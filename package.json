@@ -1,0 +1,9 @@
+{
+  "name": "jen-island",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "check": "node --check app.js && node --check cloudflare/worker.js"
+  }
+}
