@@ -6,7 +6,7 @@
 import { TAU, shade, mix, clamp, rng } from '../core/util.js';
 import { INK, ell, circ, box, poly, line, limb, shadow, text, rrect } from './draw.js';
 import { LIGHT, glows, lanternShape } from './props.js';
-import { T, tr } from '../systems/state.js';
+import { G, T, tr } from '../systems/state.js';
 
 const glow = (b, x, y, r, col) => glows.push([b.x + x, b.y + y, r, col]);
 const nightA = () => LIGHT.night;
@@ -194,14 +194,67 @@ export function drawShed(c, t, b) {
   if (!broken && (s.level || 1) >= 2 && nightA() > 0.05) glow(b, -w / 2 + 4, -h + 10, 26, 'rgba(255,190,110,.5)');
 }
 
+// What makes each home recognisable from the path.
+function houseExtras(c, t, b, w, h) {
+  switch (b.style) {
+    case 'player': { // flower boxes, a dormer and a name plate with your name
+      for (const x of [-32, 32]) { box(c, x - 13, -h + 31, 26, 5, 2, '#b77a4f', INK, 0.8); for (let i = 0; i < 4; i++) circ(c, x - 9 + i * 6, -h + 30, 2.2, ['#ff8fb0', '#ffd35a', '#fff', '#f36d86'][i], INK, 0.4); }
+      box(c, -12, -h - 34, 24, 18, 3, b.wall || '#f7dd8a', INK, 1); box(c, -7, -h - 30, 14, 11, 2, '#bfe6ef', INK, 0.8); poly(c, [-15, -h - 34, 0, -h - 44, 15, -h - 34], b.roof || '#d9784f', INK, 1);
+      const nm = (G.state?.player?.name || '').slice(0, 10);
+      if (nm) signBoard(c, -w / 2 + 14, -18, 26, 7, nm, '#fff5df', INK);
+      break;
+    }
+    case 'wood': { // Bà Tư: kumquat pots and a rocking chair on the porch
+      for (const x of [-w / 2 - 6, w / 2 + 6]) { poly(c, [x - 6, 0, x + 6, 0, x + 5, -9, x - 5, -9], '#d9784f', INK, 0.8); circ(c, x, -16, 8, '#6fb356', INK, 0.8); for (let i = 0; i < 5; i++) circ(c, x - 5 + (i * 3.1) % 10, -20 + (i * 5) % 9, 1.6, '#ffa53a', null); }
+      const rk = Math.sin(t * 1.4) * 0.08; c.save(); c.translate(-32, -2); c.rotate(rk); box(c, -7, -12, 14, 3, 1, '#a8763f', INK, 0.6); box(c, -7, -22, 3, 11, 1, '#a8763f', INK, 0.6); c.beginPath(); c.arc(0, 0, 9, Math.PI * 1.1, Math.PI * 1.9); c.strokeStyle = '#8a5f3e'; c.lineWidth = 1.6; c.stroke(); c.restore();
+      break;
+    }
+    case 'student': { // Linh: bicycle, a balcony with books drying and a tiny satellite dish
+      box(c, -w / 2 + 6, -h - 2, 40, 4, 1, '#8f9aa3', INK, 0.7); for (let i = 0; i < 6; i++) line(c, -w / 2 + 8 + i * 7, -h - 2, -w / 2 + 8 + i * 7, -h + 8, '#8f9aa3', 0.8);
+      c.save(); c.translate(w / 2 + 14, 0); for (const x of [-7, 7]) { c.beginPath(); c.arc(x, -5, 5, 0, TAU); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke(); } line(c, -7, -5, 0, -12, '#6fbfb0', 1.6); line(c, 0, -12, 7, -5, '#6fbfb0', 1.6); line(c, 0, -12, 3, -15, INK, 1); box(c, -6, -16, 7, 3, 1, '#6fbfb0', INK, 0.5); c.restore();
+      c.save(); c.translate(w / 2 - 14, -h - 30); circ(c, 0, 0, 5, '#e9eef2', INK, 0.8); line(c, 0, 0, 3, -3, INK, 0.8); c.restore();
+      break;
+    }
+    case 'flowers': { // Cô Lan: flower buckets out front and a striped awning
+      awning(c, 0, -h + 8, w - 20, ['#fff5df', '#f4a9b8'], 9);
+      for (let i = 0; i < 5; i++) { const x = -w / 2 + 8 + i * 12; if (Math.abs(x) < 20) continue; box(c, x - 5, -8, 10, 8, 2, '#8fb7e0', INK, 0.7); for (let k = 0; k < 4; k++) circ(c, x - 3 + k * 2, -11 - (k % 2) * 2 + Math.sin(t * 2 + i + k) * 0.4, 2, ['#ff8fb0', '#ffd35a', '#fff', '#e97ad0'][(i + k) % 4], INK, 0.3); }
+      break;
+    }
+    case 'garage': { // Anh Tuấn: a roll-up garage door and his taxi scooter sign
+      box(c, w / 2 - 36, -30, 28, 30, 2, '#b9c3cb', INK, 0.8); for (let y = -27; y < -2; y += 4) line(c, w / 2 - 35, y, w / 2 - 9, y, '#8a96a0', 0.6);
+      signBoard(c, -w / 2 + 18, -h - 4, 30, 8, 'TAXI', '#f7de8c', INK);
+      break;
+    }
+    case 'clinic': { // Chị Mai: a little clinic with a green cross
+      box(c, -8, -h - 18, 16, 16, 3, '#fff', INK, 0.9); box(c, -2, -h - 16, 4, 12, 0.5, '#6fbf73', null); box(c, -6, -h - 12, 12, 4, 0.5, '#6fbf73', null);
+      limb(c, [w / 2 + 8, 0, w / 2 + 8, -16], 2, '#8a5f3e'); box(c, w / 2 + 2, -24, 12, 9, 3, '#6f9fc8'); // post box
+      break;
+    }
+    case 'painter': { // Vy: paint splotches and a sun-bleached canvas awning
+      awning(c, 0, -h + 8, w - 24, ['#fffaf0', '#8fb7e0'], 9);
+      for (let i = 0; i < 7; i++) circ(c, -w / 2 + 10 + (i * 37) % (w - 20), -8 - (i * 13) % 26, 2.2, ['#f28f7c', '#ffd35a', '#6fbfb0', '#c9b6e8'][i % 4], null);
+      break;
+    }
+    case 'fisher': { // Chú Hải: nets drying and a paddle by the door
+      c.save(); c.translate(-w / 2 - 10, 0); for (const x of [0, 26]) limb(c, [x, 0, x, -30], 1.6, '#8a5f3e'); c.strokeStyle = 'rgba(91,63,54,.6)'; c.lineWidth = 0.5; for (let i = 0; i <= 6; i++) { c.beginPath(); c.moveTo(i * 4.3, -28); c.quadraticCurveTo(i * 4.3 + Math.sin(t * 1.5) * 1.5, -16, i * 4.3, -6); c.stroke(); } for (let y = -26; y < -6; y += 4) { c.beginPath(); c.moveTo(0, y); c.lineTo(26, y + Math.sin(t + y) * 0.6); c.stroke(); } c.restore();
+      c.save(); c.translate(w / 2 + 8, 0); c.rotate(0.2); limb(c, [0, 0, 0, -28], 1.6, '#b77a4f'); ell(c, 0, -30, 3, 7, '#c9975f', INK, 0.7); c.restore();
+      break;
+    }
+  }
+}
+
 export function drawHouse(c, t, b) {
   const s = b.state?.() || {}, w = b.w || 118, h = 50, col = b.wall || '#f7dd8a';
   shadow(c, 0, 2, w * 0.62, 11, 0.2);
   wallFace(c, w, h, col, { bricks: false });
   windowBox(c, -32, -h + 12, 22, 18, { shutter: b.shutter || '#6fae7c', box: true, b });
   windowBox(c, 32, -h + 12, 22, 18, { shutter: b.shutter || '#6fae7c', box: true, b });
+  const st = b.style;
+  if (st === 'wood') for (let y = -h + 4; y < -2; y += 6) line(c, -w / 2 + 2, y, w / 2 - 2, y, 'rgba(120,80,50,.28)', 1);
+  if (st === 'clinic') { box(c, -w / 2 + 2, -12, w - 4, 10, 2, '#dfeef7', null); }
   door(c, 0, 20, 32, b.doorCol || '#b77a4f', b.doorOpen || 0, { matCol: '#e89a8a' });
-  tileRoof(c, w, 44, h, b.roof || '#d9784f', { overhang: 10 });
+  if (st === 'tin') tinRoof(c, w, 34, h, b.roof || '#6f9fc8'); else tileRoof(c, w, 44, h, b.roof || '#d9784f', { overhang: 10 });
+  houseExtras(c, t, b.fisher ? { ...b, style: 'fisher' } : b, w, h);
   if (b.label) signBoard(c, 0, -h + 4, 30, 7, tr(b.label), '#fff5df', INK);
   if (b.chimney) { box(c, 24, -h - 44, 10, 16, 2, '#c9b8a8'); for (let i = 0; i < 3; i++) { const k = (t * 0.3 + i / 3) % 1; c.globalAlpha = 0.45 * (1 - k); circ(c, 29 + Math.sin(k * 6) * 3, -h - 48 - k * 20, 3 + k * 4, '#fff', null); } c.globalAlpha = 1; }
   if (s.mailbox !== false && b.mailbox) { limb(c, [w / 2 + 8, 0, w / 2 + 8, -16], 2, '#8a5f3e'); box(c, w / 2 + 2, -24, 12, 9, 3, '#e8584e'); }
@@ -276,6 +329,21 @@ export function drawShop(c, t, b) {
     door(c, w / 2 - 22, 22, 34, '#c98f5a', b.doorOpen || 0, { matCol: '#9fd8c8' });
     tileRoof(c, w, 40, h, '#c9674a', { overhang: 8 });
     signBoard(c, 0, -h - 8, 96, 16, T('ANH KHOA\'S FURNITURE', 'NỘI THẤT ANH KHOA'), '#fff5df', '#8a5f3e');
+  }
+  else if (kind === 'boutique') {
+    // big display window with two mannequins, striped pink awning, scalloped sign
+    box(c, -w / 2 + 10, -h + 14, w - 60, h - 18, 4, nightA() > 0.05 ? winLit() : '#e6f5fb');
+    const dm = (x, col, hat) => { limb(c, [x, -6, x, -14], 1, '#8a5f3e'); poly(c, [x - 5, -30, x + 5, -30, x + 7, -14, x - 7, -14], col, INK, 0.7); circ(c, x, -35, 3.4, '#f3e6d6', INK, 0.7); if (hat) { ell(c, x, -38, 6.4, 1.8, hat, INK, 0.6); ell(c, x, -40, 3.2, 2.2, hat, INK, 0.6); } };
+    dm(-w / 2 + 26, '#f4a9b8', '#f3dcae'); dm(-w / 2 + 50, '#8fb7e0', null); dm(-w / 2 + 70, '#f7de8c', null);
+    c.fillStyle = 'rgba(255,255,255,.4)'; c.beginPath(); c.moveTo(-w / 2 + 12, -10); c.lineTo(-w / 2 + 36, -h + 16); c.lineTo(-w / 2 + 44, -h + 16); c.lineTo(-w / 2 + 20, -10); c.fill();
+    if (nightA() > 0.05) glow(b, -w / 2 + 40, -h + 30, 46, 'rgba(255,200,210,.5)');
+    door(c, w / 2 - 24, 24, 36, '#f4a9b8', b.doorOpen || 0, { matCol: '#f4a9b8', inside: '#fff3f5' });
+    awning(c, -14, -h + 12, w - 32, ['#fff5f7', '#f28fa3'], 12);
+    box(c, -w / 2 - 2, -h - 22, w + 4, 22, 10, '#f28fa3');
+    for (let i = 0; i < 9; i++) circ(c, -w / 2 + 6 + i * (w - 8) / 8, -h, 3.2, '#f28fa3', null);
+    text(c, T('CÔ BA\'S BOUTIQUE', 'TIỆM ÁO CÔ BA'), 0, -h - 11, 10.5, '#fff', 900, 'center', INK, 2.4);
+    // a little hanger icon
+    c.strokeStyle = '#fff'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(w / 2 - 14, -h - 5); c.lineTo(w / 2 - 6, -h - 11); c.lineTo(w / 2 + 2, -h - 5); c.closePath(); c.stroke();
   }
   if (kind === 'supermarket') { /* flat roof edge */ }
 }

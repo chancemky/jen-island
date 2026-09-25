@@ -128,6 +128,7 @@ export function banyan(c, t, p) {
   const cols = ['#5da24f', '#6db55a', '#79c262', '#86cc6c'];
   const blobs = [[-46, -72, 30, 0], [46, -74, 30, 0], [0, -76, 30, 0], [-20, -92, 34, 1], [22, -96, 34, 1], [-58, -92, 22, 2], [58, -94, 22, 2], [0, -114, 30, 3]];
   blobs.forEach(([x, y, r, ci], i) => { const sw = w * (2 + -y / 60 * 2.4) * s; leafBlob(c, x * s + sw, y * s, r * s, cols[ci], i, 11); if (ci >= 2) leafMarks(c, x * s + sw, y * s, r * s, shade(cols[ci], 40), i); });
+  if (p.fireflies && LIGHT.night > 0.2) for (let i = 0; i < 16; i++) { const a = t * (0.3 + (i % 5) * 0.08) + i * 1.7, x = Math.cos(a) * (30 + (i * 13) % 50), y = -40 - Math.sin(a * 1.3) * 30 - (i * 7) % 50; const k = (Math.sin(t * 3 + i * 2.3) + 1) / 2; circ(c, x, y, 1.2 + k, `rgba(255,245,150,${0.4 + k * 0.6})`, null); glows.push([p.x + x, p.y + y, 10, 'rgba(255,240,140,.35)']); }
 }
 export function bush(c, t, p) {
   const s = p.s || 1, col = p.col || '#76bf5f', w = wind(p.x, t, p.y) * 0.8;
@@ -360,10 +361,17 @@ export function signpost(c, t, p) {
   shadow(c, 0, 1, 6, 2, 0.16);
   limb(c, [0, 0, 0, -44], 3, '#8a5f3e');
   (p.signs || []).forEach((s, i) => {
-    const y = -40 + i * 11, dir = s.dir || 1;
+    // each board points at its real destination; a round badge shows the exact heading
+    const dx = s.to ? s.to[0] - p.x : (s.dir || 1), dy = s.to ? s.to[1] - p.y : 0;
+    const y = -40 + i * 11, dir = dx >= 0 ? 1 : -1, ang = Math.atan2(dy, dx);
     c.save(); c.translate(0, y);
-    poly(c, dir > 0 ? [-2, -4.5, 34, -4.5, 40, 0, 34, 4.5, -2, 4.5] : [2, -4.5, -34, -4.5, -40, 0, -34, 4.5, 2, 4.5], s.col || '#f3dcae', INK, 0.9);
-    text(c, tr(s.label), dir * 17, 0.4, 5.6, INK, 900);
+    poly(c, dir > 0 ? [-2, -4.5, 38, -4.5, 44, 0, 38, 4.5, -2, 4.5] : [2, -4.5, -38, -4.5, -44, 0, -38, 4.5, 2, 4.5], s.col || '#f3dcae', INK, 0.9);
+    text(c, tr(s.label), dir * 17, 0.4, 5.4, INK, 900);
+    c.save(); c.translate(dir * 36, 0);
+    circ(c, 0, 0, 3.6, '#fff8ea', INK, 0.6);
+    c.rotate(ang); c.fillStyle = '#e56b4e';
+    c.beginPath(); c.moveTo(2.6, 0); c.lineTo(-1.2, -2); c.lineTo(-0.4, 0); c.lineTo(-1.2, 2); c.closePath(); c.fill();
+    c.restore();
     c.restore();
   });
 }
@@ -611,4 +619,47 @@ export function rock(c, t, p) {
   ell(c, -3 * s, -9 * s, 4 * s, 2 * s, 'rgba(255,255,255,.35)', null);
   // a little moss
   ell(c, 5 * s, -9 * s, 3.4 * s, 1.6 * s, 'rgba(120,180,90,.55)', null);
+}
+
+// The long bridge to Firefly Islet: a wooden deck on posts with rope rails.
+// Until it's repaired the middle is missing (a few planks dangle from the rope).
+export function seaBridge(c, t, p) {
+  const w = 262, h = 38, fixed = p.fixed?.();
+  c.save(); c.translate(0, -h);
+  const plank = (x0, x1) => {
+    c.fillStyle = 'rgba(40,80,90,.25)'; c.fillRect(x0 + 3, 5, x1 - x0, h);
+    box(c, x0, 0, x1 - x0, h, 3, '#d19a62', INK, 1.1);
+    c.strokeStyle = '#a8763f'; c.lineWidth = 1; for (let x = x0 + 6; x < x1; x += 6) { c.beginPath(); c.moveTo(x, 1); c.lineTo(x, h - 1); c.stroke(); }
+  };
+  const posts = x => { for (const y of [-2, h - 2]) box(c, x - 3, y - 4, 6, 10, 2, '#8a5f3e', INK, 0.8); };
+  if (fixed) plank(0, w);
+  else {
+    plank(0, 70); plank(w - 70, w);
+    // dangling planks and a sagging rope over the gap
+    for (let i = 0; i < 4; i++) { const x = 84 + i * 30, sw = Math.sin(t * 1.4 + i) * 0.12; c.save(); c.translate(x, 6 + (i % 2) * 20); c.rotate(0.4 + sw + i * 0.3); box(c, -3, -2, 6, 16, 1, '#b98a5a', INK, 0.7); c.restore(); }
+    c.strokeStyle = '#c9a26a'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(70, 0); c.quadraticCurveTo(w / 2, 26 + Math.sin(t) * 2, w - 70, 0); c.stroke();
+    text(c, T('BROKEN', 'HƯ'), w / 2, h / 2 + 2, 7, '#fff', 900, 'center', INK, 2);
+  }
+  for (let x = 0; x <= w; x += fixed ? 44 : 70) if (fixed || x <= 70 || x >= w - 70) posts(Math.min(w - 2, Math.max(2, x)));
+  c.strokeStyle = '#c9a26a'; c.lineWidth = 1.4;
+  for (const y of [-2, h - 2]) { c.beginPath(); c.moveTo(0, y - 6); if (fixed) c.lineTo(w, y - 6); else { c.lineTo(70, y - 6); c.moveTo(w - 70, y - 6); c.lineTo(w, y - 6); } c.stroke(); }
+  c.restore();
+}
+export function lookout(c, t, p) {
+  shadow(c, 0, 2, 20, 6, 0.18);
+  for (const [x0, x1] of [[-14, -8], [14, 8]]) limb(c, [x0, 0, x1, -70], 2.6, '#8a5f3e');
+  for (const y of [-20, -45]) line(c, -13, y, 13, y, '#8a5f3e', 2);
+  line(c, -12, -8, 10, -55, '#a8763f', 1.4);
+  box(c, -16, -84, 32, 16, 2, '#d19a62', INK, 1);
+  poly(c, [-20, -84, 0, -104, 20, -84], '#e8584e', INK, 1);
+  // a brass telescope poking out
+  c.save(); c.translate(10, -80); c.rotate(-0.4 + Math.sin(t * 0.3) * 0.1); box(c, 0, -2, 14, 4, 1.5, '#e3a52c', INK, 0.7); c.restore();
+  const fl = Math.sin(t * 3) * 2; poly(c, [0, -104, 0, -118, 10 + fl * 0.3, -114, 0, -110], '#ffd35a', INK, 0.6);
+}
+export function easel(c, t, p) {
+  shadow(c, 0, 1, 9, 2.4, 0.16);
+  limb(c, [-7, 0, 0, -34], 1.6, '#8a5f3e'); limb(c, [7, 0, 0, -34], 1.6, '#8a5f3e'); limb(c, [0, 0, 0, -30], 1.2, '#8a5f3e');
+  box(c, -11, -32, 22, 18, 1.5, '#fffaf0', INK, 0.8);
+  c.fillStyle = '#8fb7e0'; c.fillRect(-9, -30, 18, 7); c.fillStyle = '#a3d68a'; c.fillRect(-9, -23, 18, 7);
+  circ(c, 5, -27, 2, '#ffd35a', null); poly(c, [-9, -23, -4, -27, 1, -23], '#6fb356', null);
 }

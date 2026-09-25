@@ -13,6 +13,7 @@ import { DISHES, ICONS } from '../gfx/food.js';
 import { INK, ell, circ, box, text } from '../gfx/draw.js';
 import { RECIPES, BUSINESSES, ROLES, TRAITS, EMPLOYEE_NAMES, PERSONALITIES, RECIPE_UPGRADES } from '../data/game.js';
 import { visitorLook, employeeLook } from '../data/looks.js';
+import { addXP } from './progress.js';
 import { rand, randi, choice, chance, dist, bus, clamp, rng } from '../core/util.js';
 import { canMake, takeStock, recipeUses, bizRecipes, recipePrice } from './business.js';
 import { PREPPED, INGREDIENTS } from '../data/game.js';
@@ -29,6 +30,14 @@ export function buildRestaurant() {
   const r = new Interior({ id: 'restaurant', name: 'Nhà hàng', w: 420, h: 380, WH: 72, wall: '#f7e0b8', wall2: '#f0d4a4', floor: '#c98f5a', door: { x: 210, w: 34 }, building: 'restaurant', fitW: 440 });
   r.wallItem('window', 360, { w: 44, h: 26, hgt: 58, curtain: '#e8584e' });
   r.wallItem('painting', 290);
+  r.wallItem('bunting', 250, { w: 300, cols: ['#e8584e', '#ffd35a', '#e8584e', '#fff5df'] });
+  r.wallItem('familyPhoto', 330); r.wallItem('wallShelf', 250);
+  r.furn('mat', 150, 150, { w: 296, h: 78, col: '#e9e1d4' });            // kitchen tiles
+  r.furn('rug', 210, 318, { w: 260, h: 96, col: '#efbf9c' });           // dining room carpet
+  const lv = n => () => (bizOf('restaurant').level || 1) < n;
+  r.furn('koi', 380, 330, { hidden: lv(4) });
+  r.furn('bonsai', 40, 330, { hidden: lv(4) });
+  r.furn('piano', 380, 250, { hidden: lv(5) });
   for (const [x, y] of STOVES) r.furn('stove', x, y, { w: 50, on: () => (G.runtime.rest?.cooking?.[x] || 0) > 0 }, [-25, -28, 50, 26]);
   r.furn('prepTable', PREP[0], PREP[1], { w: 56 }, [-28, -28, 56, 26]);
   r.furn('sink', SINK[0], SINK[1], { w: 46 }, [-23, -28, 46, 26]);
@@ -192,6 +201,7 @@ function pay(g) {
   const tip = Math.round(g.price * (0.05 + 0.04 * svc + (cheerful ? 0.05 : 0)) * P.tip * (lv?.tip || 1) * quality * (0.5 + g.patience / g.patienceMax * 0.5));
   const total = g.price + tip;
   s.stats.served++; s.today.served++; if (g.perfect) { s.stats.perfect++; s.today.perfect++; }
+  addXP(g.perfect ? 10 : 6, 'serve');
   const tb = (s.today.biz.restaurant ||= { served: 0, revenue: 0, perfect: 0 }); tb.served++; tb.revenue += total; if (g.perfect) tb.perfect++;
   b.stats.served++; b.stats.revenue += total;
   s.today.revenue += total; s.today.tips += tip; s.stats.tipsTotal += tip;

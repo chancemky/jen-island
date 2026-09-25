@@ -6,9 +6,15 @@ import { G, T, markDirty } from './state.js';
 import { recipeName, ROLES } from '../data/game.js';
 import { say } from '../ui/dialogue.js';
 import { choice } from '../core/util.js';
+import { residentMenu, randomJoke } from './fun.js';
 
 // Three tiers per resident: early game, mid game (chapter 3+), late game (chapter 5+).
 const LINES = {
+  vy: [
+    [['Fireflies only glow when they feel safe. Same as painters.', 'Đom đóm chỉ phát sáng khi thấy an toàn. Họa sĩ cũng vậy.'], ['I\'ve painted this banyan forty times. It looks different every evening.', 'Mình vẽ cây đa này bốn mươi lần rồi. Chiều nào nhìn cũng khác.']],
+    [['Your shops look lovely from the lookout tower. Like little sweets on a tray.', 'Nhìn từ tháp canh, quán của bạn đẹp lắm. Như mấy viên kẹo trên khay.'], ['Mèo Mây posed for me once. For four seconds. Then it ate my eraser.', 'Mèo Mây từng làm mẫu cho mình. Được bốn giây. Rồi nó ăn cục gôm.']],
+    [['I\'m painting you next! Hold still… no, you moved. Fine, I\'ll guess.', 'Mình sẽ vẽ bạn nè! Đứng yên… ơ, bạn cử động rồi. Thôi mình đoán vậy.'], ['The festival painting sold to a gallery on the mainland! Now tourists come to find the real place.', 'Bức tranh lễ hội bán được cho một phòng tranh trong đất liền! Giờ du khách tới để tìm nơi thật.']],
+  ],
   ba_tu: [
     [['That was my tea stand, you know. Forty years of kumquat tea!', 'Quán trà đó là của bà đó. Bốn mươi năm bán trà tắc!'], ['Don\'t let anyone put too much sugar in. Kumquats should be a little sour.', 'Đừng bỏ nhiều đường quá nha con. Tắc phải chua chua mới ngon.']],
     [['Remember to eat properly, dear. Business is a marathon, not a race.', 'Con nhớ ăn cơm đầy đủ nha. Buôn bán là đường dài mà.'], ['The island feels young again. My knees don\'t, but the island does.', 'Hòn đảo trẻ lại rồi. Đầu gối bà thì không, nhưng hòn đảo thì có.']],
@@ -51,6 +57,7 @@ const LINES = {
   ],
 };
 const MERCH = {
+  co_ba: [['Every outfit tells a story. Yours says "I run a very good tea stand."', 'Bộ đồ nào cũng kể một câu chuyện. Bộ của con nói "Tôi bán trà rất ngon."'], ['I sewed Mèo Mây a tiny raincoat once. It refused to wear it. Artists suffer.', 'Cô từng may cho Mèo Mây một cái áo mưa nhỏ xíu. Nó không chịu mặc. Nghệ sĩ khổ lắm.'], ['Try the áo dài! Every island girl and boy should have one for Tết.', 'Thử áo dài đi con! Ai trên đảo cũng nên có một bộ cho Tết.'], ['Come back when you level up — I keep my best pieces for famous shopkeepers.', 'Lên cấp rồi quay lại nha — cô để dành đồ đẹp nhất cho chủ quán nổi tiếng.']],
   co_hoa: [['Fresh kumquats today — the sourest, sweetest ones.', 'Hôm nay có tắc tươi — chua nhất, ngọt nhất.'], ['Buy in packs, prep at your shop. Easy!', 'Mua theo gói, về quán sơ chế. Dễ ợt!'], ['The supermarket is busier than ever thanks to you.', 'Nhờ con mà siêu thị đông khách hơn bao giờ hết.']],
   chu_bay: [['Wood, metal, paint! Everything you need to fix anything!', 'Gỗ, tôn, sơn! Đủ thứ để sửa mọi thứ!'], ['That shed of yours — I knew it had good bones.', 'Căn chòi của con đó — chú biết nó còn chắc mà.'], ['Big projects need big piles of wood. I\'ve got piles.', 'Việc lớn cần nhiều gỗ. Chú có cả đống.']],
   anh_khoa: [['Every home should have one thing that makes you smile when you walk in.', 'Nhà nào cũng nên có một món làm mình mỉm cười khi bước vào.'], ['I carve every chair myself. Well, most of them.', 'Ghế nào anh cũng tự tay đẽo. À, gần hết.'], ['Try a lantern by your bed. Very cozy at night.', 'Thử đặt một cái lồng đèn cạnh giường đi. Buổi tối ấm cúng lắm.']],
@@ -76,7 +83,7 @@ export async function talkToResident(a) {
   const reg = s.regulars['res:' + rid];
   let line = pickT(choice(pool));
   if (reg?.visits >= 3 && Math.random() < 0.4) line = T(`${s.player.name}! My usual ${reg.fav ? recipeName(reg.fav) : 'order'} was perfect last time. Thank you!`, `${s.player.name}! Lần trước món ${reg.fav ? recipeName(reg.fav) : 'quen'} ngon lắm. Cảm ơn nha!`);
-  await say(a, line);
+  await residentMenu(a, rid, () => say(a, line));
   const key = 'talk:' + rid;
   if (s.story.flags[key] !== s.day) { s.story.flags[key] = s.day; s.friends[rid] = f + 1; markDirty(); }
   a.data.until = Math.max(a.data.until || 0, s.time + 3);
@@ -93,5 +100,6 @@ export async function talkToStaff(a) {
 }
 export async function talkToVisitor(a) {
   a.face(G.player); a.showEmote('happy', 1.2);
+  if (Math.random() < 0.3) { await say(a, randomJoke(), { emo: 'happy' }); return; }
   await say(a, pickT(choice(VISITOR)));
 }

@@ -3,8 +3,9 @@
 // The restaurant has its own simulation in restaurant.js.
 
 import { G, T, addMoney, addRep, markDirty, pantry, addPantry, unlockAchievement, bizOf } from './state.js';
-import { BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, recipeName, bizName } from '../data/game.js';
+import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, recipeName, bizName } from '../data/game.js';
 import { RESIDENTS, visitorLook } from '../data/looks.js';
+import { addXP } from './progress.js';
 import { Actor } from '../world/actor.js';
 import { QUEUES } from '../world/island.js';
 import { bus, rand, randi, choice, chance, clamp, dist } from '../core/util.js';
@@ -30,6 +31,10 @@ export function takeStock(bizId, key, n = 1) {
   if (PREPPED[key]) { const b = bizOf(bizId); b.prepped[key] -= n; markDirty(); }
   else addPantry(key, -n);
   return true;
+}
+export function returnStock(bizId, key, n = 1) {
+  if (PREPPED[key]) { const b = bizOf(bizId); b.prepped[key] = (b.prepped[key] || 0) + n; markDirty(); }
+  else addPantry(key, n);
 }
 function optionUses(recipe, opts) {
   const u = [];
@@ -57,7 +62,17 @@ export function recipePrice(bizId, id, size = 'M') {
   const up = BUSINESSES[bizId].upgrades?.[bizOf(bizId).level];
   const special = bizOf(bizId).special === id ? 1.1 : 1;
   const sz = RECIPES[id].options.includes('size') ? OPTIONS.size.price[size] : 1;
-  return Math.round(RECIPES[id].price * sz * (lv?.price || 1) * (up?.price || 1) * special);
+  return Math.round(RECIPES[id].price * sz * (lv?.price || 1) * (up?.price || 1) * special * priceMul(id) * eq(bizId, 'price'));
+}
+// the price the player set (1 = the fair price)
+export const priceMul = id => G.state.prices?.[id] || 1;
+// how customers feel about a price: <1 means fewer people want it
+export const priceAppeal = id => Math.pow(priceMul(id), -1.6);
+// equipment effect multiplier for a shop
+export function eq(bizId, key) {
+  const own = bizOf(bizId)?.equip; if (!own) return 1;
+  let k = 1; for (const e of EQUIPMENT) if (own[e.id] && e[key]) k *= e[key];
+  return k;
 }
 
 // ---------------------------------------------------------------- open / close
@@ -145,7 +160,7 @@ export function spawnCustomer(bizId, opts = {}) {
   }
   const P = PERSONALITIES[personality];
   const recipeLv = 1;
-  const base = 52 * P.patience * (G.state.story.chapter <= 2 ? 1.4 : 1) * recipeLv;
+  const base = 52 * P.patience * (G.state.story.chapter <= 2 ? 1.4 : 1) * recipeLv * eq(bizId, 'patience');
   const c = new Customer({ bizId, actor, key, name, personality, resident: !!resident, patience: base, patienceMax: base });
   c.order = makeOrder(bizId, c);
   if (!c.order) { if (!resident) island.remove(actor); else G.npcs.returnResident(resident); return null; }
@@ -201,7 +216,7 @@ export function makeOrder(bizId, cust) {
   const reg = G.state.regulars[cust.key];
   if (reg?.fav && pool.includes(reg.fav) && chance(0.6)) id = reg.fav;
   else if (b.special && pool.includes(b.special) && chance(0.5)) id = b.special;
-  else id = choice(pool);
+  else id = wpick(pool.map(r => [r, priceAppeal(r)])); // cheaper items get picked more often
   const R = RECIPES[id], opts = {};
   if (R.options.includes('size')) opts.size = wpick(SIZE_W);
   if (R.options.includes('sugar')) opts.sugar = choice([30, 50, 70, 70, 100]);
@@ -293,8 +308,10 @@ export function completeOrder(c, quality) {
   const speed = c.patienceRatio;
   let tipRate = quality === 'perfect' ? 0.08 + speed * 0.22 : 0.02 + speed * 0.06;
   tipRate *= P.tip * (lv?.tip || 1) * (order.special ? 1.25 : 1);
-  if (G.state.regulars[c.key]?.visits >= 3) tipRate *= 1.15;
+  if (G.state.regulars[c.key]?.visits >= 3) tipRate *= 1.15 * eq(c.bizId, 'regTip');
+  tipRate *= eq(c.bizId, 'tip') * Math.min(1.5, Math.pow(priceMul(order.recipe), -1.5)); // pricey food, smaller tips
   const tip = Math.round(price * tipRate);
+  addXP(quality === 'perfect' ? 12 + (order.special ? 3 : 0) : 7, 'serve');
   addMoney(price, 'sale');
   if (tip > 0) { addMoney(tip, 'tip'); s.today.tips += tip; s.stats.tipsTotal += tip; }
   const rep = quality === 'perfect' ? 2 + (order.special ? 1 : 0) : 1;
@@ -392,7 +409,10 @@ function nextSpawnDelay(id) {
   const boat = G.runtime.boatBoost > 0 ? 1.5 : 1;
   const special = b.special ? 1.12 : 1;
   const early = s.story.chapter <= 2 ? 1.35 : 1;
-  const rate = attract * rep * tf * boat * special * early; // customers per ~34 game-minutes baseline
+  const recs = bizRecipes(id);
+  const appeal = recs.length ? recs.reduce((a, r) => a + priceAppeal(r), 0) / recs.length : 1;
+  const gear = eq(id, 'attract') * (h >= 18 ? eq(id, 'night') : 1);
+  const rate = attract * rep * tf * boat * special * early * appeal * gear; // customers per ~34 game-minutes baseline
   return clamp(rand(22, 40) / (rate * 1.25), 4, 50);   // +25% customers
 }
 

@@ -25,6 +25,7 @@ import { showAuth } from './ui/auth.js';
 import { updateBusinesses, openBiz, closeBiz, rt as bizRT } from './systems/business.js';
 import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs } from './systems/npc.js';
 import { updateClock, endDay, specialsInit, timePaused } from './systems/time.js';
+import { repairBridge } from './systems/story.js';
 import { runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, buyScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
 import { talkToResident, talkToMerchant, talkToStaff, talkToVisitor } from './systems/talk.js';
 import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, saveStatus } from './systems/save.js';
@@ -32,6 +33,12 @@ import * as cloud from './systems/cloud.js';
 import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, MATERIALS, bizName, recipeName } from './data/game.js';
 import { applyStaticText, bootText } from './ui/statictext.js';
 import { MERCHANTS, playerLook } from './data/looks.js';
+import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones } from './systems/progress.js';
+import { BRIDGE_REPAIR } from './data/game.js';
+import { ensureLatest, watchForUpdates } from './systems/version.js';
+import { showWhatsNew } from './ui/whatsnew.js';
+import { openBoutique, openWardrobe, currentLook, refreshPlayerLook } from './ui/clothes.js';
+import { loadSprites } from './gfx/sprites.js';
 import { bus, dist, clamp, sleep, choice, money } from './core/util.js';
 import { LIGHT } from './gfx/props.js';
 
@@ -45,8 +52,10 @@ G.markDirty = markDirty;
 // ---------------------------------------------------------------- boot
 async function boot() {
   applyStaticText();
+  if (await ensureLatest()) return; // an update is live: reload once onto it
   progress(0.1, bootText('fonts'));
   try { await Promise.race([document.fonts.load('900 16px Nunito'), document.fonts.load('800 16px Nunito'), sleep(2500)]); } catch {}
+  await Promise.race([loadSprites(), sleep(6000)]);
   progress(0.3, bootText('build'));
   const renderer = new Renderer($('game'));
   G.renderer = renderer;
@@ -78,6 +87,7 @@ async function boot() {
   G.user = user;
   $('boot').classList.remove('gone'); progress(0.9, bootText('load'));
   G.state = await loadGame(user);
+  seedLevel(G.state);
   if (dev && new URLSearchParams(location.search).has('fresh')) G.state = defaultState();
   $('boot').classList.add('gone');
   startGame();
@@ -86,7 +96,7 @@ async function boot() {
 function startGame() {
   const s = G.state;
   setAudio({ music: s.settings.music, sfx: s.settings.sfx });
-  const look = s.player.look || playerLook(s.player.lookOpt || {});
+  const look = currentLook(); // base look + clothes from the wardrobe
   G.player = new Player(look);
   G.player.name = s.player.name;
   G.meo = new Actor({ id: 'meo', kind: 'cat', look: { cat: true }, name: 'Mèo Mây', speed: 66, data: { meo: true } });
@@ -101,6 +111,7 @@ function startGame() {
   if (s.today.repStart === null) s.today.repStart = s.reputation;
   renderStars();
   requestAnimationFrame(loop);
+  watchForUpdates(toast);
   window.done = true;
   if (s.story.step === 'intro' || !s.player.name) { runArrival(); return; }
   if (s.story.step === 'tour') { setScene('island', 900, 2440, 'up'); showHud(true); runTour(); return; }
@@ -110,14 +121,16 @@ function startGame() {
   if (!scenes[pos.scene].canStand(x, y, 5)) { const sc = scenes[pos.scene]; x = sc.spawn?.x ?? sc.entry?.x ?? 900; y = sc.entry?.y - 16 || 1700; }
   setScene(pos.scene, x, y, 'down');
   if (!flag('freeRoam')) setFlag('freeRoam');
+  if (s.story.step === 'free' && !flag('keeper')) setStep('rest7'); // new chapters 8–10 for finished saves
   showHud(true);
   refreshQuest();
   resetArea();
   toast({ text: T(`Welcome back, ${s.player.name}!`, `Chào mừng trở lại, ${s.player.name}!`), sub: T(`${s.island.name} · Day ${s.day}`, `${s.island.name} · Ngày ${s.day}`), icon: 'heart' });
+  setTimeout(() => showWhatsNew(), 1400);
 }
 
 function spawnMerchants() {
-  for (const id of ['supermarket', 'materials', 'furniture']) {
+  for (const id of ['supermarket', 'materials', 'furniture', 'boutique']) {
     const sc = scenes[id], mp = sc.merchantPos;
     const def = MERCHANTS[mp.id];
     const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: mp.x, y: mp.y, data: { mid: mp.id, merchant: true } });
@@ -126,7 +139,7 @@ function spawnMerchants() {
     sc.merchant = a;
   }
   // a shopper browsing the supermarket
-  const shopper = new Actor({ kind: 'human', look: { skin: '#f1c6a4', hair: '#6e4430', hairStyle: 'pony', top: '#c9b6e8', topStyle: 'tee', bottom: '#556b8a', bottomLen: 5, shoe: '#fff', lashes: true }, x: 150, y: 210, speed: 30, data: { shopper: true } });
+  const shopper = new Actor({ kind: 'human', look: { sprite: 'single_mom', skin: '#f1c6a4', hair: '#6e4430', hairStyle: 'pony', top: '#c9b6e8', topStyle: 'tee', bottom: '#556b8a', bottomLen: 5, shoe: '#fff', lashes: true }, x: 150, y: 210, speed: 30, data: { shopper: true } });
   scenes.supermarket.add(shopper);
   scenes.supermarket.shopper = shopper;
 }
@@ -141,7 +154,7 @@ function updateInteriorLife(dt) {
 }
 bus.on('enter', id => {
   const sc = scenes[id];
-  showArea(T({ house: 'Your Home', supermarket: 'Cô Hoa\'s Supermarket', materials: 'Chú Bảy\'s Materials', furniture: 'Anh Khoa\'s Furniture', meo: 'Mèo Mây\'s Home', shed1: 'Your Drink Stand', shed2: 'Your Bánh Mì Shed', truck: 'Your Food Truck', restaurant: 'Your Restaurant' }[id] || '', { house: 'Nhà của bạn', supermarket: 'Siêu thị Cô Hoa', materials: 'Vật liệu Chú Bảy', furniture: 'Nội thất Anh Khoa', meo: 'Nhà Mèo Mây', shed1: 'Quán Nước', shed2: 'Bánh Mì Góc Phố', truck: 'Xe Cuốn', restaurant: 'Nhà hàng' }[id] || ''), '');
+  showArea(T({ house: 'Your Home', supermarket: 'Cô Hoa\'s Supermarket', materials: 'Chú Bảy\'s Materials', furniture: 'Anh Khoa\'s Furniture', boutique: 'Cô Ba\'s Boutique', meo: 'Mèo Mây\'s Home', shed1: 'Your Drink Stand', shed2: 'Your Bánh Mì Shed', truck: 'Your Food Truck', restaurant: 'Your Restaurant' }[id] || '', { house: 'Nhà của bạn', supermarket: 'Siêu thị Cô Hoa', materials: 'Vật liệu Chú Bảy', furniture: 'Nội thất Anh Khoa', boutique: 'Tiệm Áo Cô Ba', meo: 'Nhà Mèo Mây', shed1: 'Quán Nước', shed2: 'Bánh Mì Góc Phố', truck: 'Xe Cuốn', restaurant: 'Nhà hàng' }[id] || ''), '');
   if (sc.merchant) { sc.merchant.face('down'); sc.merchant.setAct('wave'); sc.merchant.showEmote('happy', 1.4); setTimeout(() => sc.merchant.setAct(null), 1300); }
   if (id === 'meo' && !sc.actors.includes(G.meo)) setTimeout(() => toast({ text: T('Mèo Mây is out for a walk', 'Mèo Mây đang đi dạo'), sub: T('It\'s usually home for a nap at noon and at night.', 'Mèo Mây thường về nhà ngủ trưa và ngủ tối.'), icon: 'notebook' }), 400);
 });
@@ -169,6 +182,10 @@ function loop(now) {
   musicTick();
   if (G.runtime.cinematic) return; // the opening cinematic owns the canvas
   if (!G.scene) return;
+  if (G.runtime.paused) { // frozen world: just keep drawing it under the pause card
+    G.renderer.render(G.scene, t, { player: G.player, light: lightingFor(G.state.time, G.scene.kind !== 'island'), worldExtra: G.scene === scenes.island ? npcDrawables() : null, overlay: (c, tt) => drawSkyLife(c, tt) });
+    return;
+  }
   const gm = updateClock(dt);
   const pl = G.player, sc = G.scene;
   const busyUi = isUiOpen() || isServiceOpen() || isPrepOpen() || dialogue.active || isDecorating();
@@ -196,6 +213,7 @@ function loop(now) {
     overlay: (c, tt) => { drawSkyLife(c, tt); G.runtime.decoOverlay?.(c, tt); },
   });
   updateHud(dt);
+  tickCelebrations(() => !cs.active && !isUiOpen() && !isServiceOpen() && !isPrepOpen() && !dialogue.active && !isDecorating() && !G.runtime.paused);
   updateDialogue(dt, t);
   updateService(dt, t);
   updatePrep(dt, t);
@@ -242,6 +260,11 @@ function updateInteraction(dt) {
     if (tr.kind === 'front') return frontAction(tr);
     if (tr.kind === 'act') return actAction(tr);
   }
+  // the Long Bridge repair spot
+  if (sc === scenes.island && G.state.story.step === 'bridge' && dist(pl.x, pl.y, 1690, 1530) < 60) {
+    G.runtime.materialNeed = () => ({ label: T('the Long Bridge', 'Cây Cầu Dài'), mats: BRIDGE_REPAIR.mats });
+    setAction(T('Repair', 'Sửa cầu'), () => openRequirement({ title: T('Repair the Long Bridge', 'Sửa Cây Cầu Dài'), cost: BRIDGE_REPAIR.cost, mats: BRIDGE_REPAIR.mats, action: () => repairBridge(), actionLabel: T('Fix it!', 'Sửa thôi!'), note: T('Chú Bảy sells wood, metal and paint.', 'Chú Bảy có bán gỗ, tôn và sơn.') }), 'hammer'); return;
+  }
   // statue pedestal
   if (sc === scenes.island && dist(pl.x, pl.y, 900, 1600) < 50 && G.state.story.step === 'destination') {
     setAction(T('Statue', 'Tượng đài'), () => statueSheet(), 'star'); return;
@@ -283,14 +306,14 @@ function doorAction(tr) {
     const z = bizOf(b.biz), def = BUSINESSES[b.biz];
     if (b.biz === 'truck' && !z.owned) {
       if (G.state.story.chapter < 4) return setAction(T('Look', 'Xem'), () => say(null, T('An old truck with a FOR SALE sign. Maybe later…', 'Một chiếc xe cũ có tấm bảng “BÁN”. Để sau vậy…')), 'talk');
-      return setAction(T('Buy', 'Mua xe'), () => openRequirement({ title: bizName('truck'), sub: T('Food truck for sale', 'Xe bán đồ ăn đang rao bán'), cost: def.buy, action: () => buyScene('truck'), actionLabel: T(`Buy for ${def.buy}k`, `Mua với giá ${def.buy}k`), note: T('A food truck is run in person, like the sheds. No staff here!', 'Xe bán đồ ăn do bạn tự đứng bán, giống các căn chòi. Không thuê nhân viên được!') }), 'coin');
+      return setAction(T('Look', 'Xem'), () => say(null, T(`Locked. Mèo Mây has the keys (${gateText('truck')}).`, `Đang khóa. Mèo Mây giữ chìa khóa (${gateText('truck')}).`)), 'key');
     }
     if (b.biz === 'restaurant' && !z.owned) {
       if (G.state.story.chapter < 6) return setAction(T('Look', 'Xem'), () => say(null, T('The old restaurant on the hill. The windows are boarded up and a faded sign says “FOR SALE”.', 'Nhà hàng cũ trên đồi. Cửa sổ bị đóng ván, tấm bảng đã phai màu ghi “BÁN”.')), 'talk');
-      return setAction(T('Buy', 'Mua'), () => openRequirement({ title: T('The Restaurant on the Hill', 'Nhà hàng trên đồi'), sub: T('For sale', 'Đang rao bán'), cost: def.buy, action: () => buyScene('restaurant'), actionLabel: T(`Buy for ${money(def.buy)}`, `Mua với giá ${money(def.buy)}`) }), 'coin');
+      return setAction(T('Look', 'Xem'), () => say(null, T(`Boarded up. Mèo Mây has the key (${gateText('restaurant')}).`, `Cửa đóng ván. Mèo Mây giữ chìa khóa (${gateText('restaurant')}).`)), 'key');
     }
     if (z.repair < 1) {
-      if (!z.owned || !z.unlocked) return setAction(T('Look', 'Xem'), () => say(null, T('An old shed with a leaky roof. Mèo Mây might know who it belongs to.', 'Một căn chòi cũ, mái tôn thủng. Biết đâu Mèo Mây biết nó là của ai.')), 'talk');
+      if (!z.owned || !z.unlocked) return setAction(T('Look', 'Xem'), () => say(null, GATES[b.biz] && G.state.story.flags.ch3intro ? T(`Locked. Mèo Mây has the key (${gateText(b.biz)}).`, `Đang khóa. Mèo Mây giữ chìa khóa (${gateText(b.biz)}).`) : T('An old shed with a leaky roof. Mèo Mây might know who it belongs to.', 'Một căn chòi cũ, mái tôn thủng. Biết đâu Mèo Mây biết nó là của ai.')), 'talk');
       G.runtime.materialNeed = () => ({ label: bizName(b.biz), mats: def.repair });
       return setAction(T('Repair', 'Sửa'), () => openRequirement({ title: T(`Repair ${bizName(b.biz)}`, `Sửa ${bizName(b.biz)}`), mats: def.repair, action: () => repairScene(b.biz), actionLabel: T('Repair it!', 'Sửa ngay!'), note: b.biz === 'shed1' ? T('Wood for the walls, metal for the roof, paint to make it pretty.', 'Gỗ cho tường, tôn cho mái, sơn cho đẹp.') : '' }), 'hammer');
     }
@@ -301,6 +324,7 @@ function frontAction(tr) {
   const bizId = tr.biz, z = bizOf(bizId);
   if (bizId === 'night') {
     if (!G.state.nightMarket.restored) {
+      if (G.state.story.step === 'restoreNM' && !gatePaid('night')) return setAction(T('Look', 'Xem'), () => say(null, T(`The market gate is locked. Mèo Mây has the key (${gateText('night')}).`, `Cổng chợ đang khóa. Mèo Mây giữ chìa khóa (${gateText('night')}).`)), 'key');
       if (G.state.story.step !== 'restoreNM') return setAction(T('Look', 'Xem'), () => say(null, T('An abandoned stall with torn lanterns.', 'Quầy hàng bỏ hoang, lồng đèn rách nát.')), 'talk');
       const r = NIGHT_MARKET_RESTORE;
       G.runtime.materialNeed = () => ({ label: T('the Night Market', 'Chợ Đêm'), mats: r.mats });
@@ -337,6 +361,8 @@ function actAction(tr) {
     'shop:ingredients': () => openIngredientShop(),
     'shop:materials': () => { const st = G.state.story.step; if (st === 'materials') G.runtime.materialNeed = () => ({ label: bizName('shed1'), mats: BUSINESSES.shed1.repair }); openMaterialShop(); },
     'shop:furniture': () => openFurnitureShop(),
+    'shop:boutique': () => openBoutique(),
+    wardrobe: () => openWardrobe(),
     serve: () => serveAtCounter(bizId),
     prep: () => openPrep(bizId),
     menu: () => openBizMenu(bizId, { onUpgrade: lv => upgradeScene(bizId, lv) }),
@@ -481,10 +507,38 @@ function specialLine() {
 
 // ---------------------------------------------------------------- HUD buttons
 $('bagBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen()) return; sfx('ui'); openBag(); });
+$('mapBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen()) return; sfx('ui'); openMenu({ onLogout: logout }); });
 $('menuBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen()) return; sfx('ui'); openMenu({ onLogout: logout }); });
 $('questPill').addEventListener('click', () => { if (cs.active) return; const st = currentStep(); if (st?.text) toast({ text: T('Objective', 'Mục tiêu'), sub: st.text(), icon: 'star', ms: 4000 }); });
-$('repChip').addEventListener('click', () => toast({ text: T(`Reputation: ${Math.floor(G.state.reputation)}`, `Danh tiếng: ${Math.floor(G.state.reputation)}`), sub: T('It grows with every happy customer. More reputation, more visitors!', 'Tăng lên với mỗi vị khách vui vẻ. Càng nhiều danh tiếng, càng đông khách!'), icon: 'star' }));
+$('repChip').addEventListener('click', () => { const s = G.state, need = Math.round(90 * Math.pow(s.level || 1, 1.5)); toast({ text: T(`Level ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} XP`, `Cấp ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} KN`), sub: T(`Reputation ${Math.floor(s.reputation)}. Serve customers, repair and upgrade to level up!`, `Danh tiếng ${Math.floor(s.reputation)}. Phục vụ khách, sửa và nâng cấp quán để lên cấp!`), icon: 'trophy' }); });
 $('clockChip').addEventListener('click', () => toast({ text: T(`Day ${G.state.day}`, `Ngày ${G.state.day}`), sub: T('Shops close at midnight. Sleep in your bed to start a new day.', 'Các quán đóng cửa lúc nửa đêm. Ngủ trên giường để sang ngày mới.'), icon: 'sleep_moon' }));
+
+// progression hooks
+bus.on('sfx', k => sfx(k));
+bus.on('recipe', () => addXP(30, 'recipe'));
+bus.on('achievement', () => addXP(40, 'achievement'));
+let msSeen = 0;
+bus.on('xp', () => { const n = readyMilestones(); if (n > msSeen) toast({ text: T('Milestone reached!', 'Đạt cột mốc mới!'), sub: T('Claim your reward in Menu → Milestones', 'Nhận thưởng ở Menu → Cột mốc'), icon: 'trophy', ms: 3200 }); msSeen = n; });
+
+// ---------------------------------------------------------------- pause
+function setPaused(on) {
+  if (!!G.runtime.paused === on) return;
+  G.runtime.paused = on;
+  document.getElementById('pauseCard')?.remove();
+  if (!on) { sfx('ui'); return; }
+  releaseJoystick();
+  sfx('page');
+  const el = document.createElement('div'); el.id = 'pauseCard'; el.className = 'pause-card';
+  el.innerHTML = `<div class="pc-in"><div class="pc-cat"></div><h2>${T('Paused', 'Tạm dừng')}</h2><p>${T('Mèo Mây is taking a little nap too.', 'Mèo Mây cũng đang chợp mắt.')}</p><button class="btn big pink" type="button" data-a="go">${T('Resume', 'Tiếp tục')}</button><button class="btn ghost" type="button" data-a="menu">${T('Settings', 'Cài đặt')}</button></div>`;
+  el.addEventListener('click', e => {
+    const a = e.target.closest('button')?.dataset.a;
+    if (a === 'go') setPaused(false);
+    else if (a === 'menu') { setPaused(false); openMenu({ onLogout: logout }); }
+  });
+  document.getElementById('app').appendChild(el);
+}
+$('pauseBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen()) return; setPaused(true); });
+window.addEventListener('keydown', e => { if ((e.key === 'p' || e.key === 'Escape') && G.runtime.paused) setPaused(false); else if (e.key === 'p' && !cs.active && !isUiOpen()) setPaused(true); });
 
 async function logout() {
   saveLocal(); await saveCloudNow();

@@ -6,6 +6,7 @@
 // talking and the whole body squashes on hops.
 
 import { TAU, shade } from '../core/util.js';
+import { anticTransform } from '../systems/fun.js';
 import { INK, ell, circ, shadow, limb } from './draw.js';
 import { viewOf } from './character.js';
 
@@ -67,7 +68,7 @@ function ears(c, a, t, view) {
 }
 
 function face(c, a, t, view) {
-  const emo = a.act === 'sleep' ? 'sleepy' : (a.emo || 'neutral'), blink = a.blinkAmt || 0;
+  const emo = a.act === 'sleep' || a.act === 'faint' ? 'sleepy' : a.act === 'dance' || a.act === 'roll' ? 'happy' : (a.emo || 'neutral'), blink = a.act === 'sneeze' ? 1 : a.blinkAmt || 0;
   const lx = (a.lookX || 0) * 0.6, ly = (a.lookY || 0) * 0.5;
   const eyesX = view === 'side' ? [6.2] : [-5, 5];
   const ey = HY + 1.2;
@@ -164,6 +165,7 @@ export function drawCat(c, a, t) {
   shadow(c, 0, 0.4, (8.5 - hop * 0.12) * sc, 3 * sc, 0.2 - Math.min(0.08, hop * 0.006));
   c.scale(flip * sc, sc);
   c.translate(0, -bob - hop + breathe * 0.2);
+  anticTransform(c, a);
   c.scale(sx, sy);
 
   if (view !== 'back') tail(c, a, t, view);

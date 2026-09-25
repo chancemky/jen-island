@@ -59,14 +59,15 @@ export function camFollow(actor, zoom = 1) { cam.override = null; cam.follow = a
 
 // Walk an actor to a point along the scene's nav graph (outdoors) or directly.
 export async function walk(actor, x, y, { speed, direct = false } = {}) {
-  const sc = G.scene;
+  // path on the actor's own scene (Mèo walks the island while you're indoors)
+  const sc = (actor.scene && G.scenes?.[actor.scene]) || G.scene;
   let pts = [[x, y]];
   if (!direct && sc?.nav?.nodes.length && dist(actor.x, actor.y, x, y) > 60) {
     pts = sc.nav.path(actor.x, actor.y, x, y);
     // skip the first node if we're already past it
     if (pts.length > 1 && dist(actor.x, actor.y, pts[1][0], pts[1][1]) < dist(pts[0][0], pts[0][1], pts[1][0], pts[1][1])) pts.shift();
   }
-  await actor.walkTo(pts, { speed: speed || actor.speed });
+  return actor.walkTo(pts, { speed: speed || actor.speed });
 }
 export function face(a, target) { a.face(target); }
 export function emote(a, type, dur = 1.4) { a.showEmote(type, dur); if (type === '!') sfx('pop'); }

@@ -23,7 +23,9 @@ export const F = {
     box(c, -26, -42, 22, 11, 5, '#fff');               // pillow
     const sl = p.sleeper?.();
     if (sl) { // the sleeper lies on the pillow, blanket pulled up
-      c.save(); c.translate(-6, -30); c.rotate(-Math.PI / 2 + 0.05); c.scale(0.95, 0.95);
+      // head centred on the pillow, body under the blanket towards the foot of the bed
+      const br = Math.sin(t * 1.6) * 0.25;
+      c.save(); c.translate(6.6, -35.6 + br); c.rotate(-Math.PI / 2 + 0.04); c.scale(0.8, 0.8);
       p.drawSleeper(c, { ...sl, dir: 'down', moving: 0, act: 'sleep', emo: 'sleepy', blinkAmt: 1, sit: false, hop: 0 }, t);
       c.restore();
     }
@@ -131,7 +133,102 @@ export const F = {
   crateStack(c, t, p) { for (const [x, y] of [[-10, 0], [10, 0], [0, -16]]) { box(c, x - 9, y - 16, 18, 16, 2, '#c9955e'); line(c, x - 8, y - 15, x + 8, y - 1, '#a8763f', 0.8); } },
   photoWall(c, t, p) { for (let i = 0; i < 4; i++) { const x = -24 + i * 16, y = -62 + (i % 2) * 6; box(c, x - 6, y, 12, 14, 1, '#fff'); box(c, x - 4.5, y + 1.5, 9, 8, 0.6, ['#aee4ed', '#f7de8c', '#f4a9b8', '#9fd8c8'][i], null); } line(c, -32, -63, 32, -63, INK, 0.6); },
   cashBox(c, t, p) { box(c, -9, -10, 18, 10, 2, '#f2c14e'); box(c, -6, -13, 12, 3, 1, '#d9a032'); if ((p.amount?.() || 0) > 0) { for (let i = 0; i < 3; i++) circ(c, -4 + i * 4, -15 - (i % 2) * 2, 2.4, '#ffd35a', INK, 0.6); } },
-  pass(c, t, p) { counterBox(c, p.w || 60, 30, 10, '#e9d8bf', '#fffdf6'); },
+  pass(c, t, p) { counterBox(c, p.w || 60, 30, 10, p.col || '#e9d8bf', p.top || '#fffdf6'); },
+  // ---- boutique
+  clothesRack(c, t, p) {
+    const w = p.w || 60, cols = p.cols || ['#f4a9b8', '#9fd8c8', '#f7de8c', '#c9b6e8', '#8fb7e0', '#f8c0a0'];
+    shadow(c, 0, 1, w / 2 + 2, 3, 0.16);
+    for (const x of [-w / 2, w / 2]) limb(c, [x, 0, x, -46], 2.2, '#b9c3cb');
+    line(c, -w / 2, -45, w / 2, -45, '#8f9aa3', 2);
+    const n = Math.floor(w / 9);
+    for (let i = 0; i < n; i++) {
+      const x = -w / 2 + 6 + i * (w - 12) / Math.max(1, n - 1), sw = Math.sin(t * 1.2 + i + p.x) * 0.03;
+      c.save(); c.translate(x, -45); c.rotate(sw);
+      c.strokeStyle = '#8f9aa3'; c.lineWidth = 0.8; c.beginPath(); c.moveTo(0, 0); c.lineTo(0, 3); c.moveTo(-4, 5); c.lineTo(0, 3); c.lineTo(4, 5); c.stroke();
+      const col = cols[i % cols.length], dress = i % 3 === 1;
+      if (dress) poly(c, [-4, 5, 4, 5, 6.5, 26, -6.5, 26], col, INK, 0.7);
+      else { poly(c, [-4.6, 5, 4.6, 5, 5, 20, -5, 20], col, INK, 0.7); poly(c, [-4.6, 5, -7.4, 11, -5.4, 12.4, -4, 9], col, INK, 0.6); poly(c, [4.6, 5, 7.4, 11, 5.4, 12.4, 4, 9], col, INK, 0.6); }
+      c.restore();
+    }
+  },
+  mirror(c, t, p) {
+    shadow(c, 0, 1, 12, 3, 0.16);
+    box(c, -11, -52, 22, 50, 10, '#e3b86a', INK, 1);
+    const gr = c.createLinearGradient(-8, -48, 8, -6); gr.addColorStop(0, '#dff4ff'); gr.addColorStop(1, '#a9cfe6');
+    box(c, -8, -49, 16, 44, 8, gr, 'rgba(91,63,54,.4)', 0.6);
+    c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(-4, -40); c.lineTo(2, -46); c.moveTo(-5, -32); c.lineTo(4, -41); c.stroke();
+    limb(c, [-6, -2, -9, 0], 1.6, '#c9975f'); limb(c, [6, -2, 9, 0], 1.6, '#c9975f');
+  },
+  mannequin(c, t, p) {
+    const col = p.col || '#f4a9b8';
+    shadow(c, 0, 1, 8, 2.4, 0.16);
+    limb(c, [0, 0, 0, -14], 1.6, '#8a5f3e'); ell(c, 0, 0, 6, 1.6, '#8a5f3e', INK, 0.6);
+    poly(c, [-6, -32, 6, -32, 8, -12, -8, -12], col, INK, 0.8);
+    ell(c, 0, -34, 5, 2.4, '#f3e6d6', INK, 0.7); circ(c, 0, -40, 3.6, '#f3e6d6', INK, 0.8);
+    if (p.hat) { ell(c, 0, -43, 7, 2, p.hat, INK, 0.7); ell(c, 0, -45, 3.6, 2.4, p.hat, INK, 0.7); }
+  },
+  fittingRoom(c, t, p) {
+    shadow(c, 0, 1, 22, 4, 0.16);
+    box(c, -22, -62, 44, 62, 3, '#fbe3ea', INK, 1);
+    line(c, -20, -58, 20, -58, '#b9c3cb', 1.6);
+    const sw = Math.sin(t * 0.8) * 1.2;
+    c.fillStyle = p.col || '#e56b8b';
+    for (let i = 0; i < 6; i++) { const x = -19 + i * 6.4; c.beginPath(); c.moveTo(x, -57); c.lineTo(x + 6.4, -57); c.lineTo(x + 6.4 + sw * (i / 6), -2); c.lineTo(x + sw * (i / 6), -2); c.closePath(); c.fillStyle = i % 2 ? shade(p.col || '#e56b8b', -12) : (p.col || '#e56b8b'); c.fill(); }
+    c.strokeStyle = INK; c.lineWidth = 0.8; c.strokeRect(-19, -57, 38, 55);
+    text(c, 'FITTING', 0, -66, 5, INK, 900);
+  },
+  shoeShelf(c, t, p) {
+    const w = p.w || 44;
+    counterBox(c, w, 26, 6, '#e3c29a', '#f3dcb8');
+    const cols = ['#e9848f', '#fff', '#5f6b86', '#f5d06a', '#7a5040', '#9fd8c8'];
+    for (let r = 0; r < 2; r++) for (let i = 0; i < 3; i++) { const x = -w / 2 + 8 + i * (w - 16) / 2, y = -24 + r * 11; ell(c, x - 2, y + 6, 3.2, 1.8, cols[(i + r * 3) % 6], INK, 0.6); ell(c, x + 2.6, y + 6, 3.2, 1.8, cols[(i + r * 3) % 6], INK, 0.6); }
+  },
+  hatStand(c, t, p) {
+    shadow(c, 0, 1, 7, 2, 0.16);
+    limb(c, [0, 0, 0, -40], 2, '#8a5f3e'); ell(c, 0, 0, 7, 1.8, '#8a5f3e', INK, 0.6);
+    for (const [x, y, col, k] of [[-6, -36, '#f3dcae', 'sun'], [6, -30, '#9fd8c8', 'b'], [-5, -24, '#f28f7c', 'b']]) { limb(c, [0, y + 4, x, y + 2], 1, '#8a5f3e'); if (k === 'sun') { ell(c, x, y, 9, 2.6, col, INK, 0.7); ell(c, x, y - 2.4, 4.6, 3, col, INK, 0.7); line(c, x - 4.4, y - 1, x + 4.4, y - 1, '#f28f7c', 1.2); } else { ell(c, x, y, 6, 2, col, INK, 0.7); ell(c, x, y - 2.4, 4, 3, col, INK, 0.7); } }
+  },
+  // ---- shop details
+  pegboard(c, t, p) {
+    const w = p.w || 60;
+    box(c, -w / 2, -44, w, 30, 2, '#d8b98a', INK, 1);
+    c.fillStyle = 'rgba(91,63,54,.35)'; for (let y = -40; y < -16; y += 5) for (let x = -w / 2 + 4; x < w / 2; x += 5) c.fillRect(x, y, 1, 1);
+    limb(c, [-w / 2 + 10, -38, -w / 2 + 10, -22], 1.4, '#8f9aa3'); box(c, -w / 2 + 6, -40, 8, 3, 1, '#8f9aa3');
+    limb(c, [-4, -38, 2, -24], 1.4, '#b27b4c'); box(c, -7, -40, 8, 3.4, 1, '#8f9aa3');
+    c.strokeStyle = '#e8584e'; c.lineWidth = 1.6; c.beginPath(); c.arc(w / 2 - 12, -30, 5, 0, TAU); c.stroke();
+    limb(c, [w / 2 - 22, -38, w / 2 - 22, -22], 1.2, '#f2c14e');
+  },
+  bunting(c, t, p) {
+    const w = p.w || 120, cols = p.cols || ['#f28f7c', '#f7de8c', '#9fd8c8', '#f4a9b8', '#8fb7e0'];
+    c.strokeStyle = INK; c.lineWidth = 0.6; c.beginPath(); c.moveTo(-w / 2, -54); c.quadraticCurveTo(0, -44, w / 2, -54); c.stroke();
+    const n = Math.floor(w / 12);
+    for (let i = 0; i <= n; i++) { const k = i / n, x = -w / 2 + k * w, y = -54 + Math.sin(k * Math.PI) * 5; poly(c, [x - 4, y, x + 4, y, x, y + 7 + Math.sin(t * 2 + i) * 0.4], cols[i % cols.length], INK, 0.5); }
+  },
+  aisleSign(c, t, p) {
+    line(c, -10, -60, -10, -52, INK, 0.8); line(c, 10, -60, 10, -52, INK, 0.8);
+    c.save(); c.translate(0, -46); c.rotate(Math.sin(t * 1.3 + p.x) * 0.03);
+    box(c, -18, -6, 36, 12, 3, p.col || '#6fbf73', INK, 0.8); text(c, p.label || '', 0, 0.5, 5.6, '#fff', 900);
+    c.restore();
+  },
+  wallShelf(c, t, p) {
+    box(c, -18, -40, 36, 4, 1, '#b77a4f', INK, 0.8);
+    poly(c, [-14, -40, -10, -40, -9, -46, -15, -46], '#d9784f', INK, 0.6); ell(c, -12, -49, 4, 4, '#7fc062', INK, 0.6);
+    box(c, -4, -50, 6, 10, 1, '#9fb4dc', INK, 0.6); box(c, 3, -48, 5, 8, 1, '#f4a9b8', INK, 0.6);
+    circ(c, 13, -44, 3.4, '#f7de8c', INK, 0.6);
+  },
+  familyPhoto(c, t, p) { box(c, -10, -52, 20, 16, 2, '#b77a4f', INK, 0.8); box(c, -8, -50, 16, 12, 1, '#dff4ff', null); circ(c, -3, -45, 2.6, '#f8d6bd', INK, 0.4); circ(c, 3, -44, 2.2, '#fffaf2', INK, 0.4); ell(c, 0, -39, 7, 2, '#8fcf6f', null); },
+  floorLamp(c, t, p) { shadow(c, 0, 1, 6, 2, 0.14); limb(c, [0, 0, 0, -42], 1.4, '#8f9aa3'); ell(c, 0, 0, 5, 1.4, '#8f9aa3', INK, 0.6); poly(c, [-7, -40, 7, -40, 5, -50, -5, -50], '#fff1c8', INK, 0.8); if (LIGHT.night > 0.2) g(p, 0, -44, 40, 'rgba(255,220,150,.45)'); },
+  deskNook(c, t, p) { counterBox(c, 40, 24, 8, '#c9955e', '#e3b77f'); box(c, -12, -38, 14, 9, 1, '#fffaf0', INK, 0.6); line(c, -10, -35, 0, -35, '#b8a88f', 0.6); line(c, -10, -32, -2, -32, '#b8a88f', 0.6); circ(c, 11, -35, 3, '#f28f7c', INK, 0.6); limb(c, [11, -38, 13, -44], 0.8, '#8a5f3e'); },
+  wardrobeBig(c, t, p) {
+    shadow(c, 0, 1, 26, 4, 0.18);
+    box(c, -24, -64, 48, 64, 4, p.col || '#e3b77f', INK, 1);
+    box(c, -26, -68, 52, 7, 2, shade(p.col || '#e3b77f', -16), INK, 1);
+    line(c, 0, -62, 0, -4, INK, 1);
+    for (const x of [-12, 12]) box(c, x - 9, -58, 18, 50, 3, shade(p.col || '#e3b77f', 10), 'rgba(91,63,54,.4)', 0.7);
+    circ(c, -3, -32, 1.5, '#f2c14e', INK, 0.5); circ(c, 3, -32, 1.5, '#f2c14e', INK, 0.5);
+    // a sleeve peeking out
+    poly(c, [0, -44, 5, -40, 3, -36, 0, -38], '#f4a9b8', INK, 0.5);
+  },
 };
 
 // Small furniture preview for the decorate bar (draws into a canvas).

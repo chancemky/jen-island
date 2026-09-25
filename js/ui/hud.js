@@ -15,6 +15,7 @@ let shownMoney = null, moneyTarget = 0;
 export function showHud(on) { hud.classList.toggle('hidden', !on); actions.classList.toggle('hidden', !on); $('pointer').classList.toggle('hidden', !on); }
 
 export function initHud() {
+  const mi = document.getElementById('mapIco'); if (mi) mi.src = iconURL('map', 40);
   bus.on('money', (k) => {
     moneyTarget = G.state.money;
     const chip = $('moneyChip');
@@ -35,6 +36,7 @@ export function renderStars() {
   let h = '';
   for (let i = 1; i <= 5; i++) h += `<i class="${v >= i ? 'on' : v >= i - 0.5 ? 'half' : ''}"></i>`;
   $('stars').innerHTML = h;
+  const rn = document.getElementById('repNum'); if (rn) rn.textContent = '★' + v.toFixed(1);
 }
 
 let lastMinute = -1;
@@ -47,6 +49,9 @@ export function updateHud(dt) {
   if (Math.abs(diff) > 0.5) shownMoney += diff * Math.min(1, dt * 7) + Math.sign(diff) * 0.5;
   else shownMoney = moneyTarget;
   $('moneyLabel').textContent = money(shownMoney);
+  const lv = s.level || 1, need = Math.round(90 * Math.pow(lv, 1.5));
+  if ($('lvLabel').dataset.v !== lv + G.lang) { $('lvLabel').dataset.v = lv + G.lang; $('lvLabel').textContent = (G.lang === 'vi' ? 'Cấp ' : 'Lv ') + lv; }
+  $('xpFill').style.width = Math.min(100, (s.xp || 0) / need * 100).toFixed(1) + '%';
   const m = Math.floor(s.time);
   if (m !== lastMinute) {
     lastMinute = m;
@@ -121,11 +126,12 @@ export function setBizButton(label, handler, closing = false) {
 bizBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (bizHandler) { sfx('ui'); bizHandler(); } });
 
 // ---------------------------------------------------------------- toasts
-export function toast({ text, sub = '', icon = null, cls = '', bad = false, ms = 2800 }) {
+export function toast({ text, sub = '', icon = null, cls = '', bad = false, ms = 2800, onClick = null }) {
   const box = $('toasts');
   const el = document.createElement('div');
   el.className = 'toast ' + cls + (bad ? ' bad' : '');
   el.innerHTML = `${icon ? `<img src="${iconURL(icon, 40)}" alt="">` : ''}<div>${escapeHtml(text)}${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</div>`;
+  if (onClick) { el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer'; el.addEventListener('click', onClick); }
   box.appendChild(el);
   while (box.children.length > 3) box.firstElementChild.remove();
   if (cls === 'ach') sfx('fanfare'); else if (bad) sfx('error'); else sfx('pop');

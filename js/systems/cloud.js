@@ -77,4 +77,12 @@ export async function saveDailySummary(day, summary) {
   const uid = session.user.id;
   await api('/rest/v1/jen_island_daily_summaries?on_conflict=user_id,game_day', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ user_id: uid, game_day: day, summary_data: summary }) });
 }
+// Global leaderboard: write our own row, read the public ranking (display fields only).
+export async function pushLeaderboard(row) {
+  const uid = session.user.id;
+  await api('/rest/v1/jen_island_leaderboard?on_conflict=user_id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ user_id: uid, ...row, updated_at: new Date().toISOString() }) });
+}
+export async function fetchLeaderboard(sort = 'level') {
+  return api('/rest/v1/rpc/jen_island_leaderboard_top', { method: 'POST', body: JSON.stringify({ sort, lim: 50 }) });
+}
 export const hasSession = () => !!session;

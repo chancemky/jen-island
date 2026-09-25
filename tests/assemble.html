@@ -1,0 +1,12 @@
+<!doctype html><body style="margin:0;background:#f6ecd8"><canvas id=c></canvas><script type=module>
+import '../js/systems/state.js';
+import { drawAssembly } from '../js/gfx/assemble.js';
+import { RECIPES } from '../js/data/game.js';
+const ids=Object.keys(RECIPES).filter(k=>!['cup','glass'].includes(RECIPES[k].vessel));
+const cv=document.getElementById('c'), Z=2.2, cw=90, ch=64, cols=7; cv.width=cols*cw*Z; cv.height=ids.length*ch*Z; const c=cv.getContext('2d');
+c.lineJoin='round'; c.lineCap='round';
+ids.forEach((id,r)=>{ const R=RECIPES[id]; for(let n=0;n<=Math.min(6,R.steps.length);n++){ const st=R.steps.slice(0,n); const done=n===R.steps.length;
+  c.setTransform(Z,0,0,Z,(n*cw+cw/2)*Z,(r*ch+ch/2+4)*Z); drawAssembly(c,R,{steps:st,anim:st.map(()=>1),closeK:done?1:0},2,done,id);
+  c.setTransform(Z,0,0,Z,(n*cw+4)*Z,(r*ch+9)*Z); c.fillStyle='#000'; c.font='6px sans-serif'; c.fillText(n?st[n-1]:id,0,0); }});
+window.done=1;
+</script>

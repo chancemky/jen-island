@@ -1,14 +1,17 @@
 // Shop lists and inventory screens.
 
 import { G, T, addMoney, canAfford, addPantry, addMat, mats, pantry, hasMats, markDirty, repStars } from '../systems/state.js';
-import { INGREDIENTS, MATERIALS, FURNITURE, RECIPES, STATION, PREPPED, BUSINESSES, RECIPE_UPGRADES, ACHIEVEMENTS, CHAPTERS, PREP_VERB, ingName, matName, recipeName, bizName, furnName } from '../data/game.js';
+import { INGREDIENTS, AISLES, MATERIALS, FURNITURE, RECIPES, STATION, PREPPED, BUSINESSES, RECIPE_UPGRADES, ACHIEVEMENTS, CHAPTERS, PREP_VERB, ingName, matName, recipeName, bizName, furnName } from '../data/game.js';
 import { MERCHANTS } from '../data/looks.js';
 import { openSheet, tabs, rowEl, btn, h, flyIcon, showReward } from './sheets.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml, bus } from '../core/util.js';
 import { iconURL } from '../gfx/food.js';
 import { drawFurniturePreview } from '../gfx/furniture.js';
-import { bizRecipes, ingredientsForBiz, canMake, recipePrice } from '../systems/business.js';
+import { bizRecipes, ingredientsForBiz, canMake, recipePrice, priceMul, priceAppeal } from '../systems/business.js';
+import { level } from '../systems/progress.js';
+import { activeQuests } from '../systems/sidequests.js';
+import { EQUIPMENT, SHOP_LEVEL_REQ, PRICE_RANGE } from '../data/game.js';
 import { toast } from './hud.js';
 
 const bagBtn = () => document.getElementById('bagBtn');
@@ -39,9 +42,21 @@ export function stockedIngredients() {
 // ---------------------------------------------------------------- supermarket
 export function openIngredientShop() {
   openSheet({ title: T('Cô Hoa\'s Supermarket', 'Siêu thị Cô Hoa'), sub: T('Fresh ingredients', 'Nguyên liệu tươi'), who: MERCHANTS.co_hoa, build: (body, api) => {
+    // aisle chips
+    const stocked = stockedIngredients();
+    const aisles = AISLES.filter(a => a.id === 'all' || a.items.some(k => stocked.includes(k)));
+    if (!aisles.some(a => a.id === api.aisle)) api.aisle = 'all';
+    const bar = h('div', 'aisles');
+    for (const a of aisles) {
+      const n = a.id === 'all' ? stocked.length : a.items.filter(k => stocked.includes(k)).length;
+      const b = h('button', 'aisle' + (api.aisle === a.id ? ' on' : ''), `<img src="${iconURL(a.icon, 28)}" alt=""><span>${escapeHtml(T(a.en, a.vi))}</span><i>${n}</i>`);
+      b.type = 'button'; b.onclick = () => { sfx('ui'); api.aisle = a.id; api.rebuild(); const l = api.body.querySelector('.list'); if (l) l.scrollTop = 0; };
+      bar.appendChild(b);
+    }
+    body.appendChild(bar);
     const list = h('div', 'list scroll'); list.style.flex = '1';
     body.appendChild(list);
-    const needs = shoppingNeeds();
+    const needs = api.aisle === 'all' ? shoppingNeeds() : [];
     if (needs.length) {
       const total = needs.reduce((s, [k, n]) => s + INGREDIENTS[k].price * n, 0);
       const r = highlightRow();
@@ -55,7 +70,9 @@ export function openIngredientShop() {
       }, 'buy alt'));
       list.appendChild(r);
     }
-    for (const id of stockedIngredients()) {
+    const aisle = AISLES.find(a => a.id === api.aisle);
+    for (const id of stocked) {
+      if (aisle.items && !aisle.items.includes(id)) continue;
       const g = INGREDIENTS[id];
       const q = qtyStepper(9, 1, v => b.innerHTML = money(g.price * v));
       const right = col();
@@ -189,7 +206,10 @@ export function openBag() {
 export function openBizMenu(bizId, { onUpgrade } = {}) {
   const s = G.state, def = BUSINESSES[bizId], b = s.biz[bizId];
   openSheet({ title: bizName(bizId), sub: T(`Level ${b.level}`, `Cấp ${b.level}`), full: true, build: (body, api) => {
-    tabs(body, [T('Menu', 'Thực đơn'), T('Daily special', 'Món đặc biệt'), T('Upgrades', 'Nâng cấp'), T('Stats', 'Thống kê')], (i, pane) => {
+    tabs(body, [T('Menu', 'Thực đơn'), T('Prices', 'Giá bán'), T('Daily special', 'Món đặc biệt'), T('Upgrades', 'Nâng cấp'), T('Equipment', 'Dụng cụ'), T('Stats', 'Thống kê')], (i, pane) => {
+      if (i === 1) return pricesPane(pane, bizId, api);
+      if (i === 4) return equipPane(pane, bizId, api);
+      if (i > 1) i--; if (i > 2) i--;
       const list = h('div', 'list'); pane.appendChild(list);
       const recs = bizRecipes(bizId);
       if (i === 0) {
@@ -209,11 +229,11 @@ export function openBizMenu(bizId, { onUpgrade } = {}) {
         const ups = def.upgrades || [];
         for (let lv = 2; lv < ups.length; lv++) {
           const u = ups[lv]; if (!u) continue;
-          const done = b.level >= lv, next = b.level === lv - 1;
+          const done = b.level >= lv, req = SHOP_LEVEL_REQ[lv] || 0, locked = level() < req, next = b.level === lv - 1 && !locked;
           const need = h('div', 'need');
           need.innerHTML = `<span class="${s.money >= u.cost ? 'ok' : 'no'}"><img src="${iconURL('coin', 22)}">${u.cost}k</span>` + Object.entries(u.mats || {}).map(([k, n]) => `<span class="${mats(k) >= n ? 'ok' : 'no'}"><img src="${iconURL(k, 22)}">${mats(k)}/${n}</span>`).join('');
           const perk = u.tables ? T(`${u.tables} tables`, `${u.tables} bàn`) : T(`queue of ${u.queue}`, `hàng chờ ${u.queue}`);
-          const r = rowEl({ icon: lv === 2 ? 'lantern' : 'cable', title: T(`Level ${lv}: ${u.label}`, `Cấp ${lv}: ${u.labelVi || u.label}`), sub: done ? T('Done', 'Đã nâng cấp') : T(`${perk} · attracts more customers`, `${perk} · hút khách hơn`) });
+          const r = rowEl({ icon: lv === 2 ? 'lantern' : lv === 3 ? 'cable' : 'star', dim: locked && !done, title: T(`Level ${lv}: ${u.label}`, `Cấp ${lv}: ${u.labelVi || u.label}`), sub: done ? T('Done', 'Đã nâng cấp') : locked ? T(`Needs island level ${req}`, `Cần đảo cấp ${req}`) : T(`${perk} · attracts more customers${u.price ? ` · prices +${Math.round((u.price - 1) * 100)}%` : ''}`, `${perk} · hút khách hơn${u.price ? ` · giá +${Math.round((u.price - 1) * 100)}%` : ''}`) });
           r.querySelector('.info').appendChild(need);
           if (!done) r.appendChild(btn(T('Upgrade', 'Nâng cấp'), () => {
             if (s.money < u.cost || !hasMats(u.mats)) { sfx('error'); toast({ text: T('Not enough yet', 'Chưa đủ'), sub: T('You need more money or materials — Chú Bảy sells them.', 'Cần thêm tiền hoặc vật liệu — Chú Bảy có bán.'), bad: true }); return; }
@@ -229,6 +249,40 @@ export function openBizMenu(bizId, { onUpgrade } = {}) {
       }
     }, 0, api);
   } });
+}
+
+// ---------------------------------------------------------------- prices + equipment
+function pricesPane(pane, bizId, api) {
+  const list = h('div', 'list'); pane.appendChild(list);
+  if (level() < 2) { list.appendChild(h('div', 'empty-note', T('Reach level 2 to set your own prices.', 'Đạt cấp 2 để tự đặt giá.'))); return; }
+  list.appendChild(h('div', 'empty-note', T('Higher prices earn more per order, but fewer people buy and tips shrink. Cheaper food brings a crowd.', 'Giá cao lời hơn mỗi món, nhưng ít người mua và tiền boa giảm. Giá rẻ thì đông khách.')));
+  for (const r of bizRecipes(bizId)) {
+    const m = priceMul(r), appeal = priceAppeal(r);
+    const mood = appeal > 1.25 ? T('A bargain! Crowds love it', 'Rẻ quá! Khách mê') : appeal > 0.95 ? T('Fair price', 'Giá hợp lý') : appeal > 0.7 ? T('A bit pricey', 'Hơi đắt') : T('Too expensive — few buyers', 'Đắt quá — ít người mua');
+    const right = h('div', 'qty');
+    const set = v => { v = Math.round(Math.min(PRICE_RANGE[1], Math.max(PRICE_RANGE[0], v)) * 20) / 20; if (v === 1) delete G.state.prices[r]; else G.state.prices[r] = v; markDirty(true); sfx('tap'); api.rebuild(); };
+    const minus = h('button', '', '−'); minus.type = 'button'; minus.onclick = () => set(m - 0.05); minus.disabled = m <= PRICE_RANGE[0] + 1e-6;
+    const plus = h('button', '', '+'); plus.type = 'button'; plus.onclick = () => set(m + 0.05); plus.disabled = m >= PRICE_RANGE[1] - 1e-6;
+    const val = h('b', '', `${Math.round(m * 100)}%`);
+    right.append(minus, val, plus);
+    list.appendChild(rowEl({ icon: RECIPES[r].icon, title: `${escapeHtml(recipeName(r))} · ${recipePrice(bizId, r)}k`, sub: `${mood}${m !== 1 ? ' · <u data-reset>' + T('reset', 'đặt lại') + '</u>' : ''}`, right }));
+    const reset = list.lastChild.querySelector('[data-reset]'); if (reset) reset.onclick = () => set(1);
+  }
+}
+function equipPane(pane, bizId, api) {
+  const list = h('div', 'list'); pane.appendChild(list);
+  const b = G.state.biz[bizId]; b.equip ||= {};
+  for (const e of EQUIPMENT) {
+    const own = b.equip[e.id], locked = level() < e.lv;
+    const r = rowEl({ icon: e.icon, dim: locked, title: escapeHtml(T(e.en, e.vi)) + (own ? ` <span class="pill new">${T('Owned', 'Đã có')}</span>` : ''), sub: locked ? T(`Needs level ${e.lv} · ${e.fx}`, `Cần cấp ${e.lv} · ${e.fxVi}`) : T(e.fx, e.fxVi) });
+    if (!own) r.appendChild(btn(money(e.cost), () => {
+      if (!canAfford(e.cost)) return noMoney();
+      addMoney(-e.cost, 'upgrade'); b.equip[e.id] = true; markDirty(true); sfx('buy');
+      toast({ text: T(`${e.en} installed!`, `Đã lắp ${e.vi}!`), sub: T(e.fx, e.fxVi), icon: e.icon });
+      api.rebuild();
+    }, 'buy', locked));
+    list.appendChild(r);
+  }
 }
 
 // ---------------------------------------------------------------- requirement sheet (repair / buy / restore)
@@ -300,6 +354,11 @@ export function openJournal() {
     for (let i = 1; i < CHAPTERS.length; i++) {
       const ch = CHAPTERS[i], got = s.story.chapter >= i;
       list.appendChild(rowEl({ icon: got ? 'lantern' : 'tile', title: got ? escapeHtml(T(`Chapter ${i}: ${ch.title}`, `Chương ${i}: ${ch.vi}`)) : T(`Chapter ${i}: ???`, `Chương ${i}: ???`), dim: !got }));
+    }
+    const qs = activeQuests();
+    if (qs.length) {
+      list.appendChild(h('div', 'section-title', T('Side quests', 'Nhiệm vụ phụ')));
+      for (const q of qs) list.appendChild(rowEl({ icon: 'star', title: G.state.sideQuests[q.id] === 'found' ? T(`Bring the ${q.item[0]} back`, `Mang ${q.item[1]} về trả`) : T(`Find the ${q.item[0]}`, `Tìm ${q.item[1]}`), sub: T('Marked ★ on your map', 'Đánh dấu ★ trên bản đồ') }));
     }
     list.appendChild(h('div', 'section-title', T('Stories Mèo Mây told you', 'Chuyện Mèo Mây kể')));
     for (const [ch, en, vi] of LORE) { if (s.story.chapter >= ch) list.appendChild(rowEl({ icon: 'notebook', title: escapeHtml(T(en, vi)) })); }

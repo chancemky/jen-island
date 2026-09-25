@@ -49,16 +49,32 @@ export class Scene {
   moveWithCollision(x, y, dx, dy, r = 5) {
     let nx = x + dx, ny = y + dy;
     if (this.canStand(nx, ny, r)) return [nx, ny];
+    // already overlapping something (spawned or pushed into it): let any move out
+    const here = this.blocked(x, y, r);
+    if (here && !this.blocked(nx, ny, r, here) && this.terrain(nx, ny)) {
+      const out = here.r !== undefined ? Math.hypot(nx - here.x, (ny - here.y) * 1.4) >= Math.hypot(x - here.x, (y - here.y) * 1.4) : true;
+      if (out) return [nx, ny];
+    }
+    // round obstacles (trees, rocks, lamps): glide around the curve instead of stopping
+    const hit = this.blocked(nx, ny, r);
+    if (hit && hit.r !== undefined) {
+      let ex = x - hit.x, ey = (y - hit.y) * 1.4; const el = Math.hypot(ex, ey) || 1; ex /= el; ey /= el;
+      const vy = dy * 1.4, dot = dx * ex + vy * ey;
+      let tx = dx - dot * ex, ty = vy - dot * ey; const tl = Math.hypot(tx, ty), sp = Math.hypot(dx, vy);
+      if (tl > 1e-4) {
+        tx = tx / tl * sp; ty = ty / tl * sp;
+        const gx = x + tx + ex * 0.4, gy = y + (ty + ey * 0.4) / 1.4;
+        if (this.canStand(gx, gy, r)) return [gx, gy];
+      }
+    }
     if (this.canStand(nx, y, r)) return [nx, y];
     if (this.canStand(x, ny, r)) return [x, ny];
     // try nudging around corners so the player doesn't snag
-    const len = Math.hypot(dx, dy) || 1;
-    for (const a of [0.45, -0.45, 0.8, -0.8]) {
+    for (const a of [0.45, -0.45, 0.8, -0.8, 1.2, -1.2]) {
       const c = Math.cos(a), s = Math.sin(a);
       const tx = x + (dx * c - dy * s) * 0.7, ty = y + (dx * s + dy * c) * 0.7;
       if (this.canStand(tx, ty, r)) return [tx, ty];
     }
-    void len;
     return [x, y];
   }
 

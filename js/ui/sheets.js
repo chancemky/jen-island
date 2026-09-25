@@ -35,7 +35,12 @@ export function openSheet({ title, sub = '', who = null, cls = '', full = false,
   };
   wrap.querySelector('.x').onclick = () => close();
   wrap.addEventListener('pointerdown', e => { if (e.target === wrap) close(); });
-  const api = { wrap, sheet, body, close, rebuild: () => { body.innerHTML = ''; build?.(body, api); } };
+  const api = { wrap, sheet, body, close, rebuild: () => {
+    // keep every list where it was scrolled to (buying shouldn't jump to the top)
+    const tops = [...body.querySelectorAll('.scroll, .list')].map(e => e.scrollTop);
+    body.innerHTML = ''; build?.(body, api);
+    [...body.querySelectorAll('.scroll, .list')].forEach((e, i) => { if (tops[i]) e.scrollTop = tops[i]; });
+  } };
   build?.(body, api);
   sfx('page');
   return api;
@@ -70,7 +75,7 @@ export function portrait(cv, who, emo = 'happy') {
   const c = cv.getContext('2d');
   const look = who === 'meo' ? { cat: true } : who.look || who;
   const cat = who === 'meo' || look.cat;
-  const a = { look, kind: cat ? 'cat' : 'human', dir: 'down', moving: 0, walkPh: 0, seed: 1, blinkAmt: 0, emo, talking: false };
+  const a = { look, kind: cat ? 'cat' : 'human', dir: 'down', moving: 0, walkPh: 0, seed: 1, blinkAmt: 0, emo, talking: false, portrait: true };
   c.clearRect(0, 0, cv.width, cv.height);
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
   const s = cv.width / (cat ? 30 : 30);

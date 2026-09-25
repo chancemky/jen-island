@@ -64,6 +64,7 @@ export class Interior extends Scene {
     else if (this.wallStyle === 'tile') { c.strokeStyle = shade(this.wall, -14); c.lineWidth = 0.8; for (let y = 8; y < WH; y += 10) { c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); } for (let x = 0; x < w; x += 10) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, WH); c.stroke(); } }
     else if (this.wallStyle === 'brick') { c.strokeStyle = shade(this.wall, -16); c.lineWidth = 0.8; for (let y = 0, r = 0; y < WH; y += 8, r++) { c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); for (let x = (r % 2) * 10; x < w; x += 20) { c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + 8); c.stroke(); } } }
     else if (this.wallStyle === 'paw') { const R = rng(9); for (let i = 0; i < 26; i++) { const x = R() * w, y = 6 + R() * (WH - 16); c.fillStyle = 'rgba(255,255,255,.55)'; circ(c, x, y, 2.2, 'rgba(255,255,255,.55)', null); for (const [dx, dy] of [[-2.4, -2.6], [0, -3.6], [2.4, -2.6]]) circ(c, x + dx, y + dy, 1, 'rgba(255,255,255,.55)', null); } }
+    else if (this.wallStyle === 'dots') { const R = rng(4); for (let y = 8, r = 0; y < WH - 4; y += 12, r++) for (let x = (r % 2) * 9; x < w; x += 18) circ(c, x + R() * 0.1, y, 2.2, 'rgba(255,255,255,.7)', null); c.fillStyle = shade(this.wall, -12); c.fillRect(0, WH - 16, w, 3); }
     else if (this.wallStyle === 'metal') { c.fillStyle = 'rgba(255,255,255,.18)'; for (let x = 0; x < w; x += 14) c.fillRect(x, 0, 2, WH); }
     c.restore();
     // wainscot + baseboard
@@ -130,15 +131,19 @@ export function buildInteriors() {
   // Player home
   {
     const r = new Interior({ id: 'house', name: 'Nhà của bạn', w: 270, h: 300, WH: 64, wall: '#f7e2c4', wall2: '#f2d7b3', floor: '#d9a870', door: { x: 135, w: 30 }, building: 'house' });
-    r.wallItem('window', 135, { w: 46, h: 28, hgt: 54, curtain: '#f4a9b8' });
-    r.wallItem('calendar', 196, { day: () => G.state.day });
-    r.wallItem('clock', 76, {});
+    r.wallItem('window', 160, { w: 46, h: 28, hgt: 54, curtain: '#f4a9b8' });
+    r.wallItem('calendar', 200, { day: () => G.state.day });
+    r.wallItem('clock', 28, {});
+    r.furn('rug', 150, 214, { w: 96, h: 40, col: '#f7d6a0' });
     r.furn('bed', 48, 118, { col: '#f4a9b8', sleeper: () => G.runtime.sleeper, drawSleeper: (c, a, t) => drawHuman(c, a, t) }, [-30, -52, 60, 50]);
-    r.furn('wardrobe', 104, 72, {}, [-20, -8, 40, 8]);
+    r.furn('wardrobeBig', 104, 72, { col: '#e3b77f' }, [-24, -8, 48, 8]);
+    r.wallItem('wallShelf', 240); r.wallItem('familyPhoto', 58);
+    r.furn('floorLamp', 22, 150, {}, [-4, -3, 8, 3]);
     r.furn('kitchen', 226, 98, {}, [-35, -34, 70, 32]);
     r.furn('plant', 250, 284, { s: 1 }, [-6, -6, 12, 6]);
     r.trigger({ id: 'bed', kind: 'act', x: 14, y: 116, w: 72, h: 20, label: 'Ngủ', en: 'Sleep', icon: 'zzz', action: 'sleep' });
     r.trigger({ id: 'kitchen', kind: 'act', x: 190, y: 98, w: 70, h: 18, label: 'Nấu', en: 'Snack', icon: 'tea', action: 'homeSnack' });
+    r.trigger({ id: 'wardrobe', kind: 'act', x: 78, y: 72, w: 52, h: 22, label: 'Thay đồ', en: 'Wardrobe', icon: 'shirt', action: 'wardrobe' });
     r.bedPos = { x: 46, y: 88 };
     r.decorArea = { x: 16, y: 126, w: 238, h: 156 };
     S.house = r;
@@ -157,6 +162,8 @@ export function buildInteriors() {
     r.furn('crateStack', 266, 286, {}, [-20, -16, 40, 14]);
     r.furn('produce', 150, 236, { w: 70, cols: ['#ffa53a', '#f7de8c', '#e8584e'] }, [-35, -24, 70, 22]);
     r.trigger({ id: 'shop', kind: 'act', x: 106, y: 110, w: 88, h: 34, label: 'Mua', en: 'Shop', icon: 'tea', action: 'shop:ingredients' });
+    r.furn('aisleSign', 64, 150, { label: 'FRESH', col: '#6fbf73' }); r.furn('aisleSign', 236, 150, { label: 'FRUIT', col: '#f28f7c' });
+    r.wallItem('bunting', 150, { w: 150, cols: ['#6fbf73', '#fff', '#f28f7c', '#fff'] });
     r.merchantPos = { x: 150, y: 84, id: 'co_hoa' };
     S.supermarket = r;
   }
@@ -171,6 +178,7 @@ export function buildInteriors() {
     r.furn('sacks', 250, 280, {}, [-20, -14, 40, 12]);
     r.furn('lumber', 70, 214, { w: 60 }, [-32, -12, 64, 12]);
     r.trigger({ id: 'shop', kind: 'act', x: 100, y: 102, w: 80, h: 34, label: 'Mua', en: 'Shop', icon: 'wood', action: 'shop:materials' });
+    r.wallItem('pegboard', 60, { w: 70 });
     r.merchantPos = { x: 140, y: 78, id: 'chu_bay' };
     S.materials = r;
   }
@@ -190,7 +198,29 @@ export function buildInteriors() {
     r.furn('radio', 166, 88, {});
     r.trigger({ id: 'shop', kind: 'act', x: 104, y: 102, w: 82, h: 34, label: 'Mua', en: 'Shop', icon: 'sofa', action: 'shop:furniture' });
     r.merchantPos = { x: 145, y: 78, id: 'anh_khoa' };
+    r.furn('floorLamp', 262, 150, {}, [-4, -3, 8, 3]);
     S.furniture = r;
+  }
+  // Cô Ba's boutique
+  {
+    const r = new Interior({ id: 'boutique', name: 'Tiệm Áo Cô Ba', w: 290, h: 300, WH: 66, wall: '#fbe0e6', wall2: '#f6cfd8', wallStyle: 'dots', floor: '#e8d2b8', floorStyle: 'wood', door: { x: 145, w: 32 }, building: 'boutique' });
+    r.wallItem('bunting', 145, { w: 200, cols: ['#f4a9b8', '#fff', '#9fd8c8', '#fff', '#f7de8c'] });
+    r.wallItem('window', 60, { w: 40, h: 24, hgt: 50, curtain: '#9fd8c8' });
+    r.furn('pass', 145, 104, { w: 70, col: '#f6cfd8', top: '#fff8fa' }, [-35, -24, 70, 22]);
+    r.furn('clothesRack', 58, 148, { w: 70 }, [-36, -6, 72, 6]);
+    r.furn('clothesRack', 232, 148, { w: 70, cols: ['#3d3550', '#e8584e', '#fffaf0', '#8fb7e0', '#ffd35a'] }, [-36, -6, 72, 6]);
+    r.furn('clothesRack', 58, 226, { w: 60, cols: ['#f7de8c', '#b9d7a0', '#f8c0a0', '#dfe8ff'] }, [-31, -6, 62, 6]);
+    r.furn('mirror', 250, 92, {}, [-11, -4, 22, 4]);
+    r.furn('fittingRoom', 250, 236, { col: '#e56b8b' }, [-22, -8, 44, 8]);
+    r.furn('mannequin', 186, 220, { col: '#f4a9b8', hat: '#f3dcae' }, [-7, -3, 14, 3]);
+    r.furn('mannequin', 120, 220, { col: '#8fb7e0' }, [-7, -3, 14, 3]);
+    r.furn('hatStand', 30, 96, {}, [-6, -3, 12, 3]);
+    r.furn('shoeShelf', 200, 76, { w: 44 }, [-22, -8, 44, 8]);
+    r.furn('rug', 145, 190, { w: 70, h: 30, col: '#f4a9b8' });
+    r.furn('plant', 24, 286, {}, [-6, -6, 12, 6]);
+    r.trigger({ id: 'shop', kind: 'act', x: 104, y: 102, w: 82, h: 34, label: 'Mua', en: 'Shop', icon: 'shirt', action: 'shop:boutique' });
+    r.merchantPos = { x: 145, y: 80, id: 'co_ba' };
+    S.boutique = r;
   }
   // Mèo Mây's home
   {

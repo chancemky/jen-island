@@ -9,16 +9,17 @@ import * as P from '../gfx/props.js';
 import * as B from '../gfx/buildings.js';
 import { G, T } from '../systems/state.js';
 
-export const W = 1800, H = 2600;
+export const W = 2640, H = 2600;
+const MAIN_W = 1800; // the main island's width (the islet lies beyond)
 
 // ---------------------------------------------------------------- geometry
 const SAND_CP = [[900, 170], [1120, 190], [1330, 260], [1500, 380], [1610, 560], [1650, 780], [1640, 1000], [1680, 1220], [1700, 1450], [1720, 1700], [1700, 1950], [1610, 2170], [1440, 2330], [1200, 2410], [900, 2440], [620, 2420], [400, 2340], [230, 2190], [140, 1980], [110, 1720], [100, 1450], [120, 1220], [130, 980], [170, 740], [260, 540], [410, 360], [610, 240]];
 export const SAND = smoothLoop(SAND_CP, 10);
 const CX = 900, CY = 1300;
-function insetPoly(poly, fn) {
+function insetPoly(poly, fn, cx = CX, cy = CY) {
   const out = [];
   for (let i = 0; i < poly.length; i += 2) {
-    const x = poly[i], y = poly[i + 1], dx = CX - x, dy = CY - y, d = Math.hypot(dx, dy) || 1, k = fn(x, y);
+    const x = poly[i], y = poly[i + 1], dx = cx - x, dy = cy - y, d = Math.hypot(dx, dy) || 1, k = fn(x, y);
     out.push(x + (dx / d) * k, y + (dy / d) * k);
   }
   return out;
@@ -26,6 +27,21 @@ function insetPoly(poly, fn) {
 export const GRASS = insetPoly(SAND, (x, y) => 46 + 110 * clamp((y - 1980) / 280, 0, 1) + 70 * clamp((x - 1540) / 140, 0, 1) * clamp((y - 1760) / 260, 0, 1) + 20 * clamp((500 - x) / 200, 0, 1) * clamp((y - 1900) / 200, 0, 1));
 const FOAM2 = insetPoly(SAND, () => -16);
 const SHALLOW = insetPoly(SAND, () => -44);
+
+// Firefly Islet, east across the long bridge (opens in Chapter 8)
+const ICX = 2240, ICY = 1500;
+const ISLET_CP = [[2240, 1080], [2420, 1130], [2540, 1280], [2570, 1480], [2530, 1700], [2400, 1860], [2230, 1920], [2060, 1860], [1960, 1700], [1930, 1520], [1960, 1320], [2070, 1160]];
+export const ISLET_SAND = smoothLoop(ISLET_CP, 10);
+export const ISLET_GRASS = insetPoly(ISLET_SAND, (x, y) => 44 + 30 * clamp((y - 1700) / 200, 0, 1), ICX, ICY);
+const ISLET_FOAM = insetPoly(ISLET_SAND, () => -16, ICX, ICY), ISLET_SHALLOW = insetPoly(ISLET_SAND, () => -44, ICX, ICY);
+export const SEA_BRIDGE = { x: 1690, y: 1500, w: 262, h: 38 };
+export const LANDS = [
+  { sand: SAND, grass: GRASS, foam: FOAM2, shallow: SHALLOW, cx: CX, cy: CY },
+  { sand: ISLET_SAND, grass: ISLET_GRASS, foam: ISLET_FOAM, shallow: ISLET_SHALLOW, cx: ICX, cy: ICY },
+];
+const onSand = (x, y) => LANDS.some(l => inPoly(l.sand, x, y));
+const onGrass = (x, y) => LANDS.some(l => inPoly(l.grass, x, y));
+export const bridgeFixed = () => !!G.state?.story?.flags?.bridgeFixed;
 
 export const RIVER = smoothLine([[706, 528], [650, 640], [580, 760], [490, 862], [380, 950], [250, 1030], [150, 1075], [60, 1100]], 8);
 export const RIVER_W = 42;
@@ -35,7 +51,12 @@ export const PIER_END = { x: 820, y: 2560, w: 150, h: 46 };
 export const BRIDGES = [{ x: 422, y: 846, w: 64, h: 86, deck: 'v' }, { x: 116, y: 1050, w: 56, h: 80, deck: 'v' }];
 export const PLAZA = { x: 900, y: 1540, r: 104 };
 export const NM_PLAZA = { x: 250, y: 470, w: 360, h: 330 };
-export const PADDIES = [{ x: 1430, y: 880, w: 90, h: 70 }, { x: 1530, y: 880, w: 80, h: 70 }, { x: 1430, y: 962, w: 90, h: 70 }, { x: 1530, y: 962, w: 80, h: 70 }, { x: 1430, y: 1044, w: 180, h: 64 }];
+// fields sit back from the farm road with walkable earth bunds between them
+export const PADDIES = [
+  { x: 1420, y: 846, w: 96, h: 66 }, { x: 1534, y: 846, w: 96, h: 66 },
+  { x: 1420, y: 930, w: 96, h: 66 }, { x: 1534, y: 930, w: 96, h: 66 },
+  { x: 1432, y: 1086, w: 84, h: 52, kind: 'veg' }, { x: 1534, y: 1086, w: 84, h: 52, kind: 'veg', crop: 'corn' },
+];
 
 // Paths: [points, width]
 export const PATHS = {
@@ -53,7 +74,12 @@ export const PATHS = {
   nm: [[440, 760], [430, 520]],
   resto: [[1100, 1186], [1130, 1040], [1170, 900], [1200, 754]],
   north2: [[1170, 900], [1040, 760], [940, 620], [900, 330]],
-  paddy: [[1200, 1040], [1420, 1040], [1520, 1040], [1620, 1040]],
+  bridgeW: [[1500, 1570], [1600, 1540], [1696, 1519]],
+  bridge: [[1696, 1519], [1946, 1519]],
+  islet: [[1946, 1519], [2050, 1506], [2150, 1470], [2260, 1440], [2380, 1420], [2470, 1440]],
+  isletS: [[2150, 1470], [2200, 1600], [2290, 1700], [2230, 1820]],
+  isletN: [[2260, 1440], [2250, 1330], [2230, 1210]],
+  paddy: [[1200, 1040], [1420, 1042], [1520, 1044], [1650, 1044]],
   dinh: [[940, 620], [800, 590], [650, 440], [620, 392]],
   westCoast: [[230, 1330], [180, 1200], [150, 1090], [140, 1000], [200, 860], [300, 720]],
 };
@@ -66,19 +92,21 @@ export const BUILDINGS = [
   { id: 'shed2', type: 'shed', x: 560, y: 1574, w: 100, fp: 44, door: [32, 0], interior: 'shed2', biz: 'shed2' },
   { id: 'truck', type: 'truck', x: 1420, y: 2152, w: 104, fp: 30, door: [44, 0], interior: 'truck', biz: 'truck' },
   { id: 'restaurant', type: 'restaurant', x: 1200, y: 742, w: 232, fp: 80, door: [0, 0], interior: 'restaurant', biz: 'restaurant' },
-  { id: 'house', type: 'house', x: 1260, y: 1736, w: 118, fp: 58, door: [0, 0], interior: 'house', wall: '#f7dd8a', roof: '#d9784f', shutter: '#6fae7c', mailbox: true, chimney: true },
+  { id: 'house', type: 'house', x: 1260, y: 1736, w: 118, fp: 58, door: [0, 0], interior: 'house', wall: '#f7dd8a', roof: '#d9784f', shutter: '#6fae7c', mailbox: true, chimney: true, style: 'player' },
   { id: 'meo', type: 'meo', x: 1480, y: 1730, w: 110, fp: 56, door: [0, 0], interior: 'meo' },
   { id: 'supermarket', type: 'shop', kind: 'supermarket', x: 700, y: 1154, w: 150, fp: 60, door: [51, 0], interior: 'supermarket' },
   { id: 'materials', type: 'shop', kind: 'materials', x: 1090, y: 1154, w: 140, fp: 56, door: [48, 0], interior: 'materials', wall: '#e9ddd0' },
   { id: 'furniture', type: 'shop', kind: 'furniture', x: 1310, y: 1146, w: 140, fp: 56, door: [48, 0], interior: 'furniture', wall: '#f4e6d6' },
+  { id: 'boutique', type: 'shop', kind: 'boutique', x: 900, y: 1146, w: 136, fp: 56, door: [44, 0], interior: 'boutique', wall: '#fff3f5' },
   // resident homes (not enterable)
-  { id: 'h_batu', type: 'house', x: 420, y: 1546, w: 100, fp: 52, wall: '#f4c9c0', roof: '#c9674a', shutter: '#7aa38a', home: 'ba_tu' },
-  { id: 'h_linh', type: 'house', x: 300, y: 1384, w: 100, fp: 52, wall: '#cfe6d8', roof: '#d9784f', shutter: '#e89a8a', home: 'linh' },
-  { id: 'h_lan', type: 'house', x: 690, y: 1452, w: 100, fp: 52, wall: '#f9e2ee', roof: '#b8603f', shutter: '#9fb4dc', home: 'co_lan', label: ['FLOWERS', 'HOA'] },
-  { id: 'h_tuan', type: 'house', x: 1140, y: 1652, w: 96, fp: 50, wall: '#d6e6f5', roof: '#c9674a', shutter: '#f2c14e', home: 'anh_tuan' },
-  { id: 'h_mai', type: 'house', x: 1360, y: 1602, w: 96, fp: 50, wall: '#fbe7b6', roof: '#d9784f', shutter: '#6fae7c', home: 'chi_mai' },
-  { id: 'h_hai', type: 'house', x: 1560, y: 1952, w: 96, fp: 50, wall: '#e8f1e6', roof: '#6f9fc8', shutter: '#e8584e', home: 'chu_hai' },
+  { id: 'h_batu', type: 'house', x: 420, y: 1546, w: 100, fp: 52, wall: '#e9c9a2', roof: '#a8563f', shutter: '#7aa38a', home: 'ba_tu', style: 'wood' },
+  { id: 'h_linh', type: 'house', x: 300, y: 1384, w: 100, fp: 52, wall: '#cfe6d8', roof: '#d9784f', shutter: '#e89a8a', home: 'linh', style: 'student' },
+  { id: 'h_lan', type: 'house', x: 690, y: 1452, w: 100, fp: 52, wall: '#f9e2ee', roof: '#b8603f', shutter: '#9fb4dc', home: 'co_lan', label: ['FLOWERS', 'HOA'], style: 'flowers' },
+  { id: 'h_tuan', type: 'house', x: 1140, y: 1652, w: 96, fp: 50, wall: '#d6e6f5', roof: '#c9674a', shutter: '#f2c14e', home: 'anh_tuan', style: 'garage' },
+  { id: 'h_mai', type: 'house', x: 1360, y: 1602, w: 96, fp: 50, wall: '#f4f8fb', roof: '#6fbf73', shutter: '#6f9fc8', home: 'chi_mai', style: 'clinic' },
+  { id: 'h_hai', type: 'house', x: 1560, y: 1952, w: 96, fp: 50, wall: '#e8f1e6', roof: '#6f9fc8', shutter: '#e8584e', home: 'chu_hai', style: 'tin', fisher: true },
   { id: 'dinh', type: 'dinh', x: 620, y: 386, w: 170, fp: 60 },
+  { id: 'h_vy', type: 'house', x: 2350, y: 1668, w: 96, fp: 50, wall: '#fdf0d8', roof: '#8fb7e0', shutter: '#f28f7c', home: 'vy', style: 'painter' },
 ];
 export const STALLS = [
   { id: 'nm1', x: 340, y: 580, label: ['GRANDMA SÁU', 'BÀ SÁU'], goods: ['#f2c46b', '#e3703a'], cloth: ['#e8584e', '#fff5df'] },
@@ -102,7 +130,8 @@ const inRect = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y +
 export function onBridge(x, y) { return BRIDGES.some(b => inRect(b, x, y)); }
 export function isWater(x, y) {
   if (inRect(PIER, x, y) || inRect(PIER_END, x, y)) return false;
-  if (!inPoly(SAND, x, y)) return true;
+  if (inRect(SEA_BRIDGE, x, y)) return !bridgeFixed() && x > SEA_BRIDGE.x + 70 && x < SEA_BRIDGE.x + SEA_BRIDGE.w - 70; // the broken middle
+  if (!onSand(x, y)) return true;
   if (onBridge(x, y)) return false;
   if (distToLine(RIVER, x, y) < RIVER_W / 2) return true;
   const px = (x - POND.x) / POND.rx, py = (y - POND.y) / POND.ry;
@@ -119,29 +148,28 @@ function chunkPts(flat) { const o = []; for (let i = 0; i < flat.length; i += 2)
 
 function paintGround(c) {
   // shallow water rings
-  tracePoly(c, SHALLOW); c.fillStyle = 'rgba(140,222,222,.55)'; c.fill();
-  tracePoly(c, FOAM2); c.fillStyle = 'rgba(170,234,228,.8)'; c.fill();
+  for (const l of LANDS) { tracePoly(c, l.shallow); c.fillStyle = 'rgba(140,222,222,.55)'; c.fill(); }
+  for (const l of LANDS) { tracePoly(c, l.foam); c.fillStyle = 'rgba(170,234,228,.8)'; c.fill(); }
   // sand
-  tracePoly(c, SAND); c.fillStyle = '#f5e2b3'; c.fill();
-  c.strokeStyle = '#e8cf95'; c.lineWidth = 7; c.stroke();
+  for (const l of LANDS) { tracePoly(c, l.sand); c.fillStyle = '#f5e2b3'; c.fill(); c.strokeStyle = '#e8cf95'; c.lineWidth = 7; c.stroke(); }
   // sand speckles
   const R = rng(42);
   for (let i = 0; i < 2600; i++) {
     const x = R() * W, y = R() * H;
-    if (!inPoly(SAND, x, y) || inPoly(GRASS, x, y)) continue;
+    if (!onSand(x, y) || onGrass(x, y)) continue;
     c.fillStyle = R() < 0.5 ? 'rgba(210,180,120,.35)' : 'rgba(255,255,240,.6)';
     c.fillRect(x, y, 2, 2);
   }
   // shells & starfish on the beach
   for (let i = 0; i < 90; i++) {
     const x = R() * W, y = R() * H;
-    if (!inPoly(SAND, x, y) || inPoly(GRASS, x, y)) continue;
+    if (!onSand(x, y) || onGrass(x, y)) continue;
     if (R() < 0.3) { P.LIGHT; c.save(); c.translate(x, y); starfish(c, R()); c.restore(); }
     else { ell(c, x, y, 2.6, 1.8, R() < 0.5 ? '#fff4e8' : '#f7c9c0', 'rgba(120,90,70,.5)', 0.6); }
   }
   // grass
-  tracePoly(c, GRASS); c.fillStyle = '#a3d68a'; c.fill();
-  c.save(); c.clip();
+  for (const l of LANDS) { tracePoly(c, l.grass); c.fillStyle = '#a3d68a'; c.fill(); }
+  c.save(); c.beginPath(); for (const l of LANDS) { c.moveTo(l.grass[0], l.grass[1]); for (let i = 2; i < l.grass.length; i += 2) c.lineTo(l.grass[i], l.grass[i + 1]); c.closePath(); } c.clip();
   for (let i = 0; i < 520; i++) {
     const x = R() * W, y = R() * H, r = 20 + R() * 60;
     c.fillStyle = R() < 0.5 ? 'rgba(130,195,110,.35)' : 'rgba(190,230,150,.32)';
@@ -155,13 +183,26 @@ function paintGround(c) {
   // tiny flowers in the grass
   for (let i = 0; i < 700; i++) { const x = R() * W, y = R() * H; c.fillStyle = ['#fff', '#ffd35a', '#ff9ab5', '#c9a8ff'][i % 4]; c.beginPath(); c.arc(x, y, 1.3, 0, TAU); c.fill(); }
   c.restore();
-  tracePoly(c, GRASS); c.strokeStyle = '#8cc472'; c.lineWidth = 4; c.stroke();
-  c.strokeStyle = 'rgba(120,170,90,.5)'; c.lineWidth = 1.5; c.stroke();
+  for (const l of LANDS) { tracePoly(c, l.grass); c.strokeStyle = '#8cc472'; c.lineWidth = 4; c.stroke(); c.strokeStyle = 'rgba(120,170,90,.5)'; c.lineWidth = 1.5; c.stroke(); }
   // rice paddies
   for (const p of PADDIES) {
-    box(c, p.x - 4, p.y - 4, p.w + 8, p.h + 8, 6, '#b99a66', null);
-    box(c, p.x, p.y, p.w, p.h, 4, '#8fcfc8', 'rgba(91,63,54,.5)', 1);
-    for (let yy = p.y + 8; yy < p.y + p.h - 4; yy += 9) for (let xx = p.x + 7; xx < p.x + p.w - 4; xx += 9) { c.strokeStyle = '#6fb356'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(xx, yy + 3); c.lineTo(xx - 2, yy - 2); c.moveTo(xx, yy + 3); c.lineTo(xx + 2, yy - 2); c.stroke(); }
+    // raised earth bund, then the field
+    box(c, p.x - 6, p.y - 6, p.w + 12, p.h + 12, 8, '#c8a878', null);
+    box(c, p.x - 6, p.y - 6, p.w + 12, p.h + 12, 8, null, 'rgba(140,105,60,.45)', 1.4);
+    if (p.kind === 'veg') {
+      box(c, p.x, p.y, p.w, p.h, 4, '#9a6e45', 'rgba(91,63,54,.5)', 1);
+      for (let yy = p.y + 7; yy < p.y + p.h - 3; yy += 10) {
+        c.fillStyle = '#7d5634'; c.fillRect(p.x + 3, yy + 3, p.w - 6, 2.2);
+        for (let xx = p.x + 8; xx < p.x + p.w - 4; xx += 10) {
+          if (p.crop === 'corn') { c.strokeStyle = '#5f9f45'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(xx, yy + 3); c.lineTo(xx, yy - 6); c.moveTo(xx, yy - 1); c.lineTo(xx - 3, yy - 4); c.moveTo(xx, yy - 3); c.lineTo(xx + 3, yy - 6); c.stroke(); c.fillStyle = '#f2cf57'; c.fillRect(xx + 0.6, yy - 4, 1.8, 3); }
+          else { c.fillStyle = '#6fb356'; c.beginPath(); c.arc(xx, yy, 3.4, 0, TAU); c.fill(); c.fillStyle = '#9ad46f'; c.beginPath(); c.arc(xx - 0.8, yy - 0.8, 1.8, 0, TAU); c.fill(); }
+        }
+      }
+    } else {
+      box(c, p.x, p.y, p.w, p.h, 4, '#8fcfc8', 'rgba(91,63,54,.5)', 1);
+      c.fillStyle = 'rgba(255,255,255,.35)'; for (let k = 0; k < 4; k++) c.fillRect(p.x + 6 + k * 22, p.y + 5 + (k % 2) * 30, 12, 1.6);
+      for (let yy = p.y + 8; yy < p.y + p.h - 4; yy += 9) for (let xx = p.x + 7; xx < p.x + p.w - 4; xx += 9) { c.strokeStyle = '#5fa84a'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(xx, yy + 3); c.lineTo(xx - 2.4, yy - 3); c.moveTo(xx, yy + 3); c.lineTo(xx + 2.4, yy - 3); c.moveTo(xx, yy + 3); c.lineTo(xx, yy - 4); c.stroke(); }
+    }
   }
   // night market plaza (stone)
   { const n = NM_PLAZA; box(c, n.x, n.y, n.w, n.h, 26, '#e3d6bd', 'rgba(150,120,90,.5)', 2); c.save(); box(c, n.x, n.y, n.w, n.h, 26, null, null); c.clip(); c.strokeStyle = 'rgba(160,130,100,.3)'; c.lineWidth = 1; for (let x = n.x; x < n.x + n.w; x += 22) { c.beginPath(); c.moveTo(x, n.y); c.lineTo(x, n.y + n.h); c.stroke(); } for (let y = n.y; y < n.y + n.h; y += 22) { c.beginPath(); c.moveTo(n.x, y); c.lineTo(n.x + n.w, y); c.stroke(); } c.restore(); }
@@ -291,8 +332,8 @@ export class Island extends Scene {
     for (const [x, y, col] of [[780, 1232, '#e8584e'], [830, 1236, '#6f9fc8'], [980, 1236, '#e8584e'], [1025, 1236, '#6fbf73']]) this.add2('stool', x, y, { col });
     this.add2('lowTable', 805, 1244, {});
     // signposts
-    this.add2('signpost', 940, 2300, { signs: [{ label: ['MARKET', 'CHỢ'], dir: 1 }, { label: ['BEACH', 'BÃI BIỂN'], dir: -1 }, { label: ['HOME', 'NHÀ'], dir: 1 }], solidR: 3 });
-    this.add2('signpost', 942, 1330, { signs: [{ label: ['NIGHT MKT', 'CHỢ ĐÊM'], dir: -1 }, { label: ['RESTAURANT', 'NHÀ HÀNG'], dir: 1 }], solidR: 3 });
+    this.add2('signpost', 940, 2300, { signs: [{ label: ['MARKET', 'CHỢ'], to: [900, 1200] }, { label: ['BEACH', 'BÃI BIỂN'], to: [640, 2300] }, { label: ['HOME', 'NHÀ'], to: [1260, 1736] }], solidR: 3 });
+    this.add2('signpost', 942, 1330, { signs: [{ label: ['NIGHT MKT', 'CHỢ ĐÊM'], to: [430, 700] }, { label: ['RESTAURANT', 'NHÀ HÀNG'], to: [1200, 742] }, { label: ['PLAZA', 'QUẢNG TRƯỜNG'], to: [900, 1560] }], solidR: 3 });
     // scooters parked along the street
     this.add2('scooter', 620, 1238, { col: '#f28f7c', basket: true });
     this.add2('scooter', 1180, 1234, { col: '#9fd8c8', flip: true });
@@ -305,8 +346,8 @@ export class Island extends Scene {
     this.add2('clothesline', 1520, 1880, { w: 50 });
     this.add2('crate', 1612, 1900, { fruit: '#a6c7d8' });
     // paddy life
-    this.add2('buffalo', 1400, 1136, { solidR: 16 });
-    this.add2('haystack', 1640, 1100, { solidR: 14 });
+    this.add2('buffalo', 1380, 1150, { solidR: 16 });
+    this.add2('haystack', 1668, 1130, { solidR: 14 });
     this.add2('shrine', 1180, 1030, { solidR: 8 });
     // pond lotus
     for (let i = 0; i < 9; i++) { const a = R() * TAU, rr = R() * 0.7; this.add2('lotus', POND.x + Math.cos(a) * POND.rx * rr, POND.y + Math.sin(a) * POND.ry * rr, { flower: i % 3 === 0, cullR: 12, cullH: 16 }); }
@@ -342,9 +383,26 @@ export class Island extends Scene {
       const x = RIVER[i], y = RIVER[i + 1], nx = RIVER[i + 2] - RIVER[i - 2], ny = RIVER[i + 3] - RIVER[i - 1], l = Math.hypot(nx, ny) || 1;
       for (const sgn of [-1, 1]) { const rx = x - ny / l * 30 * sgn, ry = y + nx / l * 30 * sgn; if (!onBridge(rx, ry) && this.terrain(rx, ry)) { const p = { kind: 'reeds', x: rx, y: ry }; p.draw = (c, t) => P.reeds(c, t, p); p.cull = { x: rx - 16, y: ry - 34, w: 32, h: 40 }; this.prop(p); } }
     }
+    // ---- Firefly Islet (dressed by hand)
+    this.add2('seaBridge', SEA_BRIDGE.x, SEA_BRIDGE.y + SEA_BRIDGE.h, { flat: true, cull: { x: SEA_BRIDGE.x - 20, y: SEA_BRIDGE.y - 40, w: SEA_BRIDGE.w + 40, h: 90 }, fixed: bridgeFixed });
+    this.add2('banyan', 2250, 1318, { s: 1.05, cullR: 120, cullH: 170, solidR: 16, fireflies: true });
+    this.add2('shrine', 2196, 1330, { solidR: 7 });
+    this.add2('lookout', 2470, 1400, { cullR: 40, cullH: 150, solidR: 12 });
+    this.add2('easel', 2410, 1690, { solidR: 5, cullR: 30, cullH: 50 });
+    this.add2('beachHammock', 2100, 1790, { cullR: 60, cullH: 60 });
+    this.add2('coconutPile', 2040, 1650, { cullR: 20, cullH: 20 });
+    this.add2('coconutPile', 2440, 1560, { cullR: 20, cullH: 20 });
+    this.add2('boatShore', 2230, 1905, { cullR: 60, cullH: 40 });
+    this.add2('sandcastle', 2330, 1880, { cullR: 20, cullH: 30 });
+    for (const [x, y] of [[2010, 1300], [2080, 1200], [2410, 1210], [2510, 1320], [2530, 1560], [2480, 1760], [2350, 1860], [2120, 1880], [1990, 1740], [1975, 1440], [2160, 1150], [2320, 1140]]) this.add2('palm', x, y, { trunk: 5, solidR: 5, cullR: 60, cullH: 110 });
+    for (const [x, y, f] of [[2100, 1380, '#f36d86'], [2380, 1320, '#e97ad0'], [2150, 1640, null], [2440, 1480, '#ff5a5a'], [2300, 1560, null], [2060, 1560, '#f36d86']]) this.add2('bush', x, y, { flowers: f || undefined, solidR: 6, cullR: 30, cullH: 40 });
+    for (const [x, y] of [[2180, 1520], [2330, 1500], [2100, 1460], [2270, 1600], [2380, 1580], [2200, 1720]]) this.add2('flowerPatch', x, y, { col: '#7fc062', n: 5, flat: true, cullR: 14, cullH: 14 });
+    for (const [x, y] of [[2500, 1650], [2000, 1360], [2280, 1260]]) this.add2('rock', x, y, { solidR: 8, cullR: 20, cullH: 20 });
+    this.add2('lampPost', 2140, 1500, { solidR: 3, cullR: 40, cullH: 60 });
+    this.add2('signpost', 1636, 1590, { signs: [{ label: ['FIREFLY ISLET', 'CÙ LAO ĐOM ĐÓM'], to: [2250, 1400] }, { label: ['HOME', 'NHÀ'], to: [1260, 1736] }], solidR: 3 });
     // ---- vegetation (scattered with spacing rules)
     const avoid = (x, y, r) => {
-      if (!this.terrain(x, y) || !inPoly(GRASS, x, y)) return true;
+      if (!this.terrain(x, y) || !inPoly(GRASS, x, y)) return true; // (the islet is dressed by hand)
       for (const pts of Object.values(PATHS)) { const flat = pts.flat(); if (distToLine(flat, x, y) < PATH_W / 2 + r) return true; }
       if (dist(x, y, PLAZA.x, PLAZA.y) < PLAZA.r + r + 10) return true;
       if (x > NM_PLAZA.x - r && x < NM_PLAZA.x + NM_PLAZA.w + r && y > NM_PLAZA.y - r && y < NM_PLAZA.y + NM_PLAZA.h + r) return true;
@@ -358,7 +416,7 @@ export class Island extends Scene {
     const place = (kind, n, r, o = {}, filt = null) => {
       let tries = 0, made = 0;
       while (made < n && tries++ < n * 60) {
-        const x = 140 + R() * (W - 280), y = 220 + R() * (H - 400);
+        const x = 140 + R() * (MAIN_W - 280), y = 220 + R() * (H - 400);
         if (filt && !filt(x, y)) continue;
         if (avoid(x, y, r)) continue;
         this.add2(kind, x, y, { ...o, s: o.s ? o.s * (0.85 + R() * 0.3) : undefined, solidR: o.trunk ?? 6, cullR: o.cullR || 70, cullH: o.cullH || 130 });
@@ -374,15 +432,15 @@ export class Island extends Scene {
     place('tree', 10, 26, { trunk: 7, fruit: '#ffb74a' });
     place('bamboo', 12, 18, { trunk: 12, cullR: 40, cullH: 120 }, (x, y) => y < 1400);
     place('banana', 14, 14, { trunk: 5, cullR: 40, cullH: 70 });
-    place('bush', 46, 14, { trunk: 9, cullR: 30, cullH: 40 });
-    place('bush', 26, 14, { trunk: 9, flowers: '#f36d86', col: '#6fb356', cullR: 30, cullH: 40 });
-    place('bush', 14, 14, { trunk: 9, flowers: '#e97ad0', col: '#7cc463', cullR: 30, cullH: 40 }); // bougainvillea
+    place('bush', 46, 14, { trunk: 6, cullR: 30, cullH: 40 });
+    place('bush', 26, 14, { trunk: 6, flowers: '#f36d86', col: '#6fb356', cullR: 30, cullH: 40 });
+    place('bush', 14, 14, { trunk: 6, flowers: '#e97ad0', col: '#7cc463', cullR: 30, cullH: 40 }); // bougainvillea
     place('frangipani', 8, 16, { trunk: 5, cullR: 40, cullH: 60 });
-    place('bush', 12, 14, { trunk: 9, flowers: '#ff5a5a', col: '#5fae57', cullR: 30, cullH: 40 }); // hibiscus
-    place('rock', 14, 12, { trunk: 10, cullR: 20, cullH: 20 });
+    place('bush', 12, 14, { trunk: 6, flowers: '#ff5a5a', col: '#5fae57', cullR: 30, cullH: 40 }); // hibiscus
+    place('rock', 14, 12, { trunk: 8, cullR: 20, cullH: 20 });
     // non-colliding ground clutter
     for (let i = 0; i < 520; i++) {
-      const x = 140 + R() * (W - 280), y = 200 + R() * (H - 360);
+      const x = 140 + R() * (MAIN_W - 280), y = 200 + R() * (H - 360);
       if (avoid(x, y, 2)) continue;
       const k = R() < 0.72 ? 'grassTuft' : 'flowerPatch';
       const p = { kind: k, x, y, col: R() < 0.5 ? '#6fb356' : '#7fc062', n: 3 + (R() * 4 | 0) };
@@ -490,17 +548,34 @@ export class Island extends Scene {
     // animated foam lines hugging the beach
     c.save();
     c.lineCap = 'round'; c.lineJoin = 'round';
-    tracePoly(c, SAND);
-    c.setLineDash([14, 20]); c.lineDashOffset = -t * 9;
-    c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 3.2; c.stroke();
-    const k = (Math.sin(t * 0.9) + 1) / 2;
-    tracePoly(c, FOAM2);
-    c.setLineDash([22, 30]); c.lineDashOffset = t * 6;
-    c.strokeStyle = `rgba(255,255,255,${0.25 + k * 0.35})`; c.lineWidth = 2.2; c.stroke();
-    // river & pond flow
+    for (const l of LANDS) { tracePoly(c, l.sand); c.setLineDash([14, 20]); c.lineDashOffset = -t * 9; c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 3.2; c.stroke(); }
+    // rolling waves: each front travels in from the shallows, washes up onto the
+    // sand, leaves a wet darker band, then slides back and fades
+    c.setLineDash([]);
+    for (const L of LANDS) for (let w = 0; w < 3; w++) {
+      const SAND = L.sand;
+      if (view && (L.cx + 700 < view.x || L.cx - 700 > view.x + view.w)) continue;
+      const ph = (t / 6.5 + w / 3) % 1;
+      const d = ph < 0.62 ? 30 - (ph / 0.62) * 36 : -6 + ((ph - 0.62) / 0.38) * 20; // distance from the waterline (negative = on the sand)
+      const a = ph < 0.62 ? Math.min(1, ph / 0.2) : 1 - (ph - 0.62) / 0.38;
+      const front = insetPoly(SAND, (x, y) => -d + Math.sin(x * 0.02 + y * 0.013 + w * 2) * 3, L.cx, L.cy);
+      if (d < 2) { // wet sand where the wave has washed up
+        c.save(); tracePoly(c, SAND); c.clip();
+        c.beginPath(); for (let i = 0; i < SAND.length; i += 2) (i ? c.lineTo : c.moveTo).call(c, SAND[i], SAND[i + 1]); c.closePath();
+        for (let i = 0; i < front.length; i += 2) (i ? c.lineTo : c.moveTo).call(c, front[i], front[i + 1]); c.closePath();
+        c.fillStyle = `rgba(150,200,210,${0.35 * a})`; c.fill('evenodd'); c.restore();
+      }
+      tracePoly(c, front);
+      c.strokeStyle = `rgba(255,255,255,${0.7 * a})`; c.lineWidth = 3.4 + (ph < 0.62 ? ph * 3 : 0); c.stroke();
+      c.strokeStyle = `rgba(255,255,255,${0.3 * a})`; c.lineWidth = 8; c.stroke();
+    }
+    // river & pond flow (flows under the bridges, never over them)
+    c.save();
+    c.beginPath(); c.rect(-2000, -2000, W + 4000, H + 4000); for (const b of BRIDGES) c.rect(b.x - 2, b.y - 2, b.w + 4, b.h + 4); c.clip('evenodd');
     c.setLineDash([6, 26]); c.lineDashOffset = -t * 24;
     c.beginPath(); c.moveTo(RIVER[0], RIVER[1]); for (let i = 2; i < RIVER.length; i += 2) c.lineTo(RIVER[i], RIVER[i + 1]);
     c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 2; c.stroke();
+    c.restore();
     c.setLineDash([]);
     for (let i = 0; i < 3; i++) { const kk = (t * 0.25 + i / 3) % 1; c.globalAlpha = 0.5 * (1 - kk); ell(c, 690 + i * 10, 520, 6 + kk * 20, 2 + kk * 6, null, '#fff', 1.2); }
     c.globalAlpha = 1;
@@ -536,6 +611,8 @@ export function bizSign(id) {
 
 // Named areas for the HUD location toast.
 export const AREAS = [
+  { name: 'Cầu Gỗ Dài', en: 'The Long Bridge', test: (x, y) => x > 1700 && x < 1950 && Math.abs(y - 1519) < 60 },
+  { name: 'Cù Lao Đom Đóm', en: 'Firefly Islet', test: (x, y) => x > 1930 },
   { name: 'Bến Tàu', en: 'Ferry Dock', test: (x, y) => y > 2380 },
   { name: 'Bãi Biển', en: 'Sunny Beach', test: (x, y) => y > 2150 || (x > 1450 && y > 1900) },
   { name: 'Quảng Trường', en: 'Banyan Plaza', test: (x, y) => dist(x, y, PLAZA.x, PLAZA.y) < 190 },

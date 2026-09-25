@@ -32,7 +32,7 @@ export function initInput(zoneEl, baseEl, knobEl) {
   window.addEventListener('keyup', e => input.keys.delete(e.key.toLowerCase()));
   // iOS: stop rubber-band scrolling, double-tap zoom and pinch zoom.
   // Block page scroll/rubber-banding except inside scrollable UI strips.
-  const SCROLLERS = '.scroll, .tabs, .row-scroll, .prep-raw, .prep-bowls, .svc-grid, .summary';
+  const SCROLLERS = '.scroll, .tabs, .aisles, .row-scroll, .prep-raw, .prep-bowls, .svc-grid, .summary';
   document.addEventListener('touchmove', e => { if (!e.target.closest || !e.target.closest(SCROLLERS)) e.preventDefault(); }, { passive: false });
   // Pinch-zoom (iOS ignores user-scalable=no). Double-tap zoom is disabled via touch-action in CSS,
   // so taps on buttons are never swallowed.

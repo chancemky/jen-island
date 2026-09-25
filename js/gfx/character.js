@@ -12,6 +12,7 @@
 import { TAU, shade } from '../core/util.js';
 import { INK, ell, circ, limb, poly, shadow, heart, line } from './draw.js';
 import { drawHeld } from './food.js';
+import { drawSprite, spriteReady } from './sprites.js';
 
 const HY = -24.4, HR = 12.5, HRY = 11.4; // big round head (about half the height)
 const SH = -12.4, HEM = -4.9;           // small body: shoulder and hem lines
@@ -498,6 +499,7 @@ function headShape(c) {
 // ---------------------------------------------------------------- main entry
 export function drawHuman(c, a, t) {
   const L = a.look;
+  if (L.sprite && spriteReady(L.sprite)) return drawSprite(c, a, t);
   const view = viewOf(a.dir || 'down');
   const flip = a.dir === 'left' ? -1 : 1;
   const P = pose(a, view, t);

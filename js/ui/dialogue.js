@@ -57,7 +57,7 @@ export function say(who, text, opt = {}) {
     D.speaker = info; D.html = markup(text); D.len = plainLen(D.html); D.shown = 0; D.typing = true; D.pause = opt.delay || 0.05;
     D.emo = opt.emo || null; D.speed = opt.speed || (info.cat ? 56 : 50);
     if (info.actor) { info.actor.talking = false; if (opt.emo) info.actor.setEmo?.(opt.emo, 0); }
-    D.portraitActor = { look: info.look, kind: info.cat ? 'cat' : 'human', dir: 'down', moving: 0, walkPh: 0, seed: 3, blinkAmt: 0, emo: opt.emo || 'neutral', talking: false, headTilt: opt.tilt || 0, act: opt.act || null, actT: 0 };
+    D.portraitActor = { look: info.look, kind: info.cat ? 'cat' : 'human', dir: 'down', moving: 0, walkPh: 0, seed: 3, blinkAmt: 0, emo: opt.emo || 'neutral', talking: false, headTilt: opt.tilt || 0, act: opt.act || null, actT: 0, portrait: true };
     box.classList.remove('hidden', 'out');
     box.classList.toggle('no-portrait', !info.look);
     nameEl.textContent = info.name; nameEl.classList.toggle('hidden', !info.name); nameEl.classList.toggle('cat', !!info.cat);

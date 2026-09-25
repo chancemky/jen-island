@@ -5,6 +5,7 @@
 import { G, migrate, defaultState } from './state.js';
 import * as cloud from './cloud.js';
 import { bus } from '../core/util.js';
+import { leaderboardRow, shouldPushLeaderboard } from './progress.js';
 
 const localKey = uid => 'jenisland.save.' + uid;
 let lastLocal = 0, lastCloud = 0, cloudDirty = false, cloudBusy = false;
@@ -27,7 +28,10 @@ export function saveLocal() {
 export async function saveCloudNow({ keepalive = false } = {}) {
   if (!G.user || G.user.local || cloudBusy || !cloud.hasSession()) return;
   cloudBusy = true;
-  try { await cloud.saveCloud(snapshot(), { keepalive }); saveStatus.cloudAt = Date.now(); saveStatus.offline = false; saveStatus.error = ''; cloudDirty = false; }
+  try {
+    await cloud.saveCloud(snapshot(), { keepalive }); saveStatus.cloudAt = Date.now(); saveStatus.offline = false; saveStatus.error = ''; cloudDirty = false;
+    if (G.state.player.name && (keepalive || shouldPushLeaderboard())) cloud.pushLeaderboard(leaderboardRow(G.state)).catch(e => console.warn('leaderboard', e.message));
+  }
   catch (e) { saveStatus.offline = true; saveStatus.error = e.message; console.warn('cloud save failed', e); }
   finally { cloudBusy = false; lastCloud = performance.now(); }
 }

@@ -2,6 +2,15 @@
 
 // ---------------------------------------------------------------- ingredients
 // pack: portions per purchase. prep: raw → prepared form made at the prep table.
+// Supermarket aisles.
+export const AISLES = [
+  { id: 'all', en: 'All', vi: 'Tất cả', icon: 'bag' },
+  { id: 'drinks', en: 'Drinks', vi: 'Đồ uống', icon: 'tea', items: ['tea', 'coffee', 'condensed_milk', 'milk', 'peach_syrup', 'sugar', 'ice', 'tapioca', 'jelly', 'cheese_foam', 'coconut_milk'] },
+  { id: 'produce', en: 'Fruit & Veg', vi: 'Rau củ quả', icon: 'kumquat', items: ['kumquat', 'peach', 'avocado', 'cucumber', 'cilantro', 'herbs', 'sprouts', 'lime', 'scallion', 'chili'] },
+  { id: 'meat', en: 'Meat & Seafood', vi: 'Thịt & hải sản', icon: 'pork', items: ['pork', 'beef', 'shrimp', 'egg', 'pate'] },
+  { id: 'dry', en: 'Bakery & Dry', vi: 'Bánh & đồ khô', icon: 'bread', items: ['bread', 'rice_paper', 'noodles', 'rice', 'batter', 'beans'] },
+  { id: 'sauce', en: 'Sauces & Broth', vi: 'Nước sốt & nước dùng', icon: 'fish_sauce', items: ['fish_sauce', 'pickles', 'broth', 'broth_spicy'] },
+];
 export const INGREDIENTS = {
   tea:            { vi: 'Trà',           en: 'Tea leaves',      price: 10, pack: 8 },
   kumquat:        { vi: 'Tắc',           en: 'Kumquats',        price: 12, pack: 6, prep: { to: 'kumquat_cut', method: 'chop', verb: 'Slice' } },
@@ -175,6 +184,39 @@ export const BUSINESSES = {
            repair: { wood: 30, metal: 12, paint: 8, tile: 20 }, tables: 4,
            upgrades: [null, null, { cost: 900, mats: { wood: 12, paint: 4 }, label: 'Balcony flowers & two more tables', labelVi: 'Hoa ban công & thêm hai bàn', tables: 6, attract: 1.3 }, { cost: 1800, mats: { cable: 2, lantern: 6 }, label: 'Lantern terrace & string lights', labelVi: 'Sân lồng đèn & dây đèn', tables: 8, attract: 1.6, price: 1.1 }] },
 };
+// Shop levels 4–5 (island level 10 / 15) and the night stall's own upgrades.
+const HIGH_UPGRADES = {
+  shed1: [{ cost: 1400, mats: { tile: 6, paint: 4, lantern: 2 }, label: 'Garden seating & flower boxes', labelVi: 'Chỗ ngồi sân vườn & chậu hoa', queue: 5, attract: 1.8, price: 1.15 },
+          { cost: 3600, mats: { wood: 14, cable: 2, lantern: 4 }, label: 'Neon sign & a painted mural', labelVi: 'Biển neon & tranh tường', queue: 5, attract: 2.1, price: 1.22 }],
+  shed2: [{ cost: 1600, mats: { tile: 8, paint: 4, lantern: 2 }, label: 'Tiled counter & bread oven', labelVi: 'Quầy lát gạch & lò bánh mì', queue: 5, attract: 1.8, price: 1.15 },
+          { cost: 4000, mats: { wood: 14, cable: 2, lantern: 4 }, label: 'Famous-shop banner & awning seats', labelVi: 'Băng rôn quán nổi tiếng & ghế mái hiên', queue: 5, attract: 2.1, price: 1.22 }],
+  truck: [{ cost: 2200, mats: { metal: 8, paint: 6, cable: 1 }, label: 'Pop-out counter & beach umbrellas', labelVi: 'Quầy kéo ra & dù bãi biển', queue: 6, attract: 1.9, price: 1.15 },
+          { cost: 5200, mats: { metal: 10, cable: 3, lantern: 4 }, label: 'Chrome trim & sound system', labelVi: 'Viền chrome & dàn loa', queue: 6, attract: 2.2, price: 1.22 }],
+  restaurant: [{ cost: 4200, mats: { tile: 16, paint: 8, lantern: 4 }, label: 'Garden courtyard & koi bowl', labelVi: 'Sân vườn & chậu cá koi', tables: 8, attract: 1.9, price: 1.15 },
+          { cost: 9500, mats: { wood: 20, cable: 4, lantern: 8 }, label: 'Rooftop lanterns & live music corner', labelVi: 'Đèn lồng sân thượng & góc nhạc sống', tables: 8, attract: 2.3, price: 1.25 }],
+};
+for (const [id, ups] of Object.entries(HIGH_UPGRADES)) BUSINESSES[id].upgrades.push(...ups);
+BUSINESSES.night.upgrades = [null, null,
+  { cost: 900, mats: { lantern: 4, wood: 6 }, label: 'Red lantern canopy', labelVi: 'Mái lồng đèn đỏ', queue: 5, attract: 1.3 },
+  { cost: 2000, mats: { cable: 2, paint: 4 }, label: 'Charcoal grill upgrade', labelVi: 'Nâng cấp bếp than', queue: 5, attract: 1.6, price: 1.1 },
+  { cost: 3800, mats: { lantern: 6, tile: 8 }, label: 'Stools & a festival banner', labelVi: 'Ghế đẩu & băng rôn lễ hội', queue: 5, attract: 1.9, price: 1.15 },
+  { cost: 7000, mats: { cable: 4, lantern: 8 }, label: 'Famous street-food stall', labelVi: 'Sạp ăn vặt nổi tiếng', queue: 5, attract: 2.2, price: 1.22 }];
+// island level needed for each shop level
+export const SHOP_LEVEL_REQ = [0, 0, 1, 3, 10, 15];
+
+// Equipment: small buys per shop (island level gated).
+export const EQUIPMENT = [
+  { id: 'tipjar', icon: 'coin', lv: 6, cost: 180, en: 'Tip jar', vi: 'Hũ tiền boa', fx: '+15% tips', fxVi: '+15% tiền boa', tip: 1.15 },
+  { id: 'fan', icon: 'star', lv: 6, cost: 240, en: 'Standing fan', vi: 'Quạt đứng', fx: 'Customers wait 15% longer', fxVi: 'Khách chờ lâu hơn 15%', patience: 1.15 },
+  { id: 'chalkboard', icon: 'menu', lv: 7, cost: 320, en: 'Chalk menu board', vi: 'Bảng phấn thực đơn', fx: '+10% customers', fxVi: '+10% khách', attract: 1.1 },
+  { id: 'radio', icon: 'talk', lv: 9, cost: 450, en: 'Little radio', vi: 'Radio nhỏ', fx: 'Wait 10% longer · tips +5%', fxVi: 'Chờ lâu hơn 10% · boa +5%', patience: 1.1, tip: 1.05 },
+  { id: 'stampcard', icon: 'heart', lv: 11, cost: 650, en: 'Loyalty stamp cards', vi: 'Thẻ tích điểm', fx: 'Regulars tip +15%', fxVi: 'Khách quen boa +15%', regTip: 1.15 },
+  { id: 'lightbox', icon: 'lantern', lv: 13, cost: 900, en: 'Lit roadside sign', vi: 'Biển đèn ven đường', fx: '+20% customers after 6pm', fxVi: '+20% khách sau 18:00', night: 1.2 },
+  { id: 'register', icon: 'coin', lv: 16, cost: 1400, en: 'Shiny cash register', vi: 'Máy tính tiền mới', fx: 'Prices +5% without scaring anyone', fxVi: 'Giá +5% mà khách không phàn nàn', price: 1.05 },
+];
+// price the player sets for a recipe: multiplier of the base price
+export const PRICE_RANGE = [0.7, 1.6];
+
 export const NIGHT_MARKET_RESTORE = { mats: { wood: 20, metal: 8, paint: 6, lantern: 12, cable: 2 }, cost: 400 };
 
 // ---------------------------------------------------------------- employees (restaurants only)
@@ -238,6 +280,15 @@ export const CHAPTERS = [
   { n: 5, title: 'The Night Market', vi: 'Chợ Đêm' },
   { n: 6, title: 'The Restaurant', vi: 'Nhà Hàng' },
   { n: 7, title: 'A Destination', vi: 'Điểm Đến Của Mọi Người' },
+  { n: 8, title: 'The Long Bridge', vi: 'Cây Cầu Dài' },
+  { n: 9, title: 'The Lantern Festival', vi: 'Lễ Hội Đèn Lồng' },
+  { n: 10, title: 'Keeper of the Island', vi: 'Người Giữ Đảo' },
+];
+export const BRIDGE_REPAIR = { cost: 1500, mats: { wood: 40, metal: 12, paint: 6 } };
+export const VY_VIEWS = [
+  { id: 'lookout', x: 2470, y: 1440, en: 'the lookout tower', vi: 'tháp canh' },
+  { id: 'firefly', x: 2250, y: 1360, en: 'the firefly banyan', vi: 'cây đa đom đóm' },
+  { id: 'lighthouse', x: 900, y: 360, en: 'the lighthouse', vi: 'ngọn hải đăng' },
 ];
 
 export const ACHIEVEMENTS = {

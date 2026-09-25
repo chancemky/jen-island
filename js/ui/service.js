@@ -5,8 +5,9 @@
 
 import { G, T, bizOf } from '../systems/state.js';
 import { RECIPES, STATION, OPTIONS, PREPPED, INGREDIENTS, BUSINESSES, ingName, stationLabel, recipeName, bizName } from '../data/game.js';
-import { rt, stockOf, takeStock, evaluate, completeOrder, failOrder, bizRecipes, openBiz, canMake, orderText } from '../systems/business.js';
+import { rt, stockOf, takeStock, returnStock, evaluate, completeOrder, failOrder, bizRecipes, openBiz, canMake, orderText } from '../systems/business.js';
 import { drawCup, DISHES, ICONS, iconURL, drawIcon } from '../gfx/food.js';
+import { drawAssembly } from '../gfx/assemble.js';
 import { drawHuman, EL } from '../gfx/character.js';
 import { INK, ell, circ, box, shadow } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
@@ -32,9 +33,9 @@ export function openService(bizId, { onClose, tutorial = false, single = null } 
     <div class="svc-customer"><div class="svc-portrait"><canvas width="216" height="248"></canvas></div><div class="svc-bubble"><div class="svc-order"></div><div class="svc-chips"></div><div class="patience"><span>${T('PATIENCE', 'KIÊN NHẪN')}</span><div class="bar"><i></i></div></div></div><div class="svc-waiting hidden"></div></div>
     <div class="svc-counter">
       <div class="svc-label">${escapeHtml(bizName(bizId).toUpperCase())}</div>
-      <div class="svc-work"><div class="svc-board"><canvas width="300" height="300"></canvas><div class="svc-steps"></div></div><div class="svc-opts"></div></div>
+      <div class="svc-work"><div class="svc-board"><canvas width="300" height="210"></canvas><div class="svc-steps"></div></div><div class="svc-opts"></div></div>
       <div class="svc-grid"></div>
-      <div class="svc-bottom"><button class="btn trash" type="button" aria-label="Start over">↺</button><button class="btn pink serve" type="button">${T('Serve', 'Phục vụ')}</button></div>
+      <div class="svc-bottom"><button class="btn trash" type="button" aria-label="Undo">↶</button><button class="btn pink serve" type="button">${T('Serve', 'Phục vụ')}</button></div>
     </div>`;
   root.appendChild(el);
   G.runtime.serviceOpen = bizId;
@@ -46,7 +47,12 @@ export function openService(bizId, { onClose, tutorial = false, single = null } 
   };
   S.pc = S.portrait.getContext('2d'); S.bc = S.board.getContext('2d');
   el.querySelector('.svc-close').onclick = () => closeService();
-  el.querySelector('.trash').onclick = () => { if (!S.asm || S.busy) return; sfx('whoosh'); resetAsm(); };
+  // undo the last ingredient (it goes back on the shelf); long-press clears everything
+  let holdT = null;
+  const trash = el.querySelector('.trash');
+  trash.addEventListener('pointerdown', () => { holdT = setTimeout(() => { holdT = 'done'; if (S?.asm && !S.busy) { refundAll(); sfx('whoosh'); resetAsm(); } }, 550); });
+  trash.addEventListener('pointerup', () => { if (holdT === 'done') { holdT = null; return; } clearTimeout(holdT); holdT = null; undoLast(); });
+  trash.addEventListener('pointerleave', () => { if (holdT !== 'done') clearTimeout(holdT); holdT = null; });
   el.querySelector('.serve').onclick = () => serve();
   buildGrid();
   resetAsm();
@@ -137,10 +143,19 @@ function setOption(k, v, seg, b) {
   markOptions(); updateChips(); updateHint();
 }
 
+function undoLast() {
+  if (!S?.asm || S.busy || !S.asm.steps.length) { sfx('error'); return; }
+  const k = S.asm.steps.pop(); S.asm.anim.pop();
+  if (STATION[k].uses) returnStock(S.bizId, STATION[k].uses);
+  if (k === 'blend') S.asm.blended = S.asm.steps.includes('blend');
+  sfx('back'); refreshCounts(); buildSteps(); updateHint(); wobble();
+}
+function refundAll() { for (const k of S.asm.steps) if (STATION[k].uses) returnStock(S.bizId, STATION[k].uses); refreshCounts(); }
 function resetAsm() {
   S.asm = { steps: [], size: null, sugar: undefined, ice: undefined, topping: undefined, chili: undefined, anim: [], blended: false, servedAnim: 0 };
   if (S.cust && RECIPES[S.cust.order.recipe].options.includes('topping')) S.asm.topping = 'none';
   if (S.cust && RECIPES[S.cust.order.recipe].options.includes('ice')) S.asm.ice = 'không đá';   // no ice unless the order asks for it
+  if (S.cust && RECIPES[S.cust.order.recipe].options.includes('chili')) S.asm.chili = 'không ớt'; // no chili unless asked
   S.el.querySelector('.svc-steps').innerHTML = '';
   if (S.cust) buildSteps();
   markOptions?.(); updateChips(); updateHint();
@@ -148,8 +163,15 @@ function resetAsm() {
 function buildSteps() {
   const box = S.el.querySelector('.svc-steps');
   const R = RECIPES[S.cust.order.recipe];
-  box.innerHTML = R.steps.map(() => '<i></i>').join('');
-  [...box.children].forEach((d, i) => d.classList.toggle('on', i < S.asm.steps.length));
+  // a little recipe card: what goes in, in order; slots fill as you add things
+  const n = Math.max(R.steps.length, S.asm.steps.length);
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    const got = S.asm.steps[i], want = R.steps[i];
+    const icon = STATION[got || want]?.icon;
+    html += `<i class="${got ? (got === want ? 'on' : R.steps.includes(got) ? 'swap' : 'bad') : ''}" title="${escapeHtml(stationLabel(want || got))}">${icon ? `<img src="${iconURL(icon, 32)}" alt="">` : ''}</i>`;
+  }
+  box.innerHTML = html;
 }
 
 // ---------------------------------------------------------------- tapping
@@ -180,9 +202,7 @@ function tapIngredient(k, btnEl) {
   else if (st2.layer) sfx('pour'); else if (k === 'roll' || k === 'fold') sfx('whoosh'); else if (k === 'grill') sfx('sizzle'); else sfx('pop');
   flyIcon(st2.icon, btnEl, S.board, { size: 44, dur: 360 }).then(() => wobble());
   refreshCounts();
-  const dots = S.el.querySelector('.svc-steps').children;
-  const i = S.asm.steps.length - 1;
-  if (dots[i]) { dots[i].classList.add('on'); if (R.steps[i] !== k) dots[i].classList.add('bad'); }
+  buildSteps();
   updateHint();
 }
 function wobble() { const b = S?.el.querySelector('.svc-board'); if (!b) return; b.classList.remove('wobble'); void b.offsetWidth; b.classList.add('wobble'); }
@@ -245,7 +265,14 @@ function hintFor(res, order) {
     const k = res.mism[0];
     return T({ size: 'Wrong cup size', sugar: 'Wrong amount of sugar', ice: 'Wrong amount of ice', topping: 'Wrong topping', chili: 'Chili isn\'t right' }[k], { size: 'Sai size ly', sugar: 'Sai lượng đường', ice: 'Sai lượng đá', topping: 'Sai topping', chili: 'Ớt chưa đúng' }[k]);
   }
-  return T('Missing or extra ingredients', 'Thiếu hoặc thừa nguyên liệu');
+  // say exactly what's missing or extra
+  const need = [...RECIPES[order.recipe].steps], got = [...(S.asm?.steps || [])];
+  for (const k of [...got]) { const i = need.indexOf(k); if (i >= 0) { need.splice(i, 1); got.splice(got.indexOf(k), 1); } }
+  const nm = ks => [...new Set(ks)].map(k => stationLabel(k).toLowerCase()).join(', ');
+  const parts = [];
+  if (need.length) parts.push(T(`Missing: ${nm(need)}`, `Thiếu: ${nm(need)}`));
+  if (got.length) parts.push(T(`Extra: ${nm(got)}`, `Thừa: ${nm(got)}`));
+  return parts.join(' · ') || T('Missing or extra ingredients', 'Thiếu hoặc thừa nguyên liệu');
 }
 function verdict(big, small, q) {
   const v = h('div', 'verdict', `<b>${escapeHtml(big)}</b>${small ? `<small>${escapeHtml(small)}</small>` : ''}`);
@@ -361,7 +388,7 @@ function drawQueue(t) {
     box.innerHTML = q.slice(0, 5).map((c, i) => `<div class="qface${i === 0 ? ' cur' : ''}" data-id="${c.id}"><canvas width="88" height="88"></canvas><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#86cf8a" stroke-width="3" stroke-dasharray="100.5" stroke-linecap="round"/></svg></div>`).join('');
     for (const el of box.children) {
       const c = q.find(x => x.id === el.dataset.id), cv = el.querySelector('canvas'), cc = cv.getContext('2d');
-      cc.save(); cc.lineJoin = 'round'; cc.translate(44, 88 + 70 + EL * 4.1); cc.scale(4.1, 4.1); drawHuman(cc, { look: c.actor.look, dir: 'down', emo: 'neutral', blinkAmt: 0, moving: 0 }, 1); cc.restore();
+      cc.save(); cc.lineJoin = 'round'; cc.translate(44, 88 + 70 + EL * 4.1); cc.scale(4.1, 4.1); drawHuman(cc, { look: c.actor.look, dir: 'down', emo: 'neutral', blinkAmt: 0, moving: 0, portrait: true }, 1); cc.restore();
     }
   }
   for (const el of box.children) {
@@ -379,7 +406,7 @@ function drawPortrait(dt, t) {
   if (S.react) { S.react.t -= dt; if (S.react.t <= 0) S.react = null; }
   const k = cust.patienceRatio;
   const emo = S.react?.emo || (k < 0.25 ? 'angry' : k < 0.45 ? 'sad' : S.talkT > 0 ? 'neutral' : S.asm.steps.length ? 'think' : 'neutral');
-  const a = { look: cust.actor.look, dir: 'down', moving: 0, walkPh: 0, seed: 1, emo, talking: S.talkT > 0.15, blinkAmt: (Math.sin(t * 1.3 + 1) > 0.985) ? 1 : 0, hop: S.react && (S.react.emo === 'love' || S.react.emo === 'happy') ? Math.abs(Math.sin(t * 9)) * 2 : 0, act: S.react?.emo === 'love' ? 'cheer' : k < 0.45 && !S.react ? 'wait' : null, actT: t, headTilt: S.asm.steps.length && !S.react ? Math.sin(t * 1.2) * 0.06 : 0 };
+  const a = { look: cust.actor.look, dir: 'down', moving: 0, walkPh: 0, seed: 1, emo, talking: S.talkT > 0.15, blinkAmt: (Math.sin(t * 1.3 + 1) > 0.985) ? 1 : 0, hop: S.react && (S.react.emo === 'love' || S.react.emo === 'happy') ? Math.abs(Math.sin(t * 9)) * 2 : 0, act: S.react?.emo === 'love' ? 'cheer' : k < 0.45 && !S.react ? 'wait' : null, actT: t, headTilt: S.asm.steps.length && !S.react ? Math.sin(t * 1.2) * 0.06 : 0, portrait: true };
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
   const sc = 6.3; c.translate(cv.width / 2, cv.height + 34 + EL * sc); c.scale(sc, sc);
   drawHuman(c, a, t);
@@ -395,7 +422,7 @@ function drawBoard(dt, t) {
   if (asm.blendT > 0) asm.blendT -= dt;
   if (asm.servedAnim > 0) asm.servedAnim = Math.min(1, asm.servedAnim + dt * 2);
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
-  c.translate(cv.width / 2, cv.height / 2 + 14);
+  c.translate(cv.width / 2, cv.height / 2 + 10);
   const shake = asm.blendT > 0 ? Math.sin(t * 60) * 3 : 0;
   c.translate(shake, 0);
   if (R.vessel === 'cup' || R.vessel === 'glass') {
@@ -420,26 +447,14 @@ function drawBoard(dt, t) {
     drawCup(c, comp, t);
     c.setLineDash([]); c.globalAlpha = 1;
   } else {
-    // food: base vessel, then the pile of added ingredients; the finished dish pops in when complete
+    // food: every ingredient is drawn where it really goes, in the order added
     const done = asm.steps.length === R.steps.length && [...asm.steps].sort().join() === [...R.steps].sort().join();
-    c.scale(3.6, 3.6);
-    shadow(c, 0, 12, 22, 6, 0.18);
-    if (done) {
-      const k = Math.min(1, (asm.anim[asm.anim.length - 1] || 1));
-      c.save(); c.scale(0.8 + 0.3 * k, 0.8 + 0.3 * k); (DISHES[R.icon] || ICONS[R.icon])?.(c, t); c.restore();
-      if (k < 1) for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + t * 3; circ(c, Math.cos(a) * 20 * k, Math.sin(a) * 14 * k, 1.2, '#ffd35a', null); }
-    } else {
-      if (R.vessel === 'bowl' || R.vessel === 'pan' || R.vessel === 'grill') drawBase(c, R.vessel);
-      else if (R.vessel === 'plate') { ell(c, 0, 4, 20, 10, '#fffdf5'); ell(c, 0, 3, 14, 7, null, 'rgba(91,63,54,.25)', 1); }
-      asm.steps.forEach((k, i) => {
-        const st = STATION[k]; if (st.action) return;
-        const a = asm.anim[i], y = -2 - i * 3.2 - (1 - a) * 18, x = ((i * 7) % 11) - 5;
-        c.save(); c.translate(x, y); c.scale(0.62, 0.62); c.globalAlpha = Math.min(1, a * 2);
-        (ICONS[st.icon] || (() => {}))(c, t);
-        c.restore();
-      });
-      if (!asm.steps.length) { c.globalAlpha = 0.35; c.save(); c.scale(0.9, 0.9); (DISHES[R.icon] || ICONS[R.icon])?.(c, t); c.restore(); c.globalAlpha = 1; }
-    }
+    asm.closeK = done ? Math.min(1, (asm.closeK || 0) + dt * 3) : 0;
+    c.scale(3.5, 3.5);
+    if (!asm.steps.length) { c.globalAlpha = 0.28; c.save(); c.scale(0.9, 0.9); (DISHES[R.icon] || ICONS[R.icon])?.(c, t); c.restore(); c.globalAlpha = 1; }
+    else drawAssembly(c, R, asm, t, done, S.cust.order.recipe);
+    if (done && asm.closeK < 1) for (let i = 0; i < 8; i++) { const a = i / 8 * TAU + t * 3, k = asm.closeK; c.globalAlpha = 1 - k; circ(c, Math.cos(a) * 30 * k, Math.sin(a) * 18 * k - 4, 1.4, '#ffd35a', null); }
+    c.globalAlpha = 1;
   }
   c.restore();
 }

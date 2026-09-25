@@ -4,6 +4,7 @@
 import { clamp, rand, TAU } from '../core/util.js';
 import { drawHuman, drawEmote } from '../gfx/character.js';
 import { drawCat } from '../gfx/cat.js';
+import { spriteReady, spriteTop } from '../gfx/sprites.js';
 
 let nextId = 1;
 
@@ -123,7 +124,7 @@ export class Actor {
   }
   drawEmote(c, t) {
     if (!this.emote || !this.visible) return;
-    const top = this.kind === 'cat' ? -44 : -48 * (this.look?.scale || 1) - (this.look?.hat === 'nonla' || this.look?.hat === 'chef' || this.look?.hat === 'sunhat' ? 6 : 0);
+    const top = this.kind === 'cat' ? -44 : this.look?.sprite && spriteReady(this.look.sprite) ? -spriteTop(this.look) - 6 : -48 * (this.look?.scale || 1) - (this.look?.hat === 'nonla' || this.look?.hat === 'chef' || this.look?.hat === 'sunhat' ? 6 : 0);
     drawEmote(c, this.emote.type, this.x + 9, this.y + top - this.hop, this.emote.t / this.emote.dur, t);
   }
 }

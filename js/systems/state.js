@@ -4,6 +4,7 @@
 
 import { bus, clamp } from '../core/util.js';
 import { BUSINESSES, RECIPES, ACHIEVEMENTS } from '../data/game.js';
+import { APP_VERSION, CHANGELOG } from '../data/changelog.js';
 
 export const SAVE_VERSION = 1;
 
@@ -34,6 +35,13 @@ export function defaultState() {
     statue: false,
     settings: { music: true, sfx: true, arrow: true, lang: null },
     pos: null,               // {scene, x, y} last position for resume
+    level: 1, xp: 0, xpTotal: 0, // uncapped levels (systems/progress.js)
+    milestones: {},          // track id → tiers claimed
+    keys: {},                // shop keys bought from Mèo Mây
+    prices: {},              // recipe id → price multiplier the player set
+    wardrobe: { owned: ['classic'], outfit: 'classic' },
+    createdAt: Date.now(),   // account start: "what's new" only lists later updates
+    lastSeenVersion: APP_VERSION,
   };
 }
 export function freshDay() { return { revenue: 0, served: 0, perfect: 0, tips: 0, repStart: null, lost: 0, spent: 0, milestones: [], biz: {} }; }
@@ -52,13 +60,22 @@ export function migrate(raw) {
   s.nightMarket = { ...d.nightMarket, ...(raw.nightMarket || {}) };
   s.biz = { ...d.biz };
   for (const id of Object.keys(d.biz)) s.biz[id] = { ...d.biz[id], ...(raw.biz?.[id] || {}), open: false };
-  for (const b of Object.values(s.biz)) { b.prepped ||= {}; b.employees ||= []; b.stats ||= { served: 0, revenue: 0 }; b.decor ||= []; }
+  for (const b of Object.values(s.biz)) { b.equip ||= {}; b.prepped ||= {}; b.employees ||= []; b.stats ||= { served: 0, revenue: 0 }; b.decor ||= []; }
   s.recipes = (raw.recipes || []).filter(r => RECIPES[r]);
   s.achievements = (raw.achievements || []).filter(a => ACHIEVEMENTS[a]);
   s.money = Number.isFinite(+raw.money) ? +raw.money : d.money;
   s.reputation = Math.max(0, +raw.reputation || 0);
   s.day = Math.max(1, Math.floor(+raw.day || 1));
   s.time = clamp(+raw.time || 7 * 60, 6 * 60, 26 * 60);
+  s.milestones = { ...(raw.milestones || {}) };
+  s.prices = { ...(raw.prices || {}) };
+  s.keys = { ...(raw.keys || {}) };
+  for (const id of ['shed2', 'truck', 'night', 'restaurant']) if (s.biz[id]?.owned || s.biz[id]?.unlocked) s.keys[id] = true; // keys for shops opened before gates existed
+  s.wardrobe = { owned: Array.isArray(raw.wardrobe?.owned) && raw.wardrobe.owned.length ? raw.wardrobe.owned : ['classic'], outfit: raw.wardrobe?.outfit || 'classic' };
+  // saves from before release notes: assume they saw the build that was live when they last saved
+  if (!raw.lastSeenVersion) s.lastSeenVersion = [...CHANGELOG].reverse().filter(e => Date.parse(e.date) <= (raw.savedAt || 0)).pop()?.v || '1.0.0';
+  if (!raw.createdAt) s.createdAt = 0;
+  if (!raw.level) s.level = 0; // seeded from past progress by progress.seedLevel()
   s.v = SAVE_VERSION;
   return s;
 }

@@ -5,6 +5,10 @@
 import { G, T } from './state.js';
 import { Actor } from '../world/actor.js';
 import { RESIDENTS, MERCHANTS, visitorLook } from '../data/looks.js';
+import { drawSprite, spriteReady, spriteMeta } from '../gfx/sprites.js';
+import { initAnimals, updateAnimals, animalDrawables } from './animals.js';
+import { updateBarks, drawBarks } from './fun.js';
+import { updateSideQuests, drawSideQuests } from './sidequests.js';
 import { PATHS, BUILDINGS } from '../world/island.js';
 import { rand, randi, choice, chance, dist, bus, clamp, TAU, smoothLine } from '../core/util.js';
 import { drawBoatTop } from './cinematic.js';
@@ -38,6 +42,15 @@ export const npcs = {
 };
 G.npcs = npcs;
 
+npcs.spawnIsletResidents = () => {
+  const island = G.scenes.island;
+  for (const [rid, def] of Object.entries(RESIDENTS)) {
+    if (!def.islet || npcs.residents.some(a => a.data.rid === rid)) continue;
+    const home = HOME_OF[rid];
+    const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: home.x, y: home.y + 16, speed: rand(46, 58), data: { rid, state: 'idle', until: 0, npc: true } });
+    a.talkable = true; island.add(a); npcs.residents.push(a);
+  }
+};
 npcs.spawnVisitorAt = (x, y, tag) => {
   const island = G.scenes.island, seed = randi(1, 1e6);
   const a = new Actor({ kind: 'human', look: visitorLook(seed, 'tourist'), x, y, speed: rand(46, 60), data: { tourist: true, state: 'walking', leaveAt: G.state.time + rand(90, 200) } });
@@ -68,6 +81,7 @@ function updateVendors(island) {
 export function initNPCs(island) {
   npcs.residents.length = 0;
   for (const [rid, def] of Object.entries(RESIDENTS)) {
+    if (def.islet && !G.state.story.flags.bridgeFixed) continue;
     const home = HOME_OF[rid];
     const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: home ? home.x : 900, y: home ? home.y + 16 : 1600, speed: rand(46, 58), data: { rid, state: 'idle', until: 0, npc: true } });
     a.talkable = true;
@@ -83,6 +97,7 @@ export function initNPCs(island) {
   npcs.gulls = Array.from({ length: 5 }, (_, i) => ({ cx: rand(200, 1600), cy: rand(300, 2500), r: rand(80, 200), a: rand(0, TAU), sp: rand(0.25, 0.5) * (i % 2 ? 1 : -1), seed: i * 3, h: rand(60, 110) }));
   npcs.butterflies = Array.from({ length: 10 }, (_, i) => ({ x: rand(300, 1500), y: rand(500, 2100), vx: 0, vy: 0, t: rand(0, 10), col: choice(['#fff4b8', '#ffc0d8', '#c9e8ff', '#ffe0a8']) }));
   npcs.ferry = { state: 'away', x: BERTH.x, y: 2950, speed: 0, next: nextFerryTime(), unload: 0, dockUntil: 0 };
+  initAnimals(island);
   npcs.ducks = [0, 1, 2, 3].map(i => ({ a: i * 1.6, r: 26 + i * 9, sp: 0.12 + i * 0.03, seed: i * 3, col: i === 3 ? '#f7de8c' : '#fffaf0', x: 0, y: 0 }));
 }
 
@@ -147,14 +162,39 @@ function updateResident(island, a, dt) {
     const near = npcs.residents.find(o => o !== a && o.visible && o.data.state === 'idle' && dist(o.x, o.y, a.x, a.y) < 44);
     const pl = G.player;
     if (pl && G.scene === island && dist(pl.x, pl.y, a.x, a.y) < 50 && chance(0.5)) { a.face(pl); if (!d.greeted) { d.greeted = true; a.setAct('wave'); a.showEmote('happy', 1.2); setTimeout(() => a.act === 'wave' && a.setAct(null), 1400); } }
-    else if (near) { a.face(near); near.face(a); a.showEmote(choice(['...', 'note', 'happy', '...']), 1.8); }
-    else if (!a.sit) {
-      const r = Math.random();
-      if (d.rid === 'minh' && r < 0.4) { a.setAct('photo'); setTimeout(() => a.act === 'photo' && a.setAct(null), 2200); }
-      else if (r < 0.2) { a.setAct('phone'); setTimeout(() => a.act === 'phone' && a.setAct(null), 3000); }
-      else a.face(choice(['down', 'left', 'right', 'down']));
+    else if (near) { // a little chat; sometimes a joke lands and both laugh
+      a.face(near); near.face(a); a.showEmote(choice(['...', 'note', 'happy', '...']), 1.8);
+      if (chance(0.35)) setTimeout(() => { for (const o of [a, near]) { o.setAct('cheer'); o.doHop(60); } near.showEmote('happy', 1.4); setTimeout(() => { for (const o of [a, near]) if (o.act === 'cheer') o.setAct(null); }, 1200); }, 1600);
     }
+    else if (!a.sit) idleAct(a);
+    else if (chance(0.3)) { a.setAct(chance(0.5) ? 'drink' : 'eat', chance(0.5) ? 'cup' : 'banh_mi'); setTimeout(() => (a.act === 'drink' || a.act === 'eat') && a.setAct(null), 4000); }
   }
+}
+
+// Idle moments while standing around: each pick lasts a couple of seconds.
+const IDLE = [
+  { w: 3, go: a => a.face(choice(['down', 'left', 'right', 'down'])) },
+  { w: 2, go: a => act(a, 'phone', 3) },
+  { w: 1.5, go: a => { act(a, 'think', 2.2); a.showEmote('?', 1.6); } },
+  { w: 1.5, go: a => { a.showEmote('zzz', 1.8); a.squash = 0.6; } },                         // yawn
+  { w: 1.2, go: a => { act(a, 'dance', 2.6); a.showEmote('note', 2.4); } },
+  { w: 1, go: a => { a.doHop(70); setTimeout(() => a.doHop(60), 420); } },                   // happy hop
+  { w: 1.2, go: a => act(a, 'drink', 3, 'cup') },
+  { w: 1, go: a => act(a, 'eat', 3, 'banh_mi') },
+  { w: 1, go: a => { act(a, 'stretch', 1.8); } },
+  { w: 0.8, go: a => { a.face('left'); setTimeout(() => a.face('right'), 700); setTimeout(() => a.face('down'), 1400); } }, // look around
+];
+function act(a, name, secs, held = null) { a.setAct(name, held); setTimeout(() => a.act === name && a.setAct(null), secs * 1000); }
+function idleAct(a) {
+  const d = a.data, role = a.look?.sprite ? spriteMeta(a.look.sprite)?.role : null;
+  if (role === 'photo' && chance(0.35)) return act(a, 'photo', 2.2);
+  if (role === 'music' && chance(0.4)) { a.showEmote('note', 2.4); return act(a, 'dance', 2.4); }
+  if (role === 'sweep' && chance(0.35)) return act(a, 'sweep', 3);
+  if (role === 'jog' && chance(0.3)) { a.doHop(90); return act(a, 'stretch', 1.6); }
+  if (d.rid === 'minh' && chance(0.4)) return act(a, 'photo', 2.2);
+  if (d.rid === 'be_na' && chance(0.3)) { a.doHop(90); setTimeout(() => a.doHop(80), 400); return; }
+  let r = Math.random() * IDLE.reduce((s, x) => s + x.w, 0);
+  for (const x of IDLE) { r -= x.w; if (r <= 0) return x.go(a); }
 }
 
 // ---------------------------------------------------------------- tourists & ferry
@@ -228,7 +268,7 @@ function makeScooter(path, col, phase) {
   let len = 0; const segs = [];
   for (let i = 0; i < pts.length - 1; i++) { const d = dist(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]); segs.push(d); len += d; }
   const seed = randi(1, 999);
-  const look = { ...visitorLook(seed, 'regular'), hat: 'helmet', hatColor: choice(['#f28f7c', '#6f9fc8', '#f7de8c', '#9fd8c8', '#fff5df']), backpack: undefined, camera: undefined, scale: 1 };
+  const look = { ...visitorLook(seed, 'regular'), hat: 'helmet', hatColor: choice(['#f28f7c', '#6f9fc8', '#f7de8c', '#9fd8c8', '#fff5df']), backpack: undefined, camera: undefined, scale: 1, sprite: undefined };
   return { pts, segs, len, pos: len * phase, dir: 1, speed: 72, col, rider: { look, dir: 'right', moving: 0, seed, blinkAmt: 0, emo: 'happy', sit: true, act: 'ride', actT: 0 }, x: 0, y: 0, flip: false, beep: 0 };
 }
 function updateScooter(sc, dt) {
@@ -260,12 +300,20 @@ function updateScooter(sc, dt) {
   sc.x = nx + (-(b[1] - a[1]) / len) * off; sc.y = ny + ((b[0] - a[0]) / len) * off;
 }
 function scooterDrawable(sc) {
+  if (sc.shipper && spriteReady('shipper')) {
+    const a = sc.shipperActor || (sc.shipperActor = { look: { sprite: 'shipper' }, seed: 5, blinkAmt: 0, emo: 'happy' });
+    a.dir = sc.flip ? 'left' : 'right'; a.moving = sc.speed > 5 ? 1 : 0;
+    return { x: sc.x, y: sc.y, draw: (c, t) => drawSprite(c, a, t) };
+  }
   return { x: sc.x, y: sc.y, draw: (c, t) => { c.save(); c.translate(0, Math.sin(t * 20) * 0.3 * (sc.speed > 5 ? 1 : 0)); drawScooter(c, t, { col: sc.col, flip: sc.flip, basket: true, rider: (cc, tt) => { cc.save(); cc.scale(0.95, 0.95); drawHuman(cc, { ...sc.rider, dir: 'right' }, tt); cc.restore(); } }); c.restore(); } };
 }
 
 // ---------------------------------------------------------------- per frame
 export function updateNPCs(dt) {
   const island = G.scenes.island;
+  updateAnimals(dt);
+  updateBarks(dt);
+  updateSideQuests();
   for (const a of npcs.residents) updateResident(island, a, dt);
   updateVendors(island);
   for (const a of [...npcs.tourists]) updateTourist(island, a, dt);
@@ -296,12 +344,15 @@ export function npcDrawables() {
   const out = [];
   for (const d of npcs.ducks || []) out.push({ x: d.x, y: d.y, draw: (c, t) => duck(c, t, d) });
   const f = ferryDrawable(); if (f) out.push(f);
+  out.push(...animalDrawables());
   for (const sc of npcs.scooters) out.push(scooterDrawable(sc));
   for (const b of npcs.butterflies) out.push({ x: b.x, y: b.y, sortY: b.y + 30, draw: (c, t) => { c.save(); c.translate(0, -22 - Math.sin(b.t * 3) * 4); const f = Math.abs(Math.sin(b.t * 16)); c.fillStyle = b.col; c.strokeStyle = 'rgba(91,63,54,.7)'; c.lineWidth = 0.6; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * 2.6 * f, -1, 2.6 * f + 0.4, 3, s * 0.4, 0, TAU); c.fill(); c.stroke(); } c.restore(); } });
   return out;
 }
 export function drawSkyLife(c, t) {
   if (G.scene !== G.scenes.island) return;
+  drawSideQuests(c, t);
+  drawBarks(c, t);
   for (const g of npcs.gulls) {
     const x = g.cx + Math.cos(g.a) * g.r, y = g.cy + Math.sin(g.a) * g.r * 0.6;
     c.save(); c.globalAlpha = 0.18; c.fillStyle = '#2a4a50'; c.beginPath(); c.ellipse(x + 16, y + g.h * 0.4, 5, 1.6, 0, 0, TAU); c.fill(); c.restore();
