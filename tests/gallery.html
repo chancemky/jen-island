@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap">
+<style>body{margin:0;background:#fbf3e4}canvas{display:block}</style></head><body><canvas id="c"></canvas>
+<script type="module">
+import { drawHuman } from '../js/gfx/character.js';
+import { drawCat } from '../js/gfx/cat.js';
+import { RESIDENTS, MERCHANTS, playerLook, visitorLook, employeeLook } from '../js/data/looks.js';
+const cv = document.getElementById('c'); const W = 1400, H = 1300; cv.width = W*2; cv.height = H*2; cv.style.width=W+'px';
+const c = cv.getContext('2d'); c.scale(2,2); c.lineJoin='round';
+const t = +(new URLSearchParams(location.search).get('t') || 1.3);
+const S = 3.2;
+function at(x,y,fn,a){ c.save(); c.translate(x,y); c.scale(S,S); fn(c,a,t); c.restore(); }
+const base = {dir:'down', moving:0, walkPh:0, seed:1, blinkAmt:0, emo:'neutral'};
+let x=60, y=150;
+const pl = playerLook({hairStyle:'bob'});
+for (const [dir,mv,ph] of [['down',0,0],['down',1,1.2],['right',0,0],['right',1,1.2],['up',0,0],['left',1,2]]) { at(x,y,drawHuman,{...base,look:pl,dir,moving:mv,walkPh:ph}); x+=110; }
+for (const emo of ['happy','surprised','sad','think','angry','love']) { at(x,y,drawHuman,{...base,look:pl,emo, act: emo==='think'?'think':null}); x+=110; }
+x=60; y=330;
+for (const [dir,mv,ph] of [['down',0,0],['down',1,1.2],['right',0,0],['right',1,1.2],['up',0,0]]) { at(x,y,drawCat,{...base,dir,moving:mv,walkPh:ph}); x+=110; }
+for (const emo of ['happy','surprised','sad']) { at(x,y,drawCat,{...base,emo}); x+=110; }
+at(x,y,drawCat,{...base,talking:true,headTilt:0.2}); x+=110;
+at(x,y,drawCat,{...base,act:'wave'}); x+=110;
+at(x,y,drawCat,{...base,dir:'left',act:'point'}); x+=110;
+x=60; y=510;
+for (const k of Object.keys(RESIDENTS)) { at(x,y,drawHuman,{...base,look:RESIDENTS[k].look}); x+=110; }
+for (const k of Object.keys(MERCHANTS)) { at(x,y,drawHuman,{...base,look:MERCHANTS[k].look}); x+=110; if (x>W-50){x=60;y+=180;} }
+x=60; y=870;
+for (let i=0;i<12;i++){ at(x,y,drawHuman,{...base,look:visitorLook(i+3, i%3?'tourist':'patient'), dir:['down','right','left','down'][i%4]}); x+=110; }
+x=60; y=1060;
+for (const act of ['carry','drink','eat','chop','stir','hammer','write','clean','wave','cheer','phone']) { at(x,y,drawHuman,{...base,look:employeeLook(act.length*7, act==='stir'?'cook':'server'),act,actT:0.9,held:'tray'}); x+=110; }
+at(x,y,drawHuman,{...base,look:pl,dir:'right',act:'drink',actT:0.9});
+window.done = true;
+</script></body></html>

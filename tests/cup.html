@@ -1,0 +1,13 @@
+<!doctype html><html><body style="margin:0;background:#e2b57f"><canvas id="c" width="1200" height="320"></canvas><script type="module">
+import { drawCup } from '../js/gfx/food.js';
+const c=document.getElementById('c').getContext('2d');
+const comps=[
+ {size:'M',layers:[{color:'#e9a24a',h:0.62}],ice:0},
+ {size:'M',layers:[{color:'#e9a24a',h:0.62}],bits:[{kind:'kumquat',float:1},{kind:'kumquat',float:1},{kind:'kumquat',float:1}],ice:0},
+ {size:'M',layers:[{color:'#e9a24a',h:0.62}],bits:[{kind:'kumquat',float:1},{kind:'kumquat',float:1}],ice:2,sugar:70},
+ {size:'L',layers:[{color:'#f4ead2',h:0.24},{color:'#5e3a28',h:0.5}],ice:2,straw:true,lid:true},
+ {size:'M',layers:[{color:'#e9a24a',h:0.62},{color:'#f3e7d6',h:0.3,swirl:true}],bits:[{kind:'tapioca'},{kind:'tapioca'},{kind:'tapioca'},{kind:'tapioca'}],ice:1,foam:true},
+];
+comps.forEach((k,i)=>{c.save();c.translate(120+i*230,160);c.scale(2.2,2.2);drawCup(c,k,1);c.restore();});
+window.done=true;
+</script></body></html>

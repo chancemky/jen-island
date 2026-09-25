@@ -1,0 +1,15 @@
+{
+  "name": "JEN Island",
+  "short_name": "JEN Island",
+  "description": "A cozy Vietnamese island business-life game.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff4de",
+  "theme_color": "#fff4de",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

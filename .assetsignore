@@ -1,0 +1,10 @@
+.git
+.gitignore
+.assetsignore
+.wrangler
+node_modules
+tests
+supabase
+README.md
+package.json
+wrangler.toml

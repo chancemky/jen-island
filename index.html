@@ -1,32 +1,85 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#f6edd7">
+<meta name="theme-color" content="#fff4de">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="JEN Island">
+<meta name="description" content="A cozy Vietnamese island business-life game.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap&subset=vietnamese">
+<link rel="stylesheet" href="css/game.css">
 <title>JEN Island</title>
-<style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;font-family:ui-rounded,-apple-system,BlinkMacSystemFont,"Avenir Next",sans-serif;background:#f6edd7;color:#49382f}button,input{font:inherit}.screen{position:absolute;inset:0}.card{background:#fff9ea;border:3px solid #614b3e;border-radius:24px;box-shadow:0 12px 30px #6b4b3430}.btn{border:0;border-radius:999px;padding:12px 17px;background:#75ba8c;color:#fff;font-weight:900;box-shadow:0 5px 0 #4e9567}.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #4e9567}.rotate{display:none;position:absolute;inset:0;z-index:999;background:#241e1b;color:white;place-items:center;text-align:center;padding:35px;font-weight:900}@media(orientation:landscape){.rotate{display:grid}}
-#home{display:grid;place-items:center;padding:20px;background:linear-gradient(#bfeaf0 0 45%,#8fd2bc 45% 49%,#efd3a3 49%)}#home:after{content:"";position:absolute;bottom:-12%;width:130%;height:42%;border-radius:50% 50% 0 0;background:#7dbd74;opacity:.55}.start{z-index:2;width:min(92vw,420px);padding:26px;text-align:center}.logo{font-size:46px;font-weight:1000;letter-spacing:-2px}.logo b{color:#df7184}.sub{font-weight:750;opacity:.72;margin:4px 0 18px}
-#boat{background:linear-gradient(#a7e0e8 0 43%,#5fc3cf 43%);overflow:hidden}.sun{position:absolute;right:35px;top:70px;width:80px;height:80px;background:#ffd979;border-radius:50%}.wave{position:absolute;left:-20%;top:48%;width:160%;height:160px;background:repeating-radial-gradient(ellipse at 50% 0,#fff0 0 24px,#ffffff88 26px 29px,#fff0 31px 58px);animation:w 2s linear infinite}.boat{position:absolute;left:-40%;top:53%;width:190px;height:80px;animation:go 4s cubic-bezier(.15,.7,.3,1) forwards}.hull{position:absolute;bottom:0;width:170px;height:44px;background:#fff5df;border:5px solid #62483e;border-radius:8px 8px 50px 55px;transform:skewX(-8deg)}.cab{position:absolute;left:58px;bottom:40px;width:72px;height:40px;background:#ec879f;border:5px solid #62483e;border-bottom:0;border-radius:13px 13px 0 0}@keyframes go{to{left:62%}}@keyframes w{to{transform:translateX(-60px)}}.label{position:absolute;top:max(18px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#fff9e8e8;border-radius:999px;padding:8px 14px;font-weight:900}
-#game{background:#69c6ce;overflow:hidden}.world{position:absolute;width:1100px;height:1300px;left:50%;top:52%;transform:translate(-50%,-50%);background:#8fcf7e;border:30px solid #ead69d;border-radius:44% 56% 48% 52%/38% 40% 60% 62%;box-shadow:0 0 0 18px #62c0c9}.path{position:absolute;background:#efd9aa;border-radius:999px}.v{left:480px;top:100px;width:120px;height:1000px}.h{left:165px;top:600px;width:770px;height:110px}.dock{position:absolute;left:505px;top:-100px;width:90px;height:230px;background:repeating-linear-gradient(90deg,#b97949 0 18px,#8e5c3b 18px 21px);border:4px solid #634637}.b{position:absolute;width:135px;height:105px;background:#f6e4c3;border:5px solid #5e493b;border-radius:18px;display:grid;place-items:end center;padding-bottom:13px;font-weight:950;box-shadow:0 9px 0 #5a403526}.b:before{content:"";position:absolute;left:-10px;right:-10px;top:-34px;height:49px;border:5px solid #5e493b;border-radius:55% 55% 18% 18%;background:#e58277}.shop:before{background:#efbc68}.home:before{background:#7db69d}.cat:before{background:#e8a6a0}.broken{filter:saturate(.55)}.broken:after{content:"BROKEN";position:absolute;right:-20px;top:38px;background:#fff2cf;border:3px solid #5e493b;padding:4px;transform:rotate(8deg);font-size:10px}.restaurant{width:190px;height:130px}.restaurant:before{background:#d96e5f}.tree{position:absolute;font-size:48px}.player{position:absolute;width:42px;height:56px;z-index:10}.ph{position:absolute;left:5px;top:0;width:32px;height:32px;border:3px solid #503d35;border-radius:50%;background:#edc1a3}.pb{position:absolute;left:4px;top:27px;width:34px;height:27px;border:3px solid #503d35;border-radius:12px;background:#90c5a6}.hud{position:absolute;z-index:30;top:max(10px,env(safe-area-inset-top));left:10px;right:10px;display:flex;gap:7px}.chip{background:#fff9e9e8;border:2px solid #624b3e;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}.chip:last-child{margin-left:auto}.joy{position:absolute;left:20px;bottom:max(26px,env(safe-area-inset-bottom));width:108px;height:108px;border-radius:50%;background:#ffffff55;border:3px solid #57483b55;z-index:35;touch-action:none}.stick{position:absolute;left:29px;top:29px;width:46px;height:46px;border-radius:50%;background:#fff0dccc;border:3px solid #57483b77}.act{position:absolute;right:22px;bottom:max(32px,env(safe-area-inset-bottom));width:82px;height:82px;border:0;border-radius:50%;background:#ec8b9c;border:5px solid #fff2da;color:#fff;font-weight:950;z-index:35;box-shadow:0 7px 0 #b96675}.dialog{position:absolute;z-index:50;left:12px;right:12px;bottom:max(18px,env(safe-area-inset-bottom));padding:16px 18px;min-height:128px}.speaker{font-weight:950;color:#c35f71;margin-bottom:6px}.text{font-size:17px;font-weight:750;line-height:1.45}.hint{font-size:10px;opacity:.45;margin-top:8px}.modal{position:absolute;inset:0;z-index:80;background:#2e251f77;display:grid;place-items:center;padding:20px}.modal .card{width:min(92vw,420px);padding:20px}.modal input{width:100%;padding:13px;border:2px solid #cdb194;border-radius:13px;margin:6px 0}
-</style>
 </head>
 <body>
-<div class="rotate">JEN Island is built for vertical Safari.<br>Rotate your phone upright.</div>
-<div id="app"></div>
-<script>
-const app=document.getElementById("app");let p={name:"",island:"",x:520,y:1030,money:400,day:1},dialog=0;
-const lines=["Chào bạn! Welcome to the island.","I'm Mèo Mây. I'll be helping you bring this place back to life.","First, tell me your name and what you want to call the island."];
-function home(){app.innerHTML='<section id="home" class="screen"><div class="start card"><div class="logo">JEN <b>Island</b></div><div class="sub">Vietnamese island business life game</div><p>Vertical Safari prototype</p><button class="btn" id="start">Start Preview</button></div></section>';start.onclick=boat}
-function boat(){app.innerHTML='<section id="boat" class="screen"><div class="sun"></div><div class="wave"></div><div class="label">Arriving at JEN Island</div><div class="boat"><div class="cab"></div><div class="hull"></div></div></section>';setTimeout(game,4000)}
-function game(){app.innerHTML='<section id="game" class="screen"><div class="world"><div class="path v"></div><div class="path h"></div><div class="dock"></div><div class="b broken" style="left:275px;top:545px">First Shed</div><div class="b home" style="left:720px;top:540px">Your House</div><div class="b shop" style="left:170px;top:805px">Supermarket</div><div class="b shop" style="left:410px;top:815px">Materials</div><div class="b cat" style="left:765px;top:815px">Mèo Mây</div><div class="b restaurant broken" style="left:170px;top:1010px">Restaurant</div><div class="tree" style="left:135px;top:335px">🌴</div><div class="tree" style="left:850px;top:300px">🌺</div><div class="tree" style="left:685px;top:1040px">🏮</div><div class="player" id="pl" style="left:'+p.x+'px;top:'+p.y+'px"><div class="ph"></div><div class="pb"></div></div></div><div class="hud"><div class="chip">Day '+p.day+'</div><div class="chip" id="place">Dock</div><div class="chip">₫'+p.money+'k</div></div><div class="joy" id="joy"><div class="stick" id="stick"></div></div><button class="act" id="act">A</button><div class="dialog card" id="dlg"><div class="speaker">Mèo Mây 🐱</div><div class="text" id="txt"></div><div class="hint">Tap to continue</div></div></section>';type(lines[0]);dlg.onclick=next;setupJoy();act.onclick=interact}
-function type(s){txt.textContent="";let i=0,t=setInterval(()=>{txt.textContent+=s[i++]||"";if(i>s.length)clearInterval(t)},18)}
-function next(){dialog++;if(dialog<lines.length){type(lines[dialog]);return}if(dialog===lines.length){app.insertAdjacentHTML("beforeend",'<div class="modal" id="m"><div class="card"><h2>Welcome</h2><input id="pn" placeholder="Your name"><input id="isn" placeholder="Island name"><button class="btn" id="ok" style="width:100%;margin-top:8px">Continue</button></div></div>');ok.onclick=()=>{p.name=pn.value||"Bạn";p.island=isn.value||"JEN Island";m.remove();txt.textContent="Perfect, "+p.name+"! Explore "+p.island+". Start with the broken shed, then visit your house.";setTimeout(()=>dlg.style.display="none",2600)};return}}
-function setupJoy(){let active=false;joy.onpointerdown=e=>{active=true;joy.setPointerCapture(e.pointerId)};joy.onpointermove=e=>{if(!active)return;let r=joy.getBoundingClientRect(),dx=e.clientX-r.left-54,dy=e.clientY-r.top-54,d=Math.hypot(dx,dy)||1,max=31;if(d>max){dx*=max/d;dy*=max/d}stick.style.transform='translate('+dx+'px,'+dy+'px)';move(dx/max,dy/max)};joy.onpointerup=()=>{active=false;stick.style.transform=""}}
-function move(dx,dy){p.x=Math.max(80,Math.min(980,p.x+dx*17));p.y=Math.max(100,Math.min(1160,p.y+dy*17));pl.style.left=p.x+"px";pl.style.top=p.y+"px";let l="Island";if(Math.hypot(p.x-340,p.y-590)<145)l="Broken Shed";else if(Math.hypot(p.x-780,p.y-580)<145)l="Your House";else if(Math.hypot(p.x-230,p.y-850)<155)l="Supermarket";else if(Math.hypot(p.x-820,p.y-850)<155)l="Mèo Mây's House";place.textContent=l}
-function interact(){let l=place.textContent,b="Walk closer to a building.";if(l==="Broken Shed")b="Repair this shed with wood, metal and paint. It becomes your first business.";if(l==="Your House")b="Sleeping ends the day and shows your daily business stats.";if(l==="Supermarket")b="Buy Vietnamese ingredients here before opening your businesses.";if(l==="Mèo Mây's House")b="Mèo Mây guides the story, upgrades, hiring and endgame progression.";app.insertAdjacentHTML("beforeend",'<div class="modal" id="pop"><div class="card"><h2>'+l+'</h2><p style="line-height:1.5;font-weight:700">'+b+'</p><button class="btn" id="close">Close</button></div></div>');close.onclick=()=>pop.remove()}
-home();
-</script>
+<div id="app">
+  <canvas id="game" aria-label="JEN Island"></canvas>
+
+  <!-- touch layer for the floating joystick -->
+  <div id="touch"><div id="joyBase"><div id="joyKnob"></div></div><div id="joyHint">Chạm & kéo để đi<small>Touch & drag anywhere to walk</small></div></div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <button class="chip chip-clock" id="clockChip" type="button"><span class="sun" id="sunIcon"></span><span><b id="dayLabel">Ngày 1</b><small id="clockLabel">07:00</small></span></button>
+      <div class="chip chip-money" id="moneyChip"><span class="coin"></span><b id="moneyLabel">0k</b></div>
+      <button class="chip chip-rep" id="repChip" type="button"><span class="stars" id="stars"></span></button>
+      <button class="round-btn" id="menuBtn" type="button" aria-label="Menu"><span class="burger"></span></button>
+    </div>
+    <button class="quest" id="questPill" type="button"><span class="quest-dot"></span><span id="questText"></span></button>
+    <div class="area" id="areaToast"><b id="areaName"></b><small id="areaEn"></small></div>
+  </div>
+  <div id="pointer" class="hidden"><div class="pointer-arrow"></div></div>
+
+  <!-- context actions -->
+  <div id="actions" class="hidden">
+    <button class="act-btn" id="actBtn" type="button"><span class="act-icon" id="actIcon"></span><span class="act-label" id="actLabel">A</span></button>
+    <button class="pill-btn open-btn hidden" id="bizBtn" type="button"></button>
+    <button class="side-btn" id="bagBtn" type="button" aria-label="Bag"><span class="bag-ico"></span></button>
+  </div>
+
+  <!-- dialogue -->
+  <div id="dialog" class="hidden">
+    <div class="dlg-portrait"><canvas id="portrait" width="220" height="220"></canvas></div>
+    <div class="dlg-box">
+      <div class="dlg-name" id="dlgName"></div>
+      <div class="dlg-text" id="dlgText"></div>
+      <div class="dlg-choices" id="dlgChoices"></div>
+      <div class="dlg-next" id="dlgNext"></div>
+    </div>
+  </div>
+
+  <div id="sheets"></div>
+  <div id="toasts"></div>
+  <div id="fade"></div>
+  <div id="cinema" class="hidden"><div class="bar top"></div><div class="bar bottom"></div><button class="skip-btn hidden" id="skipBtn" type="button">Bỏ qua ›</button><div class="caption" id="caption"></div></div>
+
+  <!-- account screen -->
+  <section id="auth" class="screen hidden">
+    <canvas id="authBg"></canvas>
+    <div class="auth-card card">
+      <div class="logo"><span class="logo-jen">JEN</span><span class="logo-island">Island</span></div>
+      <p class="tagline">Một hòn đảo nhỏ · A cozy Vietnamese island life</p>
+      <div class="seg" id="authTabs"><button type="button" class="on" data-tab="login">Đăng nhập</button><button type="button" data-tab="signup">Tạo tài khoản</button></div>
+      <form id="authForm" autocomplete="on" novalidate>
+        <label class="field"><span>Email</span><input id="authEmail" type="email" autocomplete="email" inputmode="email" required></label>
+        <label class="field"><span>Mật khẩu · Password</span><input id="authPass" type="password" autocomplete="current-password" minlength="6" required></label>
+        <p class="auth-msg" id="authMsg"></p>
+        <button class="btn big" id="authSubmit" type="submit">Lên đảo · Play</button>
+      </form>
+    </div>
+  </section>
+
+  <div id="boot" class="screen"><div class="boot-inner"><div class="boot-cat"></div><div class="boot-bar"><i id="bootBar"></i></div><small id="bootMsg">Đang tải…</small></div></div>
+  <div id="rotate"><div class="rotate-card"><div class="rotate-phone"></div><b>Xoay dọc điện thoại nhé!</b><small>JEN Island is played in portrait. Please turn your phone upright.</small></div></div>
+</div>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

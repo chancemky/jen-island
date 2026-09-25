@@ -1,0 +1,9 @@
+<!doctype html><html><body style="margin:0;background:transparent"><canvas id="c"></canvas><script type="module">
+import { drawCat } from '../js/gfx/cat.js';
+const S=+(new URLSearchParams(location.search).get('s')||512); const cv=document.getElementById('c'); cv.width=cv.height=S;
+const c=cv.getContext('2d'); c.lineJoin='round'; c.lineCap='round';
+const g=c.createLinearGradient(0,0,0,S); g.addColorStop(0,'#aee4ed'); g.addColorStop(0.62,'#8fd3e0'); g.addColorStop(0.62,'#f5e2b3'); g.addColorStop(1,'#efd8a6');
+c.fillStyle=g; c.fillRect(0,0,S,S);
+c.save(); c.translate(S/2, S*0.97); c.scale(S/40,S/40); drawCat(c,{dir:'down',moving:0,walkPh:0,seed:1,emo:'happy',blinkAmt:0,look:{cat:true},headTilt:-0.08},1.2); c.restore();
+window.done=true;
+</script></body></html>

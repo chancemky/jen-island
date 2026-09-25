@@ -1,9 +1,11 @@
 {
   "name": "jen-island",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "npx serve .",
-    "check": "node --check app.js && node --check cloudflare/worker.js"
+    "dev": "python3 -m http.server 8765",
+    "check": "for f in $(find js -name '*.js'); do node --check $f || exit 1; done",
+    "deploy": "npx wrangler deploy"
   }
 }

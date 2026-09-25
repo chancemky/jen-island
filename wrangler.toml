@@ -1,0 +1,8 @@
+# Cloudflare Worker serving JEN Island as Workers Static Assets (no build step).
+# Deploy: npx wrangler deploy
+name = "jen-island"
+compatibility_date = "2025-09-01"
+
+[assets]
+directory = "."
+not_found_handling = "single-page-application"
