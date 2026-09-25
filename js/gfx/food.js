@@ -109,7 +109,7 @@ export const ICONS = {
   door: c => { box(c, -9, -12, 18, 24, 3, '#b77a4f'); box(c, -6, -9, 12, 8, 1.5, '#c98f5a', INK, 0.7); circ(c, 5, 2, 1.4, '#f2c14e', INK, 0.5); },
   talk: c => { c.beginPath(); c.ellipse(0, -2, 12, 9, 0, 0, TAU); c.fillStyle = '#fff'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.3; c.stroke(); poly(c, [-4, 6, -7, 12, 1, 7], '#fff', INK, 1.1); for (let i = -1; i <= 1; i++) circ(c, i * 4.5, -2, 1.5, INK, null); },
   star: c => { c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 5 : 12; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fillStyle = '#ffd35a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke(); },
-  sign_open: c => { box(c, -12, -7, 24, 14, 3, '#6fbf73'); line(c, -6, -7, 0, -13, INK, 1); line(c, 6, -7, 0, -13, INK, 1); c.font = '900 7px Nunito, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; c.fillText('MỞ', 0, 0.5); },
+  sign_open: c => { box(c, -12, -7, 24, 14, 3, '#6fbf73'); line(c, -6, -7, 0, -13, INK, 1); line(c, 6, -7, 0, -13, INK, 1); c.strokeStyle = '#fff'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(-5, 0); c.lineTo(-1, 4); c.lineTo(6, -3); c.stroke(); },
   broom: c => { c.save(); c.rotate(0.5); line(c, 0, -13, 0, 4, '#b88752', 2.4); poly(c, [-5, 4, 5, 4, 7, 13, -7, 13], '#e9c46f', INK, 1); c.restore(); },
   plate: c => { ell(c, 0, 2, 13, 8, '#fffdf5'); ell(c, 0, 1, 8, 5, '#e9a25a', null); },
   person: c => { circ(c, 0, -5, 7, '#f8d6bd'); c.beginPath(); c.arc(0, -7, 7.4, Math.PI, 0); c.fillStyle = '#4a322b'; c.fill(); box(c, -8, 3, 16, 10, 5, '#9fd8c8'); },

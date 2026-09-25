@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
@@ -23,7 +23,7 @@
   <canvas id="game" aria-label="JEN Island"></canvas>
 
   <!-- touch layer for the floating joystick -->
-  <div id="touch"><div id="joyBase"><div id="joyKnob"></div></div><div id="joyHint">Chạm & kéo để đi<small>Touch & drag anywhere to walk</small></div></div>
+  <div id="touch"><div id="joyBase"><div id="joyKnob"></div></div><div id="joyHint" data-t="joyhint"></div></div>
 
   <!-- HUD -->
   <div id="hud" class="hidden">
@@ -59,26 +59,27 @@
   <div id="sheets"></div>
   <div id="toasts"></div>
   <div id="fade"></div>
-  <div id="cinema" class="hidden"><div class="bar top"></div><div class="bar bottom"></div><button class="skip-btn hidden" id="skipBtn" type="button">Bỏ qua ›</button><div class="caption" id="caption"></div></div>
+  <div id="cinema" class="hidden"><div class="bar top"></div><div class="bar bottom"></div><button class="skip-btn hidden" id="skipBtn" type="button" data-t="skip"></button><div class="caption" id="caption"></div></div>
 
   <!-- account screen -->
   <section id="auth" class="screen hidden">
     <canvas id="authBg"></canvas>
     <div class="auth-card card">
       <div class="logo"><span class="logo-jen">JEN</span><span class="logo-island">Island</span></div>
-      <p class="tagline">Một hòn đảo nhỏ · A cozy Vietnamese island life</p>
-      <div class="seg" id="authTabs"><button type="button" class="on" data-tab="login">Đăng nhập</button><button type="button" data-tab="signup">Tạo tài khoản</button></div>
+      <p class="tagline" data-t="tagline"></p>
+      <div class="seg" id="authTabs"><button type="button" class="on" data-tab="login" data-t="login"></button><button type="button" data-tab="signup" data-t="signup"></button></div>
       <form id="authForm" autocomplete="on" novalidate>
-        <label class="field"><span>Email</span><input id="authEmail" type="email" autocomplete="email" inputmode="email" required></label>
-        <label class="field"><span>Mật khẩu · Password</span><input id="authPass" type="password" autocomplete="current-password" minlength="6" required></label>
+        <label class="field"><span data-t="email"></span><input id="authEmail" type="email" autocomplete="email" inputmode="email" required></label>
+        <label class="field"><span data-t="password"></span><input id="authPass" type="password" autocomplete="current-password" minlength="6" required></label>
         <p class="auth-msg" id="authMsg"></p>
-        <button class="btn big" id="authSubmit" type="submit">Lên đảo · Play</button>
+        <button class="btn big" id="authSubmit" type="submit" data-t="play"></button>
+        <div class="lang-pick" id="langPick"><button type="button" data-lang="en">English</button><button type="button" data-lang="vi">Tiếng Việt</button></div>
       </form>
     </div>
   </section>
 
-  <div id="boot" class="screen"><div class="boot-inner"><div class="boot-cat"></div><div class="boot-bar"><i id="bootBar"></i></div><small id="bootMsg">Đang tải…</small></div></div>
-  <div id="rotate"><div class="rotate-card"><div class="rotate-phone"></div><b>Xoay dọc điện thoại nhé!</b><small>JEN Island is played in portrait. Please turn your phone upright.</small></div></div>
+  <div id="boot" class="screen"><div class="boot-inner"><div class="boot-cat"></div><div class="boot-bar"><i id="bootBar"></i></div><small id="bootMsg"></small></div></div>
+  <div id="rotate"><div class="rotate-card"><div class="rotate-phone"></div><b data-t="rotate"></b><small data-t="rotate2"></small></div></div>
 </div>
 <script type="module" src="js/main.js"></script>
 </body>

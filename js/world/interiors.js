@@ -35,6 +35,7 @@ export class Interior extends Scene {
   }
   furn(kind, x, y, o = {}, solid = null) {
     const p = { kind, x, y, ...o };
+    if (kind === 'rug' || kind === 'mat') p.flat = true;   // floor coverings sit under everyone
     p.draw = (c, t) => F[kind](c, t, p);
     p.cull = { x: x - 80, y: y - 90, w: 160, h: 110 };
     this.prop(p);
@@ -74,6 +75,25 @@ export class Interior extends Scene {
     box(c, -8, 0, 10, h + 10, 3, shade(this.wall, -30), INK, 1.2);
     box(c, w - 2, 0, 10, h + 10, 3, shade(this.wall, -30), INK, 1.2);
     if (this.outside) this.drawOutside(c, t);
+    // doormat is part of the floor so feet never slip under it
+    box(c, this.door.x - this.door.w / 2 + 1, this.h - 14, this.door.w - 2, 12, 3, '#e89a8a', INK, 0.8);
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1; for (let i = 1; i < 4; i++) { const x = this.door.x - this.door.w / 2 + 1 + i * (this.door.w - 2) / 4; c.beginPath(); c.moveTo(x, this.h - 12); c.lineTo(x, this.h - 4); c.stroke(); }
+  }
+  // ---- 1: an unmistakable way out: glowing doorway, frame and a bouncing EXIT arrow
+  drawOver(c, v, t) {
+    const { door, h } = this, pl = G.player;
+    const near = pl && Math.hypot(pl.x - door.x, pl.y - h) < 70;
+    const k = near ? 1 : 0.7;
+    const bob = Math.sin(t * 4) * 3;
+    const y = h - 44 + bob;
+    c.save(); c.globalAlpha = k;
+    // arrow
+    c.beginPath(); c.moveTo(door.x - 9, y); c.lineTo(door.x + 9, y); c.lineTo(door.x + 9, y + 8); c.lineTo(door.x + 15, y + 8); c.lineTo(door.x, y + 20); c.lineTo(door.x - 15, y + 8); c.lineTo(door.x - 9, y + 8); c.closePath();
+    c.fillStyle = '#6fbf73'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.6; c.stroke();
+    // label
+    box(c, door.x - 20, y - 15, 40, 13, 5, '#fff8ea', INK, 1.2);
+    text(c, G.lang === 'vi' ? 'LỐI RA' : 'EXIT', door.x, y - 8.2, 7.5, '#3f8f5f', 900);
+    c.restore();
   }
   drawOutside(c, t) {
     const { w, h } = this;
@@ -92,10 +112,14 @@ export class Interior extends Scene {
     // door frame + mat
     box(c, L - 3, h - 6, 4, 16, 1, shade(this.wall, -50), INK, 1);
     box(c, R - 1, h - 6, 4, 16, 1, shade(this.wall, -50), INK, 1);
-    ell(c, door.x, h + 1, door.w / 2 - 2, 3, '#e89a8a', INK, 0.8);
-    // light spilling in from outside
-    const lt = LIGHT.night > 0.4 ? 'rgba(120,130,200,.25)' : 'rgba(255,240,200,.35)';
-    c.fillStyle = lt; c.beginPath(); c.moveTo(L, h + 8); c.lineTo(R, h + 8); c.lineTo(R + 10, h - 30); c.lineTo(L - 10, h - 30); c.closePath(); c.globalAlpha = 0.5; c.fill(); c.globalAlpha = 1;
+    // bright light spilling in from outside marks the doorway
+    const pulse = 0.55 + 0.15 * Math.sin(t * 2.5);
+    const g = c.createLinearGradient(0, h + 8, 0, h - 40);
+    g.addColorStop(0, LIGHT.night > 0.4 ? `rgba(160,170,230,${pulse})` : `rgba(255,244,200,${pulse + 0.2})`); g.addColorStop(1, 'rgba(255,244,200,0)');
+    c.fillStyle = g; c.beginPath(); c.moveTo(L, h + 8); c.lineTo(R, h + 8); c.lineTo(R + 12, h - 40); c.lineTo(L - 12, h - 40); c.closePath(); c.fill();
+    // door frame posts + lintel
+    box(c, L - 5, h - 16, 6, 26, 2, shade(this.wall, -55), INK, 1);
+    box(c, R - 1, h - 16, 6, 26, 2, shade(this.wall, -55), INK, 1);
   }
 }
 
@@ -185,6 +209,7 @@ export function buildInteriors() {
     r.trigger({ id: 'notebook', kind: 'act', x: 176, y: 146, w: 48, h: 20, label: 'Sổ tay', en: 'Recipes', icon: 'notebook', action: 'recipeBook' });
     r.trigger({ id: 'photos', kind: 'act', x: 170, y: 64, w: 56, h: 16, label: 'Kỷ niệm', en: 'Memories', icon: 'photo', action: 'journal' });
     r.meoSpot = { x: 124, y: 170 };
+    r.catBed = { x: 56, y: 233 };
     S.meo = r;
   }
   // Business interiors with a service window onto the outdoor queue

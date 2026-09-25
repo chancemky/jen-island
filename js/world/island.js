@@ -7,7 +7,7 @@ import { INK, ell, circ, box, poly, line, text, star } from '../gfx/draw.js';
 import { drawHuman } from '../gfx/character.js';
 import * as P from '../gfx/props.js';
 import * as B from '../gfx/buildings.js';
-import { G } from '../systems/state.js';
+import { G, T } from '../systems/state.js';
 
 export const W = 1800, H = 2600;
 
@@ -74,19 +74,19 @@ export const BUILDINGS = [
   // resident homes (not enterable)
   { id: 'h_batu', type: 'house', x: 420, y: 1546, w: 100, fp: 52, wall: '#f4c9c0', roof: '#c9674a', shutter: '#7aa38a', home: 'ba_tu' },
   { id: 'h_linh', type: 'house', x: 300, y: 1384, w: 100, fp: 52, wall: '#cfe6d8', roof: '#d9784f', shutter: '#e89a8a', home: 'linh' },
-  { id: 'h_lan', type: 'house', x: 690, y: 1452, w: 100, fp: 52, wall: '#f9e2ee', roof: '#b8603f', shutter: '#9fb4dc', home: 'co_lan', label: 'HOA' },
+  { id: 'h_lan', type: 'house', x: 690, y: 1452, w: 100, fp: 52, wall: '#f9e2ee', roof: '#b8603f', shutter: '#9fb4dc', home: 'co_lan', label: ['FLOWERS', 'HOA'] },
   { id: 'h_tuan', type: 'house', x: 1140, y: 1652, w: 96, fp: 50, wall: '#d6e6f5', roof: '#c9674a', shutter: '#f2c14e', home: 'anh_tuan' },
   { id: 'h_mai', type: 'house', x: 1360, y: 1602, w: 96, fp: 50, wall: '#fbe7b6', roof: '#d9784f', shutter: '#6fae7c', home: 'chi_mai' },
   { id: 'h_hai', type: 'house', x: 1560, y: 1952, w: 96, fp: 50, wall: '#e8f1e6', roof: '#6f9fc8', shutter: '#e8584e', home: 'chu_hai' },
   { id: 'dinh', type: 'dinh', x: 620, y: 386, w: 170, fp: 60 },
 ];
 export const STALLS = [
-  { id: 'nm1', x: 340, y: 580, label: 'BÀ SÁU', goods: ['#f2c46b', '#e3703a'], cloth: ['#e8584e', '#fff5df'] },
-  { id: 'nm2', x: 530, y: 580, label: 'CHÈ', goods: ['#a8423a', '#9fd67a'], cloth: ['#6fbfb0', '#fff5df'] },
-  { id: 'nm3', x: 340, y: 670, label: 'ỐC', goods: ['#e0a052', '#fff5df'], cloth: ['#f2c14e', '#fff5df'] },
-  { id: 'night', x: 530, y: 670, label: 'SẠP CỦA BẠN', goods: ['#f2c46b', '#a8423a'], cloth: ['#f08ca0', '#fff5df'], biz: 'night' },
-  { id: 'nm5', x: 340, y: 760, label: 'NƯỚC MÍA', goods: ['#b9e08a', '#f7de8c'], cloth: ['#8fb7e0', '#fff5df'] },
-  { id: 'nm6', x: 530, y: 760, label: 'XIÊN QUE', goods: ['#c96b45', '#e3703a'], cloth: ['#c9b6e8', '#fff5df'] },
+  { id: 'nm1', x: 340, y: 580, label: ['GRANDMA SÁU', 'BÀ SÁU'], goods: ['#f2c46b', '#e3703a'], cloth: ['#e8584e', '#fff5df'] },
+  { id: 'nm2', x: 530, y: 580, label: ['SWEET SOUP', 'CHÈ'], goods: ['#a8423a', '#9fd67a'], cloth: ['#6fbfb0', '#fff5df'] },
+  { id: 'nm3', x: 340, y: 670, label: ['SNAILS', 'ỐC'], goods: ['#e0a052', '#fff5df'], cloth: ['#f2c14e', '#fff5df'] },
+  { id: 'night', x: 530, y: 670, label: ['YOUR STALL', 'SẠP CỦA BẠN'], goods: ['#f2c46b', '#a8423a'], cloth: ['#f08ca0', '#fff5df'], biz: 'night' },
+  { id: 'nm5', x: 340, y: 760, label: ['SUGARCANE', 'NƯỚC MÍA'], goods: ['#b9e08a', '#f7de8c'], cloth: ['#8fb7e0', '#fff5df'] },
+  { id: 'nm6', x: 530, y: 760, label: ['SKEWERS', 'XIÊN QUE'], goods: ['#c96b45', '#e3703a'], cloth: ['#c9b6e8', '#fff5df'] },
 ];
 
 // Where customers queue for each business (front of the service window).
@@ -286,13 +286,13 @@ export class Island extends Scene {
     for (const [x, y] of [[830, 1640], [970, 1640], [830, 1450], [970, 1450]]) this.add2('bench', x, y, { solidRect: [-18, -8, 36, 8] });
     // lantern strings over the market street
     for (let i = 0; i < 4; i++) this.add2('lanternString', 560 + i * 200, 1214, { x2: 560 + i * 200 + 150, h: 50, cullR: 160, cullH: 80, cull: { x: 560 + i * 200 - 10, y: 1150, w: 180, h: 80 } });
-    this.add2('foodCart', 810, 1222, { label: 'BÁNH MÌ', solidRect: [-20, -8, 40, 8] });
-    this.add2('foodCart', 1000, 1224, { label: 'KEM', solidRect: [-20, -8, 40, 8] });
+    this.add2('foodCart', 810, 1222, { label: ['BÁNH MÌ', 'BÁNH MÌ'], solidRect: [-20, -8, 40, 8] });
+    this.add2('foodCart', 1000, 1224, { label: ['ICE CREAM', 'KEM'], solidRect: [-20, -8, 40, 8] });
     for (const [x, y, col] of [[780, 1232, '#e8584e'], [830, 1236, '#6f9fc8'], [980, 1236, '#e8584e'], [1025, 1236, '#6fbf73']]) this.add2('stool', x, y, { col });
     this.add2('lowTable', 805, 1244, {});
     // signposts
-    this.add2('signpost', 940, 2300, { signs: [{ label: 'CHỢ', dir: 1 }, { label: 'BÃI BIỂN', dir: -1 }, { label: 'NHÀ', dir: 1 }], solidR: 3 });
-    this.add2('signpost', 942, 1330, { signs: [{ label: 'CHỢ ĐÊM', dir: -1 }, { label: 'NHÀ HÀNG', dir: 1 }], solidR: 3 });
+    this.add2('signpost', 940, 2300, { signs: [{ label: ['MARKET', 'CHỢ'], dir: 1 }, { label: ['BEACH', 'BÃI BIỂN'], dir: -1 }, { label: ['HOME', 'NHÀ'], dir: 1 }], solidR: 3 });
+    this.add2('signpost', 942, 1330, { signs: [{ label: ['NIGHT MKT', 'CHỢ ĐÊM'], dir: -1 }, { label: ['RESTAURANT', 'NHÀ HÀNG'], dir: 1 }], solidR: 3 });
     // scooters parked along the street
     this.add2('scooter', 620, 1238, { col: '#f28f7c', basket: true });
     this.add2('scooter', 1180, 1234, { col: '#9fd8c8', flip: true });
@@ -311,9 +311,37 @@ export class Island extends Scene {
     // pond lotus
     for (let i = 0; i < 9; i++) { const a = R() * TAU, rr = R() * 0.7; this.add2('lotus', POND.x + Math.cos(a) * POND.rx * rr, POND.y + Math.sin(a) * POND.ry * rr, { flower: i % 3 === 0, cullR: 12, cullH: 16 }); }
     // lamp posts
-    for (const [x, y] of [[872, 2268], [930, 2006], [872, 1740], [930, 1300], [560, 1160], [1240, 1160], [1150, 1700], [440, 1620], [1160, 960], [960, 700], [476, 1040]]) this.add2('lampPost', x, y, { solidR: 3, cullR: 40, cullH: 60 });
+    for (const [x, y] of [[872, 2268], [936, 2040], [872, 1740], [930, 1300], [560, 1160], [1240, 1160], [1150, 1700], [440, 1620], [1160, 960], [960, 700], [476, 1040]]) this.add2('lampPost', x, y, { solidR: 3, cullR: 40, cullH: 60 });
     // pots and flowers by buildings
     for (const [x, y] of [[640, 1162], [760, 1162], [1400, 1742], [1540, 1740], [1200, 1744], [1330, 1742]]) this.add2('pot', x, y, { flowers: ['#ff8fb0', '#ffd35a', '#fff'][((x + y) | 0) % 3], solidR: 5 });
+    // ---- hand-placed decorations
+    const deco = (kind, x, y, o = {}) => { if (!this.terrain(x, y)) return null; return this.add2(kind, x, y, o); };
+    for (const [x, dx] of [[630, -150], [480, -150]]) deco('powerPole', x, 1634, { to: [dx, -8], cull: { x: x - 170, y: 1540, w: 200, h: 110 }, solidR: 3 });
+    deco('powerPole', 330, 1626, { cullR: 40, cullH: 100, solidR: 3 });
+    deco('flowerArch', 903, 1950, { w: 46, cullR: 50, cullH: 90 }); this.circle(880, 1948, 3); this.circle(926, 1948, 3);
+    deco('flowerArch', 456, 996, { w: 46, cullR: 50, cullH: 90 }); this.circle(433, 994, 3); this.circle(479, 994, 3);
+    deco('birdCage', 482, 1560, { solidR: 3, cullR: 30, cullH: 60 });
+    deco('birdCage', 1628, 1958, { solidR: 3, cullR: 30, cullH: 60 });
+    deco('fruitStand', 1262, 1250, { solidRect: [-26, -8, 52, 8], cullR: 50, cullH: 70 });
+    deco('fruitStand', 1044, 2300, { solidRect: [-26, -8, 52, 8], cullR: 50, cullH: 70 });
+    deco('sugarcaneCart', 1034, 1476, { label: ['SUGARCANE', 'NƯỚC MÍA'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 70 });
+    deco('rattanSet', 636, 1486, { solidRect: [-22, -8, 44, 8] });
+    deco('rattanSet', 668, 2268, { solidRect: [-22, -8, 44, 8] });
+    deco('fishingNet', 1552, 2150, { solidRect: [-24, -4, 48, 4], cullR: 40, cullH: 50 });
+    for (const [x, y] of [[1474, 2244], [556, 2300], [1210, 2300]]) deco('coconutPile', x, y, { solidR: 8 });
+    deco('sandcastle', 826, 2334, { solidR: 10 }); deco('sandcastle', 1262, 2352, { solidR: 10 });
+    deco('beachHammock', 980, 2336, { w: 60, solidRect: [-32, -4, 64, 4], cullR: 40, cullH: 50 });
+    deco('boatShore', 1150, 2386, { col: '#6fbfb0' }); deco('boatShore', 392, 2296, { col: '#f28f7c', flip: true });
+    deco('well', 362, 1466, { solidR: 14, cullR: 30, cullH: 50 });
+    deco('bicycle', 1410, 1618, { col: '#9fb4dc' }); deco('bicycle', 626, 1172, { col: '#f28f7c', flip: true });
+    deco('veggieGarden', 346, 1660, { w: 60, solidRect: [-30, -26, 60, 26] });
+    deco('veggieGarden', 1488, 2004, { w: 50, solidRect: [-25, -26, 50, 26] });
+    for (const [x, y, f] of [[1100, 1470, 0], [760, 1640, 0], [1540, 1650, 0], [300, 1500, 0], [1380, 1470, 0]]) deco('frangipani', x, y, { solidR: 5, cullR: 40, cullH: 60, s: 1 });
+    // reeds along both river banks
+    for (let i = 4; i < RIVER.length - 4; i += 10) {
+      const x = RIVER[i], y = RIVER[i + 1], nx = RIVER[i + 2] - RIVER[i - 2], ny = RIVER[i + 3] - RIVER[i - 1], l = Math.hypot(nx, ny) || 1;
+      for (const sgn of [-1, 1]) { const rx = x - ny / l * 30 * sgn, ry = y + nx / l * 30 * sgn; if (!onBridge(rx, ry) && this.terrain(rx, ry)) { const p = { kind: 'reeds', x: rx, y: ry }; p.draw = (c, t) => P.reeds(c, t, p); p.cull = { x: rx - 16, y: ry - 34, w: 32, h: 40 }; this.prop(p); } }
+    }
     // ---- vegetation (scattered with spacing rules)
     const avoid = (x, y, r) => {
       if (!this.terrain(x, y) || !inPoly(GRASS, x, y)) return true;
@@ -349,6 +377,8 @@ export class Island extends Scene {
     place('bush', 46, 14, { trunk: 9, cullR: 30, cullH: 40 });
     place('bush', 26, 14, { trunk: 9, flowers: '#f36d86', col: '#6fb356', cullR: 30, cullH: 40 });
     place('bush', 14, 14, { trunk: 9, flowers: '#e97ad0', col: '#7cc463', cullR: 30, cullH: 40 }); // bougainvillea
+    place('frangipani', 8, 16, { trunk: 5, cullR: 40, cullH: 60 });
+    place('bush', 12, 14, { trunk: 9, flowers: '#ff5a5a', col: '#5fae57', cullR: 30, cullH: 40 }); // hibiscus
     place('rock', 14, 12, { trunk: 10, cullR: 20, cullH: 20 });
     // non-colliding ground clutter
     for (let i = 0; i < 520; i++) {
@@ -496,11 +526,11 @@ function drawFounderStatue(c, t) {
 
 export function bizSign(id) {
   const s = G.state;
-  if (id === 'shed1') return 'TRÀ & CÀ PHÊ';
+  if (id === 'shed1') return T('TEA & COFFEE', 'TRÀ & CÀ PHÊ');
   if (id === 'shed2') return 'BÁNH MÌ';
-  if (id === 'truck') return 'XE CUỐN';
-  if (id === 'restaurant') return 'NHÀ HÀNG ' + (s.island.name || 'JEN').toUpperCase();
-  if (id === 'night') return 'SẠP ĐÊM';
+  if (id === 'truck') return T('ROLL TRUCK', 'XE CUỐN');
+  if (id === 'restaurant') return T((s.island.name || 'JEN').toUpperCase() + ' RESTAURANT', 'NHÀ HÀNG ' + (s.island.name || 'JEN').toUpperCase());
+  if (id === 'night') return T('NIGHT STALL', 'SẠP ĐÊM');
   return '';
 }
 
@@ -518,4 +548,4 @@ export const AREAS = [
   { name: 'Ngọn Hải Đăng', en: 'Lighthouse Point', test: (x, y) => y < 420 },
   { name: 'Hồ Sen', en: 'Lotus Spring', test: (x, y) => dist(x, y, POND.x, POND.y) < 170 },
 ];
-export function areaAt(x, y) { return AREAS.find(a => a.test(x, y)) || { name: 'Đảo', en: 'Island' }; }
+export function areaAt(x, y) { const a = AREAS.find(a => a.test(x, y)) || { name: 'Đảo', en: 'The Island' }; return { name: T(a.en, a.name), en: '' }; }

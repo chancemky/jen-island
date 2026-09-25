@@ -67,7 +67,7 @@ function ears(c, a, t, view) {
 }
 
 function face(c, a, t, view) {
-  const emo = a.emo || 'neutral', blink = a.blinkAmt || 0;
+  const emo = a.act === 'sleep' ? 'sleepy' : (a.emo || 'neutral'), blink = a.blinkAmt || 0;
   const lx = (a.lookX || 0) * 0.6, ly = (a.lookY || 0) * 0.5;
   const eyesX = view === 'side' ? [6.2] : [-5, 5];
   const ey = HY + 1.2;
@@ -120,7 +120,35 @@ function face(c, a, t, view) {
   }
 }
 
+// Curled up asleep: a round loaf with the tail wrapped around, head on paws.
+function drawCatSleeping(c, a, t) {
+  const br = Math.sin(t * 1.7) * 0.5 + 0.5;
+  const sc = a.look?.scale || 1;
+  c.save(); c.scale(sc, sc);
+  shadow(c, 0, 0.5, 11, 3.2, 0.18);
+  // tail wrapped around the front
+  c.lineCap = 'round';
+  c.beginPath(); c.moveTo(9, -4); c.quadraticCurveTo(12, 1, 4, 1.6); c.quadraticCurveTo(-4, 2.4, -9, -0.5);
+  c.strokeStyle = INK; c.lineWidth = 5.4; c.stroke(); c.strokeStyle = FUR; c.lineWidth = 3.6; c.stroke();
+  c.beginPath(); c.moveTo(-4, 2.2); c.quadraticCurveTo(-7, 1.4, -9, -0.5); c.strokeStyle = PATCH; c.lineWidth = 3.6; c.stroke();
+  // body loaf (rises and falls with breath)
+  c.beginPath(); c.ellipse(1, -5.5 - br * 0.5, 11, 6 + br * 0.5, 0, 0, TAU); c.fillStyle = FUR; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+  c.save(); c.beginPath(); c.ellipse(1, -5.5 - br * 0.5, 11, 6 + br * 0.5, 0, 0, TAU); c.clip(); cloud(c, 5, -9, 4, PATCH); c.restore();
+  // head resting on the left, eyes closed
+  c.save(); c.translate(-6, -3); c.scale(0.62, 0.62); c.translate(0, -HY - 4); c.rotate(-0.25);
+  ears(c, { ...a, emo: 'sleepy' }, t, 'front');
+  headPath(c); c.fillStyle = FUR; c.fill();
+  c.save(); c.clip(); cloud(c, -6.8, HY - 5.8, 4.4, PATCH); c.restore();
+  headPath(c); c.strokeStyle = INK; c.lineWidth = 1.4; c.stroke();
+  face(c, { ...a, emo: 'sleepy', talking: false }, t, 'front');
+  c.restore();
+  // front paws tucked under the chin
+  ell(c, -1, -1.6, 2.4, 1.7, FUR, INK, 0.9); ell(c, 3.5, -1.4, 2.4, 1.7, FUR, INK, 0.9);
+  c.restore();
+}
+
 export function drawCat(c, a, t) {
+  if (a.act === 'sleep') return drawCatSleeping(c, a, t);
   const view = viewOf(a.dir || 'down');
   const flip = a.dir === 'left' ? -1 : 1;
   const m = a.moving || 0, ph = a.walkPh || 0;

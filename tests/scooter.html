@@ -1,0 +1,6 @@
+<!doctype html><html><body style="margin:0;background:#a3d68a"><canvas id="c" width="900" height="300"></canvas><script type="module">
+import { scooter } from '../js/gfx/props.js'; import { drawHuman } from '../js/gfx/character.js'; import { visitorLook } from '../js/data/looks.js';
+const c=document.getElementById('c').getContext('2d'); c.lineJoin='round'; c.lineCap='round';
+[0,1,2].forEach(i=>{ const look={...visitorLook(i*5+2,'regular'),hat:'helmet',hatColor:['#f28f7c','#6f9fc8','#f7de8c'][i]};
+ c.save(); c.translate(150+i*300,230); c.scale(4,4); scooter(c,1,{col:['#f28f7c','#9fd8c8','#f7de8c'][i],flip:i===1,basket:true,rider:(cc,t)=>drawHuman(cc,{look,dir:'right',moving:0,seed:1,blinkAmt:0,emo:'happy',sit:true,act:'ride'},t)}); c.restore(); });
+window.done=true;</script></body></html>

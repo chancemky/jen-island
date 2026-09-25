@@ -4,7 +4,7 @@
 // Without staff the player does those jobs (take orders, collect the register,
 // clear tables). With a full team it runs while you're elsewhere.
 
-import { G, bizOf, addMoney, addRep, markDirty, unlockAchievement } from './state.js';
+import { G, T, bizOf, addMoney, addRep, markDirty, unlockAchievement } from './state.js';
 import { Interior } from '../world/interiors.js';
 import { Grid } from '../world/scene.js';
 import { Actor } from '../world/actor.js';
@@ -148,7 +148,7 @@ function spawnGuest() {
   const capacity = sc.tables.filter(t => t.active).length * 2;
   if (inside >= capacity + 2) return;
   const pool = bizRecipes('restaurant').filter(id => canMake('restaurant', id));
-  if (!pool.length) { if (!r.warned) { r.warned = true; bus.emit('toast', { text: 'Nhà hàng hết nguyên liệu!', sub: 'Restaurant is out of ingredients', bad: true }); } return; }
+  if (!pool.length) { if (!r.warned) { r.warned = true; bus.emit('toast', { text: T('The restaurant is out of ingredients!', 'Nhà hàng hết nguyên liệu!'), bad: true }); } return; }
   r.warned = false;
   const seed = randi(1, 1e6), pers = choice(['patient', 'patient', 'excited', 'tourist', 'rushed', 'picky', 'regular']);
   const b = bizOf('restaurant');
@@ -202,7 +202,7 @@ function pay(g) {
   fx.float(g.actor.x, g.actor.y - 44, '+' + total + 'k', '#ffe07a', { size: 9 });
   bus.emit('rest:paid', g, total);
   markDirty();
-  if (!cashier && !G.state.story.flags.registerHint) { G.state.story.flags.registerHint = true; bus.emit('toast', { text: 'Tiền đang ở quầy thu ngân', sub: 'Collect the takings at the register — or hire a cashier.', icon: 'coin' }); }
+  if (!cashier && !G.state.story.flags.registerHint) { G.state.story.flags.registerHint = true; bus.emit('toast', { text: T('Payments go to the register', 'Tiền đang ở quầy thu ngân'), sub: T('Collect the takings at the register — or hire a cashier.', 'Thu tiền ở quầy — hoặc thuê một thu ngân.'), icon: 'coin' }); }
 }
 
 // Player serves a guest directly (when there is no server/cook). Called by the service UI flow.
@@ -263,7 +263,7 @@ function assign(a) {
   d.breakT -= 1;
   if (d.breakT <= 0) {
     d.breakT = (e.trait === 'steady' ? 400 : 120) + e.stats.reliability * 60 + rand(0, 80);
-    if (chance(e.trait === 'dreamy' ? 0.7 : 0.5 - e.stats.reliability * 0.07)) return task(a, 'break', BREAK, async () => { a.face('down'); a.sit = true; a.setAct('drink', 'cup'); a.showEmote(chance(0.5) ? 'note' : 'zzz', 3); await wait(rand(14, 26)); a.sit = false; a.setAct(null); });
+    if (chance(e.trait === 'dreamy' ? 0.7 : 0.5 - e.stats.reliability * 0.07)) return task(a, 'break', BREAK, async () => { a.face('down'); a.sit = true; if (chance(0.5)) { a.setAct('drink', 'cup'); a.showEmote('note', 3); } else { a.setAct('sleep'); a.showEmote('zzz', 20); } await wait(rand(14, 26)); a.sit = false; a.setAct(null); a.emote = null; });
   }
   const role = e.role, speedK = 1.4 - e.stats.speed * 0.12;
   if (role === 'server') {
@@ -300,7 +300,7 @@ function assign(a) {
         tk.guest.perfect = chance(0.45 + e.stats.cooking * 0.1 + (e.trait === 'careful' ? 0.15 : 0));
         r.pass.push({ slot, guest: tk.guest, recipe: tk.recipe });
         sfx('bell');
-        if (!staffByRole('server').length) bus.emit('toast', { text: 'Món đã xong!', sub: 'A dish is ready on the pass — carry it to the table.', icon: RECIPES[tk.recipe].icon, ms: 1800 });
+        if (!staffByRole('server').length) bus.emit('toast', { text: T('A dish is ready!', 'Món đã xong!'), sub: T('It\'s on the pass — carry it to the table.', 'Món đang ở quầy chuyển — mang ra bàn nhé.'), icon: RECIPES[tk.recipe].icon, ms: 1800 });
       });
     }
     return idleNear(a, [STOVES[0][0] + 30, 132]);
@@ -354,14 +354,14 @@ export function updateRestaurant(dt, gameMin) {
   if (sc !== G.scene) sc.update(dt, G.t);   // keep simulating while the player is elsewhere
   // guests arrive while open
   if (b.open) {
-    if (G.state.time >= 22 * 60) { b.open = false; bus.emit('biz:close', 'restaurant', 'hours'); }
-    r.spawnT -= gameMin;
+    if (G.state.time >= 24 * 60) { b.open = false; bus.emit('biz:close', 'restaurant', 'hours'); }
+    r.spawnT -= dt;
     if (r.spawnT <= 0) {
       const rep = 1 + Math.min(3, G.state.reputation / 80);
       const h = G.state.time / 60;
       const tf = (h >= 11 && h < 13.5) || (h >= 17.5 && h < 20.5) ? 1.6 : 1;
       const att = BUSINESSES.restaurant.upgrades?.[b.level]?.attract || 1;
-      r.spawnT = clamp(rand(26, 44) / (rep * tf * att), 6, 60);
+      r.spawnT = clamp(rand(26, 44) / (rep * tf * att * 1.25), 5, 50);
       spawnGuest();
     }
   }
@@ -385,7 +385,7 @@ export function updateRestaurant(dt, gameMin) {
   if (r.depositT <= 0) {
     r.depositT = 20;
     const cashier = staffByRole('cashier')[0];
-    if (cashier && b.register > 0) { const k = Math.round(b.register); b.register = 0; addMoney(k, 'deposit'); cashier.showEmote('coin', 1.4); bus.emit('toast', { text: `${cashier.name} đã nộp ${k}k`, sub: 'Cashier deposited the restaurant takings', icon: 'coin', ms: 1800 }); }
+    if (cashier && b.register > 0) { const k = Math.round(b.register); b.register = 0; addMoney(k, 'deposit'); cashier.showEmote('coin', 1.4); bus.emit('toast', { text: T(`${cashier.name} deposited ${k}k`, `${cashier.name} đã nộp ${k}k`), sub: T('The restaurant\'s takings', 'Tiền bán hàng của nhà hàng'), icon: 'coin', ms: 1800 }); }
   }
 }
 export function collectRegister() {

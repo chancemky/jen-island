@@ -13,8 +13,8 @@ import { TAU, shade } from '../core/util.js';
 import { INK, ell, circ, limb, poly, shadow, heart } from './draw.js';
 import { drawHeld } from './food.js';
 
-const HY = -25.2, HR = 11.8, HRY = 10.8; // head centre / radii
-const SH = -14.2, HEM = -5.6;           // shoulder and hem lines
+const HY = -24.4, HR = 12.9, HRY = 11.7; // big round head (about 60% of the height)
+const SH = -12.4, HEM = -4.9;           // small body: shoulder and hem lines
 const EYE = '#3d2723', EYE2 = '#8a5540', BLUSH = 'rgba(247,140,150,.5)', MOUTH = '#8e3f3e';
 
 // ---------------------------------------------------------------- helpers
@@ -39,7 +39,7 @@ function pose(a, view, t) {
     dy: -bob + breathe * 0.25 - (a.hop || 0), sx: 1, sy: 1 + breathe * 0.012,
     tilt: sw * 0.035 + (a.tilt || 0), headTilt: a.headTilt || 0, headDy: breathe * 0.35,
     legL: 0, legR: 0, legLx: 0, legRx: 0,
-    hL: [-7.4, -7.9], hR: [7.4, -7.9], held: null, heldHand: 'R',
+    hL: [-6.6, -6.6], hR: [6.6, -6.6], held: null, heldHand: 'R',
   };
   // squash on turns and landings
   if (a.turnT > 0) { const k = a.turnT / 0.14; P.sx = 1 - 0.1 * k; P.sy = 1 + 0.06 * k; }
@@ -48,10 +48,10 @@ function pose(a, view, t) {
   if (view === 'side') {
     P.legLx = sw * 2.8; P.legRx = -sw * 2.8;
     P.legL = -Math.max(0, Math.sin(ph)) * 1.4 * m; P.legR = -Math.max(0, -Math.sin(ph)) * 1.4 * m;
-    P.hL = [-sw * 4.2 - 0.5, -8.2]; P.hR = [sw * 4.2 + 0.5, -8.2];
+    P.hL = [-sw * 3.8 - 0.5, -7]; P.hR = [sw * 3.8 + 0.5, -7];
   } else {
     P.legL = -Math.max(0, Math.sin(ph)) * 2.2 * m; P.legR = -Math.max(0, -Math.sin(ph)) * 2.2 * m;
-    P.hL = [-7.2 - Math.abs(sw) * 0.4, -7.8 - sw * 1.6]; P.hR = [7.2 + Math.abs(sw) * 0.4, -7.8 + sw * 1.6];
+    P.hL = [-6.5 - Math.abs(sw) * 0.4, -6.6 - sw * 1.5]; P.hR = [6.5 + Math.abs(sw) * 0.4, -6.6 + sw * 1.5];
   }
 
   switch (act) {
@@ -82,18 +82,21 @@ function pose(a, view, t) {
       break;
     }
     case 'sleep': P.headTilt += 0.16; P.headDy += 1.2; break;
+    case 'ride': // both hands forward on the handlebar grips, leaning in a little
+      P.hR = [11.5, -12.2]; P.hL = [10.4, -12.8]; P.tilt += 0.1; P.ride = true; break;
   }
   if (a.sit) { P.dy += 3.2; P.legL = P.legR = 0; }
+  if (P.ride) { P.legLx = 4.2; P.legRx = 5.2; P.legL = -1.2; P.legR = -0.6; }
   return P;
 }
 
 // ---------------------------------------------------------------- face
 function eyes(c, a, L, view, t, s) {
-  const emo = a.emo || 'neutral';
+  const emo = a.act === 'sleep' ? 'sleepy' : (a.emo || 'neutral');
   const blink = a.blinkAmt || 0;
   const lx = (a.lookX || 0) * 0.7, ly = (a.lookY || 0) * 0.6;
-  const pos = view === 'side' ? [[5.6, 0]] : [[-4.5, 0], [4.5, 0]];
-  const ey = HY + 1.4;
+  const pos = view === 'side' ? [[6.2, 0]] : [[-5.1, 0], [5.1, 0]];
+  const ey = HY + 3.1;
   for (const [ex0] of pos) {
     const ex = ex0 + lx * (view === 'side' ? 0.4 : 1);
     if (emo === 'happy' || emo === 'love' && blink > 0.5) {
@@ -107,25 +110,28 @@ function eyes(c, a, L, view, t, s) {
       c.strokeStyle = EYE; c.lineWidth = 1.2; c.lineCap = 'round'; c.stroke();
       continue;
     }
-    const big = emo === 'surprised' ? 1.2 : 1;
-    const rx = 2.05 * big, ry = 2.75 * big * (1 - blink * 0.7);
+    const big = emo === 'surprised' ? 1.12 : 1;
+    const rx = (view === 'side' ? 2.3 : 2.75) * big, ry = 3.55 * big * (1 - blink * 0.75);
     const yy = ey + ly;
-    // iris with a warm lower gradient like the reference
+    const iris = L.eyeCol || '#8a5a40';
+    // sclera sliver, then a big glossy iris with a dark top and a lighter bottom
     c.beginPath(); c.ellipse(ex, yy, rx, ry, 0, 0, TAU);
     const g = c.createLinearGradient(0, yy - ry, 0, yy + ry);
-    g.addColorStop(0, L.eye || EYE); g.addColorStop(0.55, L.eye || EYE); g.addColorStop(1, L.eye2 || EYE2);
+    g.addColorStop(0, '#2a1a18'); g.addColorStop(0.35, shade(iris, -45)); g.addColorStop(0.8, iris); g.addColorStop(1, shade(iris, 45));
     c.fillStyle = g; c.fill();
-    // highlights
-    const hx = emo === 'think' ? 0.6 : -0.7;
-    circ(c, ex + hx, yy - ry * 0.42, 0.95 * big, '#fff', null);
-    circ(c, ex + 0.8, yy + ry * 0.38, 0.42 * big, 'rgba(255,255,255,.85)', null);
-    // lashes / upper lid
-    if (L.lashes) {
-      const o = view === 'side' ? 1 : Math.sign(ex0);
-      c.beginPath(); c.moveTo(ex - rx * 1.05, yy - ry * 0.35); c.quadraticCurveTo(ex, yy - ry * 1.28, ex + rx * 1.05, yy - ry * 0.35);
-      c.strokeStyle = EYE; c.lineWidth = 0.9; c.stroke();
-      c.beginPath(); c.moveTo(ex + o * rx * 0.95, yy - ry * 0.5); c.lineTo(ex + o * (rx + 1.1), yy - ry * 0.95); c.stroke();
-    }
+    // pupil
+    ell(c, ex + lx * 0.2, yy + ry * 0.05, rx * 0.46, ry * 0.5, 'rgba(25,14,12,.75)', null);
+    // highlights: a big one, a small one and a tiny sparkle
+    const hx = emo === 'think' ? 0.7 : -0.8;
+    ell(c, ex + hx, yy - ry * 0.4, 1.25 * big, 1.05 * big, '#fff', null);
+    circ(c, ex + 0.95, yy + ry * 0.42, 0.55 * big, 'rgba(255,255,255,.9)', null);
+    if (emo === 'happy' || emo === 'excited' || emo === 'neutral') circ(c, ex + 1.2, yy - ry * 0.62, 0.35, '#fff', null);
+    // thick upper lash line with an outer flick — the big-eyed chibi look
+    // lash line hugs the top of the eye, mirrored per side, with a soft outer flick
+    const o = view === 'side' ? 1 : Math.sign(ex0);
+    c.beginPath(); c.moveTo(ex - o * rx * 1.0, yy - ry * 0.5); c.quadraticCurveTo(ex - o * rx * 0.05, yy - ry * 1.3, ex + o * rx * 1.14, yy - ry * 0.18);
+    c.strokeStyle = '#2a1a18'; c.lineWidth = 1.2; c.lineCap = 'round'; c.stroke();
+    if (L.lashes) { c.beginPath(); c.moveTo(ex + o * rx * 1.08, yy - ry * 0.22); c.quadraticCurveTo(ex + o * (rx + 1.1), yy - ry * 0.3, ex + o * (rx + 1.6), yy - ry * 0.62); c.lineWidth = 0.9; c.stroke(); }
     if (emo === 'sad') {
       const o = ex0 < 0 ? 1 : -1; // inner corner raised = sad (lowered would read as angry)
       c.beginPath(); c.moveTo(ex - o * 2.3, yy - ry * 0.9 + 0.5); c.lineTo(ex + o * 2.3, yy - ry * 0.9 - 0.9);
@@ -138,20 +144,20 @@ function eyes(c, a, L, view, t, s) {
 
 function blushAndMouth(c, a, L, view, t, P) {
   const emo = a.emo || 'neutral';
-  const bx = view === 'side' ? [7.6] : [-7.3, 7.3];
-  for (const x of bx) ell(c, x, HY + 4.6, view === 'side' ? 1.8 : 2.4, 1.35, emo === 'angry' ? 'rgba(240,110,110,.65)' : BLUSH, null);
-  if (emo !== 'angry' && view !== 'side') for (const x of bx) { // tiny blush lines like the reference
-    c.strokeStyle = 'rgba(230,110,120,.45)'; c.lineWidth = 0.45;
-    c.beginPath(); c.moveTo(x - 1, HY + 4.1); c.lineTo(x - 1.6, HY + 5.1); c.moveTo(x + 0.3, HY + 4.1); c.lineTo(x - 0.3, HY + 5.1); c.stroke();
+  const bx = view === 'side' ? [8.3] : [-8.2, 8.2];
+  for (const x of bx) ell(c, x, HY + 6.9, view === 'side' ? 2 : 2.7, 1.5, emo === 'angry' ? 'rgba(240,110,110,.65)' : 'rgba(250,135,150,.55)', null);
+  if (emo !== 'angry' && view !== 'side') for (const x of bx) { // tiny blush strokes
+    c.strokeStyle = 'rgba(230,100,120,.5)'; c.lineWidth = 0.5;
+    c.beginPath(); for (let k = -1; k <= 1; k++) { c.moveTo(x + k * 1.1 + 0.5, HY + 6.2); c.lineTo(x + k * 1.1 - 0.3, HY + 7.5); } c.stroke();
   }
-  const mx = view === 'side' ? 8.4 : 0, my = HY + 6.4;
+  const mx = view === 'side' ? 9.3 : 0, my = HY + 8.2;
   let open = 0;
   if (a.talking) open = 0.35 + 0.65 * Math.abs(Math.sin(t * 17 + Math.sin(t * 5)));
   if (P.chew) open = 0.5;
   c.lineCap = 'round';
   if (emo === 'surprised') { ell(c, mx, my + 0.4, 1.3, 1.6 + open * 0.4, MOUTH, INK, 0.6); return; }
   if (open > 0.15 || emo === 'happy' || emo === 'love') {
-    const w = view === 'side' ? 1.3 : 1.9, h = emo === 'happy' || emo === 'love' ? Math.max(open, 0.8) * 1.9 : open * 1.8;
+    const w = view === 'side' ? 1.1 : 1.6, h = emo === 'happy' || emo === 'love' ? Math.max(open, 0.8) * 1.7 : open * 1.6;
     c.beginPath(); c.moveTo(mx - w, my - 0.3); c.quadraticCurveTo(mx, my + h * 1.4, mx + w, my - 0.3); c.closePath();
     c.fillStyle = MOUTH; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.6; c.stroke();
     if (h > 1) ell(c, mx, my + h * 0.55, w * 0.55, h * 0.3, '#f28b95', null);
@@ -161,7 +167,7 @@ function blushAndMouth(c, a, L, view, t, P) {
   if (emo === 'sad') { c.moveTo(mx - 1.3, my + 0.7); c.quadraticCurveTo(mx, my - 0.5, mx + 1.3, my + 0.7); }
   else if (emo === 'angry') { c.moveTo(mx - 1.2, my + 0.2); c.lineTo(mx + 1.2, my); }
   else if (emo === 'think') { c.moveTo(mx - 0.9, my + 0.3); c.quadraticCurveTo(mx + 0.3, my + 0.1, mx + 1.3, my - 0.4); }
-  else { c.moveTo(mx - 1.2, my - 0.2); c.quadraticCurveTo(mx, my + 1, mx + 1.2, my - 0.2); }
+  else { c.moveTo(mx - 1.1, my - 0.3); c.quadraticCurveTo(mx - 0.55, my + 0.7, mx, my - 0.05); c.quadraticCurveTo(mx + 0.55, my + 0.7, mx + 1.1, my - 0.3); } // tiny cat-like smile
   c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
 }
 
@@ -171,7 +177,7 @@ function brows(c, a, L, view) {
   c.strokeStyle = C.hairS; c.lineWidth = 0.9; c.lineCap = 'round';
   for (const x of xs) {
     const inner = view === 'side' ? -1 : -Math.sign(x);
-    const y = HY - 3.4;
+    const y = HY - 1.6;
     c.beginPath();
     if (emo === 'angry') { c.moveTo(x - inner * 1.8, y - 0.8); c.lineTo(x + inner * 1.6, y + 0.5); }
     else if (emo === 'sad') { c.moveTo(x - inner * 1.8, y + 0.5); c.lineTo(x + inner * 1.6, y - 0.6); }
@@ -258,12 +264,17 @@ function hairFront(c, L, view, t) {
     } else if (st === 'bald') {
       c.lineTo(HR - 1, HY - 3); c.quadraticCurveTo(0, HY - 7, -HR + 1, HY - 3);
     } else {
-      c.quadraticCurveTo(HR - 0.4, HY - 2.2, HR - 2.6, HY - 2.9);
-      c.quadraticCurveTo(7, HY - 1.4, 5.2, HY - 3.9);
-      c.quadraticCurveTo(3.4, HY - 1.6, 1.2, HY - 4.4);
-      c.quadraticCurveTo(-1.2, HY - 1.8, -3.3, HY - 4.2);
-      c.quadraticCurveTo(-5.8, HY - 1.2, -7.6, HY - 3.6);
-      c.quadraticCurveTo(-HR + 0.6, HY - 2, -HR - 0.9, HY + 3);
+      // soft pointed strands falling over the forehead, just above the eyes
+      // uneven, softly pointed strands: rounded where they meet, sharp at the tips
+      const tips = [[HR - 1.3, HY + 2], [7.2, HY - 0.2], [2.4, HY - 1.2], [-2.6, HY - 0.5], [-7.4, HY + 0.4], [-HR + 1.3, HY + 2]];
+      const roots = [[9.2, HY - 5], [4.6, HY - 5.6], [-0.2, HY - 6], [-5, HY - 5.4], [-9.6, HY - 4.6]];
+      c.lineTo(tips[0][0], tips[0][1]);
+      for (let i = 0; i < roots.length; i++) {
+        const [tx, ty] = tips[i], [rx0, ry0] = roots[i], [nx, ny] = tips[i + 1];
+        c.quadraticCurveTo(tx - 0.6, (ty + ry0) / 2 - 1, rx0, ry0);   // up into the root, curved
+        c.quadraticCurveTo(nx + 0.8, (ry0 + ny) / 2 - 0.5, nx, ny);    // down to the next tip
+      }
+      c.lineTo(-HR - 0.9, HY + 3);
     }
     c.closePath(); c.fill(); c.stroke();
     // face-framing locks
@@ -317,6 +328,14 @@ function hat(c, L, view, t) {
     c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
     c.fillStyle = '#fff'; for (let i = -2; i <= 2; i++) circ(c, i * 3.6, HY - 8 + Math.abs(i) * 0.8, 0.55, 'rgba(255,255,255,.9)', null);
     if (view !== 'front') { c.beginPath(); c.moveTo(-HR, HY - 5); c.lineTo(-HR - 4, HY - 2 + Math.sin(t * 5) * 0.8); c.lineTo(-HR - 2.5, HY - 6); c.fillStyle = col; c.fill(); c.stroke(); }
+  } else if (h === 'helmet') {
+    // nón bảo hiểm — the half-shell scooter helmet
+    c.beginPath(); c.ellipse(0, HY - 4.2, HR + 1.4, HRY + 0.4, 0, Math.PI, TAU); c.closePath();
+    c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.1; c.stroke();
+    c.strokeStyle = shade(col, 40); c.lineWidth = 1.6; c.beginPath(); c.ellipse(-2, HY - 9, HR - 4, HRY - 5, 0, Math.PI * 1.1, Math.PI * 1.5); c.stroke();
+    if (view === 'side') { c.beginPath(); c.moveTo(HR - 2, HY - 4.6); c.quadraticCurveTo(HR + 4, HY - 4.4, HR + 4.4, HY - 2.6); c.lineTo(HR - 1.4, HY - 3.2); c.closePath(); c.fillStyle = shade(col, -25); c.fill(); c.stroke(); }
+    else if (view === 'front') { box(c, -HR + 1, HY - 5.4, (HR - 1) * 2, 2.2, 1, shade(col, -25)); }
+    c.strokeStyle = '#5a4a48'; c.lineWidth = 0.6; c.beginPath(); c.moveTo(view === 'side' ? -2 : -HR + 1.5, HY - 3); c.quadraticCurveTo(view === 'side' ? 2 : 0, HY + HRY - 1, view === 'side' ? 5 : HR - 1.5, HY - 3); c.stroke();
   } else if (h === 'chef') {
     box(c, -6.8, top - 3, 13.6, 7, 1.5, '#fffdf8');
     for (const x of [-4.6, 0, 4.6]) circ(c, x, top - 4.6, 4.2, '#fffdf8');
@@ -344,17 +363,17 @@ function legs(c, L, P, view) {
   };
   if (P.sitHide) return;
   if (view === 'side') { draw(P.legRx - 0.6, P.legR); draw(P.legLx + 0.6, P.legL); }
-  else { draw(-2.9, P.legL); draw(2.9, P.legR); }
+  else { draw(-2.5, P.legL); draw(2.5, P.legR); }
   void lh;
 }
 
 function torso(c, L, P, view, t) {
   const C = cols(L), st = L.topStyle || 'tee';
-  const w1 = 5.2, w2 = st === 'dress' || st === 'aodai' ? 7.8 : 6.6;
+  const w1 = 4.5, w2 = st === 'dress' || st === 'aodai' ? 7 : 5.9;
   const hem = st === 'dress' ? HEM + 2.4 : st === 'aodai' ? HEM + 3.6 : HEM;
   // bottoms (shorts/skirt) peeking below top
   if (st !== 'dress' && st !== 'aodai') {
-    c.beginPath(); c.moveTo(-6.2, HEM - 1.5); c.lineTo(6.2, HEM - 1.5); c.lineTo(6.6, HEM + 1.9); c.lineTo(-6.6, HEM + 1.9); c.closePath();
+    c.beginPath(); c.moveTo(-5.5, HEM - 1.4); c.lineTo(5.5, HEM - 1.4); c.lineTo(5.9, HEM + 1.7); c.lineTo(-5.9, HEM + 1.7); c.closePath();
     c.fillStyle = L.bottom; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
     if (view === 'front') { c.strokeStyle = C.botS; c.lineWidth = 0.6; c.beginPath(); c.moveTo(0, HEM); c.lineTo(0, HEM + 1.9); c.stroke(); }
   }
@@ -420,6 +439,16 @@ function arm(c, L, sx, sy, hx, hy) {
   void mx; void my; void C;
 }
 
+// A mochi-shaped head: round on top, a little fuller at the cheeks.
+function headShape(c) {
+  c.beginPath();
+  c.moveTo(-HR, HY + 0.5);
+  c.bezierCurveTo(-HR, HY - HRY * 1.38, HR, HY - HRY * 1.38, HR, HY + 0.5);
+  c.bezierCurveTo(HR + 0.3, HY + HRY * 0.95, HR * 0.45, HY + HRY + 0.4, 0, HY + HRY + 0.4);
+  c.bezierCurveTo(-HR * 0.45, HY + HRY + 0.4, -HR - 0.3, HY + HRY * 0.95, -HR, HY + 0.5);
+  c.closePath();
+}
+
 // ---------------------------------------------------------------- main entry
 export function drawHuman(c, a, t) {
   const L = a.look;
@@ -435,8 +464,8 @@ export function drawHuman(c, a, t) {
   c.scale(P.sx, P.sy);
   const s = {};
 
-  const shL = view === 'side' ? [-0.6, SH + 1.4] : [-5, SH + 1.3];
-  const shR = view === 'side' ? [0.6, SH + 1.4] : [5, SH + 1.3];
+  const shL = view === 'side' ? [-0.6, SH + 1.3] : [-4.3, SH + 1.2];
+  const shR = view === 'side' ? [0.6, SH + 1.3] : [4.3, SH + 1.2];
 
   // far arm (side view) and long back hair behind body
   if (view === 'side') { c.globalAlpha = 1; arm(c, { ...L, top: cols(L).topS, skin: cols(L).skinS, armSkin: cols(L).skinS }, shL[0], shL[1], P.hL[0], P.hL[1]); }
@@ -457,9 +486,9 @@ export function drawHuman(c, a, t) {
       if (view === 'front') { ell(c, -HR + 0.3, HY + 1.6, 1.8, 2.4, L.skin); ell(c, HR - 0.3, HY + 1.6, 1.8, 2.4, L.skin); }
       else ell(c, -1, HY + 1.4, 1.8, 2.4, L.skin);
     }
-    ell(c, 0, HY, HR, HRY, L.skin, INK, 1.05);
+    headShape(c); c.fillStyle = L.skin; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.05; c.stroke();
     // soft face shading at the bottom
-    c.save(); c.beginPath(); c.ellipse(0, HY, HR, HRY, 0, 0, TAU); c.clip();
+    c.save(); headShape(c); c.clip();
     c.fillStyle = 'rgba(230,160,130,.16)'; c.beginPath(); c.ellipse(0, HY + HRY + 2, HR + 2, 5, 0, 0, TAU); c.fill(); c.restore();
     eyes(c, a, L, view, t, s);
     blushAndMouth(c, a, L, view, t, P);
@@ -468,9 +497,9 @@ export function drawHuman(c, a, t) {
   if (s.brows && view !== 'back') brows(c, a, L, view);
   if (L.glasses && view !== 'back') {
     c.strokeStyle = L.glasses; c.lineWidth = 0.8;
-    const xs = view === 'side' ? [5.6] : [-4.5, 4.5];
-    for (const x of xs) { c.beginPath(); c.ellipse(x, HY + 1.4, 3.1, 2.8, 0, 0, TAU); c.stroke(); }
-    if (view === 'front') { c.beginPath(); c.moveTo(-1.4, HY + 1); c.lineTo(1.4, HY + 1); c.stroke(); }
+    const xs = view === 'side' ? [6.2] : [-5.1, 5.1];
+    for (const x of xs) { c.beginPath(); c.ellipse(x, HY + 3.1, 3.7, 3.4, 0, 0, TAU); c.stroke(); }
+    if (view === 'front') { c.beginPath(); c.moveTo(-1.4, HY + 2.6); c.lineTo(1.4, HY + 2.6); c.stroke(); }
   }
   hat(c, L, view, t);
   if (L.flower && view !== 'back') { for (let i = 0; i < 5; i++) { const an = i / 5 * TAU + 0.3; circ(c, (view === 'side' ? -2 : 7.8) + Math.cos(an) * 1.6, HY - 6.8 + Math.sin(an) * 1.6, 1.35, L.flower, INK, 0.5); } circ(c, view === 'side' ? -2 : 7.8, HY - 6.8, 0.9, '#ffd35a', null); }

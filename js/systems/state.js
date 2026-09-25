@@ -32,7 +32,7 @@ export function defaultState() {
     history: [],             // last few daily summaries
     nightMarket: { restored: false },
     statue: false,
-    settings: { music: true, sfx: true, arrow: true },
+    settings: { music: true, sfx: true, arrow: true, lang: null },
     pos: null,               // {scene, x, y} last position for resume
   };
 }
@@ -65,6 +65,16 @@ export function migrate(raw) {
 
 // Shared mutable handle. G.state is the save; G.* holds runtime singletons.
 export const G = { state: defaultState(), user: null, dirty: false, scene: null, player: null, meo: null, t: 0 };
+
+// ---- language: English by default, Vietnamese as a setting (never mixed)
+const LANG_KEY = 'jenisland.lang';
+let deviceLang = 'en';
+try { deviceLang = localStorage.getItem(LANG_KEY) === 'vi' ? 'vi' : 'en'; } catch {}
+Object.defineProperty(G, 'lang', { get() { return G.state?.settings?.lang || deviceLang; } });
+export function setLang(l) { deviceLang = l; if (G.state?.settings) G.state.settings.lang = l; try { localStorage.setItem(LANG_KEY, l); } catch {} bus.emit('lang', l); markDirty(true); }
+export const T = (en, vi) => (G.lang === 'vi' ? vi : en);
+// Resolve a label that may be a [en, vi] pair, a function, or a plain string.
+export const tr = v => (Array.isArray(v) ? T(v[0], v[1]) : typeof v === 'function' ? v() : v);
 
 export function markDirty(important = false) { G.dirty = true; if (important) bus.emit('save:now'); }
 

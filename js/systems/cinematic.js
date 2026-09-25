@@ -7,7 +7,7 @@ import { TAU, clamp, lerp, ease, rng, invLerp } from '../core/util.js';
 import { INK, ell, circ, box, poly, line, limb, text } from '../gfx/draw.js';
 import { drawHuman } from '../gfx/character.js';
 import { sfx } from '../core/audio.js';
-import { G } from './state.js';
+import { G, T } from './state.js';
 
 export function playCinematic(canvas, { onCaption, skipSignal } = {}) {
   return new Promise(resolve => {
@@ -25,7 +25,7 @@ export function playCinematic(canvas, { onCaption, skipSignal } = {}) {
     const cap = { look: { skin: '#cf9772', hair: '#2f2a30', hairStyle: 'short', top: '#fff1dc', topStyle: 'shirt', bottom: '#3f4a5e', bottomLen: 5, shoe: '#2f2a30', hat: 'cap', hatColor: '#3f4a5e' }, dir: 'right', moving: 0, seed: 1, emo: 'happy' };
     const me = { look: G.player?.look || G.state.player.look, dir: 'right', moving: 0, seed: 2, emo: 'neutral' };
     let captionStep = -1;
-    const captions = [[0.4, 'Ngoài khơi Việt Nam…', 'Somewhere off the coast of Việt Nam…'], [4.6, 'Một hòn đảo nhỏ đang chờ.', 'A quiet little island is waiting.'], [8.8, null]];
+    const captions = [[0.4, T('Somewhere off the coast of Việt Nam…', 'Ngoài khơi Việt Nam…')], [4.6, T('A quiet little island is waiting.', 'Một hòn đảo nhỏ đang chờ.')], [8.8, null]];
 
     function frame(now) {
       if (done) return;
@@ -33,7 +33,7 @@ export function playCinematic(canvas, { onCaption, skipSignal } = {}) {
       let T = (now - t0) / 1000;
       if (skipSignal?.skip) T = DUR;
       const k = clamp(T / DUR, 0, 1);
-      for (let i = captions.length - 1; i >= 0; i--) if (T >= captions[i][0]) { if (captionStep !== i) { captionStep = i; onCaption?.(captions[i][1], captions[i][2]); } break; }
+      for (let i = captions.length - 1; i >= 0; i--) if (T >= captions[i][0]) { if (captionStep !== i) { captionStep = i; onCaption?.(captions[i][1]); } break; }
 
       c.setTransform(dpr, 0, 0, dpr, 0, 0);
       const horizon = H * 0.46;

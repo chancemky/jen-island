@@ -2,8 +2,8 @@
 // to place it (a ghost shows where it will go, green = fits), tap placed items
 // to pick them back up. Furniture becomes real props with collision.
 
-import { G, markDirty, unlockAchievement } from '../systems/state.js';
-import { FURNITURE } from '../data/game.js';
+import { G, T, markDirty, unlockAchievement } from '../systems/state.js';
+import { FURNITURE, furnName } from '../data/game.js';
 import { FURN_DRAW, drawFurniturePreview } from '../gfx/furniture.js';
 import { h } from './sheets.js';
 import { sfx } from '../core/audio.js';
@@ -25,7 +25,7 @@ export function rebuildHouseFurniture() {
 function addFurnProp(sc, f) {
   const def = FURNITURE[f.id]; if (!def) return;
   const p = { homeFurn: f, x: f.x, y: f.y, draw: (c, t) => FURN_DRAW[f.id](c, t, { ...def, x: f.x, y: f.y }), cull: { x: f.x - 60, y: f.y - 80, w: 120, h: 100 } };
-  if (def.floor) p.sortY = f.y - 60; // rugs sit under everything
+  if (def.floor) p.flat = true; // rugs sit under everything
   if (def.wall) p.sortY = -1;
   sc.prop(p);
   if (!def.floor && !def.wall) sc.solid(f.x - def.w / 2, f.y - def.h, def.w, def.h, { homeFurn: f });
@@ -90,21 +90,21 @@ function renderBar() {
   const counts = {};
   for (const id of owned) counts[id] = (counts[id] || 0) + 1;
   const bar = D.bar;
-  const hint = D.sel ? (D.ghost ? (D.valid ? 'Đặt ở đây? · Place it here?' : 'Không vừa chỗ này · Doesn\'t fit here') : 'Chạm vào sàn để đặt · Tap the floor to place it') : (owned.length ? 'Chọn đồ bên dưới, hoặc chạm đồ đã đặt để di chuyển · Pick an item, or tap placed furniture to move it' : 'Chưa có đồ mới — ghé Nội thất Anh Khoa! · Tap placed furniture to move it, or buy more from Anh Khoa.');
+  const hint = D.sel ? (D.ghost ? (D.valid ? T('Place it here?', 'Đặt ở đây?') : T('It doesn\'t fit here', 'Không vừa chỗ này')) : T('Tap the floor to place it', 'Chạm vào sàn để đặt')) : (owned.length ? T('Pick an item below, or tap placed furniture to move it', 'Chọn đồ bên dưới, hoặc chạm đồ đã đặt để di chuyển') : T('Tap placed furniture to move it, or buy more from Anh Khoa.', 'Chạm đồ đã đặt để di chuyển, hoặc mua thêm ở tiệm Anh Khoa.'));
   bar.innerHTML = `<div class="deco-hint">${escapeHtml(hint)}</div><div class="row-scroll"></div><div class="deco-actions"></div>`;
   const row = bar.querySelector('.row-scroll');
   for (const [id, n] of Object.entries(counts)) {
     const it = h('button', 'deco-item' + (D.sel === id ? ' on' : ''));
     it.type = 'button';
     const cv = document.createElement('canvas'); cv.width = 112; cv.height = 88;
-    it.appendChild(cv); it.appendChild(document.createTextNode(`${FURNITURE[id].vi}${n > 1 ? ' ×' + n : ''}`));
+    it.appendChild(cv); it.appendChild(document.createTextNode(`${furnName(id)}${n > 1 ? ' ×' + n : ''}`));
     drawFurniturePreview(cv, id, FURNITURE[id]);
     it.onclick = () => { sfx('ui'); D.sel = D.sel === id ? null : id; D.ghost = null; renderBar(); };
     row.appendChild(it);
   }
   const acts = bar.querySelector('.deco-actions');
   if (D.sel && D.ghost) {
-    const place = h('button', 'btn pink', 'Đặt · Place'); place.type = 'button'; place.disabled = !D.valid;
+    const place = h('button', 'btn pink', T('Place', 'Đặt')); place.type = 'button'; place.disabled = !D.valid;
     place.onclick = () => {
       if (!D.valid) return;
       const i = G.state.home.owned.indexOf(D.sel); if (i >= 0) G.state.home.owned.splice(i, 1);
@@ -114,10 +114,10 @@ function renderBar() {
       if (G.state.home.furniture.length >= 5) unlockAchievement('cozy_home');
       D.sel = null; D.ghost = null; renderBar();
     };
-    const cancel = h('button', 'btn ghost', 'Bỏ chọn'); cancel.type = 'button'; cancel.onclick = () => { D.sel = null; D.ghost = null; sfx('back'); renderBar(); };
+    const cancel = h('button', 'btn ghost', T('Cancel', 'Bỏ chọn')); cancel.type = 'button'; cancel.onclick = () => { D.sel = null; D.ghost = null; sfx('back'); renderBar(); };
     acts.append(cancel, place);
   }
-  const done = h('button', 'btn gold', 'Xong · Done'); done.type = 'button'; done.onclick = stopDecorate;
+  const done = h('button', 'btn gold', T('Done', 'Xong')); done.type = 'button'; done.onclick = stopDecorate;
   acts.appendChild(done);
 }
 function drawGhost(c, t) {

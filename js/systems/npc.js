@@ -2,18 +2,23 @@
 // by ferry, scooters on the streets, gulls and butterflies, and Mèo Mây's own
 // wandering routine once the tutorial is over.
 
-import { G } from './state.js';
+import { G, T } from './state.js';
 import { Actor } from '../world/actor.js';
 import { RESIDENTS, MERCHANTS, visitorLook } from '../data/looks.js';
 import { PATHS, BUILDINGS } from '../world/island.js';
 import { rand, randi, choice, chance, dist, bus, clamp, TAU, smoothLine } from '../core/util.js';
 import { drawBoatTop } from './cinematic.js';
-import { scooter as drawScooter, seagull } from '../gfx/props.js';
+import { scooter as drawScooter, seagull, duck, wind } from '../gfx/props.js';
+import { cam } from '../world/render.js';
+const windAt = x => wind(x, G.t);
+const inView = r => { const v = cam.view; return r.x < v.x + v.w && r.x + r.w > v.x && r.y < v.y + v.h && r.y + r.h > v.y; };
 import { drawHuman } from '../gfx/character.js';
 import { sfx } from '../core/audio.js';
 import { fx } from '../world/render.js';
 
 const HOME_OF = Object.fromEntries(BUILDINGS.filter(b => b.home).map(b => [b.home, b]));
+// family households: Bé Na lives with her grandma, Minh rooms with Anh Tuấn
+HOME_OF.be_na = HOME_OF.ba_tu; HOME_OF.minh = HOME_OF.anh_tuan;
 const FERRY_TIMES = [8 * 60, 11 * 60, 14 * 60, 17 * 60];
 const BERTH = { x: 1004, y: 2584 };
 
@@ -49,7 +54,7 @@ function updateVendors(island) {
     npcs.vendors = VENDORS.map(([st, who], i) => {
       const b = island.buildings[st];
       const look = who === 'ba_sau' ? MERCHANTS.ba_sau.look : visitorLook(9000 + i * 17, 'regular');
-      const a = new Actor({ kind: 'human', look, name: who === 'ba_sau' ? 'Bà Sáu' : 'Người bán', x: b.x + (b.x < 440 ? -44 : 44), y: b.y + 4, data: { vendor: st, mid: who === 'ba_sau' ? 'ba_sau' : null } });
+      const a = new Actor({ kind: 'human', look, name: who === 'ba_sau' ? 'Bà Sáu' : T('Vendor', 'Người bán'), x: b.x + (b.x < 440 ? -44 : 44), y: b.y + 4, data: { vendor: st, mid: who === 'ba_sau' ? 'ba_sau' : null } });
       a.talkable = who === 'ba_sau'; a.visible = false; a.face('down');
       island.add(a); return a;
     });
@@ -78,6 +83,7 @@ export function initNPCs(island) {
   npcs.gulls = Array.from({ length: 5 }, (_, i) => ({ cx: rand(200, 1600), cy: rand(300, 2500), r: rand(80, 200), a: rand(0, TAU), sp: rand(0.25, 0.5) * (i % 2 ? 1 : -1), seed: i * 3, h: rand(60, 110) }));
   npcs.butterflies = Array.from({ length: 10 }, (_, i) => ({ x: rand(300, 1500), y: rand(500, 2100), vx: 0, vy: 0, t: rand(0, 10), col: choice(['#fff4b8', '#ffc0d8', '#c9e8ff', '#ffe0a8']) }));
   npcs.ferry = { state: 'away', x: BERTH.x, y: 2950, speed: 0, next: nextFerryTime(), unload: 0, dockUntil: 0 };
+  npcs.ducks = [0, 1, 2, 3].map(i => ({ a: i * 1.6, r: 26 + i * 9, sp: 0.12 + i * 0.03, seed: i * 3, col: i === 3 ? '#f7de8c' : '#fffaf0', x: 0, y: 0 }));
 }
 
 function nextFerryTime() {
@@ -222,7 +228,8 @@ function makeScooter(path, col, phase) {
   let len = 0; const segs = [];
   for (let i = 0; i < pts.length - 1; i++) { const d = dist(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]); segs.push(d); len += d; }
   const seed = randi(1, 999);
-  return { pts, segs, len, pos: len * phase, dir: 1, speed: 72, col, rider: { look: visitorLook(seed, 'regular'), dir: 'right', moving: 0, seed, blinkAmt: 0, emo: 'happy', sit: true }, x: 0, y: 0, flip: false, beep: 0 };
+  const look = { ...visitorLook(seed, 'regular'), hat: 'helmet', hatColor: choice(['#f28f7c', '#6f9fc8', '#f7de8c', '#9fd8c8', '#fff5df']), backpack: undefined, camera: undefined, scale: 1 };
+  return { pts, segs, len, pos: len * phase, dir: 1, speed: 72, col, rider: { look, dir: 'right', moving: 0, seed, blinkAmt: 0, emo: 'happy', sit: true, act: 'ride', actT: 0 }, x: 0, y: 0, flip: false, beep: 0 };
 }
 function updateScooter(sc, dt) {
   const pl = G.player;
@@ -265,6 +272,20 @@ export function updateNPCs(dt) {
   updateFerry(island, dt);
   for (const sc of npcs.scooters) updateScooter(sc, dt);
   for (const g of npcs.gulls) g.a += g.sp * dt;
+  for (const d of npcs.ducks || []) { d.a += d.sp * dt * (d.seed % 2 ? 1 : -1); d.x = 770 + Math.cos(d.a) * d.r * 1.3; d.y = 482 + Math.sin(d.a) * d.r * 0.62; d.flip = Math.sin(d.a) * (d.seed % 2 ? 1 : -1) > 0; }
+  // leaves and petals drift down from trees in view when the wind picks up
+  npcs.leafT = (npcs.leafT || 0) - dt;
+  if (npcs.leafT <= 0 && G.scene === island) {
+    npcs.leafT = 0.35;
+    const cand = island.props.filter(p => (p.kind === 'tree' || p.kind === 'flameTree' || p.kind === 'banyan' || p.kind === 'frangipani') && p.cull && inView(p.cull));
+    if (cand.length) {
+      const p = choice(cand), w = windAt(p.x);
+      if (Math.abs(w) > 0.35 || Math.random() < 0.25) {
+        const petal = p.kind === 'flameTree' ? '#f0553f' : p.kind === 'frangipani' ? '#fffdf2' : choice(['#8fd070', '#7cc463', '#b9d96a', '#e9c46f']);
+        fx.burst('leaf', p.x + rand(-20, 20), p.y + 2, 1, { z: rand(40, 70), up: 0, g: 9, speed: 22 + Math.abs(w) * 30, angle: w >= 0 ? 0 : Math.PI, spread: 0.6, life: 3.2, size: 2.4, col: petal });
+      }
+    }
+  }
   for (const b of npcs.butterflies) {
     b.t += dt;
     b.vx += (Math.sin(b.t * 1.3) * 18 - b.vx) * dt; b.vy += (Math.cos(b.t * 0.9) * 12 - b.vy) * dt;
@@ -273,6 +294,7 @@ export function updateNPCs(dt) {
 }
 export function npcDrawables() {
   const out = [];
+  for (const d of npcs.ducks || []) out.push({ x: d.x, y: d.y, draw: (c, t) => duck(c, t, d) });
   const f = ferryDrawable(); if (f) out.push(f);
   for (const sc of npcs.scooters) out.push(scooterDrawable(sc));
   for (const b of npcs.butterflies) out.push({ x: b.x, y: b.y, sortY: b.y + 30, draw: (c, t) => { c.save(); c.translate(0, -22 - Math.sin(b.t * 3) * 4); const f = Math.abs(Math.sin(b.t * 16)); c.fillStyle = b.col; c.strokeStyle = 'rgba(91,63,54,.7)'; c.lineWidth = 0.6; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * 2.6 * f, -1, 2.6 * f + 0.4, 3, s * 0.4, 0, TAU); c.fill(); c.stroke(); } c.restore(); } });

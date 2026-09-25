@@ -3,6 +3,7 @@
 import { damp, clamp } from '../core/util.js';
 import { moveVector } from '../core/input.js';
 import { Actor } from '../world/actor.js';
+import { G } from './state.js';
 
 export const WALK_SPEED = 96;
 
@@ -19,7 +20,8 @@ export class Player extends Actor {
     const [ix, iy, m] = moveVector();
     // ease-in to feel responsive but not twitchy
     const k = m > 0 ? 0.45 + 0.55 * m : 0;
-    const tx = ix * WALK_SPEED * (k > 0 ? 1 : 0) * Math.min(1, m * 1.25), ty = iy * WALK_SPEED * Math.min(1, m * 1.25);
+    const speed = WALK_SPEED * (G.runtime?.sleepy ? 0.72 : 1);
+    const tx = ix * speed * (k > 0 ? 1 : 0) * Math.min(1, m * 1.25), ty = iy * speed * Math.min(1, m * 1.25);
     this.vx = damp(this.vx, tx, m > 0 ? 14 : 18, dt);
     this.vy = damp(this.vy, ty, m > 0 ? 14 : 18, dt);
     const sp = Math.hypot(this.vx, this.vy);

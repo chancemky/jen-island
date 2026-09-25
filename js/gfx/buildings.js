@@ -6,6 +6,7 @@
 import { TAU, shade, mix, clamp, rng } from '../core/util.js';
 import { INK, ell, circ, box, poly, line, limb, shadow, text, rrect } from './draw.js';
 import { LIGHT, glows, lanternShape } from './props.js';
+import { T, tr } from '../systems/state.js';
 
 const glow = (b, x, y, r, col) => glows.push([b.x + x, b.y + y, r, col]);
 const nightA = () => LIGHT.night;
@@ -178,17 +179,17 @@ export function drawShed(c, t, b) {
   if (broken) { cobweb(c, -w / 2 + 2, -h + 2); cobweb(c, w / 2 - 14, -h + 3, 0.7); }
   // sign on the roof edge
   const label = s.sign || '???';
-  if (k < 0.8) signBoard(c, -8, -h - 20, 56, 13, broken ? 'QUÁN...' : label, '#b8a898', '#6e5a4e', { tilt: broken ? 0.18 : 0.18 * (1 - k) });
+  if (k < 0.8) signBoard(c, -8, -h - 20, 56, 13, broken ? T('SHOP...', 'QUÁN...') : label, '#b8a898', '#6e5a4e', { tilt: broken ? 0.18 : 0.18 * (1 - k) });
   else signBoard(c, -8, -h - 22, 66, 15, label, s.signCol || '#e8584e', '#fff5df');
   if (!broken && (s.level || 1) >= 3) stringLights(c, w + 6, -h + 2, t, b);
   if (!broken && s.open) {
     // OPEN sign flips on the door
     const f = s.signFlip ?? 1;
     c.save(); c.translate(32, -h + 12); c.scale(1, Math.abs(Math.cos((1 - f) * Math.PI / 2)) * 0.9 + 0.1);
-    box(c, -9, -4, 18, 8, 2, f > 0.5 ? '#6fbf73' : '#e8584e'); text(c, f > 0.5 ? 'MỞ CỬA' : 'ĐÓNG', 0, 0.3, 4.2, '#fff', 900); c.restore();
+    box(c, -9, -4, 18, 8, 2, f > 0.5 ? '#6fbf73' : '#e8584e'); text(c, f > 0.5 ? T('OPEN', 'MỞ CỬA') : T('CLOSED', 'ĐÓNG'), 0, 0.3, 4.2, '#fff', 900); c.restore();
     // steam from the hatch
     for (let i = 0; i < 3; i++) { const kk = (t * 0.6 + i / 3) % 1; c.globalAlpha = 0.5 * (1 - kk); c.strokeStyle = '#fff'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(hx - 10 + i * 10, hy - 2 - kk * 14); c.quadraticCurveTo(hx - 7 + i * 10, hy - 6 - kk * 14, hx - 10 + i * 10, hy - 10 - kk * 14); c.stroke(); } c.globalAlpha = 1;
-  } else if (!broken && k >= 1) { c.save(); c.translate(32, -h + 12); box(c, -9, -4, 18, 8, 2, '#b8a898'); text(c, 'ĐÓNG', 0, 0.3, 4.4, '#fff', 900); c.restore(); }
+  } else if (!broken && k >= 1) { c.save(); c.translate(32, -h + 12); box(c, -9, -4, 18, 8, 2, '#b8a898'); text(c, T('CLOSED', 'ĐÓNG'), 0, 0.3, 4.4, '#fff', 900); c.restore(); }
   if (!broken && (s.level || 1) >= 2) lanternShape(c, -w / 2 + 4, -h + 2, 0.7, '#ea5a4f', t, b.x);
   if (!broken && (s.level || 1) >= 2 && nightA() > 0.05) glow(b, -w / 2 + 4, -h + 10, 26, 'rgba(255,190,110,.5)');
 }
@@ -201,7 +202,7 @@ export function drawHouse(c, t, b) {
   windowBox(c, 32, -h + 12, 22, 18, { shutter: b.shutter || '#6fae7c', box: true, b });
   door(c, 0, 20, 32, b.doorCol || '#b77a4f', b.doorOpen || 0, { matCol: '#e89a8a' });
   tileRoof(c, w, 44, h, b.roof || '#d9784f', { overhang: 10 });
-  if (b.label) signBoard(c, 0, -h + 4, 30, 7, b.label, '#fff5df', INK);
+  if (b.label) signBoard(c, 0, -h + 4, 30, 7, tr(b.label), '#fff5df', INK);
   if (b.chimney) { box(c, 24, -h - 44, 10, 16, 2, '#c9b8a8'); for (let i = 0; i < 3; i++) { const k = (t * 0.3 + i / 3) % 1; c.globalAlpha = 0.45 * (1 - k); circ(c, 29 + Math.sin(k * 6) * 3, -h - 48 - k * 20, 3 + k * 4, '#fff', null); } c.globalAlpha = 1; }
   if (s.mailbox !== false && b.mailbox) { limb(c, [w / 2 + 8, 0, w / 2 + 8, -16], 2, '#8a5f3e'); box(c, w / 2 + 2, -24, 12, 9, 3, '#e8584e'); }
 }
@@ -232,7 +233,7 @@ export function drawMeoHouse(c, t, b) {
   const sw = Math.sin(t * 0.8) * 0.3;
   limb(c, [0, top + 6, 0, top - 10], 1.4, '#8a5f3e');
   c.save(); c.translate(0, top - 12); c.rotate(sw); ell(c, 0, 0, 7, 3, '#f2c14e'); poly(c, [6, 0, 10, -3, 10, 3], '#f2c14e', INK, 0.8); circ(c, -4, -0.5, 0.8, INK, null); c.restore();
-  signBoard(c, 0, -h + 5, 44, 8, 'Nhà Mèo Mây', '#f7a6b4', '#fff');
+  signBoard(c, 0, -h + 5, 44, 8, T('Mèo Mây\'s', 'Nhà Mèo Mây'), '#f7a6b4', '#fff');
   // cat bed + fish bowl by the door
   ell(c, -48, -2, 9, 4, '#f08a78');
 }
@@ -251,7 +252,7 @@ export function drawShop(c, t, b) {
     door(c, w / 2 - 24, 26, 38, '#bfe6ef', b.doorOpen || 0, { double: true, inside: '#f7f0dc', matCol: '#6fbf73' });
     awning(c, -14, -h + 12, w - 32, ['#fff5df', '#6fbf73'], 12);
     box(c, -w / 2 - 4, -h - 22, w + 8, 24, 4, '#6fbf73');
-    text(c, 'SIÊU THỊ CÔ HOA', 0, -h - 10, 11, '#fff', 900, 'center', INK, 2.4);
+    text(c, T('CÔ HOA\'S MARKET', 'SIÊU THỊ CÔ HOA'), 0, -h - 10, 11, '#fff', 900, 'center', INK, 2.4);
     circ(c, -w / 2 + 10, -h - 10, 7, '#fff5df');
     poly(c, [-w / 2 + 6, -h - 12, -w / 2 + 14, -h - 12, -w / 2 + 13, -h - 7, -w / 2 + 7, -h - 7], '#f28f7c', INK, 0.7);
   } else if (kind === 'materials') {
@@ -264,7 +265,7 @@ export function drawShop(c, t, b) {
     door(c, w / 2 - 22, 22, 36, '#8f9aa3', b.doorOpen || 0, { matCol: '#e9c46f' });
     tinRoof(c, w, 26, h, '#5f8fb8');
     box(c, -w / 2 + 6, -h - 34, w - 12, 20, 3, '#f7de8c');
-    text(c, 'VẬT LIỆU CHÚ BẢY', 0, -h - 23.5, 10, '#6e4430', 900);
+    text(c, T('CHÚ BẢY\'S MATERIALS', 'VẬT LIỆU CHÚ BẢY'), 0, -h - 23.5, 10, '#6e4430', 900);
   } else if (kind === 'furniture') {
     box(c, -w / 2 + 10, -h + 14, 52, h - 20, 3, nightA() > 0.05 ? winLit() : '#d9f1f6');
     // display: a chair and a lamp
@@ -274,7 +275,7 @@ export function drawShop(c, t, b) {
     windowBox(c, 22, -h + 14, 22, 18, { shutter: '#c98f5a', b });
     door(c, w / 2 - 22, 22, 34, '#c98f5a', b.doorOpen || 0, { matCol: '#9fd8c8' });
     tileRoof(c, w, 40, h, '#c9674a', { overhang: 8 });
-    signBoard(c, 0, -h - 8, 96, 16, 'NỘI THẤT ANH KHOA', '#fff5df', '#8a5f3e');
+    signBoard(c, 0, -h - 8, 96, 16, T('ANH KHOA\'S FURNITURE', 'NỘI THẤT ANH KHOA'), '#fff5df', '#8a5f3e');
   }
   if (kind === 'supermarket') { /* flat roof edge */ }
 }
@@ -304,9 +305,9 @@ export function drawRestaurant(c, t, b) {
     else { line(c, x, -43, x, -8, INK, 0.8); }
   }
   door(c, 0, 30, 40, broken ? '#8a7a6e' : '#a8563f', b.doorOpen || 0, { double: true, matCol: '#e8584e' });
-  if (broken) { line(c, -18, -40, 18, -4, '#a07a50', 4); signBoard(c, 0, -52, 40, 12, 'BÁN', '#fff5df', '#e8584e', { tilt: -0.08 }); }
+  if (broken) { line(c, -18, -40, 18, -4, '#a07a50', 4); signBoard(c, 0, -52, 44, 12, T('FOR SALE', 'BÁN'), '#fff5df', '#e8584e', { tilt: -0.08 }); }
   tileRoof(c, w, 50, h, mix('#8a7f78', '#d9784f', clamp(k * 2 - 0.5, 0, 1)), { overhang: 12, missing: k < 0.5, ridgeOrnament: !broken });
-  const name = s.sign || 'NHÀ HÀNG';
+  const name = s.sign || T('RESTAURANT', 'NHÀ HÀNG');
   if (!broken) { signBoard(c, 0, -h - 12, 128, 20, name, '#a8563f', '#ffe7a8'); }
   if (!broken) {
     awning(c, 0, -h / 2 + 8, 150, ['#fff5df', '#e8584e'], 10);
@@ -337,8 +338,8 @@ export function drawFoodTruck(c, t, b) {
   if (flap > 0.02) awning(c, -10, -56, 66, ['#fff5df', '#f28f7c'], 14 * flap);
   box(c, -44, -32, 68, 5, 2, '#c9955e');
   c.restore();
-  if (!owned) { signBoard(c, -10, -76, 60, 14, 'BÁN · FOR SALE', '#fff5df', '#e8584e', { tilt: 0.05 }); ell(c, 0, -30, 40, 14, 'rgba(160,150,140,.12)', null); }
-  else signBoard(c, -10, -76, 76, 14, s.sign || 'XE BÁNH', '#f28f7c', '#fff5df');
+  if (!owned) { signBoard(c, -10, -76, 60, 14, T('FOR SALE', 'BÁN'), '#fff5df', '#e8584e', { tilt: 0.05 }); ell(c, 0, -30, 40, 14, 'rgba(160,150,140,.12)', null); }
+  else signBoard(c, -10, -76, 76, 14, s.sign || T('FOOD TRUCK', 'XE BÁNH'), '#f28f7c', '#fff5df');
   if (open && nightA() > 0.05) stringLights(c, 90, -68, t, b);
 }
 
@@ -355,7 +356,7 @@ export function drawNightStall(c, t, b) {
   for (const x of [-w / 2 + 2, w / 2 - 2]) limb(c, [x, -h, x, -h - 34], 2.6, broken ? '#7a6a5e' : '#8a5f3e');
   const cols = broken ? ['#9d8a80', '#b3a79a'] : b.cloth || ['#e8584e', '#fff5df'];
   clothRoof(c, w, 18, h + 34, cols, { torn: broken });
-  if (!broken && b.label) signBoard(c, 0, -h - 30, w - 12, 10, b.label, '#fff5df', '#a8563f');
+  if (!broken && b.label) signBoard(c, 0, -h - 30, w - 12, 10, tr(b.label), '#fff5df', '#a8563f');
   if (!broken && nightA() > 0.05) { lanternShape(c, 0, -h - 34, 0.8, '#ea5a4f', t, b.x); glow(b, 0, -h - 20, 50, 'rgba(255,190,110,.6)'); }
   if (broken) { poly(c, [-w / 2 + 6, -h - 2, w / 2 - 10, -h - 2, w / 2 - 14, -h + 10, -w / 2 + 10, -h + 12], 'rgba(90,70,60,.35)', null); }
 }
@@ -376,5 +377,5 @@ export function drawDinh(c, t, b) {
   // twin dragons-inspired curls & pearl on the ridge
   for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * (w / 2 - 4), top - 1); c.quadraticCurveTo(s * (w / 2 + 12), top - 4, s * (w / 2 + 6), top - 18); c.strokeStyle = INK; c.lineWidth = 4; c.stroke(); c.strokeStyle = '#6fbfa0'; c.lineWidth = 2.4; c.stroke(); }
   circ(c, 0, top - 8, 5, '#f2c14e');
-  signBoard(c, 0, -h - 12, 50, 10, 'ĐÌNH LÀNG', '#f2c14e', '#8f2f24');
+  signBoard(c, 0, -h - 12, 50, 10, T('VILLAGE HALL', 'ĐÌNH LÀNG'), '#f2c14e', '#8f2f24');
 }

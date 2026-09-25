@@ -1,6 +1,8 @@
 // Account screen with a gently animated island backdrop.
 
 import * as cloud from '../systems/cloud.js';
+import { T, setLang } from '../systems/state.js';
+import { applyStaticText } from './statictext.js';
 import { drawCat } from '../gfx/cat.js';
 import { palm } from '../gfx/props.js';
 import { unlockAudio, sfx } from '../core/audio.js';
@@ -13,16 +15,18 @@ export function showAuth() {
     const scr = $('auth'); scr.classList.remove('hidden');
     let mode = 'login';
     const tabs = [...$('authTabs').children];
-    tabs.forEach(b => b.onclick = () => { mode = b.dataset.tab; tabs.forEach(x => x.classList.toggle('on', x === b)); $('authSubmit').textContent = mode === 'login' ? 'Lên đảo · Play' : 'Tạo tài khoản · Create account'; $('authPass').autocomplete = mode === 'login' ? 'current-password' : 'new-password'; $('authMsg').textContent = ''; sfx('ui'); });
+    applyStaticText();
+    for (const b of document.querySelectorAll('#langPick button')) b.onclick = () => { setLang(b.dataset.lang); applyStaticText(); $('authSubmit').textContent = mode === 'login' ? T('Play', 'Lên đảo') : T('Create account', 'Tạo tài khoản'); sfx('ui'); };
+    tabs.forEach(b => b.onclick = () => { mode = b.dataset.tab; tabs.forEach(x => x.classList.toggle('on', x === b)); $('authSubmit').textContent = mode === 'login' ? T('Play', 'Lên đảo') : T('Create account', 'Tạo tài khoản'); $('authPass').autocomplete = mode === 'login' ? 'current-password' : 'new-password'; $('authMsg').textContent = ''; sfx('ui'); });
     const msg = (t, ok = false) => { $('authMsg').textContent = t; $('authMsg').classList.toggle('ok', ok); };
     let alive = true;
     animateBg($('authBg'), () => alive);
     $('authForm').onsubmit = async e => {
       e.preventDefault(); unlockAudio();
       const email = $('authEmail').value.trim(), pass = $('authPass').value;
-      if (!/^\S+@\S+\.\S+$/.test(email)) return msg('Email chưa đúng · Please enter a valid email.');
-      if (pass.length < 6) return msg('Mật khẩu ít nhất 6 ký tự · Password needs 6+ characters.');
-      const btn = $('authSubmit'); btn.disabled = true; msg(mode === 'login' ? 'Đang đăng nhập…' : 'Đang tạo tài khoản…', true);
+      if (!/^\S+@\S+\.\S+$/.test(email)) return msg(T('Please enter a valid email.', 'Email chưa đúng.'));
+      if (pass.length < 6) return msg(T('Password needs at least 6 characters.', 'Mật khẩu cần ít nhất 6 ký tự.'));
+      const btn = $('authSubmit'); btn.disabled = true; msg(mode === 'login' ? T('Signing in…', 'Đang đăng nhập…') : T('Creating your account…', 'Đang tạo tài khoản…'), true);
       try {
         const user = mode === 'login' ? await cloud.signIn(email, pass) : await cloud.signUp(email, pass);
         sfx('success'); alive = false;
@@ -30,11 +34,11 @@ export function showAuth() {
         resolve(user);
       } catch (err) {
         sfx('error');
-        if (err.confirm) msg('Kiểm tra email để xác nhận tài khoản, rồi đăng nhập. · Check your inbox to confirm, then log in.');
-        else if (/invalid/i.test(err.message)) msg('Sai email hoặc mật khẩu · Wrong email or password.');
-        else if (/registered|exists/i.test(err.message)) msg('Email này đã có tài khoản — hãy đăng nhập. · Account exists, please log in.');
-        else if (err.status === 429) msg('Thử lại sau ít phút · Too many attempts, try again shortly.');
-        else msg((err.message || 'Không kết nối được') + ' · Could not connect.');
+        if (err.confirm) msg(T('Check your inbox to confirm your account, then log in.', 'Kiểm tra email để xác nhận tài khoản, rồi đăng nhập.'));
+        else if (/invalid/i.test(err.message)) msg(T('Wrong email or password.', 'Sai email hoặc mật khẩu.'));
+        else if (/registered|exists/i.test(err.message)) msg(T('That email already has an account — please log in.', 'Email này đã có tài khoản — hãy đăng nhập.'));
+        else if (err.status === 429) msg(T('Too many attempts — try again in a few minutes.', 'Thử lại sau ít phút nhé.'));
+        else msg(T('Could not connect. ', 'Không kết nối được. ') + (err.message || ''));
       } finally { btn.disabled = false; }
     };
   });

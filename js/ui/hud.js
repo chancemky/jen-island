@@ -1,7 +1,7 @@
 // HUD: clock, animated money counter, reputation stars, quest pill, area
 // toast, off-screen quest pointer, action button and toasts.
 
-import { G, repStars } from '../systems/state.js';
+import { G, T, repStars } from '../systems/state.js';
 import { bus, clock, money, clamp, escapeHtml } from '../core/util.js';
 import { iconURL } from '../gfx/food.js';
 import { ACHIEVEMENTS } from '../data/game.js';
@@ -23,7 +23,8 @@ export function initHud() {
     if (k < 0) setTimeout(() => chip.classList.remove('drop'), 600);
   });
   bus.on('rep', () => renderStars());
-  bus.on('achievement', id => toast({ text: 'Thành tựu mới!', sub: ACHIEVEMENTS[id].en + ' — ' + ACHIEVEMENTS[id].desc, cls: 'ach', icon: 'lantern' }));
+  bus.on('achievement', id => toast({ text: T('New achievement!', 'Thành tựu mới!'), sub: T(ACHIEVEMENTS[id].en + ' — ' + ACHIEVEMENTS[id].desc, ACHIEVEMENTS[id].vi + ' — ' + ACHIEVEMENTS[id].descVi), cls: 'ach', icon: 'lantern' }));
+  bus.on('lang', () => { lastMinute = -1; });
   bus.on('toast', o => toast(o));
   moneyTarget = G.state.money; shownMoney = G.state.money;
   renderStars();
@@ -49,7 +50,7 @@ export function updateHud(dt) {
   const m = Math.floor(s.time);
   if (m !== lastMinute) {
     lastMinute = m;
-    $('dayLabel').textContent = 'Ngày ' + s.day;
+    $('dayLabel').textContent = T('Day ', 'Ngày ') + s.day;
     $('clockLabel').textContent = clock(s.time);
     $('sunIcon').classList.toggle('night', s.time >= 18.5 * 60 || s.time < 6 * 60);
   }

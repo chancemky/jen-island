@@ -4,7 +4,8 @@
 // that plays when it completes. Progress is saved after every step, and every
 // cutscene can be safely re-entered after a reload.
 
-import { G, flag, setFlag, hasMats, spendMats, addMoney, canAfford, learnRecipe, unlockAchievement, markDirty, bizOf, pantry, mats, addRep } from './state.js';
+import { G, T, flag, setFlag, hasMats, spendMats, addMoney, canAfford, learnRecipe, unlockAchievement, markDirty, bizOf, pantry, mats, addRep } from './state.js';
+import { ingName, matName, bizName, recipeName } from '../data/game.js';
 import { BUSINESSES, RECIPES, CHAPTERS, NIGHT_MARKET_RESTORE, STATUE_COST, STATION } from '../data/game.js';
 import { cs, wait, say, ask, camTo, camFollow, walk, face, emote, hop, startFollow, stopFollow, caption } from './cutscene.js';
 import { scenes, setScene, fadeOut, fadeIn } from './scenes.js';
@@ -36,42 +37,42 @@ const bizServedSince = (biz, key) => (bizOf(biz).stats.served) - (S().flags['bs@
 export const STEPS = {
   // ---- Chapter 1
   tour: { ch: 1 },
-  materials: { ch: 1, text: () => { const r = BUSINESSES.shed1.repair; return `Mua ${r.wood} gỗ, ${r.metal} tôn, ${r.paint} sơn ở Vật liệu Chú Bảy (${mats('wood')}/${r.wood} · ${mats('metal')}/${r.metal} · ${mats('paint')}/${r.paint})`; }, target: () => G.scene?.id === 'materials' ? null : doorOf('materials'), done: () => hasMats(BUSINESSES.shed1.repair) || bizOf('shed1').repair >= 1, next: 'repair' },
-  repair: { ch: 1, text: () => 'Sửa quán nhỏ ở bãi biển · Repair the beach shed', target: () => frontOf('shed1'), done: () => bizOf('shed1').repair >= 1, next: 'ingredients', scene: () => afterFirstRepair() },
+  materials: { ch: 1, text: () => { const r = BUSINESSES.shed1.repair; return T(`Buy ${r.wood} wood, ${r.metal} metal and ${r.paint} paint at Chú Bảy's (${mats('wood')}/${r.wood} · ${mats('metal')}/${r.metal} · ${mats('paint')}/${r.paint})`, `Mua ${r.wood} gỗ, ${r.metal} tôn, ${r.paint} sơn ở Vật liệu Chú Bảy (${mats('wood')}/${r.wood} · ${mats('metal')}/${r.metal} · ${mats('paint')}/${r.paint})`); }, target: () => G.scene?.id === 'materials' ? null : doorOf('materials'), done: () => hasMats(BUSINESSES.shed1.repair) || bizOf('shed1').repair >= 1, next: 'repair' },
+  repair: { ch: 1, text: () => T('Repair the little shed on the beach', 'Sửa căn chòi nhỏ ở bãi biển'), target: () => frontOf('shed1'), done: () => bizOf('shed1').repair >= 1, next: 'ingredients', scene: () => afterFirstRepair() },
   // ---- Chapter 2
-  ingredients: { ch: 2, text: () => { const need = ['tea', 'kumquat', 'sugar', 'ice'].filter(k => !hasStockFor(k)); return need.length ? `Mua nguyên liệu trà tắc ở Siêu thị Cô Hoa (còn thiếu: ${need.map(k => ({ tea: 'trà', kumquat: 'tắc', sugar: 'đường', ice: 'đá' })[k]).join(', ')})` : 'Đủ nguyên liệu rồi!'; }, target: () => G.scene?.id === 'supermarket' ? null : doorOf('supermarket'), done: () => ['tea', 'kumquat', 'sugar', 'ice'].every(hasStockFor), next: 'prep' },
-  prep: { ch: 2, text: () => 'Sơ chế tắc ở bàn sơ chế trong quán · Slice kumquats at the shed', target: () => G.scene?.id === 'shed1' ? { scene: 'shed1', x: 194, y: 108 } : doorOf('shed1'), done: () => (bizOf('shed1').prepped.kumquat_cut || 0) > 0 || flag('firstServed3'), next: 'open' },
-  open: { ch: 2, text: () => 'Mở cửa quán! · Press OPEN to start serving', target: () => G.scene?.id === 'shed1' ? null : doorOf('shed1'), done: () => bizOf('shed1').open || flag('firstServed3'), next: 'serve' },
-  serve: { ch: 2, text: () => `Phục vụ khách đầu tiên (${Math.min(3, since('serve'))}/3) · Serve customers at the counter`, target: () => G.scene?.id === 'shed1' ? { scene: 'shed1', x: 80, y: 128 } : doorOf('shed1'), done: () => since('serve') >= 3, next: 'sleep', scene: () => afterFirstCustomers() },
-  sleep: { ch: 2, text: () => G.state.time < 17 * 60 ? 'Bán thêm, rồi về nhà ngủ · Keep selling, then sleep at home' : 'Về nhà và đi ngủ · Go home and sleep', target: () => G.scene?.id === 'house' ? { scene: 'house', x: 48, y: 124 } : doorOf('house'), done: () => G.state.day >= 2, next: 'grow' },
+  ingredients: { ch: 2, text: () => { const need = ['tea', 'kumquat', 'sugar', 'ice'].filter(k => !hasStockFor(k)); return need.length ? T(`Buy kumquat tea ingredients at Cô Hoa's supermarket (still need: ${need.map(k => ingName(k).toLowerCase()).join(', ')})`, `Mua nguyên liệu trà tắc ở Siêu thị Cô Hoa (còn thiếu: ${need.map(k => ingName(k).toLowerCase()).join(', ')})`) : T('You have everything!', 'Đủ nguyên liệu rồi!'); }, target: () => G.scene?.id === 'supermarket' ? null : doorOf('supermarket'), done: () => ['tea', 'kumquat', 'sugar', 'ice'].every(hasStockFor), next: 'prep' },
+  prep: { ch: 2, text: () => T('Slice kumquats at the prep table inside the shed', 'Cắt tắc ở bàn sơ chế trong quán'), target: () => G.scene?.id === 'shed1' ? { scene: 'shed1', x: 194, y: 108 } : doorOf('shed1'), done: () => (bizOf('shed1').prepped.kumquat_cut || 0) > 0 || flag('firstServed3'), next: 'open' },
+  open: { ch: 2, text: () => T('Open the shop! Press OPEN inside', 'Mở cửa quán! Bấm MỞ CỬA bên trong'), target: () => G.scene?.id === 'shed1' ? null : doorOf('shed1'), done: () => bizOf('shed1').open || flag('firstServed3'), next: 'serve' },
+  serve: { ch: 2, text: () => T(`Serve your first customers at the counter (${Math.min(3, since('serve'))}/3)`, `Phục vụ những vị khách đầu tiên ở quầy (${Math.min(3, since('serve'))}/3)`), target: () => G.scene?.id === 'shed1' ? { scene: 'shed1', x: 80, y: 128 } : doorOf('shed1'), done: () => since('serve') >= 3, next: 'sleep', scene: () => afterFirstCustomers() },
+  sleep: { ch: 2, text: () => G.state.time < 17 * 60 ? T('Keep selling, then go home and sleep', 'Bán thêm, rồi về nhà ngủ') : T('Go home and sleep in your bed', 'Về nhà và đi ngủ'), target: () => G.scene?.id === 'house' ? { scene: 'house', x: 48, y: 124 } : doorOf('house'), done: () => G.state.day >= 2, next: 'grow' },
   // ---- Chapter 3
-  grow: { ch: 3, text: () => `Tiếng lành đồn xa: phục vụ ${Math.min(12, since('grow'))}/12 khách · danh tiếng ${Math.floor(G.state.reputation)}/20`, target: () => G.scene?.id === 'shed1' ? null : doorOf('shed1'), done: () => since('grow') >= 12 && G.state.reputation >= 20, next: 'repair2', scene: () => introShed2() },
-  repair2: { ch: 3, text: () => { const r = BUSINESSES.shed2.repair; return `Sửa quán Bánh Mì ở Xóm Tây (gỗ ${mats('wood')}/${r.wood} · tôn ${mats('metal')}/${r.metal} · sơn ${mats('paint')}/${r.paint})`; }, target: () => frontOf('shed2'), done: () => bizOf('shed2').repair >= 1, next: 'banhmi', scene: () => afterShed2() },
-  banhmi: { ch: 3, text: () => `Bán ${Math.min(5, bizServedSince('shed2', 'banhmi'))}/5 ổ bánh mì · Sell bánh mì`, target: () => G.scene?.id === 'shed2' ? null : doorOf('shed2'), done: () => bizServedSince('shed2', 'banhmi') >= 5, next: 'truck', scene: () => chapter4Intro() },
+  grow: { ch: 3, text: () => T(`Word is spreading: serve ${Math.min(12, since('grow'))}/12 customers · reputation ${Math.floor(G.state.reputation)}/20`, `Tiếng lành đồn xa: phục vụ ${Math.min(12, since('grow'))}/12 khách · danh tiếng ${Math.floor(G.state.reputation)}/20`), target: () => G.scene?.id === 'shed1' ? null : doorOf('shed1'), done: () => since('grow') >= 12 && G.state.reputation >= 20, next: 'repair2', scene: () => introShed2() },
+  repair2: { ch: 3, text: () => { const r = BUSINESSES.shed2.repair; return T(`Repair the bánh mì shed in West Village (wood ${mats('wood')}/${r.wood} · metal ${mats('metal')}/${r.metal} · paint ${mats('paint')}/${r.paint})`, `Sửa quán Bánh Mì ở Xóm Tây (gỗ ${mats('wood')}/${r.wood} · tôn ${mats('metal')}/${r.metal} · sơn ${mats('paint')}/${r.paint})`); }, target: () => frontOf('shed2'), done: () => bizOf('shed2').repair >= 1, next: 'banhmi', scene: () => afterShed2() },
+  banhmi: { ch: 3, text: () => T(`Sell bánh mì (${Math.min(5, bizServedSince('shed2', 'banhmi'))}/5)`, `Bán ${Math.min(5, bizServedSince('shed2', 'banhmi'))}/5 ổ bánh mì`), target: () => G.scene?.id === 'shed2' ? null : doorOf('shed2'), done: () => bizServedSince('shed2', 'banhmi') >= 5, next: 'truck', scene: () => chapter4Intro() },
   // ---- Chapter 4
-  truck: { ch: 4, text: () => `Mua xe cuốn ở bãi biển phía đông (${Math.floor(G.state.money)}/${BUSINESSES.truck.buy}k)`, target: () => frontOf('truck'), done: () => bizOf('truck').owned, next: 'truckServe', scene: () => afterTruck() },
-  truckServe: { ch: 4, text: () => `Bán ${Math.min(6, bizServedSince('truck', 'truckServe'))}/6 phần ở xe cuốn · danh tiếng ${Math.floor(G.state.reputation)}/60`, target: () => G.scene?.id === 'truck' ? null : doorOf('truck'), done: () => bizServedSince('truck', 'truckServe') >= 6 && G.state.reputation >= 60, next: 'nightIntro', scene: () => chapter5Intro() },
+  truck: { ch: 4, text: () => T(`Buy the food truck on the east beach (${Math.floor(G.state.money)}/${BUSINESSES.truck.buy}k)`, `Mua xe cuốn ở bãi biển phía đông (${Math.floor(G.state.money)}/${BUSINESSES.truck.buy}k)`), target: () => frontOf('truck'), done: () => bizOf('truck').owned, next: 'truckServe', scene: () => afterTruck() },
+  truckServe: { ch: 4, text: () => T(`Sell ${Math.min(6, bizServedSince('truck', 'truckServe'))}/6 orders at the truck · reputation ${Math.floor(G.state.reputation)}/60`, `Bán ${Math.min(6, bizServedSince('truck', 'truckServe'))}/6 phần ở xe cuốn · danh tiếng ${Math.floor(G.state.reputation)}/60`), target: () => G.scene?.id === 'truck' ? null : doorOf('truck'), done: () => bizServedSince('truck', 'truckServe') >= 6 && G.state.reputation >= 60, next: 'nightIntro', scene: () => chapter5Intro() },
   // ---- Chapter 5
   nightIntro: { ch: 5 },
-  restoreNM: { ch: 5, text: () => { const r = NIGHT_MARKET_RESTORE; return `Khôi phục Chợ Đêm: ${r.cost}k, gỗ ${mats('wood')}/${r.mats.wood}, tôn ${mats('metal')}/${r.mats.metal}, sơn ${mats('paint')}/${r.mats.paint}, lồng đèn ${mats('lantern')}/${r.mats.lantern}, dây đèn ${mats('cable')}/${r.mats.cable}`; }, target: () => ({ scene: 'island', x: 430, y: 780 }), done: () => G.state.nightMarket.restored, next: 'nightServe' },
-  nightServe: { ch: 5, text: () => `Bán ${Math.min(8, bizServedSince('night', 'nightServe'))}/8 món ở Sạp Đêm (mở 17:00–24:00)`, target: () => ({ scene: 'island', x: 520, y: 700 }), done: () => bizServedSince('night', 'nightServe') >= 8, next: 'restoIntro', scene: () => chapter6Intro() },
+  restoreNM: { ch: 5, text: () => { const r = NIGHT_MARKET_RESTORE; return T(`Restore the Night Market: ${r.cost}k, wood ${mats('wood')}/${r.mats.wood}, metal ${mats('metal')}/${r.mats.metal}, paint ${mats('paint')}/${r.mats.paint}, lanterns ${mats('lantern')}/${r.mats.lantern}, light strings ${mats('cable')}/${r.mats.cable}`, `Khôi phục Chợ Đêm: ${r.cost}k, gỗ ${mats('wood')}/${r.mats.wood}, tôn ${mats('metal')}/${r.mats.metal}, sơn ${mats('paint')}/${r.mats.paint}, lồng đèn ${mats('lantern')}/${r.mats.lantern}, dây đèn ${mats('cable')}/${r.mats.cable}`); }, target: () => ({ scene: 'island', x: 430, y: 780 }), done: () => G.state.nightMarket.restored, next: 'nightServe' },
+  nightServe: { ch: 5, text: () => T(`Sell ${Math.min(8, bizServedSince('night', 'nightServe'))}/8 dishes at your night stall (open 17:00–24:00)`, `Bán ${Math.min(8, bizServedSince('night', 'nightServe'))}/8 món ở Sạp Đêm (mở 17:00–24:00)`), target: () => ({ scene: 'island', x: 520, y: 700 }), done: () => bizServedSince('night', 'nightServe') >= 8, next: 'restoIntro', scene: () => chapter6Intro() },
   // ---- Chapter 6
   restoIntro: { ch: 6 },
-  buyResto: { ch: 6, text: () => `Mua nhà hàng trên đồi (${Math.floor(G.state.money)}/${BUSINESSES.restaurant.buy}k)`, target: () => frontOf('restaurant'), done: () => bizOf('restaurant').owned, next: 'repairResto' },
-  repairResto: { ch: 6, text: () => { const r = BUSINESSES.restaurant.repair; return `Sửa nhà hàng: gỗ ${mats('wood')}/${r.wood}, tôn ${mats('metal')}/${r.metal}, sơn ${mats('paint')}/${r.paint}, ngói ${mats('tile')}/${r.tile}`; }, target: () => frontOf('restaurant'), done: () => bizOf('restaurant').repair >= 1, next: 'hire', scene: () => grandOpening() },
-  hire: { ch: 6, text: () => 'Thuê nhân viên đầu tiên ở bảng Nhân viên trong nhà hàng · Hire your first employee', target: () => G.scene?.id === 'restaurant' ? { scene: 'restaurant', x: 356, y: 330 } : doorOf('restaurant'), done: () => bizOf('restaurant').employees.length > 0, next: 'restoServe' },
-  restoServe: { ch: 6, text: () => `Phục vụ ${Math.min(12, bizServedSince('restaurant', 'restoServe'))}/12 khách ở nhà hàng`, target: () => G.scene?.id === 'restaurant' ? null : doorOf('restaurant'), done: () => bizServedSince('restaurant', 'restoServe') >= 12, next: 'team' },
-  team: { ch: 6, text: () => 'Thuê đủ đầu bếp + phục vụ để nhà hàng tự vận hành · Hire a cook and a server', target: () => G.scene?.id === 'restaurant' ? { scene: 'restaurant', x: 356, y: 330 } : doorOf('restaurant'), done: () => { const roles = new Set(bizOf('restaurant').employees.map(e => e.role)); return roles.has('cook') && roles.has('server'); }, next: 'destination', scene: () => chapter7Intro() },
+  buyResto: { ch: 6, text: () => T(`Buy the restaurant on the hill (${Math.floor(G.state.money)}/${BUSINESSES.restaurant.buy}k)`, `Mua nhà hàng trên đồi (${Math.floor(G.state.money)}/${BUSINESSES.restaurant.buy}k)`), target: () => frontOf('restaurant'), done: () => bizOf('restaurant').owned, next: 'repairResto' },
+  repairResto: { ch: 6, text: () => { const r = BUSINESSES.restaurant.repair; return T(`Repair the restaurant: wood ${mats('wood')}/${r.wood}, metal ${mats('metal')}/${r.metal}, paint ${mats('paint')}/${r.paint}, roof tiles ${mats('tile')}/${r.tile}`, `Sửa nhà hàng: gỗ ${mats('wood')}/${r.wood}, tôn ${mats('metal')}/${r.metal}, sơn ${mats('paint')}/${r.paint}, ngói ${mats('tile')}/${r.tile}`); }, target: () => frontOf('restaurant'), done: () => bizOf('restaurant').repair >= 1, next: 'hire', scene: () => grandOpening() },
+  hire: { ch: 6, text: () => T('Hire your first employee at the Staff board inside the restaurant', 'Thuê nhân viên đầu tiên ở bảng Nhân viên trong nhà hàng'), target: () => G.scene?.id === 'restaurant' ? { scene: 'restaurant', x: 356, y: 330 } : doorOf('restaurant'), done: () => bizOf('restaurant').employees.length > 0, next: 'restoServe' },
+  restoServe: { ch: 6, text: () => T(`Serve ${Math.min(12, bizServedSince('restaurant', 'restoServe'))}/12 guests at the restaurant`, `Phục vụ ${Math.min(12, bizServedSince('restaurant', 'restoServe'))}/12 khách ở nhà hàng`), target: () => G.scene?.id === 'restaurant' ? null : doorOf('restaurant'), done: () => bizServedSince('restaurant', 'restoServe') >= 12, next: 'team' },
+  team: { ch: 6, text: () => T('Hire a cook and a server so the restaurant runs itself', 'Thuê đầu bếp và phục vụ để nhà hàng tự vận hành'), target: () => G.scene?.id === 'restaurant' ? { scene: 'restaurant', x: 356, y: 330 } : doorOf('restaurant'), done: () => { const roles = new Set(bizOf('restaurant').employees.map(e => e.role)); return roles.has('cook') && roles.has('server'); }, next: 'destination', scene: () => chapter7Intro() },
   // ---- Chapter 7
-  destination: { ch: 7, text: () => { const lv3 = Object.values(G.state.biz).some(b => b.level >= 3); return `Điểm đến: danh tiếng ${Math.floor(G.state.reputation)}/300 · 1 quán cấp 3 ${lv3 ? '✓' : '✗'} · rồi dựng tượng ở Quảng Trường`; }, target: () => ({ scene: 'island', x: 900, y: 1600 }), done: () => G.state.statue, next: 'free', scene: () => finale() },
+  destination: { ch: 7, text: () => { const lv3 = Object.values(G.state.biz).some(b => b.level >= 3); return T(`A destination: reputation ${Math.floor(G.state.reputation)}/300 · one shop at level 3 ${lv3 ? '✓' : '✗'} · then build the statue in the plaza`, `Điểm đến: danh tiếng ${Math.floor(G.state.reputation)}/300 · 1 quán cấp 3 ${lv3 ? '✓' : '✗'} · rồi dựng tượng ở Quảng Trường`); }, target: () => ({ scene: 'island', x: 900, y: 1600 }), done: () => G.state.statue, next: 'free', scene: () => finale() },
   free: { ch: 7, text: () => freeText(), target: () => null, done: () => false },
 };
 function freeText() {
   const av = availableRecipes();
-  if (av.length) return 'Mèo Mây có công thức mới! Ghé nhà Mèo Mây · New recipe waiting';
+  if (av.length) return T('Mèo Mây has a new recipe for you — visit its house!', 'Mèo Mây có công thức mới! Ghé nhà Mèo Mây nhé');
   const up = Object.entries(G.state.biz).find(([id, b]) => b.owned && b.level < 3 && BUSINESSES[id].upgrades);
-  if (up) return `Nâng cấp ${BUSINESSES[up[0]].name} · Keep growing your island`;
-  return `Ngày ${G.state.day}: đảo ${G.state.island.name} đang rộn ràng!`;
+  if (up) return T(`Upgrade ${bizName(up[0])} and keep growing your island`, `Nâng cấp ${bizName(up[0])} và tiếp tục phát triển đảo`);
+  return T(`Day ${G.state.day}: ${G.state.island.name} is buzzing!`, `Ngày ${G.state.day}: đảo ${G.state.island.name} đang rộn ràng!`);
 }
 function hasStockFor(k) {
   if (pantry(k) > 0) return true;
@@ -142,7 +143,7 @@ function releaseMeo(to = 'plaza') {
 }
 function titleCard(n) {
   const ch = CHAPTERS[n];
-  caption(`Chương ${n}: ${ch.vi}`, ch.title);
+  caption(T(`Chapter ${n}: ${ch.title}`, `Chương ${n}: ${ch.vi}`));
   sfx('bell');
   return wait(2.4).then(() => caption(null));
 }
@@ -195,34 +196,34 @@ export async function runArrival() {
     face(m, pl); face(pl, m); pl.setEmo('surprised', 1.4); emote(pl, '?');
     await camTo((m.x + pl.x) / 2, pl.y - 20, { zoom: 1.35, rate: 2.5 });
     m.tiltTarget = 0.18;
-    await say('meo', 'Ơ! Một người mới! A new face on the island!', { emo: 'surprised' });
+    await say('meo', T('Oh! A new face on the island!', 'Ơ! Một người mới đến đảo kìa!'), { emo: 'surprised' });
     m.tiltTarget = 0; await hop(m, 2);
-    await say('meo', 'Chào bạn, chào bạn! Welcome! I\'m *Mèo Mây* — the island\'s official greeter, lantern-counter and nap expert.', { emo: 'happy' });
-    await say('meo', 'Hmm… you don\'t look like a fisherman. And you\'re definitely not a tourist — you packed way too much.', { tilt: 0.15 });
+    await say('meo', T('Hello, hello! Welcome! I\'m *Mèo Mây* — the island\'s official greeter, lantern-counter and nap expert.', 'Chào bạn, chào bạn! Mình là *Mèo Mây* — người chào đón, đếm lồng đèn và chuyên gia ngủ trưa của đảo.'), { emo: 'happy' });
+    await say('meo', T('Hmm… you don\'t look like a fisherman. And you\'re definitely not a tourist — you packed way too much.', 'Hừm… trông bạn không giống ngư dân. Mà cũng chẳng phải khách du lịch — bạn mang nhiều đồ quá trời.'), { tilt: 0.15 });
     m.tiltTarget = 0.2;
-    await say('meo', 'What should I call you?');
+    await say('meo', T('What should I call you?', 'Mình nên gọi bạn là gì nhỉ?'));
     m.tiltTarget = 0;
-    const name = await askText({ title: 'Bạn tên gì?', sub: 'What\'s your name?', placeholder: 'Tên của bạn', max: 14 });
+    const name = await askText({ title: T('What\'s your name?', 'Bạn tên gì?'), placeholder: T('Your name', 'Tên của bạn'), max: 14 });
     G.state.player.name = name;
     pl.name = name;
-    await say('meo', `*${name}*! What a lovely name. Let me get a good look at you…`, { emo: 'happy' });
+    await say('meo', T(`*${name}*! What a lovely name. Let me get a good look at you…`, `*${name}*! Tên dễ thương ghê. Để mình ngắm bạn kỹ một chút…`), { emo: 'happy' });
     const look = await chooseLook(G.state.player.lookOpt || {});
     G.state.player.lookOpt = look; G.state.player.look = playerLook(look); pl.look = G.state.player.look;
     pl.doHop(); fx.burst('spark', pl.x, pl.y - 30, 8, { up: 40, col: '#ffd35a' }); sfx('sparkle');
-    await say('meo', 'Perfect. Very island-chic.', { emo: 'happy' });
-    await say('meo', 'Now… this island has had a lot of names. The old folks just call it "the island". That\'s a little sad, isn\'t it?', { emo: 'sad' });
+    await say('meo', T('Perfect. Very island-chic.', 'Hoàn hảo. Rất ra dáng dân đảo.'), { emo: 'happy' });
+    await say('meo', T('Now… this island has had a lot of names. The old folks just call it “the island”. That\'s a little sad, isn\'t it?', 'Mà này… hòn đảo này từng có nhiều tên lắm. Mấy ông bà chỉ gọi là “cái đảo”. Nghe hơi buồn nhỉ?'), { emo: 'sad' });
     m.tiltTarget = 0.2;
-    await say('meo', 'Since you\'re staying, would you give it a name?');
+    await say('meo', T('Since you\'re staying, would you give it a name?', 'Bạn ở lại đây rồi, đặt cho đảo một cái tên nhé?'));
     m.tiltTarget = 0;
-    const isl = await askText({ title: 'Đặt tên cho hòn đảo', sub: 'Name your island', placeholder: 'Đảo …', max: 16, value: 'Đảo Mây' });
+    const isl = await askText({ title: T('Name your island', 'Đặt tên cho hòn đảo'), placeholder: T('Island name', 'Tên hòn đảo'), max: 16, value: T('Cloud Island', 'Đảo Mây') });
     G.state.island.name = isl;
     markDirty(true);
     cloud.hasSession() && cloud.saveProfile(name, isl).catch(() => {});
     await camTo(900, 2370, { zoom: 1.1, rate: 2, hold: 0.5 });
     sfx('sparkle'); fx.burst('confetti', 900, 2330, 24, { up: 90, speed: 70, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 60, life: 1.6 });
-    await say('meo', `*${isl}*… Hehe. The welcome gate already likes it.`, { emo: 'happy' });
+    await say('meo', T(`*${isl}*… Hehe. The welcome gate already likes it.`, `*${isl}*… Hì hì. Cổng chào thích cái tên này lắm đó.`), { emo: 'happy' });
     await camTo((m.x + pl.x) / 2, pl.y - 20, { zoom: 1.25 });
-    await say('meo', 'Okay! Follow me — I\'ll show you around. Stay close, the gulls here steal hats.', { emo: 'happy', act: 'point' });
+    await say('meo', T('Okay! Follow me — I\'ll show you around. Stay close, the gulls here steal hats.', 'Được rồi! Đi theo mình nào — mình dẫn bạn đi một vòng. Đi sát nha, hải âu ở đây hay giật nón lắm.'), { emo: 'happy', act: 'point' });
     S().step = 'tour'; markDirty(true);
   });
   G.runtime.introBoat = false;
@@ -250,18 +251,18 @@ export async function runTour() {
     await pl.walkTo([[574, 2250]], { speed: 60 });
     face(m, { x: 600, y: 2150 }); face(pl, { x: 600, y: 2150 });
     await camTo(600, 2160, { zoom: 1.28, rate: 2.4 });
-    await say('meo', 'This little shed doesn\'t look like much right now…', { emo: 'sad' });
+    await say('meo', T('This little shed doesn\'t look like much right now…', 'Căn chòi nhỏ này giờ trông chẳng ra sao…'), { emo: 'sad' });
     // Mèo Mây looks up at the broken roof
     m.lookY = -1; m.tiltTarget = -0.22;
     await camTo(600, 2120, { zoom: 1.34, rate: 2 });
     await wait(0.6);
-    await say('meo', 'But sometimes all a place needs is someone willing to believe in it.');
+    await say('meo', T('But sometimes all a place needs is someone willing to believe in it.', 'Nhưng đôi khi, một nơi chỉ cần một người chịu tin vào nó.'));
     await wait(0.8);
     m.tiltTarget = 0.2; m.lookY = 0; face(m, pl);
-    await say('meo', 'And, uh… about *12 pieces of wood*.', { tilt: 0.2 });
+    await say('meo', T('And, uh… about *12 pieces of wood*.', 'Và, ờm… khoảng *12 tấm gỗ*.'), { tilt: 0.2 });
     m.tiltTarget = 0;
-    await say('meo', 'It was Bà Tư\'s tea stand once. If you fix it up, it can be your very first business. Chú Bảy\'s material shop on Market Street sells wood, metal and paint.', { emo: 'happy' });
-    await say('meo', 'But first — your house! This way!', { emo: 'happy' });
+    await say('meo', T('It was Bà Tư\'s tea stand once. If you fix it up, it can be your very first business. Chú Bảy\'s material shop on Market Street sells wood, metal and paint.', 'Ngày xưa đây là quán trà của Bà Tư. Sửa lại là thành cửa hàng đầu tiên của bạn đó. Tiệm vật liệu Chú Bảy ở Phố Chợ có bán gỗ, tôn và sơn.'), { emo: 'happy' });
+    await say('meo', T('But first — your house! This way!', 'Nhưng trước hết — nhà của bạn! Lối này!'), { emo: 'happy' });
     camFollow(pl, 1.05);
     startFollow(m, 30);
     await walk(m, 900, 2240, { speed: 76 });
@@ -271,8 +272,8 @@ export async function runTour() {
     await pl.walkTo([[880, 1705]], { speed: 70 });
     face(m, { x: 900, y: 1540 }); face(pl, { x: 900, y: 1540 });
     await camTo(900, 1560, { zoom: 1.0, rate: 2 });
-    await say('meo', 'Banyan Plaza. Everyone meets here — for gossip, for chess, for pretending not to gossip.', { emo: 'happy' });
-    await say('meo', 'Market Street is just north of here: *Cô Hoa\'s supermarket* for ingredients, *Chú Bảy* for materials, *Anh Khoa* for furniture.', { act: 'point' });
+    await say('meo', T('Banyan Plaza. Everyone meets here — for gossip, for chess, for pretending not to gossip.', 'Quảng trường Cây Đa. Ai cũng tụ tập ở đây — để buôn chuyện, đánh cờ, và giả vờ không buôn chuyện.'), { emo: 'happy' });
+    await say('meo', T('Market Street is just north of here: *Cô Hoa\'s supermarket* for ingredients, *Chú Bảy* for materials, *Anh Khoa* for furniture.', 'Phố Chợ ở ngay phía bắc: *Siêu thị Cô Hoa* bán nguyên liệu, *Chú Bảy* bán vật liệu, *Anh Khoa* bán nội thất.'), { act: 'point' });
     camFollow(pl, 1.05);
     startFollow(m, 30);
     await walk(m, 1000, 1590, { speed: 80 });
@@ -282,17 +283,17 @@ export async function runTour() {
     face(m, { x: 1260, y: 1700 }); face(pl, { x: 1260, y: 1700 });
     B('house').doorTarget = 0.4;
     await camTo(1262, 1700, { zoom: 1.25, rate: 2.2 });
-    await say('meo', 'And this… is *your home*! Yellow walls, green shutters, a roof that only leaks when it rains.', { emo: 'happy' });
+    await say('meo', T('And this… is *your home*! Yellow walls, green shutters, a roof that only leaks when it rains.', 'Còn đây… là *nhà của bạn*! Tường vàng, cửa sổ xanh, mái chỉ dột khi trời mưa thôi.'), { emo: 'happy' });
     face(m, pl);
-    await say('meo', 'It\'s a bit empty inside. Anh Khoa sells furniture — you can arrange it however you like.');
-    await say('meo', 'When you\'re tired, *sleep in your bed*. That ends the day, and I\'ll tell you how it went. I\'m very good at counting coins.', { emo: 'happy' });
+    await say('meo', T('It\'s a bit empty inside. Anh Khoa sells furniture — you can arrange it however you like.', 'Bên trong hơi trống. Anh Khoa có bán đồ nội thất — bạn muốn bày sao cũng được.'));
+    await say('meo', T('When you\'re tired, *sleep in your bed*. That ends the day, and I\'ll tell you how it went. I\'m very good at counting coins.', 'Khi mệt thì *đi ngủ trên giường* nhé. Vậy là hết một ngày, và mình sẽ kể bạn nghe ngày hôm đó thế nào. Mình đếm tiền giỏi lắm.'), { emo: 'happy' });
     B('house').doorTarget = 0;
     face(m, { x: 1480, y: 1700 }); m.setAct('point');
     await camTo(1370, 1700, { zoom: 1.1 });
-    await say('meo', 'Oh — and my house is right next door. The one with the ears. Come visit anytime!', { act: 'point' });
+    await say('meo', T('Oh — and my house is right next door. The one with the ears. Come visit anytime!', 'À — nhà mình ở ngay bên cạnh. Cái nhà có tai mèo đó. Ghé chơi bất cứ lúc nào nha!'), { act: 'point' });
     m.setAct(null); face(m, pl);
     await camTo((m.x + pl.x) / 2, pl.y - 20, { zoom: 1.3 });
-    await say('meo', `Good luck, ${G.state.player.name}. I believe in you — and in that shed.`, { emo: 'happy' });
+    await say('meo', T(`Good luck, ${G.state.player.name}. I believe in you — and in that shed.`, `Chúc may mắn, ${G.state.player.name}. Mình tin bạn — và tin cả căn chòi đó nữa.`), { emo: 'happy' });
     m.setAct('wave'); await hop(m, 1); await wait(0.5); m.setAct(null);
     // Mèo Mây trots off toward the plaza, not vanishing
     camFollow(pl, 1);
@@ -302,7 +303,7 @@ export async function runTour() {
   G.runtime.inCutscene = false;
   setFlag('freeRoam');
   setStep('materials');
-  toast({ text: 'Chương 1: Người Mới Đến', sub: 'A New Arrival — explore freely!', icon: 'lantern' });
+  toast({ text: T('Chapter 1: A New Arrival', 'Chương 1: Người Mới Đến'), sub: T('Explore the island freely!', 'Tự do khám phá hòn đảo!'), icon: 'lantern' });
   document.body.classList.add('show-joy-hint');
   showHud(true);
 }
@@ -376,13 +377,13 @@ export async function upgradeScene(bizId, lv) {
     if (back) { await fadeOut(300); setScene(back.id, back.x, back.y, 'down'); await fadeIn(300); }
   });
   G.runtime.inCutscene = false;
-  toast({ text: `${def.name} lên cấp ${lv}!`, sub: u.label, icon: 'lantern' });
+  toast({ text: T(`${bizName(bizId)} reached level ${lv}!`, `${bizName(bizId)} lên cấp ${lv}!`), sub: T(u.label, u.labelVi || u.label), icon: 'lantern' });
   checkStory();
 }
 export async function discoverRecipe(id, { from = 'meo' } = {}) {
   if (!learnRecipe(id)) return;
   const R = RECIPES[id];
-  await showReward({ kicker: 'Công thức mới · New recipe', title: R.vi, sub: R.en, icon: R.icon, steps: R.steps.map(s => STATION[s].icon), text: R.blurb, button: 'Học xong!' });
+  await showReward({ kicker: T('New recipe', 'Công thức mới'), title: recipeName(id), sub: '', icon: R.icon, steps: R.steps.map(s => STATION[s].icon), text: T(R.blurb, R.blurbVi || R.blurb), button: T('Got it!', 'Học xong!') });
   if (G.state.recipes.length >= 5) unlockAchievement('recipes_5');
   if (G.state.recipes.length >= Object.keys(RECIPES).length) unlockAchievement('recipes_all');
   // give this business a daily special if it has none yet
@@ -398,14 +399,14 @@ async function afterFirstRepair() {
     await summonMeo(34);
     await camTo((m.x + G.player.x) / 2, G.player.y - 30, { zoom: 1.3 });
     m.setEmo('surprised', 1.2);
-    await say('meo', 'Waaa! Look at it! Is that the same shed? It looks so proud now!', { emo: 'surprised' });
+    await say('meo', T('Waaa! Look at it! Is that the same shed? It looks so proud now!', 'Oaaa! Nhìn kìa! Có phải căn chòi hồi nãy không vậy? Trông nó tự hào ghê!'), { emo: 'surprised' });
     await hop(m, 2);
-    await say('meo', 'A shop needs a menu, though. Here — this is the very first recipe Bà Tư ever taught me.', { emo: 'happy' });
+    await say('meo', T('A shop needs a menu, though. Here — this is the very first recipe Bà Tư ever taught me.', 'Mà quán thì phải có thực đơn chứ. Đây — công thức đầu tiên Bà Tư dạy mình.'), { emo: 'happy' });
     await discoverRecipe('tra_tac');
-    await say('meo', 'Trà tắc: *tea*, then *kumquat*. The customer tells you the size, sugar and ice.');
+    await say('meo', T('Kumquat tea: *tea*, then *kumquat*. The customer tells you the size, sugar and ice.', 'Trà tắc: *trà* trước, rồi *tắc*. Khách sẽ nói size, đường và đá.'));
     await titleCard(2);
-    await say('meo', 'Buy *tea, kumquats, sugar and ice* at Cô Hoa\'s supermarket. Slice the kumquats at the prep table inside the shed. Then — open up!', { emo: 'happy' });
-    await say('meo', 'I\'ll be nearby. I have very important napping to do.', { tilt: 0.15 });
+    await say('meo', T('Buy *tea, kumquats, sugar and ice* at Cô Hoa\'s supermarket. Slice the kumquats at the prep table inside the shed. Then — open up!', 'Mua *trà, tắc, đường và đá* ở Siêu thị Cô Hoa. Cắt tắc ở bàn sơ chế trong quán. Rồi — mở cửa thôi!'), { emo: 'happy' });
+    await say('meo', T('I\'ll be nearby. I have very important napping to do.', 'Mình ở gần đây thôi. Mình có một giấc ngủ trưa cực kỳ quan trọng.'), { tilt: 0.15 });
     walk(m, 700, 2296, { speed: 70 }).then(() => { m.sit = true; releaseMeo('beach'); });
     await wait(0.8);
   });
@@ -418,9 +419,9 @@ async function afterFirstCustomers() {
   await cs.run('first3', async () => {
     G.runtime.inCutscene = true;
     await summonMeo(30);
-    await say('meo', 'Your first customers! Did you see their faces? That\'s the face of someone who just had a *really* good trà tắc.', { emo: 'happy' });
-    await say('meo', 'Keep going as long as you like. Shops close at 22:00.');
-    await say('meo', 'When you\'re tired, go home and sleep in your bed. Tomorrow the ferry brings new visitors — word travels fast here.', { emo: 'happy' });
+    await say('meo', T('Your first customers! Did you see their faces? That\'s the face of someone who just had a *really* good kumquat tea.', 'Những vị khách đầu tiên! Bạn thấy mặt họ không? Đó là gương mặt của người vừa uống ly trà tắc *cực* ngon.'), { emo: 'happy' });
+    await say('meo', T('Keep going as long as you like. Shops close at midnight.', 'Cứ bán tiếp bao lâu tùy thích. Quán đóng cửa lúc nửa đêm.'));
+    await say('meo', T('When you\'re tired, go home and sleep in your bed. Tomorrow the ferry brings new visitors — word travels fast here.', 'Khi mệt thì về nhà ngủ nhé. Mai tàu sẽ đưa khách mới tới — tin đồn ở đây lan nhanh lắm.'), { emo: 'happy' });
     m.setAct('wave'); await wait(0.6); m.setAct(null);
     if (G.scene.kind === 'island') walk(m, 700, 2296, { speed: 70 }).then(() => releaseMeo('beach'));
     else m.walkTo([[G.scene.door.x, G.scene.h + 14]], { speed: 70 }).then(() => { placeMeo('island', 700, 2296); releaseMeo('beach'); });
@@ -433,7 +434,7 @@ async function afterFirstCustomers() {
 export async function morningHooks() {
   const s = G.state;
   if (S().step === 'grow' && !flag('ch3intro')) await chapter3Intro();
-  else if (availableRecipes().length && !flag('recipeNote' + s.day)) { setFlag('recipeNote' + s.day); toast({ text: 'Mèo Mây có công thức mới!', sub: 'Visit Mèo Mây\'s house to learn it.', icon: 'notebook' }); }
+  else if (availableRecipes().length && !flag('recipeNote' + s.day)) { setFlag('recipeNote' + s.day); toast({ text: T('Mèo Mây has a new recipe!', 'Mèo Mây có công thức mới!'), sub: T('Visit Mèo Mây\'s house to learn it.', 'Ghé nhà Mèo Mây để học nhé.'), icon: 'notebook' }); }
 }
 async function chapter3Intro() {
   setFlag('ch3intro');
@@ -443,7 +444,7 @@ async function chapter3Intro() {
     G.runtime.inCutscene = true;
     await wait(0.4);
     if (G.scene.id === 'house') {
-      await say('meo', `(Knock knock!) ${s().player.name}! Are you up? Come outside!`, {});
+      await say('meo', T(`(Knock knock!) ${s().player.name}! Are you up? Come outside!`, `(Cốc cốc!) ${s().player.name} ơi! Dậy chưa? Ra đây nè!`), {});
       await pl.walkTo([[135, 220]], { speed: 80 });
       await fadeOut(250);
       setScene('island', 1260, 1760, 'down');
@@ -452,12 +453,12 @@ async function chapter3Intro() {
     } else await summonMeo();
     face(pl, m);
     await camTo((m.x + pl.x) / 2, pl.y - 20, { zoom: 1.3 });
-    await say('meo', 'Good morning! Guess what — people on the mainland are talking about a tiny tea stand with *very* good trà tắc.', { emo: 'happy' });
+    await say('meo', T('Good morning! Guess what — people on the mainland are talking about a tiny tea stand with *very* good kumquat tea.', 'Chào buổi sáng! Đoán xem — người trong đất liền đang bàn tán về một quán nhỏ bán trà tắc *cực* ngon đó.'), { emo: 'happy' });
     await titleCard(3);
-    await say('meo', 'More visitors are coming by ferry now. And they\'ll want something to wake them up…');
+    await say('meo', T('More visitors are coming by ferry now. And they\'ll want something to wake them up…', 'Giờ khách đi tàu tới đông hơn rồi. Và họ sẽ muốn thứ gì đó cho tỉnh ngủ…'));
     await discoverRecipe('ca_phe_sua_da');
-    await say('meo', 'Cà phê sữa đá! Condensed milk first, *then* coffee. Never the other way. That\'s the law.', { emo: 'happy', tilt: 0.15 });
-    await say('meo', 'Serve lots of customers and grow your reputation. If the island starts believing in you, I have… another shed in mind.');
+    await say('meo', T('Iced milk coffee! Condensed milk first, *then* coffee. Never the other way. That\'s the law.', 'Cà phê sữa đá! Sữa đặc trước, *rồi mới* tới cà phê. Không bao giờ ngược lại. Luật đó.'), { emo: 'happy', tilt: 0.15 });
+    await say('meo', T('Serve lots of customers and grow your reputation. If the island starts believing in you, I have… another shed in mind.', 'Phục vụ thật nhiều khách để tăng danh tiếng nhé. Nếu cả đảo bắt đầu tin bạn, mình có… một căn chòi khác trong đầu.'));
     releaseMeo('plaza'); walk(m, 970, 1650, { speed: 70 });
     await wait(0.6);
   });
@@ -471,19 +472,19 @@ async function introShed2() {
   await cs.run('shed2', async () => {
     G.runtime.inCutscene = true;
     if (G.scene.id !== 'island') {
-      await say('meo', '(Mèo Mây\'s voice outside) Pssst! Come out here, I want to show you something!', {});
+      await say('meo', T('(Mèo Mây\'s voice outside) Pssst! Come out here, I want to show you something!', '(Tiếng Mèo Mây bên ngoài) Suỵt! Ra đây, mình muốn cho bạn xem cái này!'), {});
       await fadeOut(250); const t = island().triggers.find(t => t.kind === 'door' && t.building === G.scene.building); setScene('island', t.doorX, t.doorY + 16, 'down'); await fadeIn(300);
     }
     await summonMeo();
-    await say('meo', 'The whole island is talking about you! Bà Tư even put on her good shoes to visit your stand.', { emo: 'happy' });
-    await say('meo', 'Follow me — there\'s another shed in West Village. It used to sell the best bánh mì on the island.');
+    await say('meo', T('The whole island is talking about you! Bà Tư even put on her good shoes to visit your stand.', 'Cả đảo đang nói về bạn đó! Bà Tư còn mang đôi dép đẹp nhất để tới quán bạn.'), { emo: 'happy' });
+    await say('meo', T('Follow me — there\'s another shed in West Village. It used to sell the best bánh mì on the island.', 'Theo mình — có một căn chòi khác ở Xóm Tây. Ngày xưa nó bán bánh mì ngon nhất đảo.'));
     startFollow(m, 30); camFollow(pl, 1.05);
     await walk(m, 540, 1612, { speed: 82 });
     stopFollow(); await pl.walkTo([[512, 1618]], { speed: 60 });
     face(m, { x: 560, y: 1520 }); face(pl, { x: 560, y: 1520 });
     await camTo(560, 1530, { zoom: 1.3 });
-    await say('meo', 'Ta-da. It\'s even more broken than the first one! Isn\'t that exciting?', { emo: 'happy', tilt: 0.2 });
-    await say('meo', 'Repair it and I\'ll teach you bánh mì. Two shops means twice the running around — but I think you can handle it.');
+    await say('meo', T('Ta-da. It\'s even more broken than the first one! Isn\'t that exciting?', 'Tèn ten. Nó còn hư hơn căn đầu tiên! Hào hứng ghê chưa?'), { emo: 'happy', tilt: 0.2 });
+    await say('meo', T('Repair it and I\'ll teach you bánh mì. Two shops means twice the running around — but I think you can handle it.', 'Sửa nó đi rồi mình dạy bạn làm bánh mì. Hai quán là chạy gấp đôi — nhưng mình nghĩ bạn làm được.'));
     releaseMeo('plaza');
   });
   G.runtime.inCutscene = false;
@@ -492,9 +493,9 @@ async function afterShed2() {
   await cs.run('shed2done', async () => {
     G.runtime.inCutscene = true;
     await summonMeo();
-    await say('meo', 'Crackly bread, a little pâté, grilled pork, pickles, cucumber, cilantro. Say it with me!', { emo: 'happy' });
+    await say('meo', T('Crackly bread, a little pâté, grilled pork, pickles, cucumber, cilantro. Say it with me!', 'Bánh giòn, chút pa tê, thịt nướng, đồ chua, dưa leo, ngò. Đọc theo mình nào!'), { emo: 'happy' });
     await discoverRecipe('banh_mi_thit');
-    await say('meo', 'The grill is inside. Prep the bread and pork before you open.');
+    await say('meo', T('The grill is inside. Prep the bread and pork before you open.', 'Bếp nướng ở bên trong. Nhớ sơ chế bánh và thịt trước khi mở cửa.'));
     releaseMeo('plaza');
   });
   G.runtime.inCutscene = false;
@@ -507,11 +508,11 @@ async function chapter4Intro() {
     G.runtime.inCutscene = true;
     await summonMeo();
     const m = G.meo;
-    await say('meo', 'You\'ve been running back and forth all day! Your legs must be tired. Mine are, and I just watched.', { emo: 'sad', tilt: 0.15 });
+    await say('meo', T('You\'ve been running back and forth all day! Your legs must be tired. Mine are, and I just watched.', 'Bạn chạy tới chạy lui cả ngày! Chân chắc mỏi lắm. Chân mình cũng mỏi, mà mình chỉ ngồi xem thôi.'), { emo: 'sad', tilt: 0.15 });
     await titleCard(4);
-    await say('meo', 'Here\'s a secret about little shops: sheds and food trucks need *you* behind the counter. They\'re too small for staff.');
-    await say('meo', 'Only a real *restaurant* can have a team. Cooks, servers, cleaners… One day, maybe!');
-    await say('meo', 'For now — there\'s an old food truck on the east beach. Chú Hải wants to sell it. Rolls on wheels! Think of the possibilities!', { emo: 'happy' });
+    await say('meo', T('Here\'s a secret about little shops: sheds and food trucks need *you* behind the counter. They\'re too small for staff.', 'Bí mật về quán nhỏ nè: chòi và xe bán đồ ăn cần chính *bạn* đứng quầy. Nhỏ quá, không thuê người được.'));
+    await say('meo', T('Only a real *restaurant* can have a team. Cooks, servers, cleaners… One day, maybe!', 'Chỉ có *nhà hàng* thật sự mới có đội ngũ. Đầu bếp, phục vụ, dọn dẹp… Biết đâu một ngày nào đó!'));
+    await say('meo', T('For now — there\'s an old food truck on the east beach. Chú Hải wants to sell it. Rolls on wheels! Think of the possibilities!', 'Còn bây giờ — có một chiếc xe bán đồ ăn cũ ở bãi biển phía đông. Chú Hải muốn bán. Gỏi cuốn trên bánh xe! Nghĩ mà xem!'), { emo: 'happy' });
     releaseMeo('beach');
   });
   G.runtime.inCutscene = false;
@@ -539,9 +540,9 @@ async function afterTruck() {
   await cs.run('truckdone', async () => {
     G.runtime.inCutscene = true;
     await summonMeo();
-    await say('meo', 'Beep beep! It\'s yours! Chú Hải cried a little. Happy tears. Mostly.', { emo: 'happy' });
+    await say('meo', T('Beep beep! It\'s yours! Chú Hải cried a little. Happy tears. Mostly.', 'Bíp bíp! Của bạn rồi! Chú Hải khóc một chút. Nước mắt hạnh phúc. Chắc vậy.'), { emo: 'happy' });
     await discoverRecipe('goi_cuon');
-    await say('meo', 'Gỏi cuốn: rice paper, noodles, herbs, shrimp — then roll it up nice and snug, like a cat in a blanket.', { tilt: 0.15 });
+    await say('meo', T('Spring rolls: rice paper, noodles, herbs, shrimp — then roll it up nice and snug, like a cat in a blanket.', 'Gỏi cuốn: bánh tráng, bún, rau thơm, tôm — rồi cuốn thật chặt, như mèo cuộn trong chăn.'), { tilt: 0.15 });
     releaseMeo('beach');
   });
   G.runtime.inCutscene = false;
@@ -555,7 +556,7 @@ async function chapter5Intro() {
     G.runtime.inCutscene = true;
     if (G.scene.id !== 'island') { await fadeOut(250); const t = island().triggers.find(t => t.kind === 'door' && t.building === G.scene.building); setScene('island', t.doorX, t.doorY + 16, 'down'); await fadeIn(300); }
     await summonMeo();
-    await say('meo', `${G.state.player.name}… can I show you a place that\'s very important to me?`, {});
+    await say('meo', T(`${G.state.player.name}… can I show you a place that's very important to me?`, `${G.state.player.name}… mình dẫn bạn tới một nơi rất quan trọng với mình được không?`), {});
     await titleCard(5);
     startFollow(m, 30); camFollow(pl, 1);
     await walk(m, 452, 900, { speed: 86 });
@@ -564,18 +565,18 @@ async function chapter5Intro() {
     face(m, { x: 430, y: 600 }); face(pl, { x: 430, y: 600 });
     setMood('night');
     await camTo(430, 660, { zoom: 0.95, rate: 1.6, hold: 0.6 });
-    await say('meo', 'This was the Night Market. Every evening, the whole island came here. Lanterns everywhere. Music. Grilled rice paper…', { emo: 'sad' });
+    await say('meo', T('This was the Night Market. Every evening, the whole island came here. Lanterns everywhere. Music. Grilled rice paper…', 'Đây từng là Chợ Đêm. Tối nào cả đảo cũng tới đây. Lồng đèn khắp nơi. Tiếng nhạc. Bánh tráng nướng…'), { emo: 'sad' });
     // Bà Sáu shuffles in
     const ba = new Actor({ kind: 'human', look: MERCHANTS.ba_sau.look, name: 'Bà Sáu', x: 300, y: 700, speed: 38 });
     island().add(ba); G.runtime.baSau = ba;
     await ba.walkTo([[360, 760], [392, 790]]);
     face(ba, pl); face(pl, ba); face(m, ba);
-    await say(ba, 'Mèo Mây? Is this the young one everyone talks about? The one with the tea?', {});
-    await say(ba, 'My mother made these lanterns. When the visitors stopped coming, we stopped lighting them. It felt silly to light lanterns for nobody.', { emo: 'sad' });
+    await say(ba, T('Mèo Mây? Is this the young one everyone talks about? The one with the tea?', 'Mèo Mây đó hả? Đây là đứa nhỏ mà ai cũng nhắc tới? Đứa bán trà đó?'), {});
+    await say(ba, T('My mother made these lanterns. When the visitors stopped coming, we stopped lighting them. It felt silly to light lanterns for nobody.', 'Mẹ bà làm những chiếc lồng đèn này. Khi khách không tới nữa, tụi bà cũng thôi thắp. Thắp đèn cho chẳng ai xem thì buồn lắm.'), { emo: 'sad' });
     face(m, pl);
-    await say('meo', 'But people *are* coming back now. Because of you!', { emo: 'happy' });
-    await say(ba, 'Then let\'s light them again. Bring wood, metal, paint, new silk lanterns and light strings — Chú Bảy has them now. And a little money for the vendors.', {});
-    await say('meo', 'I\'ll help! I\'m excellent at holding one end of things.', { emo: 'happy', tilt: 0.2 });
+    await say('meo', T('But people *are* coming back now. Because of you!', 'Nhưng giờ mọi người *đang* quay lại rồi. Nhờ bạn đó!'), { emo: 'happy' });
+    await say(ba, T('Then let\'s light them again. Bring wood, metal, paint, new silk lanterns and light strings — Chú Bảy has them now. And a little money for the vendors.', 'Vậy thì mình thắp lại thôi. Mang gỗ, tôn, sơn, lồng đèn lụa mới và dây đèn — Chú Bảy giờ có bán. Thêm chút tiền cho các sạp nữa.'), {});
+    await say('meo', T('I\'ll help! I\'m excellent at holding one end of things.', 'Mình phụ! Mình giỏi nhất khoản giữ một đầu đồ đạc.'), { emo: 'happy', tilt: 0.2 });
     releaseMeo('nightmarket');
     ba.walkTo([[340, 620]]).then(() => ba.face('down'));
   });
@@ -590,7 +591,7 @@ export async function restoreNightMarket() {
     addMoney(-r.cost, 'restore'); spendMats(r.mats);
     if (G.state.time < 19 * 60 + 30) {
       await fadeOut(900, true);
-      caption('Tối hôm đó…', 'That evening…');
+      caption(T('That evening…', 'Tối hôm đó…'));
       G.state.time = 19 * 60 + 40;
       pl.x = 430; pl.y = 800; pl.face('up');
       await wait(1.8); caption(null);
@@ -603,7 +604,7 @@ export async function restoreNightMarket() {
     if (!island().actors.includes(ba)) island().add(ba);
     ba.x = 404; ba.y = 814; face(ba, { x: 430, y: 600 });
     await camTo(430, 700, { zoom: 0.9, rate: 1.4, hold: 0.4 });
-    await say(ba, 'Ready? On three. Một… hai… ba!', {});
+    await say(ba, T('Ready? On three. One… two… three!', 'Sẵn sàng chưa? Đếm nhé. Một… hai… ba!'), {});
     sfx('bell');
     // lanterns and stalls come alive one after another
     const t0 = performance.now();
@@ -625,11 +626,11 @@ export async function restoreNightMarket() {
     await wait(1.6);
     m.setEmo('happy', 3); await hop(m, 2);
     await camTo(430, 760, { zoom: 1.2, rate: 2 });
-    await say(ba, 'Look at that… It\'s just like when I was a girl.', { emo: 'happy' });
-    await say('meo', 'The Night Market is open! And one of these stalls is *yours*, partner.', { emo: 'happy' });
+    await say(ba, T('Look at that… It\'s just like when I was a girl.', 'Nhìn kìa… Y như hồi bà còn con gái.'), { emo: 'happy' });
+    await say('meo', T('The Night Market is open! And one of these stalls is *yours*, partner.', 'Chợ Đêm mở cửa rồi! Và một trong những sạp này là *của bạn* đó, cộng sự.'), { emo: 'happy' });
     await discoverRecipe('banh_trang_nuong');
     await discoverRecipe('che_ba_mau');
-    await say('meo', 'Your stall opens from 17:00 to midnight. Bánh tráng nướng and chè — the two best smells in Việt Nam.');
+    await say('meo', T('Your stall opens from 17:00 to midnight. Grilled rice paper and sweet chè — the two best smells in Việt Nam.', 'Sạp của bạn mở từ 17:00 tới nửa đêm. Bánh tráng nướng và chè — hai mùi thơm nhất Việt Nam.'));
     unlockAchievement('night_market');
     releaseMeo('nightmarket');
     ba.walkTo([[340, 610]]).then(() => ba.face('down'));
@@ -647,18 +648,18 @@ async function chapter6Intro() {
     G.runtime.inCutscene = true;
     if (G.scene.id !== 'island') { await fadeOut(250); setScene('island', 520, 760, 'down'); await fadeIn(300); }
     await summonMeo();
-    await say('meo', 'Remember what I said about restaurants? Come with me, up the hill.', {});
+    await say('meo', T('Remember what I said about restaurants? Come with me, up the hill.', 'Nhớ mình nói gì về nhà hàng không? Đi với mình lên đồi nào.'), {});
     await titleCard(6);
     startFollow(m, 30); camFollow(pl, 1);
     await walk(m, 1180, 790, { speed: 90 });
     stopFollow(); await pl.walkTo([[1150, 800]], { speed: 60 });
     face(m, { x: 1200, y: 680 }); face(pl, { x: 1200, y: 680 });
     await camTo(1200, 680, { zoom: 0.95, rate: 1.8, hold: 0.4 });
-    await say('meo', 'The old restaurant. It cooked for every wedding on the island. The kitchen still smells a little of star anise.', {});
+    await say('meo', T('The old restaurant. It cooked for every wedding on the island. The kitchen still smells a little of star anise.', 'Nhà hàng cũ. Đám cưới nào trên đảo cũng đặt ở đây. Nhà bếp vẫn còn thoang thoảng mùi hoa hồi.'), {});
     m.tiltTarget = 0.2;
-    await say('meo', 'It\'s for sale. And it\'s big enough for a *team*. You could hire cooks and servers, and it would keep running even while you\'re at your other shops!', { emo: 'happy' });
+    await say('meo', T('It\'s for sale. And it\'s big enough for a *team*. You could hire cooks and servers, and it would keep running even while you\'re at your other shops!', 'Nó đang được rao bán. Và đủ rộng cho cả một *đội*. Bạn có thể thuê đầu bếp, phục vụ, và nó vẫn chạy ngay cả khi bạn ở quán khác!'), { emo: 'happy' });
     m.tiltTarget = 0;
-    await say('meo', 'It\'ll cost a lot. And it needs a *lot* of fixing. But… I have a feeling.', { tilt: 0.15 });
+    await say('meo', T('It\'ll cost a lot. And it needs a *lot* of fixing. But… I have a feeling.', 'Sẽ tốn nhiều tiền lắm. Và cần sửa *rất* nhiều. Nhưng… mình có linh cảm.'), { tilt: 0.15 });
     releaseMeo('plaza');
   });
   G.runtime.inCutscene = false;
@@ -672,18 +673,18 @@ async function grandOpening() {
     for (const [rid, dx] of [['ba_tu', -60], ['linh', -30], ['chu_hai', 60], ['be_na', 90]]) { const a = npcs.byId(rid); if (a) { a.data.state = 'busy'; a.stop(); a.visible = true; a.x = bld.x + dx; a.y = bld.y + 56; a.face('up'); } }
     pl.x = bld.x; pl.y = bld.y + 34; pl.face('up');
     await camTo(bld.x, bld.y - 30, { zoom: 0.95, rate: 2 });
-    caption('Khai trương!', 'Grand opening!');
+    caption(T('Grand opening!', 'Khai trương!'));
     sfx('fanfare');
     fx.burst('confetti', bld.x, bld.y - 80, 60, { up: 150, speed: 120, col: ['#f08ca0', '#ffd35a', '#e8584e', '#9fd8c8', '#fff'], g: 60, life: 2.2 });
     for (const a of npcs.residents) if (a.data.state === 'busy') { a.setAct('cheer'); a.setEmo('happy', 3); }
     await wait(2.2); caption(null);
     for (const a of npcs.residents) if (a.data.state === 'busy') { a.setAct(null); npcs.returnResident(a); }
     face(m, pl); face(pl, m);
-    await say('meo', `Nhà Hàng ${G.state.island.name}! Say it slowly. Doesn\'t it sound delicious?`, { emo: 'happy' });
+    await say('meo', T(`${G.state.island.name} Restaurant! Say it slowly. Doesn't it sound delicious?`, `Nhà Hàng ${G.state.island.name}! Đọc chậm thôi. Nghe ngon không?`), { emo: 'happy' });
     await discoverRecipe('pho_bo');
     await discoverRecipe('com_tam');
-    await say('meo', 'Inside there\'s a *Staff* board by the break corner. Hire people, give them roles, and watch them work. They each have their own quirks!');
-    await say('meo', 'A cook and a server is the start of a real team. Then it can run while you\'re away.', { emo: 'happy' });
+    await say('meo', T('Inside there\'s a *Staff* board by the break corner. Hire people, give them roles, and watch them work. They each have their own quirks!', 'Bên trong có bảng *Nhân viên* ở góc nghỉ. Thuê người, giao việc, rồi xem họ làm. Mỗi người một tính!'));
+    await say('meo', T('A cook and a server is the start of a real team. Then it can run while you\'re away.', 'Một đầu bếp và một phục vụ là khởi đầu của một đội thật sự. Rồi nhà hàng sẽ tự chạy khi bạn vắng mặt.'), { emo: 'happy' });
     unlockAchievement('restaurant');
     releaseMeo('plaza');
   });
@@ -696,10 +697,10 @@ async function chapter7Intro() {
   await cs.run('ch7', async () => {
     G.runtime.inCutscene = true;
     await summonMeo();
-    await say('meo', 'Do you hear that? That\'s the sound of a ferry that\'s *full*. People come from the mainland just for your island now.', { emo: 'happy' });
+    await say('meo', T('Do you hear that? That\'s the sound of a ferry that\'s *full*. People come from the mainland just for your island now.', 'Nghe không? Đó là tiếng một chuyến tàu *chật kín*. Giờ người ta từ đất liền tới chỉ để thăm đảo của bạn.'), { emo: 'happy' });
     await titleCard(7);
-    await say('meo', 'I\'ve been thinking. The fountain in the plaza has an empty pedestal. Every island needs a founder… and ours washed up with too much luggage.', { tilt: 0.2 });
-    await say('meo', 'Make the island a real destination — lots of reputation, one shop fully upgraded — and let\'s put *you* up there.', { emo: 'happy' });
+    await say('meo', T('I\'ve been thinking. The fountain in the plaza has an empty pedestal. Every island needs a founder… and ours washed up with too much luggage.', 'Mình nghĩ nè. Đài phun nước ở quảng trường có một cái bệ trống. Đảo nào cũng cần người sáng lập… và người của đảo mình thì tới với quá trời hành lý.'), { tilt: 0.2 });
+    await say('meo', T('Make the island a real destination — lots of reputation, one shop fully upgraded — and let\'s put *you* up there.', 'Biến đảo thành điểm đến thật sự — thật nhiều danh tiếng, một quán nâng cấp tối đa — rồi mình đặt *bạn* lên đó.'), { emo: 'happy' });
     releaseMeo('plaza');
   });
   G.runtime.inCutscene = false;
@@ -711,7 +712,7 @@ export async function buildStatue() {
     G.runtime.inCutscene = true;
     addMoney(-c.cost, 'statue'); spendMats(c.mats);
     await fadeOut(900, true);
-    caption('Đêm hôm ấy, cả đảo tụ họp…', 'That night, the whole island gathered…');
+    caption(T('That night, the whole island gathered…', 'Đêm hôm ấy, cả đảo tụ họp…'));
     G.state.time = Math.max(G.state.time, 20 * 60);
     setMood('night');
     const pl = G.player, m = G.meo;
@@ -729,12 +730,12 @@ export async function buildStatue() {
     for (const a of npcs.residents) { a.setAct(null); npcs.returnResident(a); }
     face(m, pl); face(pl, m);
     await camTo((m.x + pl.x) / 2, pl.y - 20, { zoom: 1.3 });
-    await say('meo', `You know… I\'ve been waiting a long time for someone who would stay.`, { tilt: 0.12 });
-    await say('meo', 'Someone who\'d see a broken shed and think "hmm, 12 pieces of wood".', { emo: 'happy', tilt: 0.2 });
-    await say('meo', `Thank you, ${G.state.player.name}. ${G.state.island.name} is home again.`, { emo: 'love' });
+    await say('meo', T(`You know… I've been waiting a long time for someone who would stay.`, `Bạn biết không… mình đã đợi rất lâu một người chịu ở lại.`), { tilt: 0.12 });
+    await say('meo', T('Someone who\'d see a broken shed and think “hmm, 12 pieces of wood”.', 'Một người nhìn căn chòi hư mà nghĩ “hừm, 12 tấm gỗ”.'), { emo: 'happy', tilt: 0.2 });
+    await say('meo', T(`Thank you, ${G.state.player.name}. ${G.state.island.name} is home again.`, `Cảm ơn bạn, ${G.state.player.name}. ${G.state.island.name} lại là nhà rồi.`), { emo: 'love' });
     await hop(m, 3);
     unlockAchievement('statue');
-    await say('meo', 'Now! Tomorrow is a new day, and there are still recipes in my notebook. Shall we keep going?', { emo: 'happy' });
+    await say('meo', T('Now! Tomorrow is a new day, and there are still recipes in my notebook. Shall we keep going?', 'Giờ thì! Mai là ngày mới, và sổ tay của mình vẫn còn công thức. Mình tiếp tục nhé?'), { emo: 'happy' });
     releaseMeo('plaza');
   });
   G.runtime.inCutscene = false;
@@ -744,57 +745,60 @@ async function finale() { /* the statue scene itself is the finale */ }
 
 // ---------------------------------------------------------------- talking to Mèo Mây
 const MEO_LINES = [
-  'Did you know the banyan tree is older than the lighthouse? It told me. Trees talk if you nap near them long enough.',
-  'Chú Hải says it\'s going to rain. Chú Hải always says it\'s going to rain.',
-  'Bé Na asked me if cats like chè. I said yes. I have never tried chè.',
-  'Regular customers remember how you treat them. So do cats. Just so you know.',
-  'The best time to visit the beach is when the ferry leaves. So quiet. So many dropped snacks.',
-  'If a customer is in a hurry, their patience bar drops faster. Rushed people tip better, though!',
-  'Daily specials are 10% pricier and people love them. Check the menu board in each shop.',
-  'Tourists love it when you do everything perfectly. They tip like they\'re on holiday — because they are.',
+  T('Did you know the banyan tree is older than the lighthouse? It told me. Trees talk if you nap near them long enough.', 'Bạn biết cây đa còn già hơn ngọn hải đăng không? Nó kể mình nghe đó. Ngủ gần cây đủ lâu là nghe cây nói.'),
+  T('Chú Hải says it\'s going to rain. Chú Hải always says it\'s going to rain.', 'Chú Hải nói sắp mưa. Chú Hải lúc nào cũng nói sắp mưa.'),
+  T('Bé Na asked me if cats like sweet chè. I said yes. I have never tried chè.', 'Bé Na hỏi mèo có thích chè không. Mình bảo có. Mình chưa ăn chè bao giờ.'),
+  T('Regular customers remember how you treat them. So do cats. Just so you know.', 'Khách quen nhớ bạn đối xử với họ thế nào. Mèo cũng vậy. Nói cho bạn biết thôi.'),
+  T('The best time to visit the beach is when the ferry leaves. So quiet. So many dropped snacks.', 'Lúc đẹp nhất để ra biển là khi tàu vừa đi. Yên tĩnh ghê. Lại còn nhiều đồ ăn vặt rơi.'),
+  T('If a customer is in a hurry, their patience bar drops faster. Rushed people tip better, though!', 'Khách vội thì thanh kiên nhẫn tụt nhanh hơn. Nhưng người vội lại hay boa nhiều!'),
+  T('Daily specials are 10% pricier and people love them. Check the menu board in each shop.', 'Món đặc biệt hôm nay đắt hơn 10% mà ai cũng thích. Xem bảng thực đơn ở mỗi quán nhé.'),
+  T('Tourists love it when you do everything perfectly. They tip like they\'re on holiday — because they are.', 'Du khách thích khi bạn làm hoàn hảo. Họ boa như đang đi nghỉ — vì họ đang đi nghỉ thật.'),
 ];
 export async function talkToMeo() {
   const m = G.meo, pl = G.player;
   if (cs.active) return;
   await cs.run('talk:meo', async () => {
-    m.stop(); m.sit = false; face(m, pl); face(pl, m); m.data.busy = true;
+    const wasNapping = m.act === 'sleep';
+    m.stop(); m.sit = false; m.setAct(null); m.emote = null; face(m, pl); face(pl, m); m.data.busy = true;
+    if (wasNapping) { m.setEmo('sleepy', 1.5); await say('meo', G.lang === 'vi' ? '*Ngáp*… Ơ, bạn đó hả? Mình đang mơ về cá…' : '*Yawn*… Oh, it\'s you! I was dreaming about fish…', { emo: 'sleepy' }); }
     m.doHop(60); sfx('meow');
     const st = currentStep();
     const avail = availableRecipes();
-    const opts = ['Mình nên làm gì tiếp? · What should I do?', 'Kể chuyện đi · Tell me something', 'Tạm biệt · Bye!'];
-    const pick = await ask('meo', choice([`Hi ${G.state.player.name}! Need something?`, 'Mew? Oh, it\'s you! Hello!', 'I was *definitely* not asleep. What\'s up?']), opts, { emo: 'happy' });
+    const opts = [T('What should I do next?', 'Mình nên làm gì tiếp?'), T('Tell me something', 'Kể chuyện đi'), T('Bye!', 'Tạm biệt!')];
+    const pick = await ask('meo', choice([T(`Hi ${G.state.player.name}! Need something?`, `Chào ${G.state.player.name}! Cần gì không?`), T('Mew? Oh, it\'s you! Hello!', 'Meo? Ơ, bạn đó hả! Chào nha!'), T('I was *definitely* not asleep. What\'s up?', 'Mình *chắc chắn* không có ngủ. Có chuyện gì?')]), opts, { emo: 'happy' });
     if (pick === 0) {
-      if (avail.length) await say('meo', 'I wrote a new recipe in my notebook! Come to my house and have a look.', { emo: 'happy' });
+      if (avail.length) await say('meo', T('I wrote a new recipe in my notebook! Come to my house and have a look.', 'Mình vừa ghi công thức mới vào sổ tay! Qua nhà mình xem nhé.'), { emo: 'happy' });
       if (st?.text) await say('meo', hintFor(S().step));
-      else await say('meo', 'Upgrade your shops, try new recipes, make everyone a regular. And visit me!');
+      else await say('meo', T('Upgrade your shops, try new recipes, make everyone a regular. And visit me!', 'Nâng cấp quán, thử công thức mới, biến ai cũng thành khách quen. Và ghé thăm mình nữa!'));
     } else if (pick === 1) await say('meo', choice(MEO_LINES), { tilt: 0.15 });
-    else { m.setAct('wave'); await say('meo', 'Hẹn gặp lại! See you around!', { emo: 'happy' }); m.setAct(null); }
+    else { m.setAct('wave'); await say('meo', T('See you around!', 'Hẹn gặp lại nha!'), { emo: 'happy' }); m.setAct(null); }
     m.data.busy = false;
+    if (wasNapping) { m.data.napping = false; }
   }, { bars: false, keepHud: true });
 }
 function hintFor(step) {
   return ({
-    materials: 'Chú Bảy\'s material shop is on Market Street, north of the plaza. There\'s a button that buys exactly what the shed needs!',
-    repair: 'You have the materials! Walk up to the beach shed and tap the button to repair it.',
-    ingredients: 'Cô Hoa\'s supermarket is the green one on Market Street. Tea, kumquats, sugar and ice!',
-    prep: 'Inside the shed, the prep table is on the right. Tap a kumquat, tap the board, tap the bowl.',
-    open: 'Press the green OPEN button inside your shed. Then stand at the counter.',
-    serve: 'Stand behind the counter and tap Serve. Pick the size, add the ingredients in order, set sugar and ice, then serve!',
-    sleep: 'Your bed is in your house, top-left corner. Sleep whenever you\'re ready for tomorrow.',
-    grow: 'Serve customers well — perfect orders give the most reputation. Daily specials help too!',
-    repair2: 'The bánh mì shed is in West Village, west of the plaza. Chú Bảy has the materials.',
-    banhmi: 'Buy bread, pâté, pork, pickles, cucumber and cilantro, prep them, and open the bánh mì shop.',
-    truck: 'The food truck is on the east beach. Save up and tap it to buy!',
-    truckServe: 'Stock rice paper, noodles, herbs and shrimp for the truck. Tourists love gỏi cuốn!',
-    restoreNM: 'Chú Bảy sells lanterns and light strings now. Bring everything to the Night Market across the river.',
-    nightServe: 'Your night stall opens at 17:00. Rice paper, eggs and scallions for bánh tráng nướng!',
-    buyResto: 'The restaurant is on the hill in the north-east. It\'s expensive — the restaurant takes patience!',
-    repairResto: 'The restaurant needs roof tiles as well as wood, metal and paint.',
-    hire: 'Inside the restaurant, the Staff board is in the bottom-right corner.',
-    restoServe: 'Open the restaurant and look after the guests. Staff will help with whatever they\'re assigned.',
-    team: 'Hire a cook and a server, and the restaurant runs itself while you\'re away.',
-    destination: 'Grow your reputation and fully upgrade a shop. Then come see me at the plaza!',
-  })[step] || 'Just enjoy the island for a bit!';
+    materials: T('Chú Bảy\'s material shop is on Market Street, north of the plaza. There\'s a button that buys exactly what the shed needs!', 'Tiệm vật liệu Chú Bảy ở Phố Chợ, phía bắc quảng trường. Có nút mua đúng đủ những gì căn chòi cần!'),
+    repair: T('You have the materials! Walk up to the beach shed and tap the button to repair it.', 'Bạn có đủ vật liệu rồi! Đi tới căn chòi ở bãi biển rồi bấm nút để sửa.'),
+    ingredients: T('Cô Hoa\'s supermarket is the green one on Market Street. Tea, kumquats, sugar and ice!', 'Siêu thị Cô Hoa là tiệm màu xanh ở Phố Chợ. Trà, tắc, đường và đá!'),
+    prep: T('Inside the shed, the prep table is on the right. Tap a kumquat, tap the board, tap the bowl.', 'Trong quán, bàn sơ chế ở bên phải. Chạm trái tắc, chạm thớt, chạm tô.'),
+    open: T('Press the green OPEN button inside your shed. Then stand at the counter.', 'Bấm nút MỞ CỬA màu xanh trong quán. Rồi đứng ở quầy.'),
+    serve: T('Stand behind the counter and tap Serve. Pick the size, add the ingredients in order, set sugar and ice, then serve!', 'Đứng sau quầy rồi bấm Bán hàng. Chọn size, thêm nguyên liệu theo thứ tự, chỉnh đường và đá, rồi phục vụ!'),
+    sleep: T('Your bed is in your house, top-left corner. Sleep whenever you\'re ready for tomorrow.', 'Giường ở góc trên bên trái trong nhà bạn. Ngủ khi nào bạn sẵn sàng cho ngày mai.'),
+    grow: T('Serve customers well — perfect orders give the most reputation. Daily specials help too!', 'Phục vụ khách thật tốt — món hoàn hảo cho nhiều danh tiếng nhất. Món đặc biệt cũng giúp nữa!'),
+    repair2: T('The bánh mì shed is in West Village, west of the plaza. Chú Bảy has the materials.', 'Chòi bánh mì ở Xóm Tây, phía tây quảng trường. Chú Bảy có đủ vật liệu.'),
+    banhmi: T('Buy bread, pâté, pork, pickles, cucumber and cilantro, prep them, and open the bánh mì shop.', 'Mua bánh mì, pa tê, thịt heo, đồ chua, dưa leo và ngò, sơ chế rồi mở quán bánh mì.'),
+    truck: T('The food truck is on the east beach. Save up and tap it to buy!', 'Xe bán đồ ăn ở bãi biển phía đông. Để dành tiền rồi chạm vào để mua!'),
+    truckServe: T('Stock rice paper, noodles, herbs and shrimp for the truck. Tourists love spring rolls!', 'Chuẩn bị bánh tráng, bún, rau thơm và tôm cho xe. Du khách mê gỏi cuốn lắm!'),
+    restoreNM: T('Chú Bảy sells lanterns and light strings now. Bring everything to the Night Market across the river.', 'Giờ Chú Bảy có bán lồng đèn và dây đèn. Mang hết tới Chợ Đêm bên kia sông.'),
+    nightServe: T('Your night stall opens at 17:00. Rice paper, eggs and scallions for grilled rice paper!', 'Sạp đêm mở lúc 17:00. Bánh tráng, trứng và hành lá cho món bánh tráng nướng!'),
+    buyResto: T('The restaurant is on the hill in the north-east. It\'s expensive — the restaurant takes patience!', 'Nhà hàng ở trên đồi phía đông bắc. Đắt lắm — phải kiên nhẫn đó!'),
+    repairResto: T('The restaurant needs roof tiles as well as wood, metal and paint.', 'Nhà hàng cần ngói, cùng với gỗ, tôn và sơn.'),
+    hire: T('Inside the restaurant, the Staff board is in the bottom-right corner.', 'Trong nhà hàng, bảng Nhân viên ở góc dưới bên phải.'),
+    restoServe: T('Open the restaurant and look after the guests. Staff will help with whatever they\'re assigned.', 'Mở cửa nhà hàng và chăm sóc khách. Nhân viên sẽ làm những việc được giao.'),
+    team: T('Hire a cook and a server, and the restaurant runs itself while you\'re away.', 'Thuê một đầu bếp và một phục vụ, nhà hàng sẽ tự chạy khi bạn vắng mặt.'),
+    destination: T('Grow your reputation and fully upgrade a shop. Then come see me at the plaza!', 'Tăng danh tiếng và nâng cấp tối đa một quán. Rồi tới quảng trường gặp mình!'),
+  })[step] || T('Just enjoy the island for a bit!', 'Cứ tận hưởng hòn đảo một chút đi!');
 }
 
 // ---------------------------------------------------------------- Mèo Mây's routine
@@ -809,7 +813,7 @@ export function updateMeo(dt) {
   const homeTime = (h >= (st.nightMarket.restored ? 22.5 : 20.5)) || h < 7 || (h >= 12.5 && h < 13.5);
   const inHome = scenes.meo.actors.includes(m);
   if (homeTime) {
-    if (inHome) { if (!m.data.napping) { m.data.napping = true; m.x = scenes.meo.meoSpot.x; m.y = scenes.meo.meoSpot.y; m.face('down'); m.setAct('sleep'); m.showEmote('zzz', 60); } return; }
+    if (inHome) { if (!m.data.napping) { m.data.napping = true; m.x = scenes.meo.catBed.x; m.y = scenes.meo.catBed.y; m.face('down'); m.setAct('sleep'); m.showEmote('zzz', 600); } return; }
     if (m.data.goal !== 'home-walk') {
       m.data.goal = 'home-walk'; m.sit = false;
       if (G.scene !== island()) { placeMeo('meo', scenes.meo.meoSpot.x, scenes.meo.meoSpot.y); m.data.napping = false; return; }
@@ -817,7 +821,7 @@ export function updateMeo(dt) {
     }
     return;
   }
-  if (inHome) { m.setAct(null); m.emote = null; m.data.napping = false; placeMeo('island', 1480, 1752); m.data.until = 0; m.data.goal = null; }
+  if (inHome) { m.setAct(null); m.emote = null; m.data.napping = false; m.doHop(80); placeMeo('island', 1480, 1752); m.data.until = 0; m.data.goal = null; }
   if (m.path) return;
   if (st.time < (m.data.until || 0)) {
     // idle: look at the player when near, occasionally hop or sit

@@ -3,7 +3,7 @@
 // cutscenes read like a script:  await say('meo', 'Xin chào!');
 
 import { sfx } from '../core/audio.js';
-import { G } from '../systems/state.js';
+import { G, T } from '../systems/state.js';
 import { drawHuman } from '../gfx/character.js';
 import { drawCat } from '../gfx/cat.js';
 import { escapeHtml } from '../core/util.js';
@@ -23,7 +23,7 @@ export const dialogue = D;
 function speakerInfo(who) {
   if (!who) return { name: '', portrait: null };
   if (who === 'meo') return { name: 'Mèo Mây', cat: true, actor: G.meo, look: { cat: true }, pitch: 880 };
-  if (who === 'player') return { name: G.state.player.name || 'Bạn', actor: G.player, look: G.player?.look, pitch: 560 };
+  if (who === 'player') return { name: G.state.player.name || T('You', 'Bạn'), actor: G.player, look: G.player?.look, pitch: 560 };
   if (typeof who === 'object' && who.look) return { name: who.name || '', actor: who, look: who.look, cat: who.kind === 'cat', pitch: who.pitch || (who.look.scale < 0.9 ? 760 : 600) };
   const def = RESIDENTS[who] || MERCHANTS[who];
   if (def) { const a = G.npcs?.byId?.(who); return { name: def.name, actor: a, look: def.look, pitch: def.look.scale < 0.9 ? 780 : 560 + (who.length * 23) % 140 }; }
@@ -32,7 +32,7 @@ function speakerInfo(who) {
 
 function markup(s) {
   const st = G.state;
-  s = s.replaceAll('{player}', st.player.name || 'bạn').replaceAll('{island}', st.island.name || 'đảo');
+  s = s.replaceAll('{player}', st.player.name || T('friend', 'bạn')).replaceAll('{island}', st.island.name || T('the island', 'đảo'));
   return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
 }
 // Visible characters in html (tags don't count)

@@ -3,14 +3,14 @@
 // assembled on the board, option toggles (size / sugar / ice / topping / chili)
 // and ingredient trays with stock counts. Taps fly ingredients onto the board.
 
-import { G, bizOf } from '../systems/state.js';
-import { RECIPES, STATION, OPTIONS, PREPPED, INGREDIENTS, BUSINESSES } from '../data/game.js';
-import { rt, stockOf, takeStock, evaluate, completeOrder, failOrder, bizRecipes, openBiz, canMake } from '../systems/business.js';
+import { G, T, bizOf } from '../systems/state.js';
+import { RECIPES, STATION, OPTIONS, PREPPED, INGREDIENTS, BUSINESSES, ingName, stationLabel, recipeName, bizName } from '../data/game.js';
+import { rt, stockOf, takeStock, evaluate, completeOrder, failOrder, bizRecipes, openBiz, canMake, orderText } from '../systems/business.js';
 import { drawCup, DISHES, ICONS, iconURL, drawIcon } from '../gfx/food.js';
 import { drawHuman } from '../gfx/character.js';
 import { INK, ell, circ, box, shadow } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
-import { escapeHtml, money, bus, clamp, TAU } from '../core/util.js';
+import { escapeHtml, money, bus, clamp, TAU, clock } from '../core/util.js';
 import { h, flyIcon, flyCoins } from './sheets.js';
 import { toast } from './hud.js';
 import { releaseJoystick } from '../core/input.js';
@@ -28,13 +28,13 @@ export function openService(bizId, { onClose, tutorial = false, single = null } 
   const el = h('div', 'svc');
   el.innerHTML = `
     <div class="svc-awning"></div>
-    <div class="svc-top"><div class="svc-queue"></div><div class="svc-money"><span class="coin"></span><b class="m"></b></div><button class="svc-close" type="button" aria-label="Close">✕</button></div>
-    <div class="svc-customer"><div class="svc-portrait"><canvas width="216" height="248"></canvas></div><div class="svc-bubble"><div class="svc-order"></div><div class="svc-chips"></div><div class="patience"><span>KIÊN NHẪN</span><div class="bar"><i></i></div></div></div><div class="svc-waiting hidden"></div></div>
+    <div class="svc-top"><div class="svc-queue"></div><div class="svc-clock"><span class="sun"></span><b class="clk"></b></div><div class="svc-money"><span class="coin"></span><b class="m"></b></div><button class="svc-close" type="button" aria-label="Close">✕</button></div>
+    <div class="svc-customer"><div class="svc-portrait"><canvas width="216" height="248"></canvas></div><div class="svc-bubble"><div class="svc-order"></div><div class="svc-chips"></div><div class="patience"><span>${T('PATIENCE', 'KIÊN NHẪN')}</span><div class="bar"><i></i></div></div></div><div class="svc-waiting hidden"></div></div>
     <div class="svc-counter">
-      <div class="svc-label">${escapeHtml(BUSINESSES[bizId].name.toUpperCase())}</div>
+      <div class="svc-label">${escapeHtml(bizName(bizId).toUpperCase())}</div>
       <div class="svc-work"><div class="svc-board"><canvas width="300" height="300"></canvas><div class="svc-steps"></div></div><div class="svc-opts"></div></div>
       <div class="svc-grid"></div>
-      <div class="svc-bottom"><button class="btn trash" type="button" aria-label="Start over">↺</button><button class="btn pink serve" type="button">Phục vụ · Serve</button></div>
+      <div class="svc-bottom"><button class="btn trash" type="button" aria-label="Start over">↺</button><button class="btn pink serve" type="button">${T('Serve', 'Phục vụ')}</button></div>
     </div>`;
   root.appendChild(el);
   G.runtime.serviceOpen = bizId;
@@ -81,7 +81,7 @@ function buildGrid() {
     const st = STATION[k];
     const b = h('button', 'ing' + (st.action ? ' act' : ''));
     b.type = 'button'; b.dataset.k = k;
-    b.innerHTML = `<div class="tray"><img src="${iconURL(st.icon, 56)}" alt=""></div><b>${escapeHtml(st.label)}</b>${st.uses ? '<span class="cnt"></span>' : ''}`;
+    b.innerHTML = `<div class="tray"><img src="${iconURL(st.icon, 56)}" alt=""></div><b>${escapeHtml(stationLabel(k))}</b>${st.uses ? '<span class="cnt"></span>' : ''}`;
     b.addEventListener('pointerdown', e => { e.preventDefault(); tapIngredient(k, b); });
     grid.appendChild(b);
   }
@@ -106,10 +106,10 @@ function buildOptions() {
   for (const k of keys) {
     const o = OPTIONS[k];
     const row = h('div', 'opt-row');
-    row.innerHTML = `<small>${escapeHtml(o.label)}${o.en ? ' · ' + o.en : ''}</small>`;
+    row.innerHTML = `<small>${escapeHtml(T(o.en || o.label, o.label))}</small>`;
     const seg = h('div', 'seg'); seg.dataset.k = k;
     for (const v of o.values) {
-      const b = h('button', '', escapeHtml(k === 'sugar' ? v + '%' : k === 'ice' ? { 'không đá': 'Không', 'ít đá': 'Ít', 'đá bình thường': 'Thường' }[v] : k === 'topping' ? { none: '—', tapioca: 'Trân châu', jelly: 'Thạch', cheese_foam: 'Foam' }[v] : k === 'chili' ? (v === 'có ớt' ? 'Có ớt' : 'Không') : v));
+      const b = h('button', '', escapeHtml(k === 'sugar' ? v + '%' : o.btn ? T(o.btn[v][0], o.btn[v][1]) : v));
       b.type = 'button';
       b.onclick = () => setOption(k, v, seg, b);
       seg.appendChild(b);
@@ -128,9 +128,10 @@ function setOption(k, v, seg, b) {
   if (S.busy) return;
   if (k === 'size' && S.asm.steps.length) { /* allow changing size mid-way */ }
   const uses = OPTIONS[k].uses;
-  if (uses && v !== 'không đá' && v !== 'không ớt' && stockOf(S.bizId, uses) <= 0) { sfx('error'); seg.classList.add('shake'); setTimeout(() => seg.classList.remove('shake'), 300); toast({ text: `Hết ${INGREDIENTS[uses].vi}!`, sub: `Out of ${INGREDIENTS[uses].en}`, bad: true }); return; }
+  if (uses && v !== 'không đá' && v !== 'không ớt' && stockOf(S.bizId, uses) <= 0) { sfx('error'); seg.classList.add('shake'); setTimeout(() => seg.classList.remove('shake'), 300); toast({ text: T(`Out of ${ingName(uses).toLowerCase()}!`, `Hết ${ingName(uses).toLowerCase()}!`), bad: true }); return; }
   S.asm[k] = v;
-  if (k === 'topping' && v !== 'none' && stockOf(S.bizId, v) <= 0) { S.asm[k] = 'none'; sfx('error'); toast({ text: 'Hết topping', sub: 'Out of that topping', bad: true }); }
+  if (k === 'ice') S.asm.iceTouched = true;
+  if (k === 'topping' && v !== 'none' && stockOf(S.bizId, v) <= 0) { S.asm[k] = 'none'; sfx('error'); toast({ text: T('Out of that topping', 'Hết topping này rồi'), bad: true }); }
   sfx(k === 'ice' ? 'ice' : k === 'sugar' ? 'pour' : 'tap');
   wobble();
   markOptions(); updateChips(); updateHint();
@@ -139,6 +140,7 @@ function setOption(k, v, seg, b) {
 function resetAsm() {
   S.asm = { steps: [], size: null, sugar: undefined, ice: undefined, topping: undefined, chili: undefined, anim: [], blended: false, servedAnim: 0 };
   if (S.cust && RECIPES[S.cust.order.recipe].options.includes('topping')) S.asm.topping = 'none';
+  if (S.cust && RECIPES[S.cust.order.recipe].options.includes('ice')) S.asm.ice = 'không đá';   // no ice unless the order asks for it
   S.el.querySelector('.svc-steps').innerHTML = '';
   if (S.cust) buildSteps();
   markOptions?.(); updateChips(); updateHint();
@@ -157,20 +159,26 @@ function tapIngredient(k, btnEl) {
   if (R.options.includes('size') && !S.asm.size) {
     sfx('error');
     const seg = S.el.querySelector('.seg[data-k="size"]'); seg?.classList.add('shake'); setTimeout(() => seg?.classList.remove('shake'), 300);
-    toast({ text: 'Chọn size ly trước!', sub: 'Pick a cup size first', ms: 1600 });
+    toast({ text: T('Pick a cup size first!', 'Chọn size ly trước!'), ms: 1600 });
     return;
   }
   if (S.asm.steps.length >= 7) { sfx('error'); return; }
-  if (st.uses && !takeStock(S.bizId, st.uses)) {
+  // after midnight you're sleepy: sometimes your hand grabs the wrong thing
+  if (G.runtime.sleepy && Math.random() < 0.25) {
+    const others = stationKeys().filter(x => x !== k && (!STATION[x].uses || stockOf(S.bizId, STATION[x].uses) > 0));
+    if (others.length) { k = others[Math.floor(Math.random() * others.length)]; toast({ text: T('So sleepy… grabbed the wrong thing!', 'Buồn ngủ quá… lấy nhầm rồi!'), icon: 'sleep_moon', ms: 1600 }); btnEl = S.el.querySelector(`.ing[data-k="${k}"]`) || btnEl; }
+  }
+  const st2 = STATION[k];
+  if (st2.uses && !takeStock(S.bizId, st2.uses)) {
     sfx('error'); btnEl.classList.add('shake'); setTimeout(() => btnEl.classList.remove('shake'), 300);
-    toast({ text: `Hết ${st.label}!`, sub: 'Out of stock — prep or restock', bad: true, ms: 1800 });
+    toast({ text: T(`Out of ${stationLabel(k).toLowerCase()}!`, `Hết ${stationLabel(k).toLowerCase()}!`), sub: T('Prep or restock', 'Sơ chế hoặc mua thêm'), bad: true, ms: 1800 });
     return;
   }
   S.asm.steps.push(k);
   S.asm.anim.push(0);
   if (k === 'blend') { S.asm.blended = true; S.asm.blendT = 0.8; sfx('blend'); }
-  else if (st.layer) sfx('pour'); else if (k === 'roll' || k === 'fold') sfx('whoosh'); else if (k === 'grill') sfx('sizzle'); else sfx('pop');
-  flyIcon(st.icon, btnEl, S.board, { size: 44, dur: 360 }).then(() => wobble());
+  else if (st2.layer) sfx('pour'); else if (k === 'roll' || k === 'fold') sfx('whoosh'); else if (k === 'grill') sfx('sizzle'); else sfx('pop');
+  flyIcon(st2.icon, btnEl, S.board, { size: 44, dur: 360 }).then(() => wobble());
   refreshCounts();
   const dots = S.el.querySelector('.svc-steps').children;
   const i = S.asm.steps.length - 1;
@@ -181,12 +189,12 @@ function wobble() { const b = S?.el.querySelector('.svc-board'); if (!b) return;
 
 function serve() {
   if (S.busy || !S.cust) return;
-  if (!S.asm.steps.length) { sfx('error'); toast({ text: 'Chưa làm gì cả!', sub: 'Build the order first', ms: 1400 }); return; }
+  if (!S.asm.steps.length) { sfx('error'); toast({ text: T('Build the order first!', 'Chưa làm gì cả!'), ms: 1400 }); return; }
   const c = S.cust, R = RECIPES[c.order.recipe];
   // missing required option choices
   for (const k of R.options) if (S.asm[k] === undefined || S.asm[k] === null) {
     sfx('error'); const seg = S.el.querySelector(`.seg[data-k="${k}"]`); seg?.classList.add('shake'); setTimeout(() => seg?.classList.remove('shake'), 300);
-    toast({ text: `Chưa chọn ${OPTIONS[k].label.toLowerCase()}`, sub: `Choose ${OPTIONS[k].en || OPTIONS[k].label} first`, ms: 1600 });
+    toast({ text: T(`Choose the ${(OPTIONS[k].en || OPTIONS[k].label).toLowerCase()} first`, `Chưa chọn ${OPTIONS[k].label.toLowerCase()}`), ms: 1600 });
     return;
   }
   // consume option stock (sugar, ice, topping, chili)
@@ -195,22 +203,23 @@ function serve() {
   if (R.options.includes('ice') && S.asm.ice !== 'không đá') optUse.push('ice');
   if (S.asm.topping && S.asm.topping !== 'none') optUse.push(S.asm.topping);
   if (S.asm.chili === 'có ớt') optUse.push('chili');
-  for (const u of optUse) if (stockOf(S.bizId, u) <= 0) { sfx('error'); toast({ text: `Hết ${INGREDIENTS[u].vi}!`, sub: 'Out of stock', bad: true }); return; }
+  for (const u of optUse) if (stockOf(S.bizId, u) <= 0) { sfx('error'); toast({ text: T(`Out of ${ingName(u).toLowerCase()}!`, `Hết ${ingName(u).toLowerCase()}!`), bad: true }); return; }
   for (const u of optUse) takeStock(S.bizId, u);
   refreshCounts();
+  S.asm.triedServe = true;
   const res = evaluate(c.order, S.asm);
   S.busy = true;
   S.asm.servedAnim = 0.001;
   if (S.single) {
     const one = S.single;
-    if (res.q === 'wrong') { verdict('Ơ… chưa đúng!', hintFor(res, c.order), 'bad'); sfx('sad'); S.react = { emo: 'sad', t: 1.2 }; one.onResult(res.q); setTimeout(() => { if (S) { S.busy = false; resetAsm(); } }, 1000); return; }
-    verdict(res.q === 'perfect' ? 'Hoàn hảo!' : 'Ngon lắm!', 'Món đã sẵn sàng · Dish ready', res.q); sfx('success');
+    if (res.q === 'wrong') { verdict(T('Oops… not quite!', 'Ơ… chưa đúng!'), hintFor(res, c.order), 'bad'); sfx('sad'); S.react = { emo: 'sad', t: 1.2 }; one.onResult(res.q); setTimeout(() => { if (S) { S.busy = false; resetAsm(); } }, 1000); return; }
+    verdict(res.q === 'perfect' ? T('Perfect!', 'Hoàn hảo!') : T('Delicious!', 'Ngon lắm!'), T('Dish ready', 'Món đã xong'), res.q); sfx('success');
     S.react = { emo: 'love', t: 1.4 }; one.done = true; one.onResult(res.q);
     setTimeout(() => { if (S) closeService(); }, 1100);
     return;
   }
   if (res.q === 'wrong') {
-    verdict('Ơ… chưa đúng!', hintFor(res, c.order), 'bad');
+    verdict(T('Oops… not quite!', 'Ơ… chưa đúng!'), hintFor(res, c.order), 'bad');
     S.react = { emo: 'sad', t: 1.5 };
     sfx('sad');
     failOrder(c);
@@ -220,7 +229,7 @@ function serve() {
   }
   const { price, tip } = completeOrder(c, res.q);
   S.react = { emo: res.q === 'perfect' ? 'love' : 'happy', t: 1.6 };
-  verdict(res.q === 'perfect' ? 'Hoàn hảo!' : 'Ngon lắm!', `+${price}k${tip ? ` · tip ${tip}k` : ''}`, res.q);
+  verdict(res.q === 'perfect' ? T('Perfect!', 'Hoàn hảo!') : T('Delicious!', 'Ngon lắm!'), `+${price}k${tip ? T(` · tip ${tip}k`, ` · boa ${tip}k`) : ''}`, res.q);
   sfx(res.q === 'perfect' ? 'success' : 'cash'); setTimeout(() => sfx('cash'), 300);
   flyCoins(S.portrait, document.querySelector('.svc-money'), res.q === 'perfect' ? 8 : 5);
   if (S.tutorial) bus.emit('tutorial:served');
@@ -234,9 +243,9 @@ function serve() {
 function hintFor(res, order) {
   if (res.why === 'options') {
     const k = res.mism[0];
-    return { size: 'Sai size ly', sugar: 'Sai lượng đường', ice: 'Sai lượng đá', topping: 'Sai topping', chili: 'Ớt chưa đúng' }[k] + ' · check the order';
+    return T({ size: 'Wrong cup size', sugar: 'Wrong amount of sugar', ice: 'Wrong amount of ice', topping: 'Wrong topping', chili: 'Chili isn\'t right' }[k], { size: 'Sai size ly', sugar: 'Sai lượng đường', ice: 'Sai lượng đá', topping: 'Sai topping', chili: 'Ớt chưa đúng' }[k]);
   }
-  return 'Thiếu hoặc thừa nguyên liệu · wrong ingredients';
+  return T('Missing or extra ingredients', 'Thiếu hoặc thừa nguyên liệu');
 }
 function verdict(big, small, q) {
   const v = h('div', 'verdict', `<b>${escapeHtml(big)}</b>${small ? `<small>${escapeHtml(small)}</small>` : ''}`);
@@ -273,33 +282,35 @@ function renderOrder() {
     bubble.classList.add('hidden'); wait.classList.remove('hidden');
     const b = bizOf(S.bizId);
     if (!b.open) {
-      wait.innerHTML = 'Quán đang đóng cửa · The shop is closed.<br><br>';
-      const ob = h('button', 'btn gold', 'Mở cửa · Open'); ob.type = 'button';
+      wait.innerHTML = T('The shop is closed.', 'Quán đang đóng cửa.') + '<br><br>';
+      const ob = h('button', 'btn gold', T('Open the shop', 'Mở cửa')); ob.type = 'button';
       ob.onclick = () => { const r = openBiz(S.bizId); if (!r.ok) toast({ text: r.why.split('\n')[0], sub: r.why.split('\n')[1] || '', bad: true }); renderOrder(); };
       wait.appendChild(ob);
-    } else if (rt(S.bizId).queue.some(c => c.state === 'walking')) wait.innerHTML = 'Có khách đang tới! <br><small style="opacity:.7">A customer is on the way…</small>';
-    else wait.innerHTML = 'Đang chờ khách… <br><small style="opacity:.7">Waiting for the next customer</small>';
+    } else if (rt(S.bizId).queue.some(c => c.state === 'walking')) wait.innerHTML = T('A customer is on the way…', 'Có khách đang tới!');
+    else wait.innerHTML = T('Waiting for the next customer…', 'Đang chờ khách…');
     S.el.querySelector('.svc-portrait').style.visibility = 'hidden';
     return;
   }
   S.el.querySelector('.svc-portrait').style.visibility = '';
   bubble.classList.remove('hidden'); wait.classList.add('hidden');
-  const txt = c.order.text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  const txt = escapeHtml(c.order.text || orderText(c.order, c)).replace(/\*(.+?)\*/g, '<em>$1</em>');
   const reg = G.state.regulars[c.key]?.visits >= 3;
-  S.el.querySelector('.svc-order').innerHTML = `<b style="font-size:12px;opacity:.6">${escapeHtml(c.name)}${reg ? ' · khách quen ♥' : c.personality === 'tourist' ? ' · du khách' : ''}</b><br>${txt}`;
+  S.el.querySelector('.svc-order').innerHTML = `<b style="font-size:12px;opacity:.6">${escapeHtml(c.name)}${reg ? T(' · regular ♥', ' · khách quen ♥') : c.personality === 'tourist' ? T(' · tourist', ' · du khách') : ''}</b><br>${txt}`;
   updateChips();
 }
 function updateChips() {
   if (!S?.cust) return;
   const o = S.cust.order, chips = S.el.querySelector('.svc-chips');
   const R = RECIPES[o.recipe];
-  const parts = [[R.en, S.asm.steps.length ? (S.asm.steps.every((s, i) => R.steps[i] === s) ? (S.asm.steps.length === R.steps.length ? 'done' : '') : 'bad') : '']];
+  const parts = [[recipeName(o.recipe), S.asm.steps.length ? (S.asm.steps.every((s, i) => R.steps[i] === s) ? (S.asm.steps.length === R.steps.length ? 'done' : '') : 'bad') : '']];
   for (const k of R.options) {
     const want = o.opts[k], have = S.asm[k];
-    const label = k === 'size' ? 'Size ' + want : k === 'sugar' ? want + '% sugar' : k === 'ice' ? { 'không đá': 'No ice', 'ít đá': 'Less ice', 'đá bình thường': 'Normal ice' }[want] : k === 'topping' ? (want === 'none' ? 'No topping' : { tapioca: 'Tapioca', jelly: 'Jelly', cheese_foam: 'Cheese foam' }[want]) : (want === 'có ớt' ? 'Chili' : 'No chili');
-    parts.push([label, have === undefined || have === null ? '' : have === want ? 'done' : 'bad']);
+    const up = x => x.replace(/^./, ch => ch.toUpperCase());
+    const label = k === 'size' ? 'Size ' + want : k === 'sugar' ? T(want + '% sugar', want + '% đường') : up(T(OPTIONS[k].say[want][0], OPTIONS[k].say[want][1]));
+    const untouched = k === 'ice' && !S.asm.iceTouched && !S.asm.triedServe;
+    parts.push([label, have === undefined || have === null || (untouched && have !== want) ? '' : have === want ? 'done' : 'bad']);
   }
-  if (o.special) parts.push(['★ Special', 'done']);
+  if (o.special) parts.push([T('★ Special', '★ Đặc biệt'), 'done']);
   chips.innerHTML = parts.map(([l, c]) => `<span class="${c}">${escapeHtml(l)}</span>`).join('');
 }
 // Tutorial: highlight what to tap next.
@@ -321,6 +332,8 @@ export function updateService(dt, t) {
   if (!S) return;
   S.t += dt;
   S.el.querySelector('.svc-money .m').textContent = money(G.state.money);
+  S.el.querySelector('.svc-clock .clk').textContent = clock(G.state.time);
+  S.el.querySelector('.svc-clock .sun').classList.toggle('night', G.state.time >= 18.5 * 60);
   // pick up a new front customer
   const f = frontCustomer();
   if (!S.busy && f !== S.cust) nextCustomer();

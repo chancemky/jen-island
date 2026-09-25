@@ -3,19 +3,19 @@
 // burst → tap the bowl → it slides in. A batch is 4 portions, so prep takes
 // seconds. "Prep all" unlocks after the first batch.
 
-import { G, bizOf, pantry, addPantry, markDirty, flag, setFlag } from '../systems/state.js';
-import { INGREDIENTS, PREPPED, PREP_BATCH, BUSINESSES } from '../data/game.js';
+import { G, T, bizOf, pantry, addPantry, markDirty, flag, setFlag } from '../systems/state.js';
+import { INGREDIENTS, PREPPED, PREP_BATCH, BUSINESSES, PREP_VERB, ingName, bizName } from '../data/game.js';
 import { ingredientsForBiz } from '../systems/business.js';
 import { ICONS, iconURL } from '../gfx/food.js';
 import { INK, circ, ell } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
-import { escapeHtml, TAU, bus } from '../core/util.js';
+import { escapeHtml, TAU, bus, clock } from '../core/util.js';
 import { h, flyIcon } from './sheets.js';
 import { toast } from './hud.js';
 import { releaseJoystick } from '../core/input.js';
 
 let P = null;
-const METHOD = { chop: ['board', 'Chặt · Chop'], split: ['board', 'Xẻ bánh · Split'], scoop: ['board', 'Nạo · Scoop'], grill: ['grill', 'Nướng · Grill'], fry: ['pan', 'Chiên · Fry'], boil: ['pot', 'Luộc · Boil'] };
+const METHOD = { chop: 'board', split: 'board', scoop: 'board', grill: 'grill', fry: 'pan', boil: 'pot' };
 
 export function isPrepOpen() { return !!P; }
 export function openPrep(bizId, { onClose } = {}) {
@@ -23,7 +23,7 @@ export function openPrep(bizId, { onClose } = {}) {
   releaseJoystick();
   const raws = ingredientsForBiz(bizId).filter(k => INGREDIENTS[k].prep);
   const el = h('div', 'prep');
-  el.innerHTML = `<div class="prep-head"><h2>Bàn sơ chế<small>${escapeHtml(BUSINESSES[bizId].name)} · Prep table</small></h2><button class="btn gold all hidden" type="button">Sơ chế hết</button><button class="svc-close" type="button">✕</button></div>
+  el.innerHTML = `<div class="prep-head"><h2>${T('Prep table', 'Bàn sơ chế')}<small>${escapeHtml(bizName(bizId))}</small></h2><div class="svc-clock"><span class="sun"></span><b class="clk"></b></div><button class="btn gold all hidden" type="button">${T('Prep all', 'Sơ chế hết')}</button><button class="svc-close" type="button">✕</button></div>
     <div class="prep-raw"></div>
     <div class="prep-table"><div class="prep-station board"><canvas width="360" height="240"></canvas><div class="tip"></div></div></div>
     <div class="prep-bowls"></div>`;
@@ -57,12 +57,12 @@ function build() {
     const g = INGREDIENTS[k], n = pantry(k);
     const btn = h('button', 'ing' + (n <= 0 ? ' out' : ''));
     btn.type = 'button'; btn.dataset.k = k;
-    btn.innerHTML = `<div class="tray"><img src="${iconURL(k, 56)}" alt=""></div><b>${escapeHtml(g.vi)}</b><span class="cnt">${n}</span>`;
+    btn.innerHTML = `<div class="tray"><img src="${iconURL(k, 56)}" alt=""></div><b>${escapeHtml(ingName(k))}</b><span class="cnt">${n}</span>`;
     btn.addEventListener('pointerdown', e => { e.preventDefault(); tapRaw(k, btn); });
     rawBox.appendChild(btn);
     const to = g.prep.to;
     const bowl = h('div', 'bowl'); bowl.dataset.k = to;
-    bowl.innerHTML = `<div class="dish"><img src="${iconURL(to, 48)}" alt=""></div><b>${escapeHtml(PREPPED[to].vi)}</b><span class="cnt">${b.prepped[to] || 0}</span>`;
+    bowl.innerHTML = `<div class="dish"><img src="${iconURL(to, 48)}" alt=""></div><b>${escapeHtml(ingName(to))}</b><span class="cnt">${b.prepped[to] || 0}</span>`;
     bowl.addEventListener('pointerdown', e => { e.preventDefault(); tapBowl(to, bowl); });
     bowls.appendChild(bowl);
   }
@@ -72,19 +72,19 @@ function hint() {
   const tip = P.el.querySelector('.tip');
   for (const e of P.el.querySelectorAll('.hint, .target')) e.classList.remove('hint', 'target');
   if (P.stage === 'empty') {
-    tip.textContent = P.raws.some(k => pantry(k) > 0) ? 'Chạm nguyên liệu · Tap an ingredient' : 'Hết nguyên liệu thô · No raw ingredients — visit the supermarket';
+    tip.textContent = P.raws.some(k => pantry(k) > 0) ? T('Tap an ingredient', 'Chạm vào một nguyên liệu') : T('No raw ingredients — visit the supermarket', 'Hết nguyên liệu — ghé siêu thị nhé');
     const first = P.raws.find(k => pantry(k) > 0);
     if (first && !flag('prepAllUnlocked')) P.el.querySelector(`.ing[data-k="${first}"]`)?.classList.add('hint');
-  } else if (P.stage === 'placed') tip.textContent = METHOD[INGREDIENTS[P.item].prep.method][1] + ' — chạm vào thớt · tap the station';
-  else if (P.stage === 'done') { tip.textContent = 'Cho vào tô · Tap the bowl'; P.el.querySelector(`.bowl[data-k="${INGREDIENTS[P.item].prep.to}"]`)?.classList.add('target'); }
+  } else if (P.stage === 'placed') { const v = PREP_VERB[INGREDIENTS[P.item].prep.method]; tip.textContent = T(`${v[0]} it — tap the station`, `${v[1]} — chạm vào thớt`); }
+  else if (P.stage === 'done') { tip.textContent = T('Tap the bowl', 'Cho vào tô'); P.el.querySelector(`.bowl[data-k="${INGREDIENTS[P.item].prep.to}"]`)?.classList.add('target'); }
 }
 function setStation(method) {
   const st = P.el.querySelector('.prep-station');
-  st.className = 'prep-station ' + METHOD[method][0];
+  st.className = 'prep-station ' + METHOD[method];
 }
 function tapRaw(k, btn) {
   if (P.stage !== 'empty') { if (P.stage === 'placed' && P.item !== k) { /* swap */ } else { sfx('error'); return; } }
-  if (pantry(k) <= 0) { sfx('error'); btn.classList.add('shake'); setTimeout(() => btn.classList.remove('shake'), 300); toast({ text: `Hết ${INGREDIENTS[k].vi}`, sub: 'Buy more at the supermarket', bad: true }); return; }
+  if (pantry(k) <= 0) { sfx('error'); btn.classList.add('shake'); setTimeout(() => btn.classList.remove('shake'), 300); toast({ text: T(`Out of ${ingName(k).toLowerCase()}`, `Hết ${ingName(k).toLowerCase()}`), sub: T('Buy more at the supermarket', 'Mua thêm ở siêu thị nhé'), bad: true }); return; }
   P.item = k; P.stage = 'placed'; P.anim = 0; P.cuts = 0;
   P.batch = Math.min(PREP_BATCH, pantry(k));
   setStation(INGREDIENTS[k].prep.method);
@@ -111,7 +111,7 @@ function tapBowl(to, bowlEl) {
   flyIcon(to, P.el.querySelector('.prep-station'), bowlEl, { size: 56, dur: 330 }).then(() => { if (!P) return; bowlEl.classList.remove('pop'); void bowlEl.offsetWidth; bowlEl.classList.add('pop'); });
   sfx('pop'); setTimeout(() => sfx('coin'), 300);
   bus.emit('prepped', P.bizId, to, n);
-  if (!flag('prepAllUnlocked')) { setFlag('prepAllUnlocked'); setTimeout(() => { if (!P) return; P.el.querySelector('.all').classList.remove('hidden'); toast({ text: 'Mở khóa: Sơ chế hết', sub: 'Tip: "Prep all" does every batch in one tap.' }); }, 600); }
+  if (!flag('prepAllUnlocked')) { setFlag('prepAllUnlocked'); setTimeout(() => { if (!P) return; P.el.querySelector('.all').classList.remove('hidden'); toast({ text: T('Unlocked: Prep all', 'Mở khóa: Sơ chế hết'), sub: T('“Prep all” does every batch in one tap.', '“Sơ chế hết” làm hết mọi mẻ chỉ với một chạm.') }); }, 600); }
   P.stage = 'empty'; P.item = null;
   build();
 }
@@ -133,13 +133,14 @@ async function prepAll() {
     bus.emit('prepped', P.bizId, to, n);
   }
   markDirty(true);
-  if (!any) { sfx('error'); toast({ text: 'Không còn gì để sơ chế', sub: 'Nothing left to prep', ms: 1600 }); }
+  if (!any) { sfx('error'); toast({ text: T('Nothing left to prep', 'Không còn gì để sơ chế'), ms: 1600 }); }
   else sfx('success');
   build();
 }
 
 export function updatePrep(dt, t) {
   if (!P) return;
+  P.el.querySelector('.svc-clock .clk').textContent = clock(G.state.time);
   P.t += dt; P.anim = Math.min(1, P.anim + dt * 4); P.chopT = Math.max(0, P.chopT - dt);
   const c = P.c, cv = P.cv;
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height);

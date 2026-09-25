@@ -2,8 +2,8 @@
 // customers walking up and queueing, order generation, stock, and results.
 // The restaurant has its own simulation in restaurant.js.
 
-import { G, addMoney, addRep, markDirty, pantry, addPantry, unlockAchievement, bizOf } from './state.js';
-import { BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES } from '../data/game.js';
+import { G, T, addMoney, addRep, markDirty, pantry, addPantry, unlockAchievement, bizOf } from './state.js';
+import { BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, recipeName, bizName } from '../data/game.js';
 import { RESIDENTS, visitorLook } from '../data/looks.js';
 import { Actor } from '../world/actor.js';
 import { QUEUES } from '../world/island.js';
@@ -64,14 +64,14 @@ export function recipePrice(bizId, id, size = 'M') {
 export function isOpenHours(bizId, minutes = G.state.time) {
   const h = BUSINESSES[bizId].hours;
   if (h) return minutes >= h[0] && minutes < h[1];
-  return minutes >= 6 * 60 && minutes < 22 * 60;
+  return minutes >= 6 * 60 && minutes < 24 * 60;
 }
 export function openBiz(bizId) {
   const b = bizOf(bizId);
   if (b.open) return { ok: true };
-  if (!isOpenHours(bizId)) return { ok: false, why: bizId === 'night' ? 'Chợ đêm mở lúc 17:00.\nThe night market opens at 17:00.' : 'Đã khuya rồi — shops close at 22:00.' };
-  if (!bizRecipes(bizId).length) return { ok: false, why: 'Chưa có món nào! You don\'t know a recipe for this shop yet.' };
-  if (!makeableRecipes(bizId).length) return { ok: false, why: 'Hết nguyên liệu! Not enough ingredients to make anything.\nBuy supplies and prep them first.' };
+  if (!isOpenHours(bizId)) return { ok: false, why: bizId === 'night' && G.state.time < 17 * 60 ? T('The night market opens at 17:00.', 'Chợ đêm mở lúc 17:00.') : T('It\'s after midnight — everything is closed until 6:00.', 'Quá nửa đêm rồi — mọi quán đóng cửa tới 6:00.') };
+  if (!bizRecipes(bizId).length) return { ok: false, why: T('You don\'t know a recipe for this shop yet.', 'Bạn chưa biết món nào cho quán này.') };
+  if (!makeableRecipes(bizId).length) return { ok: false, why: T('Not enough ingredients!\nBuy supplies and prep them first.', 'Hết nguyên liệu!\nMua và sơ chế nguyên liệu trước nhé.') };
   b.open = true;
   const r = rt(bizId);
   r.spawnT = r.first ? 3 : rand(4, 10);
@@ -211,44 +211,61 @@ export function makeOrder(bizId, cust) {
   // make sure the options can be made with current stock; relax if not
   if (!canMake(bizId, id, opts)) { if (opts.topping) opts.topping = 'none'; if (opts.chili) opts.chili = 'không ớt'; if (!canMake(bizId, id, opts) && opts.ice) opts.ice = 'không đá'; }
   const price = recipePrice(bizId, id, opts.size);
-  const text = orderText(id, opts, cust);
-  const chips = orderChips(id, opts);
-  return { recipe: id, opts, price, text, chips, special: b.special === id };
+  return { recipe: id, opts, price, special: b.special === id };
 }
-function orderText(id, o, cust) {
-  const R = RECIPES[id], name = `*${R.vi}*`;
-  const pn = G.state.player.name || 'bạn';
-  const parts = [];
-  if (o.size) parts.push(`size *${o.size}*`);
-  if (o.topping && o.topping !== 'none') parts.push(OPTIONS.topping.names[o.topping]);
-  if (o.sugar !== undefined) parts.push(`${o.sugar}% đường`);
-  if (o.ice) parts.push(o.ice);
-  if (o.chili) parts.push(o.chili);
-  const tail = parts.length ? ', ' + parts.join(', ') : '';
-  const vessel = R.vessel === 'cup' || R.vessel === 'glass' ? 'ly' : R.vessel === 'bowl' ? 'tô' : R.vessel === 'bread' ? 'ổ' : 'phần';
-  const reg = G.state.regulars[cust.key];
-  if (cust.personality === 'tourist') {
-    const en = [];
-    if (o.size) en.push(`size ${o.size}`);
-    if (o.topping && o.topping !== 'none') en.push(`with ${o.topping === 'cheese_foam' ? 'cheese foam' : o.topping}`);
-    if (o.sugar !== undefined) en.push(`${o.sugar}% sugar`);
-    if (o.ice) en.push({ 'không đá': 'no ice', 'ít đá': 'less ice', 'đá bình thường': 'normal ice' }[o.ice]);
-    if (o.chili) en.push(o.chili === 'có ớt' ? 'spicy please' : 'not spicy');
-    return choice([`Xin chào! One ${name}${en.length ? ', ' + en.join(', ') : ''}, please!`, `Hi! Could I get a ${name}${en.length ? ' — ' + en.join(', ') : ''}? Cảm ơn!`]);
+// Order lines are built in the current language whenever they're shown.
+export function orderText(order, cust) {
+  const id = order.recipe, o = order.opts, R = RECIPES[id];
+  const pn = G.state.player.name || T('friend', 'bạn');
+  const reg = G.state.regulars[cust.key]?.visits >= 3;
+  if (G.lang === 'vi') {
+    const name = `*${R.vi}*`, parts = [];
+    if (o.size) parts.push(`size *${o.size}*`);
+    if (o.topping && o.topping !== 'none') parts.push(OPTIONS.topping.say[o.topping][1]);
+    if (o.sugar !== undefined) parts.push(`${o.sugar}% đường`);
+    if (o.ice) parts.push(OPTIONS.ice.say[o.ice][1]);
+    if (o.chili) parts.push(OPTIONS.chili.say[o.chili][1]);
+    const tail = parts.length ? ', ' + parts.join(', ') : '';
+    const v = R.vessel === 'cup' || R.vessel === 'glass' ? 'ly' : R.vessel === 'bowl' ? 'tô' : R.vessel === 'bread' ? 'ổ' : 'phần';
+    const k = pickLine(cust, 3);
+    if (reg) return [`Chào ${pn}! Như mọi khi nha: 1 ${v} ${name}${tail}!`, `Lại là em nè ${pn}! Cho 1 ${v} ${name}${tail} nhé!`, `${pn} ơi, món quen: 1 ${v} ${name}${tail}!`][k];
+    if (cust.personality === 'tourist') return [`Xin chào! Cho tôi 1 ${v} ${name}${tail}, cảm ơn!`, `Chào bạn! Mình muốn 1 ${v} ${name}${tail} nhé!`, `Cho mình thử 1 ${v} ${name}${tail} nha!`][k];
+    if (cust.personality === 'rushed') return `Nhanh giúp em nha! 1 ${v} ${name}${tail}!`;
+    if (cust.personality === 'picky') return `Làm kỹ giúp chị nhé: 1 ${v} ${name}${tail}. Đúng y vậy nha.`;
+    if (cust.personality === 'excited') return [`Oa, thơm quá! Cho em 1 ${v} ${name}${tail} đi!`, `Em nghe đồn quán ngon lắm! 1 ${v} ${name}${tail} nha!`, `Hôm nay em thèm 1 ${v} ${name}${tail} ghê!`][k];
+    return [`Cho em 1 ${v} ${name}${tail} nha!`, `1 ${v} ${name}${tail} nhé!`, `Cho mình 1 ${v} ${name}${tail} với!`][k];
   }
-  if (reg?.visits >= 3) return choice([`Chào ${pn}! Như mọi khi nha: 1 ${vessel} ${name}${tail}!`, `Lại là em nè ${pn}! Cho 1 ${vessel} ${name}${tail} nhé!`]);
-  if (cust.personality === 'rushed') return `Nhanh giúp em nha! 1 ${vessel} ${name}${tail}!`;
-  if (cust.personality === 'picky') return `Làm kỹ giúp chị nhé: 1 ${vessel} ${name}${tail}. Đúng y vậy nha.`;
-  if (cust.personality === 'excited') return choice([`Oa, thơm quá! Cho em 1 ${vessel} ${name}${tail} đi!`, `Em nghe đồn quán ngon lắm! 1 ${vessel} ${name}${tail} nha!`]);
-  return choice([`Cho em 1 ${vessel} ${name}${tail} nha!`, `1 ${vessel} ${name}${tail} nhé!`, `Cho mình 1 ${vessel} ${name}${tail} với!`]);
+  // English
+  const sizeW = { S: 'small', M: 'medium', L: 'large' }[o.size];
+  let item = `${sizeW ? sizeW + ' ' : ''}*${R.en}*`;
+  const withs = [];
+  if (o.topping && o.topping !== 'none') withs.push(OPTIONS.topping.say[o.topping][0]);
+  if (o.chili === 'có ớt') withs.push('chili');
+  if (withs.length) item += ' with ' + withs.join(' and ');
+  const mods = [];
+  if (o.sugar !== undefined) mods.push(`${o.sugar}% sugar`);
+  if (o.ice) mods.push(OPTIONS.ice.say[o.ice][0]);
+  if (o.chili === 'không ớt') mods.push('no chili');
+  const tail = mods.length ? ', ' + (mods.length > 1 ? mods.slice(0, -1).join(', ') + ' and ' + mods[mods.length - 1] : mods[0]) : '';
+  const art = /^[aeiou]/i.test(item.replace('*', '')) ? 'an' : 'a';
+  const k = pickLine(cust, 3);
+  if (reg) return [`Hi ${pn}! The usual, please: ${art} ${item}${tail}!`, `It's me again, ${pn}! ${cap(art)} ${item}${tail}, like always.`, `${pn}! My favourite: ${art} ${item}${tail}!`][k];
+  if (cust.personality === 'tourist') return [`Hello! Could I try ${art} ${item}${tail}, please?`, `Hi there! One ${item}${tail}, please!`, `Everyone says I have to try this: ${art} ${item}${tail}!`][k];
+  if (cust.personality === 'rushed') return `Quick, please! ${cap(art)} ${item}${tail}!`;
+  if (cust.personality === 'picky') return `Carefully, please: ${art} ${item}${tail}. Exactly like that.`;
+  if (cust.personality === 'excited') return [`Ooh, it smells amazing! ${cap(art)} ${item}${tail}, please!`, `I heard this place is the best! ${cap(art)} ${item}${tail}!`, `I've been craving this all day: ${art} ${item}${tail}!`][k];
+  return [`Can I get ${art} ${item}${tail}, please?`, `One ${item}${tail}, please!`, `I'd like ${art} ${item}${tail}.`][k];
 }
-function orderChips(id, o) {
-  const R = RECIPES[id], chips = [R.en];
+const cap = w => w[0].toUpperCase() + w.slice(1);
+function pickLine(cust, n) { return (cust._line ??= Math.floor(Math.random() * n)) % n; }
+export function orderChips(order) {
+  const id = order.recipe, o = order.opts, R = RECIPES[id], chips = [recipeName(id)];
   if (o.size) chips.push('Size ' + o.size);
-  if (o.sugar !== undefined) chips.push(o.sugar + '% sugar');
-  if (o.ice) chips.push({ 'không đá': 'No ice', 'ít đá': 'Less ice', 'đá bình thường': 'Normal ice' }[o.ice]);
-  if (o.topping) chips.push(o.topping === 'none' ? 'No topping' : { tapioca: 'Tapioca', jelly: 'Jelly', cheese_foam: 'Cheese foam' }[o.topping]);
-  if (o.chili) chips.push(o.chili === 'có ớt' ? 'Chili' : 'No chili');
+  if (o.sugar !== undefined) chips.push(T(`${o.sugar}% sugar`, `${o.sugar}% đường`));
+  if (o.ice) chips.push(T(OPTIONS.ice.say[o.ice][0], OPTIONS.ice.say[o.ice][1]).replace(/^./, c => c.toUpperCase()));
+  if (o.topping) chips.push(T(OPTIONS.topping.say[o.topping][0], OPTIONS.topping.say[o.topping][1]).replace(/^./, c => c.toUpperCase()));
+  if (o.chili) chips.push(T(OPTIONS.chili.say[o.chili][0], OPTIONS.chili.say[o.chili][1]).replace(/^./, c => c.toUpperCase()));
+  void R;
   return chips;
 }
 
@@ -336,12 +353,12 @@ export function updateBusinesses(dt, gameMin) {
     r.flap += ((b.open ? 1 : 0) - r.flap) * Math.min(1, dt * 5);
     r.signFlip += ((b.open ? 1 : 0) - r.signFlip) * Math.min(1, dt * 4);
     if (!b.open) continue;
-    if (!isOpenHours(id)) { closeBiz(id, 'hours'); bus.emit('toast', { text: `${def.name} đã đóng cửa`, sub: 'Closing time!' }); continue; }
+    if (!isOpenHours(id)) { closeBiz(id, 'hours'); continue; }
     // spawn
-    r.spawnT -= gameMin;
+    r.spawnT -= dt;   // real seconds, so the day's length doesn't change customer flow
     if (r.spawnT <= 0) {
       const made = makeableRecipes(id).length;
-      if (!made) { if (!r.noStockWarned) { r.noStockWarned = true; bus.emit('toast', { text: 'Hết nguyên liệu!', sub: `${def.name}: out of ingredients — restock or prep.`, bad: true }); } r.spawnT = 6; }
+      if (!made) { if (!r.noStockWarned) { r.noStockWarned = true; bus.emit('toast', { text: T('Out of ingredients!', 'Hết nguyên liệu!'), sub: T(`${bizName(id)}: restock or prep more.`, `${bizName(id)}: mua thêm hoặc sơ chế nhé.`), bad: true }); } r.spawnT = 6; }
       else {
         spawnCustomer(id);
         r.spawnT = nextSpawnDelay(id);
@@ -376,7 +393,7 @@ function nextSpawnDelay(id) {
   const special = b.special ? 1.12 : 1;
   const early = s.story.chapter <= 2 ? 1.35 : 1;
   const rate = attract * rep * tf * boat * special * early; // customers per ~34 game-minutes baseline
-  return clamp(rand(22, 40) / rate, 5, 60);
+  return clamp(rand(22, 40) / (rate * 1.25), 4, 50);   // +25% customers
 }
 
 export function stationStock(bizId, key) { return stockOf(bizId, key); }
