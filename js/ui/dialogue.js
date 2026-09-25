@@ -4,7 +4,7 @@
 
 import { sfx } from '../core/audio.js';
 import { G, T } from '../systems/state.js';
-import { drawHuman } from '../gfx/character.js';
+import { drawHuman, EL } from '../gfx/character.js';
 import { drawCat } from '../gfx/cat.js';
 import { escapeHtml } from '../core/util.js';
 import { RESIDENTS, MERCHANTS } from '../data/looks.js';
@@ -134,7 +134,7 @@ export function updateDialogue(dt, t) {
     pc.lineJoin = 'round'; pc.lineCap = 'round';
     pc.save();
     const sc = pa.kind === 'cat' ? 6.4 : 5.8;
-    pc.translate(w / 2, h + (pa.kind === 'cat' ? 6 : 18) * sc * 0.55 + 8);
+    pc.translate(w / 2, h + (pa.kind === 'cat' ? 6 : 18) * sc * 0.55 + 8 + (pa.kind === 'cat' ? 0 : EL * sc));
     pc.scale(sc, sc);
     if (pa.kind === 'cat') drawCat(pc, pa, t); else drawHuman(pc, pa, t);
     pc.restore();

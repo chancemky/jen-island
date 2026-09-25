@@ -61,13 +61,20 @@ export function visitorLook(seed, personality = 'patient') {
     top2: pick(r, ['#fff', '#fff4b8', '#ffd6e0']), accent: pick(r, ['#f28fa3', '#f7de8c', '#9fd8c8']), eyeCol: pick(r, EYES),
   };
   if (L.topStyle === 'dress') L.bottom = L.top;
+  if (fem && L.topStyle !== 'dress' && r() < 0.35) { L.skirt = true; L.bottomLen = 0; }
+  if (r() < 0.18 && L.topStyle === 'tee') { L.topStyle = 'tank'; L.sleeve = 0; }
+  if (r() < 0.22) L.tote = pick(r, ['#fff5df', '#f7de8c', '#9fd8c8', '#f4a9b8', '#c9b6e8']);
   if (r() < 0.12) L.glasses = '#5b3f36';
   if (personality === 'tourist') {
     const ex = pick(r, TOURIST_EXTRAS);
     if (ex === 'backpack') L.backpack = pick(r, ['#9fd8c8', '#f4a9b8', '#f7de8c', '#8fb7e0']);
     if (ex === 'camera') L.camera = true;
-    if (ex === 'hat' || r() < 0.3) { L.hat = pick(r, ['bucket', 'cap', 'nonla']); L.hatColor = pick(r, ['#f7de8c', '#fff1dc', '#f28f7c', '#9fd8c8', '#efd69a']); }
+    if (ex === 'hat' || r() < 0.3) { L.hat = pick(r, ['bucket', 'cap', 'nonla', 'sunhat', 'sunhat']); L.hatColor = pick(r, ['#f7de8c', '#fff1dc', '#f28f7c', '#9fd8c8', '#efd69a', '#f3dcae']); L.hatRibbon = pick(r, ['#f28f7c', '#6fbfb0', '#f4a9b8']); }
     if (L.topStyle === 'tee' && r() < 0.5) L.topStyle = 'floral';
+    const gear = r();
+    if (gear < 0.12) L.surf = pick(r, ['#6fbfb0', '#f28f7c', '#f7de8c', '#8fb7e0']);
+    else if (gear < 0.2) L.guitar = true;
+    else if (gear < 0.38) L.suitcase = pick(r, ['#f28f7c', '#8fb7e0', '#f7de8c', '#c9b6e8']);
   } else if (r() < 0.12) { L.hat = 'nonla'; L.hatColor = '#efd69a'; }
   if (personality === 'rushed' && r() < 0.5) L.lanyard = '#6d7fa8';
   if (r() < 0.12 && fem && !L.hat) L.flower = pick(r, ['#ff8fb0', '#fff', '#ffd35a']);
@@ -78,7 +85,7 @@ export function visitorLook(seed, personality = 'patient') {
 export const STAFF_OUTFIT = { apron: '#fff6e6', top: '#f28f7c', topStyle: 'tee' };
 export function employeeLook(seed, role) {
   const L = visitorLook(seed, 'regular');
-  delete L.backpack; delete L.camera; delete L.lanyard; delete L.flower; L.scale = 1;
+  delete L.backpack; delete L.camera; delete L.lanyard; delete L.flower; delete L.tote; delete L.surf; delete L.guitar; delete L.suitcase; L.scale = 1;
   L.top = role === 'cook' ? '#fff6e6' : '#f28f7c'; L.topStyle = 'tee'; L.apron = role === 'cook' ? '#f7d6c0' : '#fff6e6';
   if (role === 'cook') { L.hat = 'chef'; } else if (role === 'cleaner') { L.hat = 'bandana'; L.hatColor = '#8fb7e0'; } else { L.hat = null; }
   return L;

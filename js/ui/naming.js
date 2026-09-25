@@ -4,7 +4,7 @@ import { h } from './sheets.js';
 import { sfx } from '../core/audio.js';
 import { escapeHtml } from '../core/util.js';
 import { PLAYER_OPTIONS, playerLook } from '../data/looks.js';
-import { drawHuman } from '../gfx/character.js';
+import { drawHuman, EL } from '../gfx/character.js';
 import { G, T } from '../systems/state.js';
 
 export function askText({ title, sub = '', placeholder = '', max = 16, value = '', ok = null }) {
@@ -59,7 +59,7 @@ export function chooseLook(start = {}) {
       const t = (now - t0) / 1000;
       const a = { look: playerLook(opt), dir: 'down', moving: 0, walkPh: 0, seed: 1, blinkAmt: Math.sin(t * 1.4) > 0.97 ? 1 : 0, emo: 'happy', hop: Math.max(0, Math.sin(t * 3)) * 1.2, act: Math.sin(t * 0.8) > 0.6 ? 'wave' : null, actT: t };
       c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 300, 300); c.lineJoin = 'round'; c.lineCap = 'round';
-      c.translate(150, 300 + 30); c.scale(7, 7); drawHuman(c, a, t);
+      c.translate(150, 300 + 30 + EL * 7); c.scale(7, 7); drawHuman(c, a, t);
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);

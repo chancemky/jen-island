@@ -10,11 +10,12 @@
 // The renderer only *reads* the actor; animation state is advanced in world/actor.js.
 
 import { TAU, shade } from '../core/util.js';
-import { INK, ell, circ, limb, poly, shadow, heart } from './draw.js';
+import { INK, ell, circ, limb, poly, shadow, heart, line } from './draw.js';
 import { drawHeld } from './food.js';
 
-const HY = -24.4, HR = 12.9, HRY = 11.7; // big round head (about 60% of the height)
+const HY = -24.4, HR = 12.5, HRY = 11.4; // big round head (about half the height)
 const SH = -12.4, HEM = -4.9;           // small body: shoulder and hem lines
+export const EL = 2.4;                   // extra leg length; everything above the hips is lifted by this
 const EYE = '#3d2723', EYE2 = '#8a5540', BLUSH = 'rgba(247,140,150,.5)', MOUTH = '#8e3f3e';
 
 // ---------------------------------------------------------------- helpers
@@ -85,7 +86,7 @@ function pose(a, view, t) {
     case 'ride': // both hands forward on the handlebar grips, leaning in a little
       P.hR = [11.5, -12.2]; P.hL = [10.4, -12.8]; P.tilt += 0.1; P.ride = true; break;
   }
-  if (a.sit) { P.dy += 3.2; P.legL = P.legR = 0; }
+  if (a.sit) { P.dy += 3.2 + EL * 0.8; P.legL = P.legR = 0; }
   if (P.ride) { P.legLx = 4.2; P.legRx = 5.2; P.legL = -1.2; P.legR = -0.6; }
   return P;
 }
@@ -328,6 +329,13 @@ function hat(c, L, view, t) {
     c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
     c.fillStyle = '#fff'; for (let i = -2; i <= 2; i++) circ(c, i * 3.6, HY - 8 + Math.abs(i) * 0.8, 0.55, 'rgba(255,255,255,.9)', null);
     if (view !== 'front') { c.beginPath(); c.moveTo(-HR, HY - 5); c.lineTo(-HR - 4, HY - 2 + Math.sin(t * 5) * 0.8); c.lineTo(-HR - 2.5, HY - 6); c.fillStyle = col; c.fill(); c.stroke(); }
+  } else if (h === 'sunhat') {
+    // wide floppy straw sun hat with a ribbon
+    const by = HY - 5.2, wob = Math.sin(t * 2) * 0.4;
+    c.beginPath(); c.ellipse(0, by + 1, HR + 7.5, 4.2 + wob * 0.3, 0, 0, TAU); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    c.beginPath(); c.moveTo(-HR + 2, by + 0.5); c.quadraticCurveTo(-HR + 1, top - 3.5, 0, top - 4); c.quadraticCurveTo(HR - 1, top - 3.5, HR - 2, by + 0.5); c.closePath(); c.fillStyle = shade(col, 10); c.fill(); c.stroke();
+    c.strokeStyle = L.hatRibbon || '#f28f7c'; c.lineWidth = 2; c.beginPath(); c.moveTo(-HR + 2.2, by - 1.4); c.quadraticCurveTo(0, by + 0.6, HR - 2.2, by - 1.4); c.stroke();
+    c.strokeStyle = shade(col, -25); c.lineWidth = 0.5; for (let i = 1; i < 4; i++) { c.beginPath(); c.ellipse(0, by + 1, (HR + 7.5) * i / 4, (4.2) * i / 4, 0, 0, Math.PI); c.stroke(); }
   } else if (h === 'helmet') {
     // nón bảo hiểm — the half-shell scooter helmet
     c.beginPath(); c.ellipse(0, HY - 4.2, HR + 1.4, HRY + 0.4, 0, Math.PI, TAU); c.closePath();
@@ -354,7 +362,7 @@ function legs(c, L, P, view) {
   const C = cols(L);
   const lh = L.kid ? 4.8 : 6.2;
   const draw = (x, lift) => {
-    const top = HEM + 0.2, foot = -1.4 + lift;
+    const top = HEM + 0.2 - EL, foot = -1.4 + lift;
     limb(c, [x, top, x, foot], 3.8, L.legs || L.skin);
     if (L.bottomLen) limb(c, [x, top, x, top + Math.min(L.bottomLen, foot - top)], 4.2, L.bottom);
     const fx = view === 'side' ? x + 1 : x;
@@ -372,7 +380,11 @@ function torso(c, L, P, view, t) {
   const w1 = 4.5, w2 = st === 'dress' || st === 'aodai' ? 7 : 5.9;
   const hem = st === 'dress' ? HEM + 2.4 : st === 'aodai' ? HEM + 3.6 : HEM;
   // bottoms (shorts/skirt) peeking below top
-  if (st !== 'dress' && st !== 'aodai') {
+  if (L.skirt && st !== 'dress' && st !== 'aodai') {
+    c.beginPath(); c.moveTo(-5.4, HEM - 1.4); c.lineTo(5.4, HEM - 1.4); c.lineTo(7.4, HEM + 3.6); c.quadraticCurveTo(0, HEM + 4.8, -7.4, HEM + 3.6); c.closePath();
+    c.fillStyle = L.bottom; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    c.strokeStyle = C.botS; c.lineWidth = 0.6; for (const x of [-3, 0, 3]) { c.beginPath(); c.moveTo(x * 0.8, HEM - 1); c.lineTo(x * 1.3, HEM + 3.8); c.stroke(); }
+  } else if (st !== 'dress' && st !== 'aodai') {
     c.beginPath(); c.moveTo(-5.5, HEM - 1.4); c.lineTo(5.5, HEM - 1.4); c.lineTo(5.9, HEM + 1.7); c.lineTo(-5.9, HEM + 1.7); c.closePath();
     c.fillStyle = L.bottom; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
     if (view === 'front') { c.strokeStyle = C.botS; c.lineWidth = 0.6; c.beginPath(); c.moveTo(0, HEM); c.lineTo(0, HEM + 1.9); c.stroke(); }
@@ -439,6 +451,40 @@ function arm(c, L, sx, sy, hx, hy) {
   void mx; void my; void C;
 }
 
+// Role props worn on the back: surfboards, guitars.
+function gearBehind(c, L, view, t, lift = -EL) {
+  if (L.surf) {
+    c.save(); c.translate(view === 'side' ? -6 : 7, -12 + lift); c.rotate(view === 'side' ? -0.25 : 0.18);
+    c.beginPath(); c.ellipse(0, -8, 4.2, 17, 0, 0, TAU); c.fillStyle = L.surf; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    c.strokeStyle = '#fff'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, -24); c.lineTo(0, 8); c.stroke();
+    c.restore();
+  }
+  if (L.guitar && view !== 'side') {
+    // guitar slung across the back: the body peeks out at the hip, the neck over the shoulder
+    c.save(); c.translate(-8, -5 + lift); c.rotate(-0.55);
+    limb(c, [0, -3, 0, -21], 2.2, '#8a5f3e'); box(c, -1.8, -24, 3.6, 3.4, 1, '#5a3a24', INK, 0.6);
+    ell(c, 0, 2, 5.4, 6.4, '#e9a24a'); ell(c, 0, -3.4, 4.2, 4, '#e9a24a'); circ(c, 0, 0, 1.7, '#5a3a24', null);
+    c.restore();
+  }
+}
+// Props carried in front: a tote on the shoulder, a rolling suitcase.
+function gearFront(c, L, view, t, a) {
+  if (L.tote && view !== 'back') {
+    const x = view === 'side' ? -2 : -6.4;
+    c.strokeStyle = shade(L.tote, -30); c.lineWidth = 0.8; c.beginPath(); c.moveTo(x + 2, SH + 1); c.lineTo(x - 0.5, SH + 6); c.stroke();
+    box(c, x - 3.6, SH + 5.5, 6.6, 6.2, 1.5, L.tote, INK, 0.8);
+    circ(c, x - 0.3, SH + 8.6, 1.1, '#fff8ea', null);
+  }
+  if (L.suitcase && !a.moving && !a.act && view === 'front') {
+    c.save(); c.translate(9.2, 0 + EL);
+    limb(c, [0, -12, 0, -18], 0.9, '#5a5660');
+    box(c, -3.6, -12, 7.2, 10, 2, L.suitcase, INK, 0.9);
+    line(c, -3.6, -8, 3.6, -8, shade(L.suitcase, -25), 0.8);
+    circ(c, -2.4, -1.4, 1, '#3d3a42', null); circ(c, 2.4, -1.4, 1, '#3d3a42', null);
+    c.restore();
+  }
+}
+
 // A mochi-shaped head: round on top, a little fuller at the cheeks.
 function headShape(c) {
   c.beginPath();
@@ -470,7 +516,10 @@ export function drawHuman(c, a, t) {
   // far arm (side view) and long back hair behind body
   if (view === 'side') { c.globalAlpha = 1; arm(c, { ...L, top: cols(L).topS, skin: cols(L).skinS, armSkin: cols(L).skinS }, shL[0], shL[1], P.hL[0], P.hL[1]); }
   if (view !== 'back') hairBack(c, L, view);
+  if (view !== 'back') gearBehind(c, L, view, t);
   if (!a.sit || !a.hideLegs) legs(c, L, P, view);
+  c.translate(0, -EL);
+  if (view === 'back') gearBehind(c, L, view, t, 0);
   torso(c, L, P, view, t);
   if (view === 'front') { arm(c, L, shL[0], shL[1], P.hL[0], P.hL[1]); }
   if (view === 'back') { arm(c, L, shL[0], shL[1], P.hL[0], P.hL[1]); arm(c, L, shR[0], shR[1], P.hR[0], P.hR[1]); }
@@ -508,6 +557,7 @@ export function drawHuman(c, a, t) {
   // near arm(s) last so held items sit on top
   if (view === 'side') arm(c, L, shR[0], shR[1], P.hR[0], P.hR[1]);
   if (view === 'front') arm(c, L, shR[0], shR[1], P.hR[0], P.hR[1]);
+  gearFront(c, L, view, t, a);
   if (P.held && view !== 'back') {
     if (P.heldHand === 'both') drawHeld(c, P.held, 0, P.hR[1] - 1.5, t, view);
     else drawHeld(c, P.held, P.hR[0], P.hR[1], t, view, P);

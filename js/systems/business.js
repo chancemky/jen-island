@@ -107,7 +107,7 @@ export class Customer {
 
 function pickPersonality(fromBoat) {
   if (fromBoat && chance(0.6)) return 'tourist';
-  const list = Object.entries(PERSONALITIES).filter(([k]) => k !== 'regular');
+  const list = Object.entries(PERSONALITIES).filter(([k]) => k !== 'regular' && k !== 'tourist');
   const total = list.reduce((s, [, p]) => s + p.weight, 0);
   let r = Math.random() * total;
   for (const [k, p] of list) { r -= p.weight; if (r <= 0) return k; }

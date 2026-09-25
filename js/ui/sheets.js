@@ -4,7 +4,7 @@ import { G, T } from '../systems/state.js';
 import { sfx } from '../core/audio.js';
 import { escapeHtml, clock } from '../core/util.js';
 import { iconURL } from '../gfx/food.js';
-import { drawHuman } from '../gfx/character.js';
+import { drawHuman, EL } from '../gfx/character.js';
 import { drawCat } from '../gfx/cat.js';
 import { releaseJoystick } from '../core/input.js';
 
@@ -74,7 +74,7 @@ export function portrait(cv, who, emo = 'happy') {
   c.clearRect(0, 0, cv.width, cv.height);
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
   const s = cv.width / (cat ? 30 : 30);
-  c.translate(cv.width / 2, cv.height + (cat ? 2 : 7) * s * 0.9); c.scale(s, s);
+  c.translate(cv.width / 2, cv.height + (cat ? 2 : 7) * s * 0.9 + (cat ? 0 : EL * s)); c.scale(s, s);
   (cat ? drawCat : drawHuman)(c, a, 1);
   c.restore();
   return a;

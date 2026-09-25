@@ -7,7 +7,7 @@ import { G, T, bizOf } from '../systems/state.js';
 import { RECIPES, STATION, OPTIONS, PREPPED, INGREDIENTS, BUSINESSES, ingName, stationLabel, recipeName, bizName } from '../data/game.js';
 import { rt, stockOf, takeStock, evaluate, completeOrder, failOrder, bizRecipes, openBiz, canMake, orderText } from '../systems/business.js';
 import { drawCup, DISHES, ICONS, iconURL, drawIcon } from '../gfx/food.js';
-import { drawHuman } from '../gfx/character.js';
+import { drawHuman, EL } from '../gfx/character.js';
 import { INK, ell, circ, box, shadow } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
 import { escapeHtml, money, bus, clamp, TAU, clock } from '../core/util.js';
@@ -361,7 +361,7 @@ function drawQueue(t) {
     box.innerHTML = q.slice(0, 5).map((c, i) => `<div class="qface${i === 0 ? ' cur' : ''}" data-id="${c.id}"><canvas width="88" height="88"></canvas><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#86cf8a" stroke-width="3" stroke-dasharray="100.5" stroke-linecap="round"/></svg></div>`).join('');
     for (const el of box.children) {
       const c = q.find(x => x.id === el.dataset.id), cv = el.querySelector('canvas'), cc = cv.getContext('2d');
-      cc.save(); cc.lineJoin = 'round'; cc.translate(44, 88 + 70); cc.scale(4.1, 4.1); drawHuman(cc, { look: c.actor.look, dir: 'down', emo: 'neutral', blinkAmt: 0, moving: 0 }, 1); cc.restore();
+      cc.save(); cc.lineJoin = 'round'; cc.translate(44, 88 + 70 + EL * 4.1); cc.scale(4.1, 4.1); drawHuman(cc, { look: c.actor.look, dir: 'down', emo: 'neutral', blinkAmt: 0, moving: 0 }, 1); cc.restore();
     }
   }
   for (const el of box.children) {
@@ -381,7 +381,7 @@ function drawPortrait(dt, t) {
   const emo = S.react?.emo || (k < 0.25 ? 'angry' : k < 0.45 ? 'sad' : S.talkT > 0 ? 'neutral' : S.asm.steps.length ? 'think' : 'neutral');
   const a = { look: cust.actor.look, dir: 'down', moving: 0, walkPh: 0, seed: 1, emo, talking: S.talkT > 0.15, blinkAmt: (Math.sin(t * 1.3 + 1) > 0.985) ? 1 : 0, hop: S.react && (S.react.emo === 'love' || S.react.emo === 'happy') ? Math.abs(Math.sin(t * 9)) * 2 : 0, act: S.react?.emo === 'love' ? 'cheer' : k < 0.45 && !S.react ? 'wait' : null, actT: t, headTilt: S.asm.steps.length && !S.react ? Math.sin(t * 1.2) * 0.06 : 0 };
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
-  c.translate(cv.width / 2, cv.height + 34); const sc = 6.3; c.scale(sc, sc);
+  const sc = 6.3; c.translate(cv.width / 2, cv.height + 34 + EL * sc); c.scale(sc, sc);
   drawHuman(c, a, t);
   c.restore();
 }
