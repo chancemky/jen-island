@@ -41,7 +41,7 @@ export function updateAnimals(dt) {
   const island = G.scenes?.island; if (!island) return;
   const pl = G.player, here = G.scene === island;
   for (const a of A) {
-    a.t += dt; a.until -= dt;
+    a.t += dt; a.until -= dt; tickReact(a, dt);
     const pd = here && pl ? dist(pl.x, pl.y, a.x, a.y) : 999;
     const running = pl?.moving > 0.8;
     // reactions
@@ -73,6 +73,50 @@ export function updateAnimals(dt) {
   }
   for (const f of fish) { f.t += dt; if (f.t > f.next) { f.t = 0; f.next = rand(4, 11); f.x = rand(200, 1600); f.y = rand(2470, 2590); if (!island.terrain(f.x, f.y)) f.jump = 0.001; } if (f.jump) { f.jump += dt / 0.9; if (f.jump >= 1) f.jump = 0; } }
 }
+
+// ---------------------------------------------------------------- tapping an animal
+const VOICE = {
+  chicken: { sfx: 'cluck', say: ['Bawk!', 'Cluck cluck!', 'Bok bok?'] },
+  dog: { sfx: 'woof', say: ['Woof!', 'Arf arf!', '*happy panting*'] },
+  cat: { sfx: 'mew', say: ['Mew~', 'Mrrrp?', '*purrs*'] },
+  crab: { sfx: 'click', say: ['*click click*', 'Snip snip!', '*sideways shuffle*'] },
+  pigeon: { sfx: 'coo', say: ['Coo~', 'Coo coo!', '*flutter*'] },
+  goat: { sfx: 'bleat', say: ['Baa-a-a!', 'Meh-eh-eh!', '*chews happily*'] },
+  duck: { sfx: 'quack', say: ['Quack!', 'Quack quack!', '*waddle wiggle*'] },
+};
+const VOICE_VI = { chicken: ['Cục ta cục tác!', 'Cục cục!', 'Tác?'], dog: ['Gâu!', 'Gâu gâu!', '*thở hổn hển vui vẻ*'], cat: ['Meo~', 'Mrrr?', '*rừ rừ*'], crab: ['*lách cách*', 'Kẹp kẹp!', '*bò ngang*'], pigeon: ['Gù~', 'Gù gù!', '*vỗ cánh*'], goat: ['Be-e-e!', 'Beee!', '*nhai nhóp nhép*'], duck: ['Cạp!', 'Cạp cạp!', '*lạch bạch*'] };
+export function react(a, kind = a.kind) {
+  const v = VOICE[kind]; if (!v) return;
+  sfx(v.sfx);
+  const i = Math.floor(Math.random() * 3);
+  a.react = { t: 0, text: G.lang === 'vi' ? VOICE_VI[kind][i] : v.say[i] };
+  a.vx = a.vy = 0; a.until = 1.6; if (a.state !== 'fly') a.state = 'idle';
+  if (kind === 'pigeon' && Math.random() < 0.5) { a.state = 'fly'; a.until = 1.4; a.vx = (Math.random() - 0.5) * 40; a.vy = -20; }
+  if (kind === 'dog') a.idle = 'wag';
+  if (kind === 'cat') a.idle = 'sit';
+}
+// Returns true if a tap at world (x, y) landed on an animal.
+export function tapAnimals(x, y) {
+  let best = null, bd = 22;
+  for (const a of A) { const d = Math.hypot(a.x - x, a.y - 6 - y); if (d < bd) { bd = d; best = a; } }
+  if (!best) return false;
+  react(best); return true;
+}
+// shared bits drawn on top of any animal: tap hop, hearts and a speech bubble
+export function reactHop(a) { const r = a.react; if (!r) return 0; const k = r.t / 0.6; return k < 1 ? Math.sin(k * Math.PI) * 7 : 0; }
+export function drawReact(c, a, top = 22) {
+  const r = a.react; if (!r) return;
+  for (let i = 0; i < 3; i++) { const k = Math.min(1, Math.max(0, (r.t - i * 0.15) / 1.2)); if (k <= 0 || k >= 1) continue; c.save(); c.globalAlpha = 1 - k; c.translate((i - 1) * 7 + Math.sin(k * 6 + i) * 2, -top - k * 16); c.fillStyle = '#f36d86'; c.beginPath(); c.moveTo(0, 2.4); c.bezierCurveTo(-4.4, -0.6, -2.2, -4, 0, -1.4); c.bezierCurveTo(2.2, -4, 4.4, -0.6, 0, 2.4); c.fill(); c.restore(); }
+  const k = r.t / 1.8, pop = Math.min(1, r.t * 7), fade = k > 0.8 ? (1 - k) / 0.2 : 1;
+  c.save(); c.globalAlpha = Math.max(0, fade); c.translate(0, -top - 14); c.scale(pop, pop);
+  c.font = '900 7px Nunito, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  const w = c.measureText(r.text).width + 10;
+  c.beginPath(); c.roundRect ? c.roundRect(-w / 2, -7, w, 13, 6) : c.rect(-w / 2, -7, w, 13); c.fillStyle = '#fffaf0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke();
+  c.beginPath(); c.moveTo(-2.5, 6); c.lineTo(0, 9.5); c.lineTo(2.5, 6); c.fill();
+  c.fillStyle = INK; c.fillText(r.text, 0, 0);
+  c.restore();
+}
+export function tickReact(a, dt) { if (a.react) { a.react.t += dt; if (a.react.t > 1.8) a.react = null; } }
 
 // ---------------------------------------------------------------- drawing
 function chicken(c, t, a) {
@@ -193,7 +237,17 @@ const DRAW = { chicken, dog, cat: vcat, crab, pigeon, goat };
 export function animalDrawables() {
   const out = [];
   const SC = { chicken: 1.4, pigeon: 1.3, crab: 1.35, cat: 1.2, dog: 1.15, goat: 1.05 };
-  for (const a of A) out.push({ x: a.x, y: a.y, sortY: a.state === 'fly' ? a.y + 20 : a.y, draw: (c, t) => { c.save(); c.scale(SC[a.kind], SC[a.kind]); DRAW[a.kind](c, t, a); c.restore(); } });
+  const TOP = { chicken: 20, pigeon: 16, crab: 14, cat: 22, dog: 28, goat: 30 };
+  for (const a of A) out.push({ x: a.x, y: a.y, sortY: a.state === 'fly' ? a.y + 20 : a.y, draw: (c, t) => {
+    const hop = reactHop(a), k = a.react ? a.react.t : 9, sq = k < 0.12 ? 1 - k / 0.12 * 0.25 : k < 0.7 ? 1 + Math.sin((k - 0.12) / 0.58 * Math.PI) * 0.08 : 1;
+    c.save(); c.translate(0, -hop); c.scale(SC[a.kind] / Math.sqrt(sq), SC[a.kind] * sq);
+    if (a.react && a.kind === 'dog') c.rotate(Math.sin(k * 20) * 0.08);          // excited wiggle
+    if (a.react && a.kind === 'crab') c.translate(Math.sin(k * 30) * 1.5, 0);   // side shuffle
+    DRAW[a.kind](c, t, a);
+    if (a.react && a.kind === 'chicken' && k < 1) { c.strokeStyle = INK; c.lineWidth = 0.8; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * 5, -8); c.lineTo(s * (9 + Math.sin(k * 40) * 2), -12 - Math.abs(Math.sin(k * 40)) * 3); c.stroke(); } }
+    c.restore();
+    drawReact(c, a, TOP[a.kind] * SC[a.kind] + hop);
+  } });
   for (const f of fish) if (f.jump) {
     const k = f.jump, h = Math.sin(k * Math.PI) * 18;
     out.push({ x: f.x, y: f.y, draw: (c) => {

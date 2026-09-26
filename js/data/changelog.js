@@ -3,9 +3,21 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '3.0.0';
+export const APP_VERSION = '3.1.0';
 
 export const CHANGELOG = [
+  {
+    v: '3.1.0', date: '2026-09-26T02:40:34Z',
+    title: ['Visiting Day', 'Ngày Đi Thăm'],
+    items: [
+      ['Visit your neighbours: every home can be entered — they may be in to greet you, or asleep in bed at night', 'Đi thăm hàng xóm: vào được mọi ngôi nhà — có khi chủ nhà ra đón, ban đêm thì đang ngủ'],
+      ['Feed the ducks at the lotus pond — they swim over and gobble the crumbs', 'Cho vịt ăn ở hồ sen — lũ vịt bơi lại đớp vụn bánh'],
+      ['Tap any animal to hear its sound and see it react', 'Chạm vào con vật để nghe tiếng kêu và xem nó phản ứng'],
+      ['The river now opens naturally into the sea across the beach', 'Dòng sông giờ chảy tự nhiên qua bãi cát ra biển'],
+      ['Order bubbles: the dish turns green as soon as every ingredient is in', 'Bong bóng gọi món: món chuyển xanh ngay khi đủ nguyên liệu'],
+      ['Shop menus no longer repeat the clock; the supermarket table moved away from the door', 'Menu cửa hàng không lặp đồng hồ nữa; bàn trong siêu thị đã dời khỏi cửa'],
+    ],
+  },
   {
     v: '3.0.0', date: '2026-09-25T21:07:07Z',
     title: ['The Big Island Update', 'Bản cập nhật Đảo Lớn'],

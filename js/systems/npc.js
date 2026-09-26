@@ -6,7 +6,9 @@ import { G, T } from './state.js';
 import { Actor } from '../world/actor.js';
 import { RESIDENTS, MERCHANTS, visitorLook } from '../data/looks.js';
 import { drawSprite, spriteReady, spriteMeta } from '../gfx/sprites.js';
-import { initAnimals, updateAnimals, animalDrawables } from './animals.js';
+import { initAnimals, updateAnimals, animalDrawables, reactHop, drawReact, tickReact, react } from './animals.js';
+import { POND as POND_C } from '../world/island.js';
+import { ell } from '../gfx/draw.js';
 import { updateBarks, drawBarks } from './fun.js';
 import { updateSideQuests, drawSideQuests } from './sidequests.js';
 import { PATHS, BUILDINGS } from '../world/island.js';
@@ -308,6 +310,49 @@ function scooterDrawable(sc) {
   return { x: sc.x, y: sc.y, draw: (c, t) => { c.save(); c.translate(0, Math.sin(t * 20) * 0.3 * (sc.speed > 5 ? 1 : 0)); drawScooter(c, t, { col: sc.col, flip: sc.flip, basket: true, rider: (cc, tt) => { cc.save(); cc.scale(0.95, 0.95); drawHuman(cc, { ...sc.rider, dir: 'right' }, tt); cc.restore(); } }); c.restore(); } };
 }
 
+// ---------------------------------------------------------------- ducks + feeding
+function updateDucks(dt) {
+  const crumbs = npcs.crumbs || (npcs.crumbs = []);
+  for (const b of crumbs) {
+    if (b.z > 0 || b.vz > 0) { b.x += b.vx * dt; b.y += b.vy * dt; b.vz -= 260 * dt; b.z = Math.max(0, b.z + b.vz * dt); if (b.z === 0) { b.vz = 0; b.landed = 0.001; if (Math.random() < 0.3) sfx('splash'); } }
+    else if (b.landed) b.landed += dt;
+    b.life -= dt;
+  }
+  for (let i = crumbs.length - 1; i >= 0; i--) if (crumbs[i].life <= 0 || crumbs[i].eaten) crumbs.splice(i, 1);
+  for (const d of npcs.ducks || []) {
+    tickReact(d, dt);
+    d.peck = Math.max(0, (d.peck || 0) - dt);
+    // swim to the nearest crumb floating on the water
+    let tgt = null, bd = 160;
+    for (const b of crumbs) if (b.landed && !b.eaten) { const dd = dist(d.x, d.y, b.x, b.y); if (dd < bd) { bd = dd; tgt = b; } }
+    if (tgt) {
+      const dx = tgt.x - d.x, dy = tgt.y - d.y, l = Math.hypot(dx, dy) || 1;
+      if (l < 5) { tgt.eaten = true; d.peck = 0.5; if (!d.react || d.react.t > 0.8) { d.react = { t: 0, text: G.lang === 'vi' ? 'Cạp cạp!' : 'Quack!' }; } sfx('quack'); d.fed = (d.fed || 0) + 1; }
+      else { d.x += dx / l * 30 * dt; d.y += dy / l * 30 * dt; d.flip = dx < 0; }
+      d.a = Math.atan2((d.y - 482) / (d.r * 0.62), (d.x - 770) / (d.r * 1.3)); // rejoin the loop from here
+      continue;
+    }
+    // otherwise paddle lazily around the pond, easing back onto the loop
+    d.a += d.sp * dt * (d.seed % 2 ? 1 : -1);
+    const ox = 770 + Math.cos(d.a) * d.r * 1.3, oy = 482 + Math.sin(d.a) * d.r * 0.62;
+    const k = Math.min(1, dt * 1.5); const nx = d.x ? d.x + (ox - d.x) * k : ox, ny = d.y ? d.y + (oy - d.y) * k : oy;
+    if (Math.abs(nx - d.x) > 0.01) d.flip = nx < d.x;
+    d.x = nx; d.y = ny;
+  }
+}
+export function nearPond(x, y) { const px = (x - POND_C.x) / (POND_C.rx + 46), py = (y - POND_C.y) / (POND_C.ry + 36); return px * px + py * py < 1; }
+export function feedDucks() {
+  const pl = G.player, crumbs = npcs.crumbs || (npcs.crumbs = []);
+  pl.face({ x: POND_C.x, y: POND_C.y }); pl.setAct('wave'); sfx('whoosh');
+  setTimeout(() => pl.act === 'wave' && pl.setAct(null), 900);
+  for (let i = 0; i < 6; i++) {
+    const tx = POND_C.x + (pl.x - POND_C.x) * 0.45 + rand(-26, 26), ty = POND_C.y + (pl.y - POND_C.y) * 0.45 + rand(-12, 12), T = rand(0.5, 0.8);
+    crumbs.push({ x: pl.x, y: pl.y - 2, vx: (tx - pl.x) / T, vy: (ty - pl.y) / T, z: 14, vz: 60 + rand(0, 40), life: 12, landed: 0 });
+  }
+  const s = G.state, key = 'ducksFed';
+  if (s.story.flags[key] !== s.day) { s.story.flags[key] = s.day; bus.emit('toast', { text: G.lang === 'vi' ? 'Lũ vịt thích lắm!' : 'The ducks love you!', sub: G.lang === 'vi' ? '+5 KN · quay lại mai nhé' : '+5 XP · come back tomorrow', icon: 'heart' }); bus.emit('xp:add', 5); }
+}
+
 // ---------------------------------------------------------------- per frame
 export function updateNPCs(dt) {
   const island = G.scenes.island;
@@ -320,7 +365,7 @@ export function updateNPCs(dt) {
   updateFerry(island, dt);
   for (const sc of npcs.scooters) updateScooter(sc, dt);
   for (const g of npcs.gulls) g.a += g.sp * dt;
-  for (const d of npcs.ducks || []) { d.a += d.sp * dt * (d.seed % 2 ? 1 : -1); d.x = 770 + Math.cos(d.a) * d.r * 1.3; d.y = 482 + Math.sin(d.a) * d.r * 0.62; d.flip = Math.sin(d.a) * (d.seed % 2 ? 1 : -1) > 0; }
+  updateDucks(dt);
   // leaves and petals drift down from trees in view when the wind picks up
   npcs.leafT = (npcs.leafT || 0) - dt;
   if (npcs.leafT <= 0 && G.scene === island) {
@@ -342,7 +387,8 @@ export function updateNPCs(dt) {
 }
 export function npcDrawables() {
   const out = [];
-  for (const d of npcs.ducks || []) out.push({ x: d.x, y: d.y, draw: (c, t) => duck(c, t, d) });
+  for (const d of npcs.ducks || []) out.push({ x: d.x, y: d.y, draw: (c, t) => { const hop = reactHop(d); c.save(); c.translate(0, -hop); if (d.peck > 0) { c.translate(0, 1.5); c.rotate((d.flip ? -1 : 1) * Math.sin(d.peck * 18) * 0.25); } c.scale(1.25, 1.25); duck(c, t, d); c.restore(); if (d.react && d.react.t < 0.8) { c.save(); c.globalAlpha = 1 - d.react.t / 0.8; ell(c, 0, 2, 6 + d.react.t * 16, 2 + d.react.t * 5, null, '#fff', 1); c.restore(); } drawReact(c, d, 14 + hop); } });
+  for (const b of npcs.crumbs || []) out.push({ x: b.x, y: b.y, sortY: b.y + 2, draw: c => { if (b.z > 0) { c.save(); c.globalAlpha = 0.25; ell(c, 0, 0, 1.6, 0.8, '#2a4a50', null); c.restore(); } ell(c, 0, -b.z, 1.6, 1.3, '#e3b36a', 'rgba(91,63,54,.6)', 0.4); if (b.landed && b.landed < 0.6) { c.save(); c.globalAlpha = 1 - b.landed / 0.6; ell(c, 0, 0, 2 + b.landed * 12, 1 + b.landed * 4, null, '#fff', 0.8); c.restore(); } } });
   const f = ferryDrawable(); if (f) out.push(f);
   out.push(...animalDrawables());
   for (const sc of npcs.scooters) out.push(scooterDrawable(sc));

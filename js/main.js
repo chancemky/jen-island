@@ -32,7 +32,10 @@ import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, saveStatus 
 import * as cloud from './systems/cloud.js';
 import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, MATERIALS, bizName, recipeName } from './data/game.js';
 import { applyStaticText, bootText } from './ui/statictext.js';
-import { MERCHANTS, playerLook } from './data/looks.js';
+import { MERCHANTS, RESIDENTS, playerLook } from './data/looks.js';
+import { tapAnimals, react as reactAnimal } from './systems/animals.js';
+import { feedDucks, nearPond } from './systems/npc.js';
+import { meoAntic } from './systems/fun.js';
 import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones } from './systems/progress.js';
 import { BRIDGE_REPAIR } from './data/game.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
@@ -61,6 +64,7 @@ async function boot() {
   G.renderer = renderer;
   initInput($('touch'), $('joyBase'), $('joyKnob'));
   input.onAction = () => { if (!dialogue.active) triggerAction(); };
+  input.onTap = (cx, cy) => onWorldTap(cx, cy);
   window.addEventListener('resize', () => renderer.resize());
   window.visualViewport?.addEventListener('resize', () => renderer.resize());
   // one-time audio unlock on the first touch (iOS requirement)
@@ -154,7 +158,7 @@ function updateInteriorLife(dt) {
 }
 bus.on('enter', id => {
   const sc = scenes[id];
-  showArea(T({ house: 'Your Home', supermarket: 'Cô Hoa\'s Supermarket', materials: 'Chú Bảy\'s Materials', furniture: 'Anh Khoa\'s Furniture', boutique: 'Cô Ba\'s Boutique', meo: 'Mèo Mây\'s Home', shed1: 'Your Drink Stand', shed2: 'Your Bánh Mì Shed', truck: 'Your Food Truck', restaurant: 'Your Restaurant' }[id] || '', { house: 'Nhà của bạn', supermarket: 'Siêu thị Cô Hoa', materials: 'Vật liệu Chú Bảy', furniture: 'Nội thất Anh Khoa', boutique: 'Tiệm Áo Cô Ba', meo: 'Nhà Mèo Mây', shed1: 'Quán Nước', shed2: 'Bánh Mì Góc Phố', truck: 'Xe Cuốn', restaurant: 'Nhà hàng' }[id] || ''), '');
+  if (id.startsWith('home_')) { const rid = id.slice(5); const nm = RESIDENTS[rid]?.name || ''; showArea(T(`${nm}'s Home`, `Nhà ${nm}`), ''); } else showArea(T({ house: 'Your Home', supermarket: 'Cô Hoa\'s Supermarket', materials: 'Chú Bảy\'s Materials', furniture: 'Anh Khoa\'s Furniture', boutique: 'Cô Ba\'s Boutique', meo: 'Mèo Mây\'s Home', shed1: 'Your Drink Stand', shed2: 'Your Bánh Mì Shed', truck: 'Your Food Truck', restaurant: 'Your Restaurant' }[id] || '', { house: 'Nhà của bạn', supermarket: 'Siêu thị Cô Hoa', materials: 'Vật liệu Chú Bảy', furniture: 'Nội thất Anh Khoa', boutique: 'Tiệm Áo Cô Ba', meo: 'Nhà Mèo Mây', shed1: 'Quán Nước', shed2: 'Bánh Mì Góc Phố', truck: 'Xe Cuốn', restaurant: 'Nhà hàng' }[id] || ''), '');
   if (sc.merchant) { sc.merchant.face('down'); sc.merchant.setAct('wave'); sc.merchant.showEmote('happy', 1.4); setTimeout(() => sc.merchant.setAct(null), 1300); }
   if (id === 'meo' && !sc.actors.includes(G.meo)) setTimeout(() => toast({ text: T('Mèo Mây is out for a walk', 'Mèo Mây đang đi dạo'), sub: T('It\'s usually home for a nap at noon and at night.', 'Mèo Mây thường về nhà ngủ trưa và ngủ tối.'), icon: 'notebook' }), 400);
 });
@@ -260,6 +264,8 @@ function updateInteraction(dt) {
     if (tr.kind === 'front') return frontAction(tr);
     if (tr.kind === 'act') return actAction(tr);
   }
+  // the lotus pond: feed the ducks
+  if (sc === scenes.island && nearPond(pl.x, pl.y)) { setAction(T('Feed ducks', 'Cho vịt ăn'), () => feedDucks(), 'bread_split'); return; }
   // the Long Bridge repair spot
   if (sc === scenes.island && G.state.story.step === 'bridge' && dist(pl.x, pl.y, 1690, 1530) < 60) {
     G.runtime.materialNeed = () => ({ label: T('the Long Bridge', 'Cây Cầu Dài'), mats: BRIDGE_REPAIR.mats });
@@ -357,6 +363,7 @@ function actAction(tr) {
   const L = T(tr.en || tr.label || '', tr.label || '');
   const map = {
     sleep: () => sleepFlow(),
+    look: () => say(null, T(tr.text[0], tr.text[1])),
     homeSnack: () => homeSnack(),
     'shop:ingredients': () => openIngredientShop(),
     'shop:materials': () => { const st = G.state.story.step; if (st === 'materials') G.runtime.materialNeed = () => ({ label: bizName('shed1'), mats: BUSINESSES.shed1.repair }); openMaterialShop(); },
@@ -512,6 +519,46 @@ $('menuBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() 
 $('questPill').addEventListener('click', () => { if (cs.active) return; const st = currentStep(); if (st?.text) toast({ text: T('Objective', 'Mục tiêu'), sub: st.text(), icon: 'star', ms: 4000 }); });
 $('repChip').addEventListener('click', () => { const s = G.state, need = Math.round(90 * Math.pow(s.level || 1, 1.5)); toast({ text: T(`Level ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} XP`, `Cấp ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} KN`), sub: T(`Reputation ${Math.floor(s.reputation)}. Serve customers, repair and upgrade to level up!`, `Danh tiếng ${Math.floor(s.reputation)}. Phục vụ khách, sửa và nâng cấp quán để lên cấp!`), icon: 'trophy' }); });
 $('clockChip').addEventListener('click', () => toast({ text: T(`Day ${G.state.day}`, `Ngày ${G.state.day}`), sub: T('Shops close at midnight. Sleep in your bed to start a new day.', 'Các quán đóng cửa lúc nửa đêm. Ngủ trên giường để sang ngày mới.'), icon: 'sleep_moon' }));
+
+// tapping animals on the island makes them squeak, hop and show hearts
+function onWorldTap(cx, cy) {
+  if (G.scene !== scenes.island || cs.active || isUiOpen() || dialogue.active) return;
+  const r = $('game').getBoundingClientRect();
+  const [wx, wy] = G.renderer.toWorld(cx - r.left, cy - r.top);
+  if (tapAnimals(wx, wy)) return;
+  for (const d of npcs.ducks || []) if (dist(d.x, d.y - 6, wx, wy) < 18) { reactAnimal(d, 'duck'); return; }
+  const m = G.meo;
+  if (m && scenes.island.actors.includes(m) && !m.data.busy && dist(m.x, m.y - 16, wx, wy) < 22) { if (m.act === 'sleep') { m.setAct(null); m.data.napping = false; } sfx('meow'); m.doHop(90); m.showEmote('heart', 1.4); if (!m.act) meoAntic(m); }
+}
+bus.on('xp:add', n => addXP(n));
+
+// ---------------------------------------------------------------- visiting neighbours
+// The owner is sometimes home to greet you; at night they're asleep in bed.
+const HOST_HI = [['Oh! Come in, come in! Mind the shoes.', 'Ơ! Vào đi, vào đi! Coi chừng mấy đôi dép.'], ['A visitor! Let me hide the mess… too late.', 'Có khách! Để tui dọn… trễ rồi.'], ['Welcome! Sit anywhere. Except on the cat. There is no cat. Sit anywhere.', 'Chào mừng! Ngồi đâu cũng được. Trừ chỗ con mèo. Không có mèo. Ngồi đâu cũng được.'], ['You came to visit me? That makes my day!', 'Bạn tới thăm mình hả? Vui quá trời!']];
+bus.on('enter', id => {
+  if (!id.startsWith('home_')) return;
+  const sc = scenes[id], rid = sc.owner, a = npcs.residents.find(r => r.data.rid === rid);
+  sc.bedSleeper = null;
+  if (!a) return;
+  const name = a.name;
+  if (a.data.state === 'home') { sc.bedSleeper = { look: a.look, seed: 1 }; setTimeout(() => toast({ text: T(`Shh… ${name} is asleep.`, `Suỵt… ${name} đang ngủ.`), sub: T('Tiptoe!', 'Đi nhẹ thôi!'), icon: 'zzz' }), 500); return; }
+  if (a.data.state === 'busy' || a.data.state === 'going-home') return;
+  if (Math.random() < 0.7) {
+    scenes.island.remove(a); sc.add(a); a.stop(); a.sit = false; a.setAct(null);
+    a.x = sc.host.x; a.y = sc.host.y; a.visible = true; delete a.alpha; a.fadeIn = false;
+    a.data.state = 'busy'; a.data.hosting = id; a.face('down');
+    setTimeout(() => { if (G.scene === sc && !cs.active) { a.setAct('wave'); a.showEmote('happy', 1.4); say(a, T(...choice(HOST_HI))).then(() => a.setAct(null)); } }, 650);
+  } else setTimeout(() => toast({ text: T(`${name} is out right now.`, `${name} đang đi vắng.`), sub: T('Doors are always open on this island.', 'Trên đảo này cửa lúc nào cũng mở.'), icon: 'door' }), 500);
+});
+bus.on('leave', id => {
+  if (!id.startsWith('home_')) return;
+  const sc = scenes[id];
+  for (const a of [...sc.actors]) if (a.data?.hosting === id) {
+    sc.remove(a); scenes.island.add(a);
+    const b = scenes.island.buildings[sc.building];
+    a.x = b.x + 18; a.y = b.y + 22; a.data.state = 'idle'; a.data.until = G.state.time + 5; a.data.hosting = null;
+  }
+});
 
 // progression hooks
 bus.on('sfx', k => sfx(k));

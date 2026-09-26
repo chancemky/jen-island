@@ -22,7 +22,12 @@ export const F = {
     box(c, -30, -44, 60, 44, 4, '#fff8ea');            // mattress
     box(c, -26, -42, 22, 11, 5, '#fff');               // pillow
     const sl = p.sleeper?.();
-    if (sl) { // the sleeper lies on the pillow, blanket pulled up
+    if (sl?.look?.sprite) { // hand-drawn neighbours: head on the pillow, eyes shut
+      c.save(); c.translate(-15, -30 + Math.sin(t * 1.6) * 0.3); c.rotate(-0.22);
+      p.drawSleeper(c, { ...sl, headOnly: true, act: 'sleep', blinkAmt: 1, moving: 0, dir: 'down' }, t);
+      c.restore();
+      c.font = '900 7px Nunito, sans-serif'; c.fillStyle = '#7e8fc9'; for (let i = 0; i < 3; i++) { const k = (t * 0.5 + i / 3) % 1; c.globalAlpha = 1 - k; c.fillText('z', -4 + k * 8, -46 - k * 12); } c.globalAlpha = 1;
+    } else if (sl) { // the sleeper lies on the pillow, blanket pulled up
       // head centred on the pillow, body under the blanket towards the foot of the bed
       const br = Math.sin(t * 1.6) * 0.25;
       c.save(); c.translate(6.6, -35.6 + br); c.rotate(-Math.PI / 2 + 0.04); c.scale(0.8, 0.8);

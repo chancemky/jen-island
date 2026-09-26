@@ -44,6 +44,22 @@ const onGrass = (x, y) => LANDS.some(l => inPoly(l.grass, x, y));
 export const bridgeFixed = () => !!G.state?.story?.flags?.bridgeFixed;
 
 export const RIVER = smoothLine([[706, 528], [650, 640], [580, 760], [490, 862], [380, 950], [250, 1030], [150, 1075], [60, 1100]], 8);
+// where the river leaves the grass and crosses the beach to the sea
+const RIVER_OUT = (() => { const n = RIVER.length, x = RIVER[n - 2], y = RIVER[n - 1], dx = x - RIVER[n - 4], dy = y - RIVER[n - 3], d = Math.hypot(dx, dy) || 1; return [[x + dx / d * 60, y + dy / d * 60], [x + dx / d * 120, y + dy / d * 120]]; })();
+const RIVER_MOUTH = (() => {
+  const pts = []; for (let i = 0; i < RIVER.length; i += 2) pts.push([RIVER[i], RIVER[i + 1]]); pts.push(...RIVER_OUT);
+  const out = []; let start = null, run = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [ax, ay] = pts[i], [bx, by] = pts[i + 1], d = Math.hypot(bx - ax, by - ay);
+    for (let t = 0; t < d; t += 5) {
+      const x = ax + (bx - ax) * t / d, y = ay + (by - ay) * t / d;
+      if (!start && !inPoly(GRASS, x, y)) start = true;
+      if (start) { out.push([x, y, Math.min(1, run / 80)]); run += 5; }
+    }
+  }
+  return out;
+})();
+const MOUTH_PT = RIVER_MOUTH.find(([x, y]) => !inPoly(SAND, x, y)) || null;
 export const RIVER_W = 42;
 export const POND = { x: 770, y: 478, rx: 82, ry: 52 };
 export const PIER = { x: 872, y: 2400, w: 56, h: 205 };
@@ -99,14 +115,14 @@ export const BUILDINGS = [
   { id: 'furniture', type: 'shop', kind: 'furniture', x: 1310, y: 1146, w: 140, fp: 56, door: [48, 0], interior: 'furniture', wall: '#f4e6d6' },
   { id: 'boutique', type: 'shop', kind: 'boutique', x: 900, y: 1146, w: 136, fp: 56, door: [44, 0], interior: 'boutique', wall: '#fff3f5' },
   // resident homes (not enterable)
-  { id: 'h_batu', type: 'house', x: 420, y: 1546, w: 100, fp: 52, wall: '#e9c9a2', roof: '#a8563f', shutter: '#7aa38a', home: 'ba_tu', style: 'wood' },
-  { id: 'h_linh', type: 'house', x: 300, y: 1384, w: 100, fp: 52, wall: '#cfe6d8', roof: '#d9784f', shutter: '#e89a8a', home: 'linh', style: 'student' },
-  { id: 'h_lan', type: 'house', x: 690, y: 1452, w: 100, fp: 52, wall: '#f9e2ee', roof: '#b8603f', shutter: '#9fb4dc', home: 'co_lan', label: ['FLOWERS', 'HOA'], style: 'flowers' },
-  { id: 'h_tuan', type: 'house', x: 1140, y: 1652, w: 96, fp: 50, wall: '#d6e6f5', roof: '#c9674a', shutter: '#f2c14e', home: 'anh_tuan', style: 'garage' },
-  { id: 'h_mai', type: 'house', x: 1360, y: 1602, w: 96, fp: 50, wall: '#f4f8fb', roof: '#6fbf73', shutter: '#6f9fc8', home: 'chi_mai', style: 'clinic' },
-  { id: 'h_hai', type: 'house', x: 1560, y: 1952, w: 96, fp: 50, wall: '#e8f1e6', roof: '#6f9fc8', shutter: '#e8584e', home: 'chu_hai', style: 'tin', fisher: true },
+  { id: 'h_batu', type: 'house', interior: 'home_ba_tu', door: [0, 0], x: 420, y: 1546, w: 100, fp: 52, wall: '#e9c9a2', roof: '#a8563f', shutter: '#7aa38a', home: 'ba_tu', style: 'wood' },
+  { id: 'h_linh', type: 'house', interior: 'home_linh', door: [0, 0], x: 300, y: 1384, w: 100, fp: 52, wall: '#cfe6d8', roof: '#d9784f', shutter: '#e89a8a', home: 'linh', style: 'student' },
+  { id: 'h_lan', type: 'house', interior: 'home_co_lan', door: [0, 0], x: 690, y: 1452, w: 100, fp: 52, wall: '#f9e2ee', roof: '#b8603f', shutter: '#9fb4dc', home: 'co_lan', label: ['FLOWERS', 'HOA'], style: 'flowers' },
+  { id: 'h_tuan', type: 'house', interior: 'home_anh_tuan', door: [0, 0], x: 1140, y: 1652, w: 96, fp: 50, wall: '#d6e6f5', roof: '#c9674a', shutter: '#f2c14e', home: 'anh_tuan', style: 'garage' },
+  { id: 'h_mai', type: 'house', interior: 'home_chi_mai', door: [0, 0], x: 1360, y: 1602, w: 96, fp: 50, wall: '#f4f8fb', roof: '#6fbf73', shutter: '#6f9fc8', home: 'chi_mai', style: 'clinic' },
+  { id: 'h_hai', type: 'house', interior: 'home_chu_hai', door: [0, 0], x: 1560, y: 1952, w: 96, fp: 50, wall: '#e8f1e6', roof: '#6f9fc8', shutter: '#e8584e', home: 'chu_hai', style: 'tin', fisher: true },
   { id: 'dinh', type: 'dinh', x: 620, y: 386, w: 170, fp: 60 },
-  { id: 'h_vy', type: 'house', x: 2350, y: 1668, w: 96, fp: 50, wall: '#fdf0d8', roof: '#8fb7e0', shutter: '#f28f7c', home: 'vy', style: 'painter' },
+  { id: 'h_vy', type: 'house', interior: 'home_vy', door: [0, 0], x: 2350, y: 1668, w: 96, fp: 50, wall: '#fdf0d8', roof: '#8fb7e0', shutter: '#f28f7c', home: 'vy', style: 'painter' },
 ];
 export const STALLS = [
   { id: 'nm1', x: 340, y: 580, label: ['GRANDMA SÁU', 'BÀ SÁU'], goods: ['#f2c46b', '#e3703a'], cloth: ['#e8584e', '#fff5df'] },
@@ -141,6 +157,8 @@ export function isWater(x, y) {
 function isPaddy(x, y) { return PADDIES.some(p => inRect(p, x, y)); }
 
 // ---------------------------------------------------------------- ground painter
+function tracePolyInto(c, pts) { c.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]); c.closePath(); }
+const mixCol = (a, b, k) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',')})`; };
 function tracePoly(c, pts) { c.beginPath(); c.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]); c.closePath(); }
 function traceLine(c, pts) { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); }
 const SMOOTH_PATHS = Object.fromEntries(Object.entries(PATHS).map(([k, p]) => [k, p.length > 2 ? chunkPts(smoothLine(p, 6)) : p]));
@@ -222,10 +240,24 @@ function paintGround(c) {
     for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; circ(c, p.x + Math.cos(a) * (p.r - 12), p.y + Math.sin(a) * (p.r - 12), 3, '#e8584e', null); }
   }
   // river with banks
-  const rl = chunkPts(RIVER);
-  traceLine(c, rl); c.lineCap = 'round'; c.strokeStyle = '#d8c28c'; c.lineWidth = RIVER_W + 14; c.stroke();
+  // the channel runs on out into the sea so the mouth opens into the shallows
+  const rl = [...chunkPts(RIVER), ...RIVER_OUT];
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  // grassy stretch: earthy banks
+  c.save(); tracePoly(c, GRASS); c.clip();
+  traceLine(c, rl); c.strokeStyle = '#d8c28c'; c.lineWidth = RIVER_W + 14; c.stroke();
+  c.restore();
+  // beach stretch: damp sand instead of a bank line, and the channel fans out wider
+  c.save(); tracePoly(c, SAND); c.clip();
+  c.beginPath(); c.rect(-2000, -2000, W + 4000, H + 4000); tracePolyInto(c, GRASS); c.clip('evenodd');
+  traceLine(c, rl); c.strokeStyle = 'rgba(200,180,130,.45)'; c.lineWidth = RIVER_W + 26; c.stroke();
+  for (let i = 0; i < RIVER_MOUTH.length; i++) { const [x, y, k] = RIVER_MOUTH[i]; ell(c, x, y, RIVER_W / 2 * (1 + k * 1.5) + 8, RIVER_W / 2 * (1 + k * 1.1) + 6, 'rgba(200,180,130,.35)', null); }
+  for (let i = 0; i < RIVER_MOUTH.length; i++) { const [x, y, k] = RIVER_MOUTH[i]; ell(c, x, y, RIVER_W / 2 * (1 + k * 1.5), RIVER_W / 2 * (1 + k * 1.1), mixCol('#6cc3cf', '#8cdede', k), null); }
+  c.restore();
   traceLine(c, rl); c.strokeStyle = '#6cc3cf'; c.lineWidth = RIVER_W; c.stroke();
+  c.save(); tracePoly(c, GRASS); c.clip();
   traceLine(c, rl); c.strokeStyle = '#86d3db'; c.lineWidth = RIVER_W * 0.55; c.stroke();
+  c.restore();
   // pond
   ell(c, POND.x, POND.y, POND.rx + 8, POND.ry + 7, '#d8c28c', null);
   ell(c, POND.x, POND.y, POND.rx, POND.ry, '#6cc3cf', 'rgba(91,63,54,.4)', 1.5);
@@ -545,8 +577,9 @@ export class Island extends Scene {
     }
   }
   drawShore(c, view, t) {
-    // animated foam lines hugging the beach
+    // animated foam lines hugging the beach (open at the river mouth)
     c.save();
+    if (MOUTH_PT) { c.beginPath(); c.rect(-2000, -2000, W + 4000, H + 4000); c.moveTo(MOUTH_PT[0] + 40, MOUTH_PT[1]); c.arc(MOUTH_PT[0], MOUTH_PT[1], 40, 0, TAU); c.clip('evenodd'); }
     c.lineCap = 'round'; c.lineJoin = 'round';
     for (const l of LANDS) { tracePoly(c, l.sand); c.setLineDash([14, 20]); c.lineDashOffset = -t * 9; c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 3.2; c.stroke(); }
     // rolling waves: each front travels in from the shallows, washes up onto the

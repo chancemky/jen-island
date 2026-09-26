@@ -128,7 +128,7 @@ export function drawSprite(c, a, t) {
   if (a.emo === 'sad') sy *= 0.975;
 
   c.save();
-  shadow(c, 0, 0.4, Math.min(W * 0.36, vehicle ? 16 : 10), 3.2, a.sit ? 0.12 : 0.2);
+  if (!a.headOnly) shadow(c, 0, 0.4, Math.min(W * 0.36, vehicle ? 16 : 10), 3.2, a.sit ? 0.12 : 0.2);
   if (a.portrait) { const ef = m.eyes ? (m.eyes[0][1] + m.eyes[1][1]) / 2 : 0.26; c.translate(0, EYE_Y); c.scale(1.22, 1.22); c.translate(0, (1 - ef) * H); }
   const hop = a.hop || 0;
   c.translate(0, -bob - hop + breathe * 0.2);
@@ -138,6 +138,12 @@ export function drawSprite(c, a, t) {
 
   const legTop = LEG * S.h, legH = S.h - legTop;
   const x0 = -W / 2;
+  if (a.headOnly) { // just the head (for sleeping in bed): crop above the chin, centred
+    const ef = m.eyes ? (m.eyes[0][1] + m.eyes[1][1]) / 2 : 0.26, hh = Math.min(S.h, (ef + 0.13) * S.h), hk = 26 / hh;
+    c.drawImage(S.img, 0, 0, S.w, hh, -S.w * hk / 2, -hh * hk, S.w * hk, hh * hk);
+    if (S.blink) c.drawImage(S.blink, 0, 0, S.w, hh, -S.w * hk / 2, -hh * hk, S.w * hk, hh * hk);
+    c.restore(); return;
+  }
   if (a.sit) {
     // seated: upper body lowered onto the seat, legs folded short
     const fold = 0.42;

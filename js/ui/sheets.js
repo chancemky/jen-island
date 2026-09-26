@@ -16,7 +16,7 @@ export function openSheet({ title, sub = '', who = null, cls = '', full = false,
   releaseJoystick();
   const wrap = document.createElement('div');
   wrap.className = 'sheet-wrap' + (clear ? ' clear' : '');
-  wrap.innerHTML = `<div class="sheet ${full ? 'full' : ''} ${cls}"><div class="sheet-head">${who ? '<div class="who"><canvas width="120" height="120"></canvas></div>' : ''}<h2>${escapeHtml(title)}${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</h2><div class="svc-clock"><span class="sun ${G.state.time >= 18.5 * 60 ? 'night' : ''}"></span><b>${clock(G.state.time)}</b></div><button class="x" type="button" aria-label="Close">✕</button></div><div class="sheet-body"></div></div>`;
+  wrap.innerHTML = `<div class="sheet ${full ? 'full' : ''} ${cls}"><div class="sheet-head">${who ? '<div class="who"><canvas width="120" height="120"></canvas></div>' : ''}<h2>${escapeHtml(title)}${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</h2><button class="x" type="button" aria-label="Close">✕</button></div><div class="sheet-body"></div></div>`;
   root.appendChild(wrap);
   const sheet = wrap.querySelector('.sheet'), body = wrap.querySelector('.sheet-body');
   body.style.display = 'flex'; body.style.flexDirection = 'column'; body.style.minHeight = '0'; body.style.flex = '1';

@@ -57,6 +57,14 @@ export function sfx(name, opt = {}) {
   if (!ctx || !started || !state.sfx) return;
   switch (name) {
     case 'blip': { const now = performance.now(); if (now - state.lastBlip < 45) return; state.lastBlip = now; tone((opt.pitch || 620) * (0.94 + Math.random() * 0.12), 0.05, { type: 'triangle', vol: 0.09 }); break; }
+    case 'quack': tone(420, 0.09, { type: 'sawtooth', vol: 0.07, slide: -120 }); tone(400, 0.11, { type: 'sawtooth', vol: 0.07, slide: -150, when: 0.13 }); break;
+    case 'woof': tone(230, 0.12, { type: 'square', vol: 0.07, slide: -90 }); tone(260, 0.1, { type: 'square', vol: 0.06, slide: -120, when: 0.16 }); break;
+    case 'cluck': for (let i = 0; i < 3; i++) tone(700 + i * 60, 0.05, { type: 'triangle', vol: 0.08, slide: -200, when: i * 0.08 }); break;
+    case 'coo': tone(360, 0.25, { type: 'sine', vol: 0.09, slide: 60 }); tone(330, 0.2, { type: 'sine', vol: 0.07, slide: -40, when: 0.26 }); break;
+    case 'bleat': tone(520, 0.35, { type: 'sawtooth', vol: 0.05, slide: -60, vibrato: 18 }); break;
+    case 'click': for (let i = 0; i < 4; i++) tone(1800, 0.02, { type: 'square', vol: 0.05, when: i * 0.06 }); break;
+    case 'mew': tone(900, 0.16, { type: 'triangle', vol: 0.11, slide: 200, attack: 0.02 }); break;
+    case 'splash': tone(300, 0.18, { type: 'sine', vol: 0.06, slide: -200 }); tone(900, 0.08, { type: 'triangle', vol: 0.04, slide: -500, when: 0.02 }); break;
     case 'meow': tone(740, 0.22, { type: 'triangle', vol: 0.13, slide: 260, attack: 0.02 }); tone(980, 0.18, { type: 'sine', vol: 0.07, slide: -300, when: 0.12 }); break;
     case 'tap': tone(520, 0.06, { type: 'sine', vol: 0.18, slide: 180 }); break;
     case 'pop': tone(420, 0.09, { type: 'sine', vol: 0.22, slide: 520 }); break;

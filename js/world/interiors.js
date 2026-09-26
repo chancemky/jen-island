@@ -6,6 +6,7 @@ import { F } from '../gfx/furniture.js';
 import { INK, ell, circ, box, line, text, shadow } from '../gfx/draw.js';
 import { shade, rng, TAU } from '../core/util.js';
 import { LIGHT } from '../gfx/props.js';
+import * as PR from '../gfx/props.js';
 import { G } from '../systems/state.js';
 import { drawHuman } from '../gfx/character.js';
 
@@ -160,7 +161,7 @@ export function buildInteriors() {
     r.furn('produce', 236, 176, { w: 80, cols: ['#79b85c', '#ffb38a', '#ffd35a', '#9fd67a', '#dff4ff'] }, [-40, -24, 80, 22]);
     r.furn('sacks', 40, 286, {}, [-20, -14, 40, 12]);
     r.furn('crateStack', 266, 286, {}, [-20, -16, 40, 14]);
-    r.furn('produce', 150, 236, { w: 70, cols: ['#ffa53a', '#f7de8c', '#e8584e'] }, [-35, -24, 70, 22]);
+    r.furn('produce', 52, 240, { w: 64, cols: ['#ffa53a', '#f7de8c', '#e8584e'] }, [-32, -24, 64, 22]); // by the wall, clear of the door
     r.trigger({ id: 'shop', kind: 'act', x: 106, y: 110, w: 88, h: 34, label: 'Mua', en: 'Shop', icon: 'tea', action: 'shop:ingredients' });
     r.furn('aisleSign', 64, 150, { label: 'FRESH', col: '#6fbf73' }); r.furn('aisleSign', 236, 150, { label: 'FRUIT', col: '#f28f7c' });
     r.wallItem('bunting', 150, { w: 150, cols: ['#6fbf73', '#fff', '#f28f7c', '#fff'] });
@@ -281,6 +282,66 @@ export function buildInteriors() {
     r.furn('pass', 80, r.h - 2, { w: 148 });
     S.truck = r;
   }
+  Object.assign(S, buildHomes());
+  return S;
+}
+
+// ---------------------------------------------------------------- neighbours' homes
+// Each home has its own look, a bed (the owner sleeps there at night) and a few
+// things you can look at. 'host' is where the owner stands when they're in.
+function buildHomes() {
+  const S = {};
+  const home = (rid, o, dress, looks) => {
+    const r = new Interior({ id: 'home_' + rid, w: 240, h: 250, WH: 60, door: { x: 120, w: 30 }, building: 'h_' + ({ ba_tu: 'batu', linh: 'linh', co_lan: 'lan', anh_tuan: 'tuan', chi_mai: 'mai', chu_hai: 'hai', vy: 'vy' })[rid], ...o });
+    r.owner = rid;
+    r.bedSleeper = null;
+    r.furn('bed', 46, 112, { col: o.bed || '#9fb4dc', sleeper: () => r.bedSleeper, drawSleeper: (c, a, t) => drawHuman(c, a, t) }, [-30, -52, 60, 50]);
+    r.bedPos = { x: 46, y: 88 };
+    dress(r);
+    for (const [x, y, en, vi] of looks) r.trigger({ id: 'look' + x, kind: 'act', x: x - 22, y: y - 6, w: 44, h: 22, label: 'Xem', en: 'Look', icon: 'photo', action: 'look', text: [en, vi] });
+    r.host = o.host || { x: 150, y: 170 };
+    S[r.id] = r;
+  };
+  home('ba_tu', { wall: '#efdcc0', wall2: '#e6ceac', floor: '#b98a5a', bed: '#c9b6e8' }, r => {
+    r.wallItem('altarShelf', 150); r.wallItem('familyPhoto', 200);
+    r.furn('table', 150, 150, { w: 40, col: '#8a5f3e', cloth: '#f7d6c0' }, [-20, -10, 40, 10]);
+    r.furn('cushion', 124, 156, { col: '#e8584e' }); r.furn('cushion', 176, 156, { col: '#e8584e' });
+    r.furn('plant', 216, 118, { pot: '#d9784f' }, [-6, -6, 12, 6]); r.furn('bonsai', 24, 236, {}, [-9, -6, 18, 6]);
+    r.furn('rug', 150, 214, { w: 80, h: 30, col: '#c9674a' });
+  }, [[150, 66, 'A black-and-white photo: a young Bà Tư beside a brand-new tea stand, 1985.', 'Một tấm ảnh trắng đen: Bà Tư thời trẻ bên quán trà mới toanh, năm 1985.'], [150, 150, 'A tea set with five tiny cups. One is chipped — "Mèo Mây did it," says a note.', 'Bộ ấm trà với năm chén nhỏ. Một chén bị mẻ — tờ giấy ghi “Mèo Mây làm đó”.'], [216, 124, 'A kumquat tree in a pot. It has more fruit than leaves.', 'Một chậu tắc. Trái còn nhiều hơn lá.']]);
+  home('linh', { wall: '#dff0e6', wall2: '#cfe6d8', floor: '#e3c9a0', bed: '#f4a9b8' }, r => {
+    r.wallItem('painting', 150); r.wallItem('clock', 200);
+    r.furn('deskNook', 190, 104, {}, [-20, -8, 40, 8]); r.furn('bookshelf', 110, 90, {}, [-18, -10, 36, 10]);
+    r.furn('cushion', 150, 190, { col: '#9fd8c8' }); r.furn('lamp', 216, 180, {}, [-5, -4, 10, 4]);
+    r.furn('rug', 150, 214, { w: 90, h: 32, col: '#9fd8c8' });
+  }, [[190, 104, 'Exam notes covered in doodles of kumquats. Very focused studying.', 'Vở ôn thi vẽ đầy hình trái tắc. Học rất tập trung.'], [110, 96, 'Novels, a biology textbook, and a book called "How to Befriend a Cat".', 'Tiểu thuyết, sách sinh học, và một cuốn tên “Làm Thân Với Mèo”.'], [150, 66, 'A photo of Linh\'s graduation... from kindergarten.', 'Ảnh tốt nghiệp của Linh… mẫu giáo.']]);
+  home('co_lan', { wall: '#fbe6ef', wall2: '#f6d4e2', floor: '#e8d2b8', bed: '#f4a9b8', wallStyle: 'dots' }, r => {
+    r.wallItem('window', 150, { w: 40, h: 24, hgt: 50, curtain: '#9fd8c8' }); r.wallItem('wallShelf', 206);
+    for (const [x, y] of [[100, 96], [196, 104], [216, 176], [24, 236], [150, 236], [100, 176]]) r.furn('plant', x, y, { s: 0.9, pot: ['#8fb7e0', '#d9784f', '#f4a9b8'][(x + y) % 3] }, [-6, -6, 12, 6]);
+    r.furn('table', 160, 150, { w: 34, col: '#e3b77f', cloth: '#fff5f7' }, [-17, -10, 34, 10]);
+    r.furn('rug', 150, 214, { w: 70, h: 30, col: '#f7a6b4' });
+  }, [[160, 150, 'A half-made flower crown. The note says "for the festival!"', 'Một vòng hoa đang kết dở. Tờ giấy ghi “cho lễ hội!”'], [196, 110, 'A pot labelled "DO NOT WATER — it\'s plastic". It has been watered.', 'Chậu hoa dán nhãn “ĐỪNG TƯỚI — hoa nhựa”. Nó đã bị tưới.']]);
+  home('anh_tuan', { wall: '#dbe8f5', wall2: '#cadcee', floor: '#b9a58a', bed: '#8fb7e0', wallStyle: 'metal' }, r => {
+    r.wallItem('photoWall', 160); r.wallItem('clock', 210);
+    r.furn('sofa', 150, 150, { col: '#6f9fc8' }, [-30, -24, 60, 22]); r.furn('tv', 150, 96, {}, [-20, -8, 40, 8]);
+    r.furn('crateStack', 214, 200, {}, [-20, -16, 40, 14]); r.furn('radio', 214, 110, {});
+  }, [[160, 66, 'Minh\'s photos of the island. In every one, Mèo Mây is somewhere in the background.', 'Ảnh đảo của Minh. Tấm nào cũng có Mèo Mây ở đâu đó phía sau.'], [214, 200, 'Scooter parts and a sign: "TAXI — cheap, fast, mostly safe".', 'Đồ phụ tùng xe máy và tấm bảng: “TAXI — rẻ, nhanh, khá an toàn”.'], [150, 100, 'The TV is showing a cooking show. The host is using far too much sugar.', 'TV đang chiếu chương trình nấu ăn. Người dẫn bỏ quá trời đường.']]);
+  home('chi_mai', { wall: '#eef6f9', wall2: '#e0eef3', floor: '#dcd2c2', floorStyle: 'tile', bed: '#fffaf0' }, r => {
+    r.wallItem('wallShelf', 150); r.wallItem('calendar', 200, { day: () => G.state.day });
+    r.furn('shelfJars', 196, 60, { w: 50, cols: ['#fffaf0', '#9fd8c8', '#f28f7c', '#fff'] });
+    r.furn('deskNook', 150, 130, {}, [-20, -8, 40, 8]); r.furn('plant', 216, 200, {}, [-6, -6, 12, 6]); r.furn('chair', 110, 130, { col: '#9fd8c8' });
+  }, [[196, 66, 'Neatly labelled jars: bandages, lime drops, "emergency candy".', 'Những lọ dán nhãn gọn gàng: băng gạc, kẹo chanh, “kẹo khẩn cấp”.'], [150, 130, 'A stack of letters to deliver. The top one is addressed to "Mèo Mây, Cloud Island".', 'Một chồng thư cần giao. Lá trên cùng gửi “Mèo Mây, Đảo Mây”.']]);
+  home('chu_hai', { wall: '#e3eef0', wall2: '#d3e3e6', floor: '#a88a6a', bed: '#6f9fc8' }, r => {
+    r.wallItem('painting', 150); r.wallItem('window', 206, { w: 36, h: 22, hgt: 48, curtain: '#e8584e' });
+    r.furn('fishtank', 190, 110, {}, [-16, -16, 32, 16]); r.furn('sacks', 214, 220, {}, [-20, -14, 40, 12]);
+    r.furn('table', 130, 160, { w: 36, col: '#8a5f3e' }, [-18, -10, 36, 10]); r.furn('stool', 104, 168, {});
+  }, [[190, 114, 'A fish tank. One fish has a tiny name tag: "Not Dinner".', 'Bể cá. Một con cá đeo bảng tên nhỏ xíu: “Không Phải Bữa Tối”.'], [150, 66, 'A painting of a stormy sea. Chú Hải says it\'s a portrait of his mood before coffee.', 'Bức tranh biển động. Chú Hải bảo đó là tâm trạng chú trước khi uống cà phê.'], [214, 220, 'Nets, rope, and a sandal that is definitely Bà Tư\'s.', 'Lưới, dây thừng, và một chiếc dép chắc chắn là của Bà Tư.']]);
+  home('vy', { wall: '#fdf3e0', wall2: '#f6e6c8', floor: '#d9b98a', bed: '#9fd8c8' }, r => {
+    r.wallItem('painting', 110); r.wallItem('painting', 170);
+    r.prop({ x: 160, y: 140, draw: (c, t) => PR.easel(c, t, {}), cull: { x: 130, y: 90, w: 60, h: 60 } }); r.solid(154, 136, 12, 5);
+    r.prop({ x: 205, y: 190, draw: (c, t) => PR.easel(c, t, {}), cull: { x: 175, y: 140, w: 60, h: 60 } }); r.solid(199, 186, 12, 5);
+    r.furn('lantern', 60, 200, {}); r.furn('cushion', 110, 200, { col: '#f7de8c' });
+  }, [[160, 140, 'A half-finished painting of your shops, seen from the lookout tower.', 'Một bức tranh vẽ dở những quán của bạn, nhìn từ tháp canh.'], [140, 66, 'Paintings of fireflies. Up close, every dot is a tiny smiling face.', 'Tranh đom đóm. Nhìn gần, mỗi chấm là một khuôn mặt cười nhỏ xíu.']]);
   return S;
 }
 export { shadow, text, TAU };

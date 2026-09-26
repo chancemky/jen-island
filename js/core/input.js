@@ -15,6 +15,7 @@ export const input = {
 };
 
 let base, knob, zone, active = null, ox = 0, oy = 0;
+let downX = 0, downY = 0, downT = 0, dragMax = 0; // a quick touch without dragging is a tap
 const R = 46;
 
 export function initInput(zoneEl, baseEl, knobEl) {
@@ -48,6 +49,7 @@ function onDown(e) {
   input.lastTouch = performance.now();
   const r = zone.getBoundingClientRect();
   ox = e.clientX; oy = e.clientY;
+  downX = ox; downY = oy; downT = performance.now(); dragMax = 0;
   base.style.left = (ox - r.left) + 'px'; base.style.top = (oy - r.top) + 'px';
   base.classList.add('on');
   knob.style.transform = 'translate(-50%,-50%)';
@@ -57,6 +59,7 @@ function onMove(e) {
   e.preventDefault();
   let dx = e.clientX - ox, dy = e.clientY - oy;
   const d = Math.hypot(dx, dy);
+  dragMax = Math.max(dragMax, Math.hypot(e.clientX - downX, e.clientY - downY));
   // drag the base along when the thumb goes far, so direction changes stay easy
   if (d > R * 1.6) {
     const k = (d - R * 1.6) / d; ox += dx * k; oy += dy * k;
@@ -76,6 +79,7 @@ function onUp(e) {
   active = null;
   input.x = input.y = input.mag = 0;
   resetKnob();
+  if (dragMax < 12 && performance.now() - downT < 350 && e.clientX !== undefined) input.onTap?.(downX, downY);
 }
 function resetKnob() {
   if (!base) return;

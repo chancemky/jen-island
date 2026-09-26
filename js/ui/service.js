@@ -148,7 +148,7 @@ function undoLast() {
   const k = S.asm.steps.pop(); S.asm.anim.pop();
   if (STATION[k].uses) returnStock(S.bizId, STATION[k].uses);
   if (k === 'blend') S.asm.blended = S.asm.steps.includes('blend');
-  sfx('back'); refreshCounts(); buildSteps(); updateHint(); wobble();
+  sfx('back'); refreshCounts(); buildSteps(); updateChips(); updateHint(); wobble();
 }
 function refundAll() { for (const k of S.asm.steps) if (STATION[k].uses) returnStock(S.bizId, STATION[k].uses); refreshCounts(); }
 function resetAsm() {
@@ -203,7 +203,7 @@ function tapIngredient(k, btnEl) {
   flyIcon(st2.icon, btnEl, S.board, { size: 44, dur: 360 }).then(() => wobble());
   refreshCounts();
   buildSteps();
-  updateHint();
+  updateChips(); updateHint();
 }
 function wobble() { const b = S?.el.querySelector('.svc-board'); if (!b) return; b.classList.remove('wobble'); void b.offsetWidth; b.classList.add('wobble'); }
 
@@ -329,7 +329,12 @@ function updateChips() {
   if (!S?.cust) return;
   const o = S.cust.order, chips = S.el.querySelector('.svc-chips');
   const R = RECIPES[o.recipe];
-  const parts = [[recipeName(o.recipe), S.asm.steps.length ? (S.asm.steps.every((s, i) => R.steps[i] === s) ? (S.asm.steps.length === R.steps.length ? 'done' : '') : 'bad') : '']];
+  // the dish chip: green once every ingredient is in (any order), red if something doesn't belong
+  const need = [...R.steps], got = [...S.asm.steps];
+  let extra = false;
+  for (const k of got) { const i = need.indexOf(k); if (i >= 0) need.splice(i, 1); else extra = true; }
+  const dish = !got.length ? '' : extra ? 'bad' : need.length ? '' : 'done';
+  const parts = [[recipeName(o.recipe), dish]];
   for (const k of R.options) {
     const want = o.opts[k], have = S.asm[k];
     const up = x => x.replace(/^./, ch => ch.toUpperCase());
