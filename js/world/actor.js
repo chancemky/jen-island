@@ -67,7 +67,7 @@ export class Actor {
       } else {
         this.x += (dx / d) * step; this.y += (dy / d) * step;
         this.setDirFromVel(dx, dy);
-        this.walkPh += step * 0.21;
+        this.walkPh += step * 0.18;
         this.moving = Math.min(1, this.moving + dt * 8);
       }
     }

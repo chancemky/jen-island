@@ -3,9 +3,19 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '3.2.0';
+export const APP_VERSION = '3.3.0';
 
 export const CHANGELOG = [
+  {
+    v: '3.3.0', date: '2026-09-26T03:12:35Z',
+    title: ['Happy Feet', 'Bước Chân Vui Vẻ'],
+    items: [
+      ['A brand-new cozy walk: a soft bounce with every step, a gentle side-to-side sway and a head that bobs along', 'Dáng đi ấm áp mới: nhún nhẹ mỗi bước, lắc lư qua lại nhè nhẹ và cái đầu gật gù theo'],
+      ['Round, stubby arms and legs again — no more bent elbows and knees', 'Tay chân tròn ngắn trở lại — không còn khuỷu tay và đầu gối gập'],
+      ['Classic big-head proportions are back', 'Tỉ lệ đầu to quen thuộc đã trở lại'],
+      ['Seated characters swing their little legs happily', 'Nhân vật khi ngồi đung đưa đôi chân nhỏ'],
+    ],
+  },
   {
     v: '3.2.0', date: '2026-09-26T03:03:31Z',
     title: ['Take a Seat', 'Mời Ngồi'],

@@ -1,0 +1,10 @@
+<!doctype html><body style="margin:0;background:#a3d68a"><canvas id=c></canvas><script type=module>
+import '../js/systems/state.js';
+import { drawHuman } from '../js/gfx/character.js';
+import { playerLook, RESIDENTS } from '../js/data/looks.js';
+const Z=8, cv=document.getElementById('c'); cv.width=8*50*Z; cv.height=2*62*Z; const c=cv.getContext('2d'); c.lineJoin='round'; c.lineCap='round';
+const L=[playerLook({hairStyle:'bob'}), RESIDENTS.linh.look];
+for(let i=0;i<8;i++){ const ph=i/8*Math.PI*2;
+ for (const [r,dir] of [[0,'right'],[1,'down']]) { c.save(); c.setTransform(Z,0,0,Z,(i*50+25)*Z,(r*62+56)*Z); c.fillStyle='rgba(0,0,0,.08)'; c.fillRect(-25,0,50,0.4); drawHuman(c,{look:L[r],dir,moving:1,walkPh:ph,seed:1},0.3); c.restore(); } }
+window.done=1;
+</script>

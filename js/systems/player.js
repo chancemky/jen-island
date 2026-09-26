@@ -31,7 +31,7 @@ export class Player extends Actor {
       const moved = Math.hypot(nx - this.x, ny - this.y);
       this.x = nx; this.y = ny;
       if (m > 0.05) this.setDirFromVel(ix, iy);
-      this.walkPh += moved * 0.21;
+      this.walkPh += moved * 0.18;
       this.moving = clamp(sp / WALK_SPEED * 1.2, 0, 1);
       this._driven = true;
       this.stepT += moved;

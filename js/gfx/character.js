@@ -15,8 +15,8 @@ import { drawHeld } from './food.js';
 
 const HY = -24.4, HR = 12.5, HRY = 11.4; // big round head (about half the height)
 const SH = -12.4, HEM = -4.9;           // small body: shoulder and hem lines
-export const EL = 3.8;
-const HEAD_S = 0.9;                      // head scale about the neck (more body shows, same chibi face)                   // extra leg length; everything above the hips is lifted by this
+export const EL = 2.4;
+const HEAD_S = 1;                      // head scale about the neck (more body shows, same chibi face)                   // extra leg length; everything above the hips is lifted by this
 const EYE = '#3d2723', EYE2 = '#8a5540', BLUSH = 'rgba(247,140,150,.5)', MOUTH = '#8e3f3e';
 
 // ---------------------------------------------------------------- helpers
@@ -31,116 +31,100 @@ function cols(L) {
 
 export function viewOf(dir) { return dir === 'up' ? 'back' : dir === 'left' || dir === 'right' ? 'side' : 'front'; }
 
-// Pose: body offsets, hand targets and foot targets computed from animation
-// state. Arms and legs are two-bone limbs (see ik()), so elbows and knees bend
-// naturally when hands and feet move.
+// Pose: a soft, bouncy life-sim gait. Limbs are short rounded stubs that
+// swing from the shoulder and hip (no elbows or knees); the body bobs twice
+// per stride, rolls gently side to side, squashes a touch on each footfall,
+// and the big head follows the body a beat late.
 const HIP_Y = HEM + 0.2 - EL;            // hip joint height in the leg frame
 const FOOT_Y = -1.4;                      // resting foot height
-const THIGH = 3.75, SHIN = 3.65, UPPER = 3.95, FORE = 3.75;
+const LEG = 5.4, ARM = 5.1;
 function pose(a, view, t) {
   const m = a.moving || 0, ph = a.walkPh || 0, act = a.act, at = a.actT || 0;
-  const sw = Math.sin(ph) * m;
-  const bob = Math.abs(Math.sin(ph)) * 1.5 * m;                  // lowest at mid-stance
+  const s1 = Math.sin(ph), c1 = Math.cos(ph);
+  const step = Math.abs(s1);                                       // 0 at footfall, 1 mid-stride
   const breathe = Math.sin(t * 2.3 + (a.seed || 0)) * (1 - m);
+  const bounce = step * 2.2 * m;                                   // up while passing, down on each footfall
+  const contact = Math.pow(1 - step, 6) * m;                       // brief squash when a foot lands
+  const lag = Math.abs(Math.sin(ph - 0.5)) * 1.9 * m;              // head trails the body
   const P = {
-    dy: -bob + breathe * 0.25 - (a.hop || 0), sx: 1, sy: 1 + breathe * 0.012,
-    tilt: (view === 'side' ? 0.07 * m : sw * 0.03) + (a.tilt || 0), headTilt: (a.headTilt || 0) + (view === 'side' ? -0.04 * m : sw * 0.02), headDy: breathe * 0.35 + bob * 0.25,
-    hL: [-6.6, -4.6], hR: [6.6, -4.6], held: null, heldHand: 'R',
-    fL: null, fR: null, footAng: [0, 0], elbowPref: null,
+    dy: -bounce + breathe * 0.25 - (a.hop || 0),
+    sx: 1 + contact * 0.05, sy: 1 + breathe * 0.012 - contact * 0.06,
+    tilt: (view === 'side' ? 0.05 * m + s1 * 0.025 * m : s1 * 0.1 * m) + (a.tilt || 0),   // sway
+    headTilt: (a.headTilt || 0) + (view === 'side' ? Math.sin(ph * 2) * 0.02 * m : -s1 * 0.06 * m),
+    headDy: breathe * 0.35 + (bounce - lag) * 0.35,
+    arms: null, legs: null, held: null, heldHand: 'R',
   };
-  // squash on turns and landings
   if (a.turnT > 0) { const k = a.turnT / 0.14; P.sx = 1 - 0.1 * k; P.sy = 1 + 0.06 * k; }
   if (a.squash) { P.sy *= 1 - a.squash * 0.18; P.sx *= 1 + a.squash * 0.14; }
-  // airborne (hopping onto a seat or jumping for joy): knees tuck, arms lift
   const air = Math.min(1, (a.hop || 0) / 8);
 
-  // ---- legs: a walk cycle with lifted, forward-swinging feet
-  const leg = (phase, side) => {
-    const c = Math.cos(phase), s = Math.sin(phase);
-    const lift = Math.max(0, c) * m;                                  // swinging leg lifts
-    if (view === 'side') return { x: side * 0.6 + s * 3.8 * m, y: FOOT_Y - lift * 2.8 - air * 2.6, ang: lift * -0.35 + (s < 0 && c < 0 ? 0.12 * m : 0) };
-    return { x: side * 2.5 + s * 0.3 * m, y: FOOT_Y - lift * 2.9 - air * 2.8, ang: 0 };
-  };
-  const L0 = leg(ph, -1), R0 = leg(ph + Math.PI, 1);
-  P.fL = [L0.x, L0.y]; P.fR = [R0.x, R0.y]; P.footAng = [L0.ang, R0.ang];
-  // ---- arms swing opposite to the legs, elbows bending more on the forward swing
+  // ---- legs: stubs swinging from the hip. Side: pendulum. Front/back: step lift.
   if (view === 'side') {
-    const k = Math.sin(ph) * m;
-    P.hL = [-k * 4 - 0.4, -5 + Math.max(0, -k) * 1.8]; P.hR = [k * 4 + 0.4, -5 + Math.max(0, k) * 1.8];
+    const sw = s1 * 0.62 * m;
+    P.legs = [{ hx: -0.6, ang: -sw - air * 0.3, lift: Math.max(0, c1) * 1.5 * m, far: true }, { hx: 0.6, ang: sw + air * 0.3, lift: Math.max(0, -c1) * 1.5 * m }];
   } else {
-    P.hL = [-6.5 - Math.abs(sw) * 0.3, -4.8 - sw * 1.6]; P.hR = [6.5 + Math.abs(sw) * 0.3, -4.8 + sw * 1.6];
+    P.legs = [{ hx: -2.5, ang: -air * 0.25 - s1 * 0.05 * m, lift: Math.max(0, s1) * 2 * m + air * 1.4 }, { hx: 2.5, ang: air * 0.25 - s1 * 0.05 * m, lift: Math.max(0, -s1) * 2 * m + air * 1.4 }];
   }
-  if (air > 0.05) { P.hL = [P.hL[0] - air * 1.5, P.hL[1] - air * 5]; P.hR = [P.hR[0] + air * 1.5, P.hR[1] - air * 5]; }
-
+  // ---- arms swing opposite the legs, straight from the shoulder
+  if (view === 'side') {
+    const sw = s1 * 0.7 * m;
+    P.arms = [{ ang: sw, far: true }, { ang: -sw }];                // angle from hanging straight down
+  } else {
+    P.arms = [{ ang: -0.32 - Math.abs(s1) * 0.08 * m, fwd: s1 * m }, { ang: 0.32 + Math.abs(s1) * 0.08 * m, fwd: -s1 * m }];
+  }
+  if (air > 0.05) { P.arms[0].ang -= air * 0.9; P.arms[1].ang += air * 0.9; }
+  // arms can also point at a target (actions)
+  const aim = (i, x, y) => { P.arms[i] = { to: [x, y] }; };
   switch (act) {
-    case 'wave': P.hR = [8.6 + Math.sin(t * 12) * 1.8, -18.6]; P.elbowPref = [1, 0.6]; break;
-    case 'cheer': { const k = Math.abs(Math.sin(t * 9)); P.hL = [-7.6, -19.5 - k * 2.4]; P.hR = [7.6, -19.5 - k * 2.4]; break; }
-    case 'think': P.hR = [3, -17.6]; P.headTilt += 0.09; P.hL = [-2.6, -9.2]; break;
-    case 'carry': P.hL = [-3.8, -10.6]; P.hR = [3.8, -10.6]; P.held = a.held; P.heldHand = 'both'; break;
+    case 'wave': aim(1, 7.6 + Math.sin(t * 12) * 1.8, -19.5); break;
+    case 'cheer': { const k = Math.abs(Math.sin(t * 9)); aim(0, -7.4, -19.5 - k * 2); aim(1, 7.4, -19.5 - k * 2); break; }
+    case 'think': aim(1, 3.4, -17); P.headTilt += 0.09; break;
+    case 'carry': aim(0, -3.6, -10.4); aim(1, 3.6, -10.4); P.held = a.held; P.heldHand = 'both'; break;
     case 'drink': case 'eat': {
-      const k = (Math.sin(at * 2.2) + 1) / 2, up = k > 0.72 ? 1 : 0;
-      P.hR = up ? [2.2, -17.4] : [4.8, -10.2]; P.held = a.held || (act === 'drink' ? 'cup' : 'bowl');
+      const k = (Math.sin(at * 2.2) + 1) / 2, up = k > 0.72;
+      aim(1, up ? 2.4 : 5, up ? -17.4 : -10.2); P.held = a.held || (act === 'drink' ? 'cup' : 'bowl');
       if (up && act === 'eat') P.chew = true;
-      if (a.sit) P.hL = [-4.2, -8.6];
       break;
     }
-    case 'hold': P.hR = [5, -10.2]; P.held = a.held; break;
-    case 'chop': case 'work': P.hR = [4.4, -10.4 - Math.abs(Math.sin(at * 14)) * 3]; P.hL = [-3.8, -9.8]; P.held = act === 'chop' ? 'knife' : a.held; break;
-    case 'stir': P.hR = [3 + Math.cos(at * 8) * 2, -10.4 + Math.sin(at * 8) * 1]; P.hL = [-4.2, -9.6]; P.held = 'ladle'; break;
-    case 'hammer': { const k = (at * 3.4) % 1, s2 = k < 0.7 ? k / 0.7 : 1 - (k - 0.7) / 0.3; P.hR = [6.2, -9.6 - s2 * 8.6]; P.held = 'hammer'; P.hL = [-4, -8.4]; P.elbowPref = [1, 0.3]; break; }
-    case 'write': P.hL = [-3.4, -10.8]; P.hR = [2.4 + Math.sin(at * 9) * 0.8, -11.4]; P.held = 'notebook'; break;
-    case 'clean': P.hR = [5 + Math.sin(at * 7) * 3.4, -8.8]; P.held = 'cloth'; break;
-    case 'sweep': P.hR = [4.6, -10.6]; P.hL = [2, -8.8]; P.held = 'broom'; P.sweep = Math.sin(at * 5); break;
-    case 'phone': P.hR = [3.4, -15.6]; P.hL = [-2.4, -9.6]; P.held = 'phone'; P.elbowPref = [1, 1]; break;
-    case 'photo': P.hR = [3, -18.2]; P.hL = [-3, -18.2]; P.held = 'camera'; break;
-    case 'dance': { const k = Math.sin(at * 7); P.hL = [-7 + k, -14 - Math.abs(k) * 4]; P.hR = [7 + k, -14 - Math.abs(-k) * 4]; P.tilt += k * 0.08; P.dy -= Math.abs(Math.sin(at * 7)) * 1.6; break; }
-    case 'stretch': { const k = Math.sin(Math.min(1, at / 1.6) * Math.PI); P.hL = [-3 - k, -12 - k * 9]; P.hR = [3 + k, -12 - k * 9]; P.sy *= 1 + k * 0.05; break; }
-    case 'sit': break;
-    case 'wait': {
-      const tap = Math.max(0, Math.sin(at * 6)) * (Math.sin(at * 0.7) > 0.3 ? 1 : 0);
-      P.fR = [P.fR[0], FOOT_Y - tap * 1.2]; P.hL = [-4.6, -8.8]; P.hR = [4.6, -8.8];
-      break;
-    }
+    case 'hold': aim(1, 5, -10.2); P.held = a.held; break;
+    case 'chop': case 'work': aim(1, 4.4, -10.4 - Math.abs(Math.sin(at * 14)) * 3); aim(0, -3.8, -9.8); P.held = act === 'chop' ? 'knife' : a.held; break;
+    case 'stir': aim(1, 3 + Math.cos(at * 8) * 2, -10.4 + Math.sin(at * 8)); aim(0, -4.2, -9.6); P.held = 'ladle'; break;
+    case 'hammer': { const k = (at * 3.4) % 1, s2 = k < 0.7 ? k / 0.7 : 1 - (k - 0.7) / 0.3; aim(1, 6.2, -9.6 - s2 * 8.6); aim(0, -4, -8.4); P.held = 'hammer'; break; }
+    case 'write': aim(0, -3.4, -10.8); aim(1, 2.4 + Math.sin(at * 9) * 0.8, -11.4); P.held = 'notebook'; break;
+    case 'clean': aim(1, 5 + Math.sin(at * 7) * 3.4, -8.8); P.held = 'cloth'; break;
+    case 'sweep': aim(1, 4.6, -10.6); aim(0, 2, -8.8); P.held = 'broom'; P.sweep = Math.sin(at * 5); break;
+    case 'phone': aim(1, 3.6, -15.6); P.held = 'phone'; break;
+    case 'photo': aim(0, -3, -17.6); aim(1, 3, -17.6); P.held = 'camera'; break;
+    case 'dance': { const k = Math.sin(at * 7); aim(0, -7 + k, -14 - Math.abs(k) * 3); aim(1, 7 + k, -14 - Math.abs(k) * 3); P.tilt += k * 0.09; P.dy -= Math.abs(Math.sin(at * 7)) * 1.6; break; }
+    case 'stretch': { const k = Math.sin(Math.min(1, at / 1.6) * Math.PI); aim(0, -3 - k, -12 - k * 8); aim(1, 3 + k, -12 - k * 8); P.sy *= 1 + k * 0.05; break; }
+    case 'wait': P.tapR = Math.max(0, Math.sin(at * 6)) * (Math.sin(at * 0.7) > 0.3 ? 1 : 0); break;
     case 'sleep': P.headTilt += 0.16; P.headDy += 1.2; break;
     case 'ride': P.ride = true; break;
   }
+  if (P.tapR) P.legs[1].lift = P.tapR * 1.1;
 
-  // ---- sitting: hips drop onto the seat, knees bend, feet rest on the ground
+  // ---- sitting: hips on the seat; stubby legs stick forward (side) or down (front)
   if (a.sit || P.ride) {
-    const seatH = a.seatH ?? 7.5;
-    P.dy = (-seatH - HIP_Y) + breathe * 0.2 - (a.hop || 0) * 0 ;
-    const ground = (a.footAt ? a.footAt[1] : FOOT_Y) - P.dy;          // ground height in the leg frame
-    if (view === 'side') {
-      const fx = a.footAt ? a.footAt[0] : 3.6;
-      P.fL = [fx - 0.4, ground]; P.fR = [fx + 0.4, ground]; P.footAng = [0, 0]; P.kneePref = [1, -0.6];
-    } else {
-      P.sitFront = true; P.fL = [-2.7, ground]; P.fR = [2.7, ground]; P.footAng = [0, 0];
-    }
-    // hands rest on the lap unless busy
+    const seatH = a.seatH ?? 6;
+    P.dy = (-seatH - HIP_Y) + breathe * 0.2;
+    P.tilt = a.tilt || 0; P.sx = 1; P.sy = 1 + breathe * 0.01;
+    const swing = Math.sin(t * 2 + (a.seed || 0)) * 0.12;            // a little happy leg swing
+    if (view === 'side') P.legs = [{ hx: -0.6, ang: -1.25 + swing, lift: 0, far: true }, { hx: 0.6, ang: -1.35 - swing, lift: 0 }];
+    else P.legs = seatH < 5 ? [{ hx: -2.4, stub: 2.2 }, { hx: 2.4, stub: 2.2 }] : [{ hx: -2.5, stub: 3.6 + swing * 3 }, { hx: 2.5, stub: 3.6 - swing * 3 }];
     if (!act || act === 'sit' || act === 'sleep') {
-      if (view === 'side') { P.hL = [2.6, HIP_Y + P.dy * 0 + EL + 0.6]; P.hR = [3.2, HIP_Y + EL + 0.2]; }
-      else { P.hL = [-3.4, HIP_Y + EL + 1.8]; P.hR = [3.4, HIP_Y + EL + 1.8]; }
+      if (view === 'side') { aim(0, 2.6, HIP_Y + EL - 0.4); aim(1, 3.2, HIP_Y + EL - 0.8); }
+      else { aim(0, -3.6, HIP_Y + EL + 0.6); aim(1, 3.6, HIP_Y + EL + 0.6); }
     }
-    if (!P.ride && a.handAt && act === 'wave') P.hL = [a.handAt[0][0], a.handAt[0][1] - P.dy + EL];
-    if (P.ride && a.handAt) { P.hL = [a.handAt[0][0], a.handAt[0][1] - P.dy + EL]; P.hR = [a.handAt[1][0], a.handAt[1][1] - P.dy + EL]; P.elbowPref = view === 'side' ? [-0.3, 1] : [Math.sign(a.handAt[1][0]) || 1, 0.8]; }
+    if (a.handAt) {
+      const g = h => [h[0], h[1] - P.dy + EL];
+      if (P.ride) { aim(0, ...g(a.handAt[0])); aim(1, ...g(a.handAt[1])); }
+      else if (act === 'wave') aim(0, ...g(a.handAt[0]));
+    }
+    if (P.ride && view === 'side' && a.footAt) { const fx = a.footAt[0], fy = a.footAt[1] - P.dy; const ang = Math.atan2(fx - 0, fy - HIP_Y); P.legs = [{ hx: -0.6, ang: -ang * -1 - 0.05, lift: 0, far: true }, { hx: 0.6, ang: ang, lift: 0 }]; }
   }
-  if (a.sit && !P.ride) P.tilt = (a.tilt || 0);
   return P;
 }
 
-// Two-bone IK: the joint (elbow/knee) between A and B for bone lengths l1, l2,
-// on the side closest to the preferred direction.
-function ik(ax, ay, bx, by, l1, l2, px, py) {
-  let dx = bx - ax, dy = by - ay, d = Math.hypot(dx, dy) || 0.001;
-  const maxD = l1 + l2 - 0.02;
-  if (d > maxD) { bx = ax + dx / d * maxD; by = ay + dy / d * maxD; dx = bx - ax; dy = by - ay; d = maxD; }
-  const ux = dx / d, uy = dy / d;
-  const aa = (l1 * l1 - l2 * l2 + d * d) / (2 * d), hh = Math.sqrt(Math.max(0, l1 * l1 - aa * aa));
-  const mx = ax + ux * aa, my = ay + uy * aa;
-  const j1 = [mx - uy * hh, my + ux * hh], j2 = [mx + uy * hh, my - ux * hh];
-  const d1 = (j1[0] - mx) * px + (j1[1] - my) * py;
-  return { j: d1 >= 0 ? j1 : j2, end: [bx, by] };
-}
 // Cut a polyline at a given length (for sleeves and trouser legs).
 function cutLine(pts, len) {
   const out = [pts[0], pts[1]];
@@ -422,41 +406,24 @@ function box(c, x, y, w, h, r, fill) {
 function legs(c, L, P, view) {
   const C = cols(L);
   if (P.sitHide) return;
-  const skin = L.legs || L.skin, sk2 = cols(L).skinS;
-  const pants = L.bottomLen ? Math.min(L.bottomLen * 1.05, THIGH + SHIN) : 0;
-  const draw = (hx, foot, ang, far) => {
-    let knee, end;
-    if (P.sitFront) {
-      // seated, facing us: the thigh points at the camera (short), shin drops to the floor
-      knee = [hx * 1.18, HIP_Y + 1.3];
-      const fy = Math.max(knee[1] + 0.6, Math.min(foot[1], knee[1] + SHIN));
-      end = fy - knee[1] < 1 ? [hx * -0.35, knee[1] + 1.2] : [hx * 1.1, fy];   // too low a seat: cross-legged
-    } else {
-      const r = ik(hx, HIP_Y, foot[0], foot[1], THIGH, SHIN, ...(P.kneePref || (view === 'side' ? [1, -0.25] : [Math.sign(hx) * 0.3, -1])));
-      knee = r.j; end = r.end;
-    }
-    const pts = [hx, HIP_Y, knee[0], knee[1], end[0], end[1]];
-    limb(c, pts, 3.7, far ? sk2 : skin);
-    // a soft highlight down the front of the leg
-    c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 1; c.beginPath(); c.moveTo(pts[0] + 0.6, pts[1]); c.lineTo(pts[2] + 0.6, pts[3]); c.lineTo(pts[4] + 0.5, pts[5] - 0.4); c.stroke();
-    if (!L.bottomLen || pants < THIGH) { // bare knee: a tiny kneecap line
-      c.strokeStyle = 'rgba(160,100,80,.45)'; c.lineWidth = 0.5; c.beginPath(); c.arc(knee[0], knee[1], 0.9, Math.PI * 0.9, Math.PI * 1.9); c.stroke();
-    }
-    if (pants > 0) {
-      const pp = cutLine(pts, pants);
-      limb(c, pp, 4.3, far ? C.botS : L.bottom);
-      if (pants >= THIGH + SHIN - 0.2) { c.strokeStyle = C.botS; c.lineWidth = 0.6; c.beginPath(); c.moveTo(pp[pp.length - 2] - 2, pp[pp.length - 1]); c.lineTo(pp[pp.length - 2] + 2, pp[pp.length - 1]); c.stroke(); }
-    }
-    // shoe: a rounded sole with a toe cap; tilts as the foot lifts
-    c.save(); c.translate(end[0], end[1] + 0.3); c.rotate(ang || 0);
-    const fw = view === 'side' ? 3 : 2.5, fx = view === 'side' ? 0.9 : 0;
-    ell(c, fx, 0.2, fw, 1.75, far ? shade(L.shoe, -12) : L.shoe);
-    c.fillStyle = shade(L.shoe, -35); c.fillRect(fx - fw + 0.5, 1.2, fw * 2 - 1, 0.7);
-    ell(c, fx - 0.6, -0.4, 1, 0.5, C.shoeH, null);
+  const skin = L.legs || L.skin;
+  const pants = L.bottomLen ? Math.min(L.bottomLen, LEG) : 0;
+  const draw = g => {
+    let ex, ey;
+    if (g.stub !== undefined) { ex = g.hx * 1.05; ey = HIP_Y + g.stub; }         // seated, facing us: a short stub
+    else { const len = LEG - (g.lift || 0) * 0.5; ex = g.hx + Math.sin(g.ang || 0) * len; ey = HIP_Y + Math.cos(g.ang || 0) * len - (g.lift || 0); }
+    const pts = [g.hx, HIP_Y, ex, ey];
+    limb(c, pts, 4, g.far ? C.skinS : skin);
+    if (pants > 0) { const k = Math.min(1, pants / LEG); limb(c, [g.hx, HIP_Y, g.hx + (ex - g.hx) * k, HIP_Y + (ey - HIP_Y) * k], 4.6, g.far ? C.botS : L.bottom); }
+    // round little shoe
+    const ang = g.stub !== undefined ? 0 : (g.ang || 0) * 0.6;
+    c.save(); c.translate(ex, ey + 0.4); c.rotate(view === 'side' ? -ang : 0);
+    const fw = view === 'side' ? 2.9 : 2.5, fx = view === 'side' ? 0.8 : 0;
+    ell(c, fx, 0.1, fw, 1.8, g.far ? shade(L.shoe, -12) : L.shoe);
+    ell(c, fx - 0.6, -0.5, 1, 0.5, C.shoeH, null);
     c.restore();
   };
-  if (view === 'side') { draw(-0.6, P.fL, P.footAng[0], true); draw(0.6, P.fR, P.footAng[1], false); }
-  else { draw(-2.5, P.fL, P.footAng[0], false); draw(2.5, P.fR, P.footAng[1], false); }
+  for (const g of P.legs) draw(g);
 }
 
 function torso(c, L, P, view, t) {
@@ -525,28 +492,23 @@ function torso(c, L, P, view, t) {
   if (L.camera && view === 'front') { c.strokeStyle = '#3d3d44'; c.lineWidth = 0.5; c.beginPath(); c.moveTo(-3, SH); c.lineTo(0, SH + 5); c.lineTo(3, SH); c.stroke(); box(c, -2.2, SH + 4.4, 4.4, 3, 0.8, '#4a4a54'); circ(c, 0, SH + 5.9, 1, '#9fc9e6', '#2a2a30', 0.5); }
 }
 
-function arm(c, L, sx, sy, hx, hy, pref, far) {
+// Straight, soft arm stub: hangs at an angle, or points at a target (clamped to reach).
+function arm(c, L, sx, sy, spec, side, far) {
   const C = cols(L);
-  const r = ik(sx, sy, hx, hy, UPPER, FORE, ...(pref || [Math.sign(hx - sx || sx) || 1, 0.5]));
-  const pts = [sx, sy, r.j[0], r.j[1], r.end[0], r.end[1]];
+  let hx, hy;
+  if (spec?.to) {
+    const dx = spec.to[0] - sx, dy = spec.to[1] - sy, d = Math.hypot(dx, dy) || 1, len = Math.min(d, ARM + 0.6);
+    hx = sx + dx / d * len; hy = sy + dy / d * len;
+  } else {
+    const ang = spec?.ang || 0;   // 0 = straight down; + swings toward +x
+    hx = sx + Math.sin(ang) * ARM; hy = sy + Math.cos(ang) * ARM - (spec?.fwd ? Math.abs(spec.fwd) * 0.5 : 0);
+  }
   const skin = far ? C.skinS : (L.armSkin || L.skin);
   const sleeve = L.sleeve ?? 0.55;
-  limb(c, pts, 3.2, skin);
-  c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 0.9; c.beginPath(); c.moveTo(pts[0] - 0.5, pts[1]); c.lineTo(pts[2] - 0.5, pts[3]); c.lineTo(pts[4] - 0.4, pts[5]); c.stroke();
-  if (sleeve > 0) {
-    const sp = cutLine(pts, sleeve * (UPPER + FORE));
-    limb(c, sp, 3.9, far ? C.topS : L.top);
-    // cuff
-    const n = sp.length; c.strokeStyle = far ? shade(C.topS, -10) : C.topS; c.lineWidth = 0.7;
-    const ex = sp[n - 2], ey = sp[n - 1], px = sp[n - 4], py = sp[n - 3], d = Math.hypot(ex - px, ey - py) || 1, nx = -(ey - py) / d, ny = (ex - px) / d;
-    c.beginPath(); c.moveTo(ex + nx * 1.9, ey + ny * 1.9); c.lineTo(ex - nx * 1.9, ey - ny * 1.9); c.stroke();
-  }
-  // mitten hand with a little thumb
-  const hx2 = r.end[0], hy2 = r.end[1];
-  circ(c, hx2, hy2, 1.95, far ? C.skinS : L.skin, INK, 0.9);
-  const fdx = hx2 - r.j[0], fdy = hy2 - r.j[1], fd = Math.hypot(fdx, fdy) || 1;
-  circ(c, hx2 - fdy / fd * 1.2 + fdx / fd * 0.3, hy2 + fdx / fd * 1.2 + fdy / fd * 0.3, 0.75, far ? C.skinS : L.skin, INK, 0.5);
-  return r.end;
+  limb(c, [sx, sy, hx, hy], 3.3, skin);
+  if (sleeve > 0) limb(c, [sx, sy, sx + (hx - sx) * sleeve, sy + (hy - sy) * sleeve], 3.9, far ? C.topS : L.top);
+  circ(c, hx, hy, 1.95, far ? C.skinS : L.skin, INK, 0.9);
+  return [hx, hy];
 }
 
 // Role props worn on the back: surfboards, guitars.
@@ -612,18 +574,16 @@ export function drawHuman(c, a, t) {
   const shR = view === 'side' ? [0.6, SH + 1.3] : [4.3, SH + 1.2];
 
   // far arm (side view) and long back hair behind body
-  const prefL = P.elbowPref ? [-P.elbowPref[0], P.elbowPref[1]] : view === 'side' ? [-1, 0.6] : [-1, 0.45];
-  const prefR = P.elbowPref || (view === 'side' ? [-1, 0.6] : [1, 0.45]);
   const headXf = () => { c.translate(0, P.headDy); c.translate(0, HY + 6); c.rotate(P.headTilt); c.scale(HEAD_S, HEAD_S); c.translate(0, -HY - 6); };
   if (view !== 'back') { c.save(); c.translate(0, -EL); headXf(); hairBack(c, L, view); c.restore(); }
   if (view !== 'back') gearBehind(c, L, view, t);
   if (!a.sit || !a.hideLegs) legs(c, L, P, view);
   c.translate(0, -EL);
-  if (view === 'side') arm(c, L, shL[0], shL[1], P.hL[0], P.hL[1], P.elbowPref ? P.elbowPref : prefL, true);
+  if (view === 'side') arm(c, L, shL[0], shL[1], P.arms[0], -1, true);
   if (view === 'back') gearBehind(c, L, view, t, 0);
   torso(c, L, P, view, t);
-  if (view === 'front') arm(c, L, shL[0], shL[1], P.hL[0], P.hL[1], prefL);
-  if (view === 'back') { arm(c, L, shL[0], shL[1], P.hL[0], P.hL[1], prefL); arm(c, L, shR[0], shR[1], P.hR[0], P.hR[1], prefR); }
+  if (view === 'front') arm(c, L, shL[0], shL[1], P.arms[0], -1);
+  if (view === 'back') { arm(c, L, shL[0], shL[1], P.arms[0], -1); arm(c, L, shR[0], shR[1], P.arms[1], 1); }
 
   // head group
   c.save();
@@ -655,7 +615,8 @@ export function drawHuman(c, a, t) {
   c.restore();
 
   // near arm(s) last so held items sit on top
-  if (view === 'side' || view === 'front') { const e = arm(c, L, shR[0], shR[1], P.hR[0], P.hR[1], prefR); P.hR = e; }
+  P.hR = [shR[0] + 5, shR[1] + 3];
+  if (view === 'side' || view === 'front') P.hR = arm(c, L, shR[0], shR[1], P.arms[1], 1);
   gearFront(c, L, view, t, a);
   if (P.held && view !== 'back') {
     if (P.heldHand === 'both') drawHeld(c, P.held, 0, P.hR[1] - 1.5, t, view);
