@@ -57,7 +57,7 @@ export function playCinematic(canvas, { onCaption, skipSignal } = {}) {
       }
       // island on the horizon: grows as we approach
       const approach = ease.inOutCubic(clamp((T - 1) / (DUR - 2.4), 0, 1));
-      const isx = W * lerp(0.62, 0.5, approach), isc = lerp(0.35, 2.6, approach);
+      const isx = W * lerp(0.62, 0.5, approach), isc = lerp(0.35, 2.35, approach);   // (kept small enough that the lighthouse top stays in view)
       c.save(); c.translate(isx, horizon + 2); c.scale(isc, isc);
       drawFarIsland(c, T);
       c.restore();
@@ -119,7 +119,17 @@ function drawFarIsland(c, T) {
   // lighthouse
   poly(c, [-6, -40, -4, -66, 4, -66, 6, -40], '#fff8ee', 'rgba(91,63,54,.6)', 0.8);
   c.fillStyle = '#e8584e'; c.fillRect(-5, -56, 10, 5); c.fillRect(-4.5, -64, 9, 3);
-  if (Math.sin(T * 2) > 0) circ(c, 0, -68, 3, '#fff4c8', null);
+  // the top: gallery deck with a railing, the glass lantern room, a red dome and a finial
+  box(c, -6.5, -68, 13, 2.2, 0.6, '#5a4a48', null);
+  for (const x of [-5.5, -2.7, 0, 2.7, 5.5]) line(c, x, -68, x, -70.4, '#5a4a48', 0.5);
+  line(c, -6, -70.4, 6, -70.4, '#5a4a48', 0.6);
+  const lit = 0.55 + 0.45 * Math.max(0, Math.sin(T * 2));
+  box(c, -3.4, -75.5, 6.8, 5.4, 1, `rgba(255,${230 + lit * 20 | 0},${150 + lit * 50 | 0},.95)`, 'rgba(91,63,54,.6)', 0.6);
+  line(c, 0, -75.5, 0, -70.1, 'rgba(91,63,54,.45)', 0.4);
+  c.beginPath(); c.moveTo(-4.4, -75.5); c.quadraticCurveTo(0, -82, 4.4, -75.5); c.closePath(); c.fillStyle = '#e8584e'; c.fill(); c.strokeStyle = 'rgba(91,63,54,.6)'; c.lineWidth = 0.6; c.stroke();
+  line(c, 0, -80.6, 0, -83, '#5a4a48', 0.6); circ(c, 0, -83.3, 0.7, '#5a4a48', null);
+  // a soft sweep of light from the lamp
+  c.save(); c.globalAlpha = 0.18 + 0.2 * lit; const g = c.createRadialGradient(0, -73, 1, 0, -73, 22); g.addColorStop(0, '#fff4c8'); g.addColorStop(1, 'rgba(255,244,200,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, -73, 22, 0, Math.PI * 2); c.fill(); c.restore();
   // roofs
   for (const [x, col] of [[-50, '#d9784f'], [-30, '#f28f7c'], [26, '#d9784f'], [52, '#9fb4dc']]) { box(c, x - 6, -30, 12, 8, 1, '#fff1dc', 'rgba(91,63,54,.5)', 0.5); poly(c, [x - 8, -30, x + 8, -30, x, -37], col, 'rgba(91,63,54,.5)', 0.5); }
   // palms

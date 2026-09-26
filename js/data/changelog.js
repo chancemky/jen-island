@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '4.3.0';
+export const APP_VERSION = '4.3.1';
 
 export const CHANGELOG = [
+  {
+    v: '4.3.1', date: '2026-09-26T22:58:29Z',
+    title: ['The Lamp Room', 'Phòng Đèn'],
+    items: [
+      ['In the opening boat ride, the lighthouse on the island has its full top: a gallery with a railing, a glowing lamp room and a red dome', 'Trong cảnh tàu mở đầu, ngọn hải đăng trên đảo có đủ phần đỉnh: ban công có lan can, phòng đèn sáng và mái vòm đỏ'],
+      ['The island stays a little smaller as the boat arrives, so the lighthouse is never cut off at the top', 'Hòn đảo nhỏ lại một chút khi tàu tới gần, để ngọn hải đăng không bao giờ bị cắt ở phía trên'],
+    ],
+  },
   {
     v: '4.3.0', date: '2026-09-26T18:32:30Z',
     title: ['The Grind', 'Cày Cuốc'],
