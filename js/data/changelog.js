@@ -3,9 +3,24 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '4.1.1';
+export const APP_VERSION = '4.1.2';
 
 export const CHANGELOG = [
+  {
+    v: '4.1.2', date: '2026-09-26T14:48:32Z',
+    title: ['Smooth Sailing', 'Thuận Buồm Xuôi Gió'],
+    items: [
+      ['The eye colour preview shows your character with open eyes', 'Xem trước màu mắt giờ hiện nhân vật đang mở mắt'],
+      ['Girl / Boy buttons fit their tiles in both English and Vietnamese', 'Nút Nữ / Nam vừa khung trong cả tiếng Anh và tiếng Việt'],
+      ['Characters face where they walk in every follow-along scene (no more sidestepping to the left)', 'Nhân vật quay mặt theo hướng đi trong mọi cảnh đi theo (hết đi ngang sang trái)'],
+      ['Much smoother cutscenes: the ground no longer repaints when the camera zooms, and new areas load a little at a time', 'Cảnh phim mượt hơn nhiều: mặt đất không vẽ lại khi camera phóng to, khu vực mới được tải từ từ'],
+      ['Fixed the world being drawn at the wrong size after the opening boat ride (a pale box on the sea, and extra lag)', 'Sửa lỗi thế giới bị vẽ sai kích thước sau chuyến tàu mở đầu (ô vuông nhạt trên biển và thêm giật lag)'],
+      ['Cutscenes can never leave you stuck: a Continue button appears if one stalls, and walks that get blocked finish on their own', 'Cảnh phim không bao giờ làm bạn kẹt nữa: nút Tiếp tục hiện ra nếu cảnh bị đứng, và nhân vật bị chặn đường sẽ tự tới nơi'],
+      ['Cô Lan\'s flower shop has a new front: a big FLOWER SHOP sign, a pink awning, bucket stands, bouquets in the windows, sunflowers and a chalkboard', 'Tiệm Hoa của cô Lan có mặt tiền mới: bảng hiệu TIỆM HOA lớn, mái hiên hồng, kệ xô hoa, bó hoa trên cửa sổ, hoa hướng dương và bảng phấn'],
+      ['When Mèo Mây shows you your home, it explains that it\'s rented, when rent starts, and how to buy it outright (Menu → Business)', 'Khi Mèo Mây dẫn bạn xem nhà, bé giải thích nhà đang thuê, khi nào bắt đầu trả tiền và cách mua đứt (Menu → Kinh doanh)'],
+      ['Repairing a shop: you hammer from each side of the building, facing it, and dust flies from where the hammer lands', 'Sửa quán: bạn đóng búa từ hai bên, quay mặt vào tường, và bụi bay ra đúng chỗ búa gõ'],
+    ],
+  },
   {
     v: '4.1.1', date: '2026-09-26T14:11:40Z',
     title: ['Calm Seas', 'Biển Êm'],

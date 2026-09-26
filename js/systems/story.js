@@ -7,7 +7,7 @@
 import { G, T, flag, setFlag, hasMats, spendMats, addMoney, canAfford, learnRecipe, unlockAchievement, markDirty, bizOf, pantry, mats, addRep } from './state.js';
 import { ingName, matName, bizName, recipeName } from '../data/game.js';
 import { BUSINESSES, RECIPES, CHAPTERS, NIGHT_MARKET_RESTORE, STATUE_COST, STATION, BRIDGE_REPAIR, VY_VIEWS, HARBOUR_BRIDGE, COVE_BRIDGE } from '../data/game.js';
-import { keeperOf, staffedCount } from './economy.js';
+import { keeperOf, staffedCount, PLACES, propertyPrice } from './economy.js';
 import { cs, wait, say, ask, camTo, camFollow, walk, face, emote, hop, startFollow, stopFollow, caption } from './cutscene.js';
 import { scenes, setScene, fadeOut, fadeIn } from './scenes.js';
 import { cam, fx } from '../world/render.js';
@@ -325,6 +325,7 @@ export async function runArrival() {
   caption(null);
   skipBtn.classList.add('hidden');
   G.runtime.cinematic = false;
+  G.renderer?.resize();                                 // the cinematic sized the canvas for itself: give it back to the world renderer
   // 2) docking, top-down
   setScene('island', 1004, 2584, 'up');
   pl.visible = false;
@@ -445,6 +446,10 @@ export async function runTour() {
     await camTo(1262, 1700, { zoom: 1.25, rate: 2.2 });
     await say('meo', T('And this… is *your home*! Yellow walls, green shutters, a roof that only leaks when it rains.', 'Còn đây… là *nhà của bạn*! Tường vàng, cửa sổ xanh, mái chỉ dột khi trời mưa thôi.'), { emo: 'happy' });
     face(m, pl);
+    // it's rented — and it doesn't have to stay that way
+    await say('meo', T(`One thing: this house is *rented*, like every shop you'll run. The rent is ${money(PLACES.house.rent)} a day, and it starts on *day 3* — I talked the landlord into a little welcome discount.`, `Có điều này: căn nhà này là nhà *thuê*, giống mọi quán bạn sẽ mở. Tiền thuê là ${money(PLACES.house.rent)} mỗi ngày, bắt đầu từ *ngày 3* — mình đã xin chủ nhà giảm giá chào mừng rồi.`));
+    await say('meo', T(`Rent comes out of your money automatically every night when you sleep. But you can also *buy the property outright* for ${money(propertyPrice('house'))} — then it's yours forever and the rent stops.`, `Tiền thuê tự trừ vào tiền của bạn mỗi tối khi đi ngủ. Nhưng bạn cũng có thể *mua đứt* với giá ${money(propertyPrice('house'))} — khi đó nhà là của bạn mãi mãi và không phải trả thuê nữa.`));
+    await say('meo', T('To buy, open the *Menu → Business* tab and tap *Buy property*. Every shop you rent works the same way. Save up — owning beats renting!', 'Muốn mua thì mở *Menu → Kinh doanh* rồi bấm *Mua đứt*. Quán nào bạn thuê cũng vậy. Ráng dành dụm nha — có nhà riêng vẫn hơn đi thuê!'), { emo: 'happy' });
     await say('meo', T('It\'s a bit empty inside. Anh Khoa sells furniture — you can arrange it however you like.', 'Bên trong hơi trống. Anh Khoa có bán đồ nội thất — bạn muốn bày sao cũng được.'));
     await say('meo', T('When you\'re tired, *sleep in your bed*. That ends the day, and I\'ll tell you how it went. I\'m very good at counting coins.', 'Khi mệt thì *đi ngủ trên giường* nhé. Vậy là hết một ngày, và mình sẽ kể bạn nghe ngày hôm đó thế nào. Mình đếm tiền giỏi lắm.'), { emo: 'happy' });
     B('house').doorTarget = 0;
@@ -477,26 +482,37 @@ export async function repairScene(bizId) {
     G.runtime.inCutscene = true;
     spendMats(def.repair);
     const pl = G.player;
-    await walk(pl, bld.x - 30, bld.y + 30, { direct: true, speed: 80 });
-    face(pl, { x: bld.x, y: bld.y - 30 });
-    await camTo(bld.x, bld.y - 50, { zoom: 1.3, rate: 2.4 });
+    // hammer from each side of the building in profile, so the swing (and where it lands) is readable
+    const spots = [[bld.x - bld.w / 2 - 14, bld.y + 6, 1], [bld.x + bld.w / 2 + 14, bld.y + 6, -1]];
+    await walk(pl, spots[0][0], spots[0][1] + 24, { speed: 90 });
+    await camTo(bld.x, bld.y - 40, { zoom: 1.3, rate: 2.4 });
     r.repairAnim = 0;
-    pl.setAct('hammer');
-    const dur = 4.2, t0 = performance.now();
-    let lastHit = 0;
-    while (true) {
-      const k = (performance.now() - t0) / 1000 / dur;
-      if (k >= 1) break;
-      r.repairAnim = k * 0.999;
-      if (performance.now() - lastHit > 300) {
-        lastHit = performance.now(); sfx('hammer'); cam.shake = 0.25;
-        const x = bld.x + rand(-bld.w / 2, bld.w / 2), y = bld.y - rand(10, 70);
-        fx.burst('dust', x, y, 5, { up: 30, speed: 40, life: 0.8 });
-        fx.burst('chip', x, y, 3, { up: 80, speed: 60, col: ['#c88a52', '#d9a064', '#b9c3cb'], size: 3 });
+    const dur = 4.4;
+    for (let si = 0; si < spots.length; si++) {
+      const [sx, sy, f] = spots[si];
+      pl.setAct(null); delete pl.yawOverride;
+      await walk(pl, sx, sy, { direct: true, speed: 90 });
+      pl.face(f > 0 ? 'right' : 'left');
+      // from the right side a 3/4 turn keeps the hammer hand (right) toward the wall and in view
+      pl.yawOverride = f > 0 ? Math.PI / 2 : -Math.PI * 0.3;
+      pl.setAct('hammer');
+      const tA = performance.now(); let lastHit = -1;
+      while (true) {
+        const e = (performance.now() - tA) / 1000, k = (si + Math.min(1, e / (dur / 2))) / spots.length;
+        r.repairAnim = Math.min(0.999, k);
+        if (e >= dur / 2) break;
+        // the hammer lands once per swing (the pose cycles 3.4×/s, striking at 70% of the cycle)
+        const hit = Math.floor(e * 3.4 + 0.3);
+        if (hit !== lastHit) {
+          lastHit = hit; sfx('hammer'); cam.shake = 0.15;
+          const x = pl.x + f * 16, y = pl.y - 10;
+          fx.burst('dust', x, y, 4, { up: 25, speed: 35, life: 0.6 });
+          fx.burst('chip', x, y, 3, { up: 70, speed: 50, col: ['#c88a52', '#d9a064', '#b9c3cb'], size: 2.5 });
+        }
+        await sleep(30);
       }
-      await sleep(30);
     }
-    pl.setAct(null);
+    pl.setAct(null); delete pl.yawOverride;
     r.repairAnim = null;
     b.repair = 1; b.unlocked = true;
     markDirty(true);

@@ -42,9 +42,13 @@ export class Actor {
     if (!Array.isArray(points[0])) points = [points];
     this.path = points.map(p => [p[0], p[1]]);
     this.pathSpeed = opt.speed || this.speed;
+    // a walk never hangs: if it takes much longer than it should (blocked, or its scene isn't updating), it snaps to the end
+    let len = 0, px = this.x, py = this.y; for (const [x, y] of this.path) { len += Math.hypot(x - px, y - py); px = x; py = y; }
+    this._walkDeadline = performance.now() + (len / Math.max(10, this.pathSpeed)) * 2000 + 2500;
     if (this._resolve) this._resolve(false);
     return new Promise(res => { this._resolve = res; });
   }
+  finishWalk() { if (!this.path) return; const last = this.path[this.path.length - 1]; if (last) { this.x = last[0]; this.y = last[1]; } this.path = null; const r = this._resolve; this._resolve = null; r?.(true); }
   stop() { this.path = null; if (this._resolve) { const r = this._resolve; this._resolve = null; r(false); } }
   face(d) {
     if (typeof d === 'object') { const dx = d.x - this.x, dy = d.y - this.y; d = Math.abs(dx) > Math.abs(dy) * 0.9 ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down'; }
@@ -81,6 +85,7 @@ export class Actor {
   setDirFromVel(vx, vy) {
     const ax = Math.abs(vx), ay = Math.abs(vy);
     if (ax < 0.01 && ay < 0.01) return;
+    this.moveAng = Math.atan2(vx, vy);   // the body always turns toward where it's going (fixes side-stepping in follow scenes)
     const horiz = this.dir === 'left' || this.dir === 'right';
     let d;
     if (horiz ? ax > ay * 0.7 : ax > ay * 1.35) d = vx < 0 ? 'left' : 'right';

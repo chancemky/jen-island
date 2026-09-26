@@ -84,7 +84,7 @@ async function boot() {
   G.scenes = scenes;
   progress(0.7, bootText('meo'));
   // pre-warm the ground chunks near the dock
-  scenes.island.cache.get(2, 6, Math.min(2.5, renderer.dpr * cam.baseZoom));
+  scenes.island.cache.get(2, 6, Math.min(2, renderer.dpr * cam.baseZoom * 1.15));
   initHud(); initSaveHooks();
   progress(0.85, bootText('net'));
   let user = null;
@@ -183,6 +183,24 @@ bus.on('achievement', () => { if (Math.random() < 0.5) setTimeout(() => toast({ 
 bus.on('biz:open', id => { if (currentStep()) checkStory(); });
 bus.on('biz:close', (id, why) => { if (why === 'hours') toast({ text: T(`${bizName(id)} is closed`, `${bizName(id)} đã đóng cửa`), sub: T('Closing time!', 'Hết giờ bán rồi!') }); });
 
+// ---------------------------------------------------------------- cutscene safety net
+// Overdue walks snap to their end, and if a cutscene shows no dialog for a long
+// while, a Continue button appears (and it moves on by itself soon after).
+let wdT = 0, wdIdle = 0, wdBtn = null;
+function finishAllWalks() { for (const sc of Object.values(scenes)) for (const a of sc?.actors || []) if (a.path) a.finishWalk?.(); cam.override = null; }
+function cutsceneWatchdog(dt) {
+  wdT += dt;
+  if (wdT > 1) { wdT = 0; const now = performance.now(); for (const sc of Object.values(scenes)) for (const a of sc?.actors || []) if (a.path && a._walkDeadline && now > a._walkDeadline) a.finishWalk(); }
+  const stuck = cs.active && !dialogue.active && !isUiOpen() && !G.runtime.paused && !document.querySelector('.levelup, .reward, .modal, .summary');
+  wdIdle = stuck ? wdIdle + dt : 0;
+  if (wdIdle > 12 && !wdBtn) {
+    wdBtn = document.createElement('button'); wdBtn.className = 'btn big pink cs-continue'; wdBtn.type = 'button'; wdBtn.textContent = T('Continue ▶', 'Tiếp tục ▶');
+    wdBtn.onclick = () => { finishAllWalks(); wdIdle = 0; wdBtn?.remove(); wdBtn = null; };
+    document.getElementById('app').appendChild(wdBtn);
+  }
+  if (wdIdle > 20) { finishAllWalks(); wdIdle = 0; }
+  if (!stuck && wdBtn) { wdBtn.remove(); wdBtn = null; }
+}
 // ---------------------------------------------------------------- main loop
 let last = performance.now(), storyT = 0, areaT = 0;
 let lastFrame = 0;
@@ -236,6 +254,7 @@ function loop(now) {
     worldExtra: sc === scenes.island ? npcDrawables() : null,
     overlay: (c, tt) => { drawSkyLife(c, tt); G.runtime.decoOverlay?.(c, tt); },
   });
+  cutsceneWatchdog(dt);
   updateHud(dt);
   tickCelebrations(() => !cs.active && !isUiOpen() && !isServiceOpen() && !isPrepOpen() && !dialogue.active && !isDecorating() && !G.runtime.paused);
   updateDialogue(dt, t);

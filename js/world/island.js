@@ -157,7 +157,7 @@ export const BUILDINGS = [
   // resident homes (not enterable)
   { id: 'h_batu', type: 'house', interior: 'home_ba_tu', door: [0, 0], x: 420, y: 1546, w: 100, fp: 52, wall: '#e9c9a2', roof: '#a8563f', shutter: '#7aa38a', home: 'ba_tu', style: 'wood' },
   { id: 'h_linh', type: 'house', interior: 'home_linh', door: [0, 0], x: 300, y: 1384, w: 100, fp: 52, wall: '#cfe6d8', roof: '#d9784f', shutter: '#e89a8a', home: 'linh', style: 'student' },
-  { id: 'h_lan', type: 'house', interior: 'home_co_lan', door: [0, 0], x: 690, y: 1452, w: 100, fp: 52, wall: '#f9e2ee', roof: '#b8603f', shutter: '#9fb4dc', home: 'co_lan', label: ['FLOWERS', 'TIỆM HOA'], style: 'flowers' },
+  { id: 'h_lan', type: 'house', interior: 'home_co_lan', door: [0, 0], x: 690, y: 1452, w: 100, fp: 52, wall: '#f9e2ee', roof: '#b8603f', shutter: '#9fb4dc', home: 'co_lan', label: ['FLOWERS', 'TIỆM HOA'], style: 'florist' },
   { id: 'h_tuan', type: 'house', interior: 'home_anh_tuan', door: [0, 0], x: 1140, y: 1652, w: 96, fp: 50, wall: '#d6e6f5', roof: '#c9674a', shutter: '#f2c14e', home: 'anh_tuan', style: 'garage' },
   { id: 'h_mai', type: 'house', interior: 'home_chi_mai', door: [0, 0], x: 1360, y: 1602, w: 96, fp: 50, wall: '#f4f8fb', roof: '#6fbf73', shutter: '#6f9fc8', home: 'chi_mai', style: 'clinic' },
   { id: 'h_hai', type: 'house', interior: 'home_chu_hai', door: [0, 0], x: 1560, y: 1952, w: 96, fp: 50, wall: '#e8f1e6', roof: '#6f9fc8', shutter: '#e8584e', home: 'chu_hai', style: 'tin', fisher: true },
@@ -224,7 +224,12 @@ const NAV_ONLY = new Set(['nm', 'bridge', 'hbridge', 'cbridge']);
 const SMOOTH_PATHS = Object.fromEntries(Object.entries(PATHS).filter(([k]) => !NAV_ONLY.has(k)).map(([k, p]) => [k, p.length > 2 ? chunkPts(smoothLine(p, 6)) : p]));
 function chunkPts(flat) { const o = []; for (let i = 0; i < flat.length; i += 2) o.push([flat[i], flat[i + 1]]); return o; }
 
-function paintGround(c) {
+// the tile being painted (points outside it are skipped; the random layout stays identical)
+let GB = null;
+const inb = (x, y, r = 8) => !GB || (x > GB.x0 - r && x < GB.x1 + r && y > GB.y0 - r && y < GB.y1 + r);
+const SPK = [], SHL = [];                               // remembered "is this point on the beach?" answers
+function paintGround(c, bounds = null) {
+  GB = bounds;
   // shallow water rings
   for (const l of LANDS) { tracePoly(c, l.shallow); c.fillStyle = 'rgba(140,222,222,.55)'; c.fill(); }
   for (const l of LANDS) { tracePoly(c, l.foam); c.fillStyle = 'rgba(170,234,228,.8)'; c.fill(); }
@@ -234,16 +239,16 @@ function paintGround(c) {
   const R = rng(42);
   for (let i = 0; i < 2600; i++) {
     const x = R() * W, y = R() * H;
-    if (!onSand(x, y) || onGrass(x, y)) continue;
-    c.fillStyle = R() < 0.5 ? 'rgba(210,180,120,.35)' : 'rgba(255,255,240,.6)';
-    c.fillRect(x, y, 2, 2);
+    if (!(SPK[i] ??= onSand(x, y) && !onGrass(x, y))) continue;
+    const col = R() < 0.5 ? 'rgba(210,180,120,.35)' : 'rgba(255,255,240,.6)';
+    if (inb(x, y)) { c.fillStyle = col; c.fillRect(x, y, 2, 2); }
   }
   // shells & starfish on the beach
   for (let i = 0; i < 90; i++) {
     const x = R() * W, y = R() * H;
-    if (!onSand(x, y) || onGrass(x, y)) continue;
-    if (R() < 0.3) { P.LIGHT; c.save(); c.translate(x, y); starfish(c, R()); c.restore(); }
-    else { ell(c, x, y, 2.6, 1.8, R() < 0.5 ? '#fff4e8' : '#f7c9c0', 'rgba(120,90,70,.5)', 0.6); }
+    if (!(SHL[i] ??= onSand(x, y) && !onGrass(x, y))) continue;
+    if (R() < 0.3) { const r2 = R(); if (inb(x, y)) { c.save(); c.translate(x, y); starfish(c, r2); c.restore(); } }
+    else { const col = R() < 0.5 ? '#fff4e8' : '#f7c9c0'; if (inb(x, y)) ell(c, x, y, 2.6, 1.8, col, 'rgba(120,90,70,.5)', 0.6); }
   }
   // grass
   for (const l of LANDS) { tracePoly(c, l.grass); c.fillStyle = '#a3d68a'; c.fill(); }
@@ -251,15 +256,15 @@ function paintGround(c) {
   for (let i = 0; i < 520; i++) {
     const x = R() * W, y = R() * H, r = 20 + R() * 60;
     c.fillStyle = R() < 0.5 ? 'rgba(130,195,110,.35)' : 'rgba(190,230,150,.32)';
-    c.beginPath(); c.ellipse(x, y, r, r * 0.6, 0, 0, TAU); c.fill();
+    if (inb(x, y, r)) { c.beginPath(); c.ellipse(x, y, r, r * 0.6, 0, 0, TAU); c.fill(); }
   }
   for (let i = 0; i < 5200; i++) {
     const x = R() * W, y = R() * H;
     c.strokeStyle = R() < 0.6 ? 'rgba(90,150,70,.35)' : 'rgba(220,245,190,.5)'; c.lineWidth = 1;
-    c.beginPath(); c.moveTo(x, y); c.lineTo(x + 1, y - 3); c.stroke();
+    if (inb(x, y)) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + 1, y - 3); c.stroke(); }
   }
   // tiny flowers in the grass
-  for (let i = 0; i < 700; i++) { const x = R() * W, y = R() * H; c.fillStyle = ['#fff', '#ffd35a', '#ff9ab5', '#c9a8ff'][i % 4]; c.beginPath(); c.arc(x, y, 1.3, 0, TAU); c.fill(); }
+  for (let i = 0; i < 700; i++) { const x = R() * W, y = R() * H; if (!inb(x, y)) continue; c.fillStyle = ['#fff', '#ffd35a', '#ff9ab5', '#c9a8ff'][i % 4]; c.beginPath(); c.arc(x, y, 1.3, 0, TAU); c.fill(); }
   c.restore();
   for (const l of LANDS) { tracePoly(c, l.grass); c.strokeStyle = '#8cc472'; c.lineWidth = 4; c.stroke(); c.strokeStyle = 'rgba(120,170,90,.5)'; c.lineWidth = 1.5; c.stroke(); }
   // rice paddies
@@ -290,7 +295,7 @@ function paintGround(c) {
   for (const pts of Object.values(SMOOTH_PATHS)) {
     for (let i = 0; i < pts.length - 1; i++) {
       const [ax, ay] = pts[i], [bx, by] = pts[i + 1], d = Math.hypot(bx - ax, by - ay);
-      for (let k = 0; k < d; k += 9) { const tt = k / d, ox = (R() - 0.5) * PATH_W * 0.8, oy = (R() - 0.5) * PATH_W * 0.8; c.fillStyle = R() < 0.5 ? 'rgba(190,150,100,.4)' : 'rgba(255,250,230,.6)'; c.fillRect(ax + (bx - ax) * tt + ox, ay + (by - ay) * tt + oy, 2.2, 1.6); }
+      for (let k = 0; k < d; k += 9) { const tt = k / d, ox = (R() - 0.5) * PATH_W * 0.8, oy = (R() - 0.5) * PATH_W * 0.8; const col = R() < 0.5 ? 'rgba(190,150,100,.4)' : 'rgba(255,250,230,.6)', px = ax + (bx - ax) * tt + ox, py = ay + (by - ay) * tt + oy; if (inb(px, py)) { c.fillStyle = col; c.fillRect(px, py, 2.2, 1.6); } }
     }
   }
   // grassy fringe and little stones along the path edges
@@ -299,8 +304,8 @@ function paintGround(c) {
       const [ax, ay] = pts[i], [bx, by] = pts[i + 1], d = Math.hypot(bx - ax, by - ay), nx = -(by - ay) / (d || 1), ny = (bx - ax) / (d || 1);
       for (let k = 0; k < d; k += 7) {
         const tt = k / d, sd = R() < 0.5 ? -1 : 1, off = PATH_W / 2 + 2 + R() * 2, x = ax + (bx - ax) * tt + nx * off * sd, y = ay + (by - ay) * tt + ny * off * sd;
-        if (R() < 0.7) { c.strokeStyle = R() < 0.5 ? '#6fb356' : '#86c46a'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x, y); c.lineTo(x - nx * sd * 3 + (R() - 0.5), y - ny * sd * 3 - 2); c.moveTo(x + 1.5, y); c.lineTo(x + 1.5 - nx * sd * 2.4, y - ny * sd * 2.4 - 2.6); c.stroke(); }
-        else { c.fillStyle = R() < 0.5 ? '#d9cfbe' : '#c9bfae'; c.beginPath(); c.ellipse(x - nx * sd * 4, y - ny * sd * 4, 2.2, 1.4, 0, 0, TAU); c.fill(); }
+        if (R() < 0.7) { const col = R() < 0.5 ? '#6fb356' : '#86c46a', jit = R() - 0.5; if (!inb(x, y)) continue; c.strokeStyle = col; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x, y); c.lineTo(x - nx * sd * 3 + jit, y - ny * sd * 3 - 2); c.moveTo(x + 1.5, y); c.lineTo(x + 1.5 - nx * sd * 2.4, y - ny * sd * 2.4 - 2.6); c.stroke(); }
+        else { const col = R() < 0.5 ? '#d9cfbe' : '#c9bfae'; if (!inb(x, y)) continue; c.fillStyle = col; c.beginPath(); c.ellipse(x - nx * sd * 4, y - ny * sd * 4, 2.2, 1.4, 0, 0, TAU); c.fill(); }
       }
       // worn darker centre
       c.strokeStyle = 'rgba(200,160,100,.18)'; c.lineWidth = PATH_W * 0.35; c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by); c.stroke();
@@ -355,31 +360,40 @@ function paintGround(c) {
 }
 function starfish(c, r) { const col = r < 0.5 ? '#f7a36b' : '#f28f9a'; c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 1.7 : 4.2; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = 'rgba(120,70,50,.6)'; c.lineWidth = 0.6; c.stroke(); }
 
-// Chunk cache so the heavy ground only paints once per zoom level.
+// Chunk cache for the heavy ground. The tile sharpness is fixed per device
+// (not tied to cutscene zooms, which used to repaint everything at once), only
+// a couple of new tiles are painted per frame, and old tiles are freed when the
+// memory budget is reached (iOS draws tiles black once canvas memory runs out).
 const CHUNK = 400;
 export class GroundCache {
-  constructor() { this.map = new Map(); this.scale = 0; }
+  constructor() { this.map = new Map(); this.scale = 0; this.budget = 2; this.frame = 0; }
+  newFrame(n = 2) { this.budget = n; this.frame++; }
   get(ix, iy, scale) {
-    scale = Math.min(2, Math.round(scale * 4) / 4);          // snap + cap: fewer rebuilds, far less canvas memory
-    if (Math.abs(scale - this.scale) > 0.01) { for (const v of this.map.values()) v.cv.width = v.cv.height = 0; this.map.clear(); this.scale = scale; }   // free old tiles right away (iOS turns tiles black when canvas memory runs out)
+    scale = Math.min(2, Math.round(scale * 4) / 4);
+    if (Math.abs(scale - this.scale) > 0.01) { for (const v of this.map.values()) v.cv.width = v.cv.height = 0; this.map.clear(); this.scale = scale; }
     const key = ix + ',' + iy;
     let e = this.map.get(key);
     if (!e) {
+      if (this.budget <= 0) return null;               // painted on a later frame
+      this.budget--;
       const cv = document.createElement('canvas');
       const px = Math.ceil(CHUNK * scale);
       cv.width = px; cv.height = px;
       const c = cv.getContext('2d');
+      if (!c) return null;
       c.scale(scale, scale); c.translate(-ix * CHUNK, -iy * CHUNK);
       c.lineJoin = 'round'; c.lineCap = 'round';
-      paintGround(c);
-      e = { cv, used: 0 };
+      paintGround(c, { x0: ix * CHUNK - 12, y0: iy * CHUNK - 12, x1: (ix + 1) * CHUNK + 12, y1: (iy + 1) * CHUNK + 12 });
+      e = { cv, used: 0, frame: 0 };
       this.map.set(key, e);
-      if (this.map.size > 16) { // evict least recently used (16 tiles ≈ 40 MB at 2x)
-        let old = null, ou = Infinity; for (const [k, v] of this.map) if (v.used < ou && k !== key) { ou = v.used; old = k; }
-        if (old) { const v = this.map.get(old); v.cv.width = v.cv.height = 0; this.map.delete(old); }
+      const maxTiles = Math.max(12, Math.floor(60e6 / (px * px * 4)));   // ~60 MB of tiles
+      while (this.map.size > maxTiles) {
+        let old = null, ou = Infinity; for (const [k, v] of this.map) if (v.frame !== this.frame && v.used < ou && k !== key) { ou = v.used; old = k; }
+        if (!old) break;                                // never drop a tile that's on screen right now
+        const v = this.map.get(old); v.cv.width = v.cv.height = 0; this.map.delete(old);
       }
     }
-    e.used = performance.now();
+    e.used = performance.now(); e.frame = this.frame;
     return e.cv;
   }
 }
@@ -388,6 +402,7 @@ export class GroundCache {
 export class Island extends Scene {
   constructor() {
     super({ id: 'island', kind: 'island', w: W, h: H, spawn: { x: 900, y: 2560 } });
+    this.bg = '#5ec2cf';                                // open sea beyond the map edge (never black)
     this.cache = new GroundCache();
     this.buildings = {};
     this.build();
@@ -733,9 +748,10 @@ export class Island extends Scene {
   drawGround(c, view, t, scale) {
     const ix0 = Math.max(0, Math.floor(view.x / CHUNK)), iy0 = Math.max(0, Math.floor(view.y / CHUNK));
     const ix1 = Math.min(Math.ceil(W / CHUNK) - 1, Math.floor((view.x + view.w) / CHUNK)), iy1 = Math.min(Math.ceil(H / CHUNK) - 1, Math.floor((view.y + view.h) / CHUNK));
+    this.cache.newFrame(this.cache.map.size ? 2 : 6);    // a few extra on the very first frame
     for (let iy = iy0; iy <= iy1; iy++) for (let ix = ix0; ix <= ix1; ix++) {
       const cv = this.cache.get(ix, iy, scale);
-      c.drawImage(cv, ix * CHUNK, iy * CHUNK, CHUNK + 0.5, CHUNK + 0.5);
+      if (cv && cv.width) c.drawImage(cv, ix * CHUNK, iy * CHUNK, CHUNK + 0.5, CHUNK + 0.5);
     }
   }
   drawShore(c, view, t) {

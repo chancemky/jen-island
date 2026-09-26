@@ -370,6 +370,9 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 .cycler .sw i { width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid transparent; }
 .cycler .sw i.on { border-color: var(--ink); transform: scale(1.2); }
 .cycler .val { flex: 1; text-align: center; font-weight: 900; }
+.cycler .g-seg { flex: 1; min-width: 0; }
+.cycler .g-seg button { width: auto; min-width: 0; height: 36px; flex: 1; font-size: 14px; border: none; background: transparent; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; }
+.cycler .g-seg button.on { background: #fff; }
 
 /* ---------------------------------------------------------------- boot + rotate */
 #boot { z-index: 120; display: grid; place-items: center; background: #fff4de; transition: opacity .5s; }
@@ -590,3 +593,4 @@ body.hide-controls .pause-btn, body.cutscene .pause-btn { display: none; }
   background: radial-gradient(circle at 50% 100%, #8fcb73 0 15px, transparent 16px) 0 100%/46px 100% repeat-x, radial-gradient(circle at 50% 100%, #7cbc62 0 11px, transparent 12px) 23px 100%/46px 100% repeat-x; }
 .svc-outside.night .svc-sky::after { filter: brightness(.45) saturate(.6); }
 .svc-outside.dusk .svc-sky::after { filter: brightness(.85) sepia(.2); }
+.cs-continue { position: absolute; left: 50%; bottom: calc(40px + var(--sab)); transform: translateX(-50%); z-index: 60; pointer-events: auto; min-width: 180px; }

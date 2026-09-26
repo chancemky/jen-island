@@ -133,7 +133,7 @@ export class Renderer {
     const light = extra.light || { night: 0, golden: 0, dawn: 0 };
     LIGHT.night = light.lampOn ? Math.max(0.3, light.night) : 0;
 
-    if (scene.kind === 'island') { scene.drawWater(c, v, t); scene.drawGround(c, v, t, Math.min(2.5, d * z)); scene.drawShore(c, v, t); }
+    if (scene.kind === 'island') { scene.drawWater(c, v, t); scene.drawGround(c, v, t, Math.min(2, d * cam.baseZoom * 1.15)); scene.drawShore(c, v, t); }   // ground sharpness fixed per device: cutscene zooms don't repaint it
     else scene.drawBackground(c, v, t);
     if (scene.drawUnder) scene.drawUnder(c, v, t);
 

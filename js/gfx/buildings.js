@@ -219,6 +219,40 @@ function houseExtras(c, t, b, w, h) {
       for (let i = 0; i < 5; i++) { const x = -w / 2 + 8 + i * 12; if (Math.abs(x) < 20) continue; box(c, x - 5, -8, 10, 8, 2, '#8fb7e0', INK, 0.7); for (let k = 0; k < 4; k++) circ(c, x - 3 + k * 2, -11 - (k % 2) * 2 + Math.sin(t * 2 + i + k) * 0.4, 2, ['#ff8fb0', '#ffd35a', '#fff', '#e97ad0'][(i + k) % 4], INK, 0.3); }
       break;
     }
+    case 'florist': { // Cô Lan's flower shop: unmistakable from the path
+      const PET = ['#ff8fb0', '#ffd35a', '#fff', '#e97ad0', '#f36d86', '#c9b6e8', '#ffa53a'];
+      const bloom = (x, y, r, col, ph = 0) => { const sw = Math.sin(t * 1.8 + ph + x) * 0.5; for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; circ(c, x + sw + Math.cos(a) * r * 0.8, y + Math.sin(a) * r * 0.8, r * 0.62, col, INK, 0.35); } circ(c, x + sw, y, r * 0.45, '#ffd35a', INK, 0.3); };
+      // bouquets filling both display windows
+      const wx = Math.min(32, w * 0.5 - 20);
+      for (const x of [-wx, wx]) { box(c, x - 9, -h + 24, 18, 5, 1.5, '#8fb7e0', INK, 0.6); for (let k = 0; k < 5; k++) { line(c, x - 6 + k * 3, -h + 24, x - 6 + k * 3.2, -h + 19 - (k % 2) * 2, '#5f9f45', 0.8); bloom(x - 6 + k * 3.2, -h + 18 - (k % 2) * 2, 2, PET[(k + (x > 0 ? 2 : 0)) % PET.length], k); } }
+      // scalloped pink awning over the whole front
+      awning(c, 0, -h + 8, w - 10, ['#fff5df', '#f28fb0'], 11);
+      // a garland of blossoms arching over the door
+      c.save(); c.strokeStyle = '#5f9f45'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(-13, -2); c.quadraticCurveTo(-15, -40, 0, -41); c.quadraticCurveTo(15, -40, 13, -2); c.stroke(); c.restore();
+      for (let k = 0; k <= 8; k++) { const a = Math.PI * (1 - k / 8), x = Math.cos(a) * 13.5, y = -24 - Math.sin(a) * 16; circ(c, x, y + 2, 2.2, '#6fb356', INK, 0.3); bloom(x, y, 1.8, PET[k % PET.length], k); }
+      // hanging basket by the door
+      line(c, -22, -h + 12, -22, -h + 20, '#8a5f3e', 0.8); ell(c, -22, -h + 22, 5, 3, '#b77a4f', INK, 0.6); for (let k = 0; k < 3; k++) bloom(-25 + k * 3, -h + 20, 1.6, PET[(k + 3) % PET.length], k); line(c, -24, -h + 24, -25, -h + 29, '#6fb356', 1); line(c, -20, -h + 24, -19, -h + 28, '#6fb356', 1);
+      // tiered flower-bucket stands on both sides of the door
+      for (const side of [-1, 1]) {
+        const cx = side * (w / 2 + 8);
+        box(c, cx - 16, -14, 32, 3, 1, '#a8763f', INK, 0.7); box(c, cx - 12, -26, 24, 3, 1, '#a8763f', INK, 0.7);
+        for (const lx of [cx - 15, cx + 13]) box(c, lx, -26, 2.5, 26, 0.6, '#8a5f3e', INK, 0.5);
+        for (let i = 0; i < 3; i++) { const x = cx - 10 + i * 10; poly(c, [x - 4.5, -14, x + 4.5, -14, x + 3.5, -22, x - 3.5, -22], ['#8fb7e0', '#b9c3cb', '#f4a9b8'][i], INK, 0.6); for (let k = 0; k < 4; k++) bloom(x - 3 + k * 2, -24 - (k % 2) * 2.5, 1.9, PET[(i * 2 + k + (side > 0 ? 3 : 0)) % PET.length], i + k); }
+        for (let i = 0; i < 2; i++) { const x = cx - 5 + i * 10; poly(c, [x - 4, -26, x + 4, -26, x + 3, -33, x - 3, -33], ['#f4a9b8', '#8fb7e0'][i], INK, 0.6); for (let k = 0; k < 3; k++) bloom(x - 2 + k * 2, -35 - (k % 2) * 2, 1.9, PET[(i + k + 1 + (side > 0 ? 2 : 0)) % PET.length], k); }
+        for (let i = 0; i < 4; i++) { const x = cx - 12 + i * 8; box(c, x - 3.5, -6, 7, 6, 1.4, ['#d9784f', '#c9975f'][i % 2], INK, 0.6); bloom(x, -8, 2.1, PET[(i + (side > 0 ? 4 : 1)) % PET.length], i); }
+      }
+      // sunflowers leaning on the wall + a chalkboard easel on the path
+      for (const x of [-w / 2 - 28, w / 2 + 28]) { line(c, x, 0, x + Math.sin(t + x) * 0.8, -34, '#5f9f45', 1.6); ell(c, x + 3, -18, 4, 2, '#6fb356', INK, 0.4); for (let k = 0; k < 10; k++) { const a = k / 10 * TAU; ell(c, x + Math.cos(a) * 4.2, -36 + Math.sin(a) * 4.2, 2.2, 1.3, '#ffcf3a', INK, 0.3); } circ(c, x, -36, 3, '#7a4a2a', INK, 0.5); }
+      c.save(); c.translate(24, -1); poly(c, [-8, 0, 8, 0, 6, -18, -6, -18], '#3e4a45', INK, 1); line(c, -8, 0, -9, 3, '#8a5f3e', 1.2); line(c, 8, 0, 9, 3, '#8a5f3e', 1.2);
+      text(c, T('FRESH', 'HOA'), 0, -13, 3.6, '#fff', 900); text(c, T('FLOWERS', 'TƯƠI'), 0, -8.6, 3.2, '#fff', 900); bloom(-3, -3.5, 1.4, '#ff8fb0'); bloom(3, -3.5, 1.4, '#ffd35a'); c.restore();
+      // big roof sign with a flower emblem
+      box(c, -34, -h - 40, 68, 20, 6, '#f28fb0', INK, 1.4); box(c, -32, -h - 38, 64, 16, 5, null, '#fff5df', 1);
+      text(c, T('FLOWER SHOP', 'TIỆM HOA'), 5, -h - 30, T(6.2, 7.4), '#fff', 900);
+      bloom(-25, -h - 30, 3.2, '#fff', 0); bloom(29, -h - 43, 2.6, '#ffd35a', 1); bloom(-31, -h - 20, 2.4, '#e97ad0', 2);
+      line(c, -20, -h - 20, -20, -h - 13, '#8a5f3e', 1); line(c, 20, -h - 20, 20, -h - 13, '#8a5f3e', 1);
+      if (nightA() > 0.05) glow(b, 0, -h - 30, 40, 'rgba(255,170,200,.45)');
+      break;
+    }
     case 'garage': { // Anh Tuấn: a roll-up garage door and his taxi scooter sign
       // one wide garage door on the right (no window there), well clear of the front door
       const gx0 = 16, gx1 = w / 2 - 4;
@@ -269,7 +303,7 @@ export function drawHouse(c, t, b) {
   door(c, 0, 20, 32, b.doorCol || '#b77a4f', b.doorOpen || 0, { matCol: '#e89a8a' });
   if (st === 'tin') tinRoof(c, w, 34, h, b.roof || '#6f9fc8'); else tileRoof(c, w, 44, h, b.roof || '#d9784f', { overhang: 10 });
   houseExtras(c, t, b.fisher ? { ...b, style: 'fisher' } : b, w, h);
-  if (b.label) signBoard(c, 0, -h + 4, 30, 7, tr(b.label), '#fff5df', INK);
+  if (b.label && st !== 'florist') signBoard(c, 0, -h + 4, 30, 7, tr(b.label), '#fff5df', INK);
   if (b.chimney) { box(c, 24, -h - 44, 10, 16, 2, '#c9b8a8'); for (let i = 0; i < 3; i++) { const k = (t * 0.3 + i / 3) % 1; c.globalAlpha = 0.45 * (1 - k); circ(c, 29 + Math.sin(k * 6) * 3, -h - 48 - k * 20, 3 + k * 4, '#fff', null); } c.globalAlpha = 1; }
   if (s.mailbox !== false && b.mailbox) { limb(c, [w / 2 + 8, 0, w / 2 + 8, -16], 2, '#8a5f3e'); box(c, w / 2 + 2, -24, 12, 9, 3, '#e8584e'); }
 }
