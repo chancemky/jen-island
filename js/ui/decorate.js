@@ -151,7 +151,7 @@ function renderBar() {
   const counts = {};
   for (const id of owned) counts[id] = (counts[id] || 0) + 1;
   const bar = D.bar;
-  const hint = D.sel ? (D.ghost ? (D.valid ? T('Place it here?', 'Đặt ở đây?') : T('It doesn\'t fit here', 'Không vừa chỗ này')) : T('Tap the floor to place it', 'Chạm vào sàn để đặt')) : (owned.length ? T('Pick an item below, or tap any furniture (even the bed, wardrobe and kitchen) to move or turn it', 'Chọn đồ bên dưới, hoặc chạm vào đồ bất kỳ (cả giường, tủ, bếp) để dời hoặc xoay') : T('Tap any furniture — even the bed, wardrobe and kitchen — to move or turn it, or buy more from Anh Khoa.', 'Chạm vào bất kỳ đồ nào — cả giường, tủ và bếp — để dời hoặc xoay, hoặc mua thêm ở tiệm Anh Khoa.'));
+  const hint = D.sel ? (D.ghost ? (D.valid ? T('Place it here?', 'Đặt ở đây?') : T('It doesn\'t fit here', 'Không vừa chỗ này')) : T('Tap the floor to place it', 'Chạm vào sàn để đặt')) : (owned.length ? T('Pick an item below, or tap any furniture (even the bed, wardrobe and kitchen) to move or turn it', 'Chọn đồ bên dưới, hoặc chạm vào đồ bất kỳ (cả giường, tủ, bếp) để dời hoặc xoay') : T('Tap any furniture — even the bed, wardrobe and kitchen — to move or turn it, or buy more from Anh Khoa.', 'Chạm vào bất kỳ đồ nào — cả giường, tủ và bếp — để dời hoặc xoay, hoặc mua thêm ở Nhà đẹp Anh Khoa.'));
   bar.innerHTML = `<div class="deco-hint">${escapeHtml(hint)}</div><div class="row-scroll"></div><div class="deco-actions"></div>`;
   const row = bar.querySelector('.row-scroll');
   for (const [id, n] of Object.entries(counts)) {

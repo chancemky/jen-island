@@ -26,7 +26,7 @@ export const VENDORS = {
     act: 'drink', done: [['Ahh, so refreshing!', 'Aaa, mát cả người!'], ['Sweet and zesty!', 'Ngọt thanh luôn!']],
   },
   banhtrang: {
-    name: 'Bà Út', x: 808, y: 1928, look: GRANNY('#f7de8c', '#e9c9a2', '#b9b3ba'),
+    name: 'Bà Út', x: 868, y: 1928, look: GRANNY('#f7de8c', '#e9c9a2', '#b9b3ba'),
     hi: [['Bánh tráng trộn! Rice paper salad with mango, quail egg and a little chili.', 'Bánh tráng trộn đây! Có xoài, trứng cút với chút ớt nè.'], ['The schoolkids line up for this every afternoon. Try it, cháu!', 'Chiều nào học trò cũng xếp hàng mua. Ăn thử đi cháu!']],
     menu: [{ id: 'banhtrang', en: 'Rice paper salad', vi: 'Bánh tráng trộn', price: 5 }, { id: 'banhtrang', en: 'Extra spicy', vi: 'Cay thật cay', price: 6 }],
     act: 'eat', done: [['Sweet, sour, crunchy… so good!', 'Chua chua, ngọt ngọt, giòn giòn… ngon quá!'], ['Whoa, spicy! In a good way!', 'Oa, cay! Mà cay ngon!']],

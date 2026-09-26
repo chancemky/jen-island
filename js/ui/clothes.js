@@ -49,7 +49,7 @@ function itemRow(id, right, { dim = false, note = '' } = {}) {
 }
 
 export function openBoutique() {
-  openSheet({ title: T('Cô Ba\'s Boutique', 'Tiệm Áo Cô Ba'), sub: T('Clothes, hats and accessories', 'Quần áo, mũ nón và phụ kiện'), who: BA, full: true, build: (body, api) => {
+  openSheet({ title: T('Cô Ba\'s Boutique', 'Tiệm thời trang cô Ba'), sub: T('Clothes, hats and accessories', 'Quần áo, mũ nón và phụ kiện'), who: BA, full: true, build: (body, api) => {
     tabs(body, SLOTS.map(sl => T(sl.en, sl.vi)), (i, pane) => {
       const slot = SLOTS[i].id, w = wardrobe();
       const list = h('div', 'list'); pane.appendChild(list);
@@ -91,7 +91,7 @@ export function openWardrobe() {
         }, on ? 'buy pink' : 'buy alt', on);
         list.appendChild(itemRow(id, b, { note: on ? T('Wearing now', 'Đang mặc') : '' }));
       }
-      if (ids.length <= 1) list.appendChild(h('div', 'empty-note', T('Buy more at Cô Ba\'s Boutique on Market Street!', 'Mua thêm ở Tiệm Áo Cô Ba trên Phố Chợ nhé!')));
+      if (ids.length <= 1) list.appendChild(h('div', 'empty-note', T('Buy more at Cô Ba\'s Boutique on Market Street!', 'Mua thêm ở Tiệm thời trang cô Ba trên Phố Chợ nhé!')));
     }, 0, api);
   } });
 }

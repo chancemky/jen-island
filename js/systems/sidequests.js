@@ -79,8 +79,8 @@ export function updateSideQuests(dt = 0.016) {
     const ix = q.x + r.dx, iy = q.y + r.dy, d = dist(pl.x, pl.y, ix, iy);
     const kind = SCENE[q.id];
     if (kind === 'wind') {                    // the letter keeps blowing away until the third try
-      r.dx += Math.sin(r.t * 0.9) * 4 * dt; r.dy += Math.cos(r.t * 0.7) * 3 * dt;
-      if (d < 34 && r.flee < 2) { r.flee++; const an = Math.atan2(iy - pl.y, ix - pl.x); r.goal = [r.dx + Math.cos(an) * 60, r.dy + Math.sin(an) * 34]; sfx('whoosh'); toast({ text: T('Whoosh! The wind grabbed it again…', 'Vù! Gió lại cuốn nó đi…'), icon: 'star', ms: 1400 }); }
+      r.dx += Math.sin(r.t * 0.9) * 4 * dt; r.dy += Math.cos(r.t * 0.7) * 3 * dt; r.dx = Math.max(-90, Math.min(90, r.dx)); r.dy = Math.max(-60, Math.min(60, r.dy));
+      if (d < 34 && r.flee < 2) { r.flee++; const an = Math.atan2(iy - pl.y, ix - pl.x); let gx = r.dx + Math.cos(an) * 60, gy = r.dy + Math.sin(an) * 34; const gl = Math.hypot(gx, gy); if (gl > 80) { gx = gx / gl * 80; gy = gy / gl * 80; } if (!G.scenes.island.terrain(q.x + gx, q.y + gy)) { gx = -gx * 0.5; gy = -gy * 0.5; } r.goal = [gx, gy]; sfx('whoosh'); toast({ text: T('Whoosh! The wind grabbed it again…', 'Vù! Gió lại cuốn nó đi…'), icon: 'star', ms: 1400 }); }
       if (r.goal) { r.dx += (r.goal[0] - r.dx) * Math.min(1, dt * 3); r.dy += (r.goal[1] - r.dy) * Math.min(1, dt * 3); if (Math.hypot(r.goal[0] - r.dx, r.goal[1] - r.dy) < 2) r.goal = null; }
       if (d < 24 && r.flee >= 2 && !r.goal) play(q);
       continue;
@@ -164,6 +164,8 @@ export function refreshGuide() {
   const a = residentOf(q), asleep = a?.data?.state === 'home';
   setGuide({ text: asleep ? T(`Return the ${q.item[0]} to ${ownerName(q)} (asleep now — they're up in the morning)`, `Trả ${q.item[1]} cho ${ownerName(q)} (đang ngủ — sáng mai dậy)`) : T(`Return the ${q.item[0]} to ${ownerName(q)}`, `Trả ${q.item[1]} cho ${ownerName(q)}`), target: () => ownerTarget(q) });
 }
+// where a lost item is right now (the letter blows around)
+export function questSpot(q) { const r = RT[q.id]; return { x: q.x + (r?.dx || 0), y: q.y + (r?.dy || 0) }; }
 export const foundQuestFor = rid => SIDE_QUESTS.find(q => q.giver === rid && Q()[q.id] === 'found');
 
 // ---------------------------------------------------------------- drawing
@@ -172,7 +174,21 @@ export function drawSideQuests(c, t) {
   for (const q of SIDE_QUESTS) {
     const st = Q()[q.id];
     if (st === 'found') { drawOwnerMark(c, t, q); continue; }
-    if (st !== 'active') continue;
+  }
+}
+// the lost-item scenes are part of the world (sorted with trees and people)
+export function sideQuestDrawables() {
+  if (G.scene !== G.scenes?.island) return [];
+  const out = [];
+  for (const q of SIDE_QUESTS) {
+    if (Q()[q.id] !== 'active') continue;
+    const r = rtq(q);
+    out.push({ x: q.x + r.dx, y: q.y + r.dy, sortY: q.y + r.dy + 1, draw: (c, t) => { c.save(); c.translate(-(q.x + r.dx), -(q.y + r.dy)); drawScene(c, t, q); c.restore(); } });
+  }
+  return out;
+}
+function drawScene(c, t, q) {
+  {
     const r = rtq(q), kind = SCENE[q.id], x = q.x + r.dx, y = q.y + r.dy;
     // a soft glow so it's findable from a distance
     const k = (Math.sin(t * 4) + 1) / 2;

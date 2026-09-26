@@ -228,12 +228,12 @@ function houseExtras(c, t, b, w, h) {
       signBoard(c, -w / 2 + 18, -h - 4, 30, 8, 'TAXI', '#f7de8c', INK);
       break;
     }
-    case 'clinic': { // Dr. Mai's clinic: white and mint, a glowing green cross, a ramp, a bench and opening hours
+    case 'clinic': { // Doctor An's clinic: white and mint, a glowing green cross, a ramp, a bench and opening hours
       box(c, -w / 2 + 1, -14, w - 2, 5, 1, '#6fbfb0', null);                                   // mint stripe
       // green cross light box on the roof edge
       box(c, -11, -h - 30, 22, 22, 4, '#fff', INK, 1); box(c, -3, -h - 27, 6, 16, 1, '#3fae5c', null); box(c, -8, -h - 22, 16, 6, 1, '#3fae5c', null);
       if (nightA() > 0.05) glow(b, 0, -h - 19, 30, 'rgba(120,230,150,.45)');
-      signBoard(c, 0, -h + 4, 50, 8, T('DR. MAI\'S CLINIC', 'PHÒNG KHÁM BS. MAI'), '#3fae5c', '#fff');
+      signBoard(c, 0, -h + 4, 50, 8, T('DR. AN\'S CLINIC', 'PHÒNG KHÁM BS. AN'), '#3fae5c', '#fff');
       // blinds in the windows
       for (const x of [-Math.min(32, w * 0.5 - 20), Math.min(32, w * 0.5 - 20)]) for (let i = 0; i < 4; i++) line(c, x - 10, -h + 15 + i * 4, x + 10, -h + 15 + i * 4, 'rgba(255,255,255,.75)', 0.9);
       // ramp with a rail, opening hours plate, a bench and a first-aid box by the door
@@ -319,7 +319,7 @@ export function drawShop(c, t, b) {
     door(c, w / 2 - 24, 26, 38, '#bfe6ef', b.doorOpen || 0, { double: true, inside: '#f7f0dc', matCol: '#6fbf73' });
     awning(c, -14, -h + 12, w - 32, ['#fff5df', '#6fbf73'], 12);
     box(c, -w / 2 - 4, -h - 22, w + 8, 24, 4, '#6fbf73');
-    text(c, T('CÔ HOA\'S MARKET', 'SIÊU THỊ CÔ HOA'), 0, -h - 10, 11, '#fff', 900, 'center', INK, 2.4);
+    text(c, T('BINH MINH MARKET', 'SIÊU THỊ BÌNH MINH'), 0, -h - 10, 11, '#fff', 900, 'center', INK, 2.4);
     circ(c, -w / 2 + 10, -h - 10, 7, '#fff5df');
     poly(c, [-w / 2 + 6, -h - 12, -w / 2 + 14, -h - 12, -w / 2 + 13, -h - 7, -w / 2 + 7, -h - 7], '#f28f7c', INK, 0.7);
   } else if (kind === 'materials') {
@@ -332,7 +332,7 @@ export function drawShop(c, t, b) {
     door(c, w / 2 - 22, 22, 36, '#8f9aa3', b.doorOpen || 0, { matCol: '#e9c46f' });
     tinRoof(c, w, 26, h, '#5f8fb8');
     box(c, -w / 2 + 6, -h - 34, w - 12, 20, 3, '#f7de8c');
-    text(c, T('CHÚ BẢY\'S MATERIALS', 'VẬT LIỆU CHÚ BẢY'), 0, -h - 23.5, 10, '#6e4430', 900);
+    text(c, T('BEN VUNG MATERIALS', 'VLXD BỀN VỮNG'), 0, -h - 23.5, 10, '#6e4430', 900);
   } else if (kind === 'furniture') {
     box(c, -w / 2 + 10, -h + 14, 52, h - 20, 3, nightA() > 0.05 ? winLit() : '#d9f1f6');
     // display: a chair and a lamp
@@ -342,7 +342,7 @@ export function drawShop(c, t, b) {
     windowBox(c, 8, -h + 14, 22, 18, { shutter: '#c98f5a', b });
     door(c, w / 2 - 22, 22, 34, '#c98f5a', b.doorOpen || 0, { matCol: '#9fd8c8' });
     tileRoof(c, w, 40, h, '#c9674a', { overhang: 8 });
-    signBoard(c, 0, -h - 8, 96, 16, T('ANH KHOA\'S FURNITURE', 'NỘI THẤT ANH KHOA'), '#fff5df', '#8a5f3e');
+    signBoard(c, 0, -h - 8, 96, 16, T('ANH KHOA\'S FURNITURE', 'NHÀ ĐẸP ANH KHOA'), '#fff5df', '#8a5f3e');
   }
   else if (kind === 'boutique') {
     // big display window with two mannequins, striped pink awning, scalloped sign
@@ -355,7 +355,7 @@ export function drawShop(c, t, b) {
     awning(c, -14, -h + 12, w - 32, ['#fff5f7', '#f28fa3'], 12);
     box(c, -w / 2 - 2, -h - 22, w + 4, 22, 10, '#f28fa3');
     for (let i = 0; i < 9; i++) circ(c, -w / 2 + 6 + i * (w - 8) / 8, -h, 3.2, '#f28fa3', null);
-    text(c, T('CÔ BA\'S BOUTIQUE', 'TIỆM ÁO CÔ BA'), 0, -h - 11, 10.5, '#fff', 900, 'center', INK, 2.4);
+    { const lab = T('CÔ BA\'S BOUTIQUE', 'TIỆM THỜI TRANG CÔ BA'); text(c, lab, -5, -h - 11, Math.min(10.5, (w - 34) / lab.length * 1.75), '#fff', 900, 'center', INK, 2.4); }   // long names shrink to fit
     // a little hanger icon
     { const hx = w / 2 - 6, hy = -h - 11; c.strokeStyle = '#fff'; c.lineWidth = 1.4; c.lineCap = 'round';
       c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx, hy - 2.5); c.arc(hx + 2, hy - 2.5, 2, Math.PI, Math.PI * 2.1); c.stroke();          // the hook
@@ -482,7 +482,7 @@ export function drawNightStall(c, t, b) {
   const cols = broken ? ['#9d8a80', '#b3a79a'] : b.cloth || ['#e8584e', '#fff5df'];
   clothRoof(c, w, 18, h + 34, cols, { torn: broken });
   if (!broken && (s.label || b.label)) signBoard(c, 0, -h - 30, w - 12, 10, tr(s.label || b.label), s.owned ? '#f08ca0' : '#fff5df', s.owned ? '#fff' : '#a8563f');
-  if (!broken && nightA() > 0.05) { lanternShape(c, 0, -h - 34, 0.8, '#ea5a4f', t, b.x); glow(b, 0, -h - 20, 50, 'rgba(255,190,110,.6)'); }
+  if (!broken && nightA() > 0.05) { lanternShape(c, w / 2 - 4, -h - 40, 0.7, '#ea5a4f', t, b.x); glow(b, 0, -h - 20, 50, 'rgba(255,190,110,.6)'); }   // hangs from the post, clear of the sign
   if (broken) { poly(c, [-w / 2 + 6, -h - 2, w / 2 - 10, -h - 2, w / 2 - 14, -h + 10, -w / 2 + 10, -h + 12], 'rgba(90,70,60,.35)', null); }
 }
 

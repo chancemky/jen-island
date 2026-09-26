@@ -1,0 +1,8 @@
+<!doctype html><body style="margin:0;background:#a3d68a"><canvas id=c></canvas><script type=module>
+import '../js/systems/state.js';
+import { drawHuman } from '../js/gfx/character.js';
+import { playerLook } from '../js/data/looks.js';
+const Z=6, cv=document.getElementById('c'); cv.width=4*40*Z; cv.height=60*Z; const c=cv.getContext('2d'); c.lineJoin='round'; c.lineCap='round';
+['down','right','up','left'].forEach((d,i)=>{ c.save(); c.setTransform(Z,0,0,Z,(i*40+20)*Z,54*Z); drawHuman(c,{look:playerLook({hairStyle:'bob'}),dir:d,moving:0,seed:1,basket:true,basketItems:4},0.3); c.restore(); });
+window.done=1;
+</script>

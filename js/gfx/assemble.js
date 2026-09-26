@@ -6,7 +6,7 @@
 // Units: roughly ±36 wide around the origin; `a` is a 0..1 drop-in animation.
 
 import { TAU } from '../core/util.js';
-import { INK, ell, circ, box, shadow, poly } from './draw.js';
+import { INK, ell, circ, box, shadow, poly, line } from './draw.js';
 
 const rngOf = s => () => ((s = (s * 16807) % 2147483647) / 2147483647);
 

@@ -41,7 +41,7 @@ export function stockedIngredients() {
 
 // ---------------------------------------------------------------- supermarket
 export function openIngredientShop() {
-  openSheet({ title: T('Cô Hoa\'s Supermarket', 'Siêu thị Cô Hoa'), sub: T('Fresh ingredients', 'Nguyên liệu tươi'), who: MERCHANTS.co_hoa, build: (body, api) => {
+  openSheet({ title: T('Binh Minh Supermarket', 'Siêu thị Bình Minh'), sub: T('Fresh ingredients', 'Nguyên liệu tươi'), who: MERCHANTS.co_hoa, build: (body, api) => {
     // aisle chips
     const stocked = stockedIngredients();
     const aisles = AISLES.filter(a => a.id === 'all' || a.items.some(k => stocked.includes(k)));
@@ -113,7 +113,7 @@ export function shoppingNeeds() {
 
 // ---------------------------------------------------------------- materials
 export function openMaterialShop() {
-  openSheet({ title: T('Chú Bảy\'s Materials', 'Vật liệu Chú Bảy'), sub: T('Wood, metal sheets and paint', 'Gỗ, tôn, sơn'), who: MERCHANTS.chu_bay, build: (body, api) => {
+  openSheet({ title: T('Ben Vung Materials', 'VLXD Bền Vững'), sub: T('Wood, metal sheets and paint', 'Gỗ, tôn, sơn'), who: MERCHANTS.chu_bay, build: (body, api) => {
     const list = h('div', 'list scroll'); list.style.flex = '1'; body.appendChild(list);
     const need = G.runtime.materialNeed?.();
     if (need) {
@@ -147,7 +147,7 @@ export function openMaterialShop() {
 
 // ---------------------------------------------------------------- furniture
 export function openFurnitureShop() {
-  openSheet({ title: T('Anh Khoa\'s Furniture', 'Nội thất Anh Khoa'), sub: T('Make your house a home', 'Đồ đạc cho ngôi nhà'), who: MERCHANTS.anh_khoa, build: (body, api) => {
+  openSheet({ title: T('Anh Khoa\'s Furniture', 'Nhà đẹp Anh Khoa'), sub: T('Make your house a home', 'Đồ đạc cho ngôi nhà'), who: MERCHANTS.anh_khoa, build: (body, api) => {
     const list = h('div', 'list scroll'); list.style.flex = '1'; body.appendChild(list);
     const s = G.state;
     for (const [id, f] of Object.entries(FURNITURE)) {
@@ -300,7 +300,7 @@ export function openRequirement({ title, sub = '', cost = 0, mats: need = {}, ac
     const foot = h('div', 'foot');
     foot.appendChild(btn(actionLabel, () => { if (!ready) return; api.close(true); action(); }, 'btn big' + (ready ? ' pink' : ''), !ready));
     body.appendChild(foot);
-    if (!ready) wrap.appendChild(h('div', 'empty-note', Object.keys(need).length ? T('Chú Bảy\'s material shop on Market Street sells what you need.', 'Tiệm vật liệu Chú Bảy ở Phố Chợ có bán đủ thứ bạn cần.') : T('Keep earning — you\'re nearly there!', 'Cố gắng thêm chút nữa — sắp đủ rồi!')));
+    if (!ready) wrap.appendChild(h('div', 'empty-note', Object.keys(need).length ? T('Ben Vung Materials on Market Street sells what you need.', 'Tiệm VLXD Bền Vững ở Phố Chợ có bán đủ thứ bạn cần.') : T('Keep earning — you\'re nearly there!', 'Cố gắng thêm chút nữa — sắp đủ rồi!')));
   } });
 }
 

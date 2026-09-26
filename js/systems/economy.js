@@ -55,7 +55,8 @@ export function candidate(id) {
   let h = 7; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) % 100003;
   const seed = (G.state.day * 977 + h * 131) % 100000;
   const r = n => ((seed * 9301 + 49297 * n) % 233280) / 233280;
-  return { name: LOCAL_NAMES[Math.floor(r(1) * LOCAL_NAMES.length)], seed, trait: TRAIT[Math.floor(r(2) * TRAIT.length)].id };
+  const adults = LOCAL_NAMES.filter(n => !n.startsWith('Em '));      // no children behind the counter
+  return { name: adults[Math.floor(r(1) * adults.length)], seed, trait: TRAIT[Math.floor(r(2) * TRAIT.length)].id };
 }
 export function hireKeeper(id) {
   const k = candidate(id), fee = keeperWage(id) * 2;             // first two days up front

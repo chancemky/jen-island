@@ -3,6 +3,7 @@
 
 import { rng, pick } from '../core/util.js';
 import { HAIRCUTS } from './hair.js';
+import { T } from '../systems/state.js';
 
 export const EYES = ['#8a5a40', '#4f9f7a', '#5f8fd0', '#c9803a', '#8a6ad0', '#3f6f5a'];
 export const SKIN = ['#fde5d2', '#f8d6bd', '#f1c6a4', '#e3b08b', '#cf9772', '#b67e5b'];
@@ -39,7 +40,7 @@ export const RESIDENTS = {
   co_lan: { name: 'Cô Lan', role: 'Florist', look: { skin: '#f8d6bd', eyeCol: '#4f9f7a', hair: '#2f2a30', hairStyle: 'sidepart', top: '#f8c0a0', topStyle: 'aodai', bottom: '#fff', bottomLen: 5, shoe: '#f0e6da', lashes: true, flower: '#ff8fb0' }, personality: 'picky' },
   be_na: { name: 'Bé Na', role: 'Kid who loves chè', look: { skin: '#fde5d2', eyeCol: '#c9803a', hair: '#6e4430', hairStyle: 'buns', top: '#f7de8c', topStyle: 'dress', bottom: '#f7de8c', shoe: '#e9848f', scale: 0.8, lashes: true }, personality: 'excited' },
   anh_tuan: { name: 'Anh Tuấn', role: 'Scooter taxi driver', look: { skin: '#e3b08b', eyeCol: '#8a6ad0', hair: '#2f2a30', hairStyle: 'crop', top: '#9fd8c8', topStyle: 'shirt', bottom: '#3f4a5e', bottomLen: 5, shoe: '#7a5040', hat: 'bucket', hatColor: '#7aa38a' }, personality: 'regular' },
-  chi_mai: { name: 'Chị Mai', role: 'Island doctor', look: { skin: '#f1c6a4', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'highpony', top: '#a9cf9a', topStyle: 'shirt', bottom: '#6d7fa8', bottomLen: 5, shoe: '#f0e6da', lashes: true, lanyard: '#f28f7c', accent: '#f7de8c' }, personality: 'rushed' },
+  chi_mai: { get name() { return T('Doctor An', 'Bác sĩ An'); }, role: 'Island doctor', look: { skin: '#f1c6a4', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'highpony', top: '#a9cf9a', topStyle: 'shirt', bottom: '#6d7fa8', bottomLen: 5, shoe: '#f0e6da', lashes: true, lanyard: '#f28f7c', accent: '#f7de8c' }, personality: 'rushed' },
 };
 // Lives on Firefly Islet; appears once the Long Bridge is fixed.
 RESIDENTS.vy = { name: 'Vy', role: 'Painter', islet: true, look: { skin: '#fde5d2', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'frenchbob', top: '#9fd8c8', topStyle: 'tee', bottom: '#556b8a', bottomLen: 3, shoe: '#fff', lashes: true, hat: 'bucket', hatColor: '#3f4a5e' }, personality: 'excited' };

@@ -1,5 +1,6 @@
 <!doctype html><body style="margin:0;background:#5ec2cf"><canvas id=c></canvas><script type=module>
-import '../js/systems/state.js';
+import { setLang } from '../js/systems/state.js';
+if (new URLSearchParams(location.search).get('lang') === 'vi') setLang('vi');
 import { Island, W, H } from '../js/world/island.js';
 const Q=new URLSearchParams(location.search), S=+(Q.get('s')||0.4), x0=+(Q.get('x')||0), y0=+(Q.get('y')||0), w=+(Q.get('w')||W), h=+(Q.get('h')||H);
 const isl=new Island(); const cv=document.getElementById('c'); cv.width=w*S; cv.height=h*S; const c=cv.getContext('2d');

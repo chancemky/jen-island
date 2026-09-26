@@ -10,7 +10,7 @@ import { POND as POND_C, isOcean } from '../world/island.js';
 import { ell, circ } from '../gfx/draw.js';
 import { updateBarks, drawBarks } from './fun.js';
 import { nearestSeat, hopOnto } from './seats.js';
-import { updateSideQuests, drawSideQuests } from './sidequests.js';
+import { updateSideQuests, drawSideQuests, sideQuestDrawables } from './sidequests.js';
 import { PATHS, BUILDINGS, QUEUES } from '../world/island.js';
 import { rand, randi, choice, chance, dist, bus, clamp, TAU, smoothLine } from '../core/util.js';
 import { drawBoatTop } from './cinematic.js';
@@ -51,6 +51,7 @@ npcs.spawnIsletResidents = () => {
     if (!def.islet || npcs.residents.some(a => a.data.rid === rid)) continue;
     const home = HOME_OF[rid];
     const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: home.x, y: home.y + 16, speed: rand(46, 58), data: { rid, state: 'idle', until: 0, npc: true } });
+    Object.defineProperty(a, 'name', { get: () => def.name, set() {}, configurable: true });   // follows the language (e.g. Doctor An / Bác sĩ An)
     a.talkable = true; island.add(a); npcs.residents.push(a);
   }
 };
@@ -88,6 +89,7 @@ export function initNPCs(island) {
     if (def.islet && !G.state.story.flags.bridgeFixed) continue;
     const home = HOME_OF[rid];
     const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: home ? home.x : 900, y: home ? home.y + 16 : 1600, speed: rand(46, 58), data: { rid, state: 'idle', until: 0, npc: true } });
+    Object.defineProperty(a, 'name', { get: () => def.name, set() {}, configurable: true });   // follows the language (e.g. Doctor An / Bác sĩ An)
     a.talkable = true;
     island.add(a);
     npcs.residents.push(a);
@@ -446,6 +448,7 @@ export function npcDrawables() {
   const f = ferryDrawable(); if (f) out.push(f);
   out.push(...animalDrawables());
   for (const sc of npcs.scooters) out.push(scooterDrawable(sc));
+  for (const d of sideQuestDrawables()) out.push(d);
   for (const b of npcs.butterflies) out.push({ x: b.x, y: b.y, sortY: b.y + 30, draw: (c, t) => { c.save(); c.translate(0, -22 - Math.sin(b.t * 3) * 4); const f = Math.abs(Math.sin(b.t * 16)); c.fillStyle = b.col; c.strokeStyle = 'rgba(91,63,54,.7)'; c.lineWidth = 0.6; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * 2.6 * f, -1, 2.6 * f + 0.4, 3, s * 0.4, 0, TAU); c.fill(); c.stroke(); } c.restore(); } });
   return out;
 }

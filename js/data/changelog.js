@@ -3,9 +3,32 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '4.0.0';
+export const APP_VERSION = '4.1.0';
 
 export const CHANGELOG = [
+  {
+    v: '4.1.0', date: '2026-09-26T13:40:16Z',
+    title: ['Every Chapter Counts', 'Chương Nào Cũng Đáng'],
+    items: [
+      ['Every chapter now has real, multi-part goals, not just a single number to wait for', 'Mỗi chương giờ có mục tiêu nhiều phần thật sự, không chỉ chờ một con số'],
+      ['Chapter 1 ends with \'Settle in\': 40 customers, 12 perfect orders, 900k earned, reputation 15 and day 5', 'Chương 1 kết thúc bằng \'Làm quen với đảo\': 40 khách, 12 món hoàn hảo, kiếm 900k, danh tiếng 15 và ngày thứ 5'],
+      ['Chapter 2: earn 3 regulars, learn peach tea at Mèo Mây\'s house, upgrade the drink stand and keep serving', 'Chương 2: có 3 khách quen, học trà đào ở nhà Mèo Mây, nâng cấp quán nước và tiếp tục bán'],
+      ['Chapter 3 asks you to decorate your home; Chapter 6 to upgrade the bánh mì shed and save up', 'Chương 3 cần trang trí nhà; Chương 6 cần nâng cấp quán bánh mì và để dành tiền'],
+      ['Chapter 5: sell bánh mì yourself while your new shopkeeper runs the drink stand', 'Chương 5: tự bán bánh mì trong lúc người trông mới lo quán nước'],
+      ['Chapter 9: hire a keeper for a night stall; Chapter 13: learn egg coffee, staff the café and sell 80 coffees', 'Chương 9: thuê người trông sạp đêm; Chương 13: học cà phê trứng, thuê người trông quán cà phê và bán 80 ly'],
+      ['Chapter 15: buy 3 properties, have 4 shops with keepers and save 15M₫', 'Chương 15: mua đứt 3 nơi, có 4 quán có người trông và để dành 15 triệu'],
+      ['Fixed a crash when grilling squid at the Coconut Cove Grill', 'Sửa lỗi văng game khi nướng mực ở Quán Nướng Vịnh Dừa'],
+      ['Lost items sit in clearings and are drawn among trees and people, not over them', 'Đồ thất lạc nằm ở chỗ trống và được vẽ lẫn giữa cây cối, người đi lại, không đè lên trên'],
+      ['The windblown letter stays close by, and the map star follows it', 'Lá thư bay giờ không bay quá xa, ngôi sao trên bản đồ đi theo nó'],
+      ['Haircuts: the camera moves in close and Chị Tiên stands beside your chair', 'Cắt tóc: máy quay lại gần và Chị Tiên đứng cạnh ghế'],
+      ['Talking to the cart grandmas no longer makes you sit on a stool, and trees stay clear of the carts', 'Nói chuyện với các bà bán xe không còn bị ngồi lên ghế đẩu, cây không che xe nữa'],
+      ['Night Market customers queue in the open aisle, and stall lanterns no longer cover the signs', 'Khách Chợ Đêm xếp hàng ở lối đi trống, đèn lồng không che biển sạp nữa'],
+      ['Coconut Cove is a sunny beach again instead of a forest', 'Vịnh Dừa lại là bãi biển đầy nắng thay vì một khu rừng'],
+      ['Fixed Mèo Mây getting stuck on the way to the Night Market', 'Sửa lỗi Mèo Mây bị kẹt trên đường tới Chợ Đêm'],
+      ['Shop applicants are always grown-ups', 'Người xin việc trông quán luôn là người lớn'],
+      ['New names: Binh Minh Supermarket, Ben Vung Materials, Wind Plaza, and the clinic is now Doctor An\'s', 'Tên mới: Siêu thị Bình Minh, VLXD Bền Vững, Tiệm thời trang cô Ba, Nhà đẹp Anh Khoa, Tiệm Hoa, Quảng trường gió, và phòng khám của Bác sĩ An'],
+    ],
+  },
   {
     v: '4.0.0', date: '2026-09-26T12:29:58Z',
     title: ['The Big Island', 'Hòn Đảo Lớn'],

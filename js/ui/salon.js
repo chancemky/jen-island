@@ -12,6 +12,7 @@ import { money, escapeHtml, sleep } from '../core/util.js';
 import { toast } from './hud.js';
 import { addXP } from '../systems/progress.js';
 import { fx } from '../world/render.js';
+import { camTo, camFollow } from '../systems/cutscene.js';
 import { baseLook, refreshPlayerLook } from './clothes.js';
 
 const DYE_PRICE = 60;
@@ -49,7 +50,8 @@ async function haircut(patch, label) {
   pl.control = false;
   try {
     if (chair) { await pl.walkTo([[chair.x, chair.y + 12]], { speed: 90 }); pl.face('up'); await sleep(100); pl.face('down'); pl.sit = true; pl.seatH = 11; pl.x = chair.x; pl.y = chair.y + 1.5; pl.squash = 0.8; sfx('pop'); }
-    if (st && chair) { st._home = st._home || { x: st.x, y: st.y }; await st.walkTo([[chair.x + 16, chair.y + 2]], { speed: 90 }); st.face('left'); }
+    if (chair) camTo(chair.x + 10, chair.y - 26, { zoom: 1.9, rate: 3 });
+    if (st && chair) { st._home = st._home || { x: st.x, y: st.y }; await st.walkTo([[chair.x + 26, chair.y + 6]], { speed: 90 }); st.face('left'); }
     // cape on, snip snip (little bits of hair fall), then POOF: new look
     const oldLook = pl.look; pl.look = { ...oldLook, cape: '#fffaf0' }; delete pl.look._v;
     st?.setAct('work', 'scissors');
@@ -70,9 +72,10 @@ async function haircut(patch, label) {
     st?.showEmote('heart', 1.4);
     await sleep(600);
     if (chair) { pl.sit = false; pl.seatH = undefined; pl.doHop?.(70); pl.y = chair.y + 14; }
+    camFollow(pl, 1);
     toast({ text: T(`New look: ${label[0]}!`, `Kiểu mới: ${label[1]}!`), sub: T('Chị Tiên: "Gorgeous! Come back any time."', 'Chị Tiên: "Xinh quá trời! Ghé lại nha."'), icon: 'scissors' });
     if (st && st._home) { st.walkTo([[st._home.x, st._home.y]], { speed: 70 }).then(() => st.face('down')); }
-  } finally { pl.control = true; if (pl.look?.cape) refreshPlayerLook(); }
+  } finally { pl.control = true; if (pl.look?.cape) refreshPlayerLook(); camFollow(pl, 1); }
 }
 
 export function openSalon() {

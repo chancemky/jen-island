@@ -5,7 +5,7 @@
 
 import { G, T } from '../systems/state.js';
 import { RIVER, RIVER_W, POND, PATHS, BUILDINGS, STALLS, PLAZA, NM_PLAZA, PIER, PIER_END, LANDS, PADDIES, BRIDGES, SEA_BRIDGES, W, H } from '../world/island.js';
-import { activeQuests } from '../systems/sidequests.js';
+import { activeQuests, questSpot } from '../systems/sidequests.js';
 import { currentStep } from '../systems/story.js';
 import { iconURL } from '../gfx/food.js';
 import { TAU, clamp } from '../core/util.js';
@@ -89,7 +89,7 @@ function buildBase() {
   }
   // the pier
   for (const r of [PIER, PIER_END]) { c.fillStyle = '#c98f5a'; c.fillRect(r.x, r.y, r.w, r.h); c.strokeStyle = '#8a5f3e'; c.lineWidth = 5; c.strokeRect(r.x, r.y, r.w, r.h); }
-  // Banyan Plaza: a round paved square with the fountain
+  // Wind Plaza: a round paved square with the fountain
   c.beginPath(); c.arc(PLAZA.x, PLAZA.y, PLAZA.r, 0, TAU); c.fillStyle = '#ecdcc0'; c.fill(); c.strokeStyle = '#c7a574'; c.lineWidth = 6; c.stroke();
   c.beginPath(); c.arc(PLAZA.x, PLAZA.y, 30, 0, TAU); c.fillStyle = '#8fd6e2'; c.fill(); c.strokeStyle = '#9aa3ad'; c.lineWidth = 6; c.stroke();
   // Night Market: tiled square, two rows of striped stall roofs, lantern strings
@@ -186,7 +186,7 @@ function draw(cv, view) {
   }
   // area names
   c.globalAlpha = 0.55;
-  for (const [x, y, en, vi, reg] of [[520, 1760, 'West Village', 'Xóm Tây'], [1330, 1880, 'East Village', 'Xóm Đông'], [900, 2350, 'Sunny Beach', 'Bãi Biển'], [1460, 1180, 'Rice Paddies', 'Ruộng Lúa'], [900, 1080, 'Market Street', 'Phố Chợ'], [430, 450, 'Night Market', 'Chợ Đêm'], [900, 1700, 'Banyan Plaza', 'Quảng Trường Cây Đa'], [2690, 820, 'Harbour Town', 'Phố Cảng', 'harbour'], [2330, 2420, 'Coconut Cove', 'Vịnh Dừa', 'cove'], [2250, 1760, 'Firefly Islet', 'Cù Lao Đom Đóm', 'islet']]) {
+  for (const [x, y, en, vi, reg] of [[520, 1760, 'West Village', 'Xóm Tây'], [1330, 1880, 'East Village', 'Xóm Đông'], [900, 2350, 'Sunny Beach', 'Bãi Biển'], [1460, 1180, 'Rice Paddies', 'Ruộng Lúa'], [900, 1080, 'Market Street', 'Phố Chợ'], [430, 450, 'Night Market', 'Chợ Đêm'], [900, 1700, 'Wind Plaza', 'Quảng trường gió'], [2690, 820, 'Harbour Town', 'Phố Cảng', 'harbour'], [2330, 2420, 'Coconut Cove', 'Vịnh Dừa', 'cove'], [2250, 1760, 'Firefly Islet', 'Cù Lao Đom Đóm', 'islet']]) {
     if (reg && !regionOpen(reg)) continue;
     label(c, T(en, vi), x, y, 13 * k, '#5b3f36', null, 'italic 900');
   }
@@ -217,7 +217,7 @@ function draw(cv, view) {
     }
   }
   // side quest stars
-  for (const q of activeQuests()) if (G.state.sideQuests[q.id] === 'active') starAt(c, q.x, q.y, 12 * k);
+  for (const q of activeQuests()) if (G.state.sideQuests[q.id] === 'active') { const sp = questSpot(q); starAt(c, sp.x, sp.y, 12 * k); }
   // goal
   const tg = currentStep()?.target?.();
   if (tg && tg.scene === 'island') { c.beginPath(); c.arc(tg.x, tg.y, 18 * k, 0, TAU); c.strokeStyle = '#f2c14e'; c.lineWidth = 5 * k; c.stroke(); c.beginPath(); c.arc(tg.x, tg.y, 28 * k, 0, TAU); c.strokeStyle = 'rgba(242,193,78,.45)'; c.lineWidth = 4 * k; c.stroke(); }

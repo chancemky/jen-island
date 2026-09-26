@@ -151,7 +151,7 @@ export function buildInteriors() {
   }
   // Supermarket
   {
-    const r = new Interior({ id: 'supermarket', name: 'Siêu thị Cô Hoa', w: 300, h: 300, WH: 66, wall: '#e3f3ea', wall2: '#d3ecdf', wallStyle: 'tile', floor: '#f4efe4', floorStyle: 'tile', door: { x: 150, w: 34 }, building: 'supermarket' });
+    const r = new Interior({ id: 'supermarket', name: 'Siêu thị Bình Minh', w: 300, h: 300, WH: 66, wall: '#e3f3ea', wall2: '#d3ecdf', wallStyle: 'tile', floor: '#f4efe4', floorStyle: 'tile', door: { x: 150, w: 34 }, building: 'supermarket' });
     r.furn('shelfJars', 52, 70, { w: 84, cols: ['#f28f7c', '#f7de8c', '#9fd67a', '#e9a24a', '#f4ead2'] }, [-42, -8, 84, 8]);
     r.furn('fridge', 262, 72, {}, [-18, -8, 36, 8]);
     r.furn('fridge', 224, 72, {}, [-18, -8, 36, 8]);
@@ -170,7 +170,7 @@ export function buildInteriors() {
   }
   // Material shop
   {
-    const r = new Interior({ id: 'materials', name: 'Vật liệu Chú Bảy', w: 280, h: 290, WH: 64, wall: '#e9d6c4', wallStyle: 'brick', floor: '#c9c3b8', floorStyle: 'concrete', door: { x: 140, w: 32 }, building: 'materials' });
+    const r = new Interior({ id: 'materials', name: 'VLXD Bền Vững', w: 280, h: 290, WH: 64, wall: '#e9d6c4', wallStyle: 'brick', floor: '#c9c3b8', floorStyle: 'concrete', door: { x: 140, w: 32 }, building: 'materials' });
     r.furn('lumber', 50, 130, { w: 70 }, [-36, -12, 72, 12]);
     r.furn('paintShelf', 232, 72, { w: 70 }, [-35, -8, 70, 8]);
     r.furn('sheetStack', 226, 178, {}, [-24, -20, 48, 20]);
@@ -185,7 +185,7 @@ export function buildInteriors() {
   }
   // Furniture shop
   {
-    const r = new Interior({ id: 'furniture', name: 'Nội thất Anh Khoa', w: 290, h: 300, WH: 64, wall: '#f4e1cf', wall2: '#efd6be', floor: '#c98f5a', door: { x: 145, w: 32 }, building: 'furniture' });
+    const r = new Interior({ id: 'furniture', name: 'Nhà đẹp Anh Khoa', w: 290, h: 300, WH: 64, wall: '#f4e1cf', wall2: '#efd6be', floor: '#c98f5a', door: { x: 145, w: 32 }, building: 'furniture' });
     r.wallItem('painting', 60); r.wallItem('clock', 226); r.wallItem('painting', 100);
     r.furn('pass', 145, 104, { w: 70 }, [-35, -24, 70, 22]);
     r.furn('sofa', 62, 150, {}, [-30, -24, 60, 22]);
@@ -204,7 +204,7 @@ export function buildInteriors() {
   }
   // Cô Ba's boutique
   {
-    const r = new Interior({ id: 'boutique', name: 'Tiệm Áo Cô Ba', w: 290, h: 300, WH: 66, wall: '#fbe0e6', wall2: '#f6cfd8', wallStyle: 'dots', floor: '#e8d2b8', floorStyle: 'wood', door: { x: 145, w: 32 }, building: 'boutique' });
+    const r = new Interior({ id: 'boutique', name: 'Tiệm thời trang cô Ba', w: 290, h: 300, WH: 66, wall: '#fbe0e6', wall2: '#f6cfd8', wallStyle: 'dots', floor: '#e8d2b8', floorStyle: 'wood', door: { x: 145, w: 32 }, building: 'boutique' });
     r.wallItem('bunting', 145, { w: 200, cols: ['#f4a9b8', '#fff', '#9fd8c8', '#fff', '#f7de8c'] });
     r.wallItem('window', 60, { w: 40, h: 24, hgt: 50, curtain: '#9fd8c8' });
     r.furn('pass', 145, 104, { w: 70, col: '#f6cfd8', top: '#fff8fa' }, [-35, -24, 70, 22]);
