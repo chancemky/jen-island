@@ -3,9 +3,24 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '3.3.0';
+export const APP_VERSION = '3.4.0';
 
 export const CHANGELOG = [
+  {
+    v: '3.4.0', date: '2026-09-26T03:30:56Z',
+    title: ['A Livelier Island', 'Hòn Đảo Sống Động'],
+    items: [
+      ['The island feels alive: drifting cloud shadows, falling petals, dragonflies over the water and fireflies at night', 'Hòn đảo sống động hơn: bóng mây trôi, cánh hoa rơi, chuồn chuồn trên mặt nước và đom đóm ban đêm'],
+      ['Tall grass, mushrooms, stumps, pebbles, clover, meadow flowers and flower beds by every home', 'Cỏ cao, nấm, gốc cây, sỏi, cỏ ba lá, hoa đồng nội và luống hoa trước mỗi nhà'],
+      ['Paths no longer cut into the Night Market, buildings or fields — and they have grassy edges now', 'Đường không còn cắt vào Chợ Đêm, nhà cửa hay ruộng — và có viền cỏ hai bên'],
+      ['All furniture redone with much more detail: patchwork quilts, woven sofas, full bookshelves, cozy kitchens and more', 'Toàn bộ nội thất được vẽ lại chi tiết hơn: chăn chắp vá, sofa mây, kệ sách đầy ắp, bếp ấm cúng và nhiều hơn nữa'],
+      ['Rooms have wainscoting, varied floorboards and soft window light', 'Phòng có ốp tường, sàn gỗ nhiều sắc và ánh nắng dịu từ cửa sổ'],
+      ['New hats (beanies, berets, bows, kitty ears, flower crowns, a crown!) and a new Shoes section with sandals, boots and bunny slippers', 'Mũ mới (mũ len, mũ nồi, nơ, tai mèo, vòng hoa, vương miện!) và mục Giày dép mới với dép, bốt và dép thỏ'],
+      ['Sleepers now lie on their backs, tucked under the quilt', 'Người ngủ giờ nằm ngửa, đắp chăn gọn gàng'],
+      ['Heads and paws stay attached on every character and animal', 'Đầu và chân tay luôn dính liền trên mọi nhân vật và con vật'],
+      ['Push the stick all the way to jog; fuller arm swing when walking', 'Đẩy cần hết cỡ để chạy chậm; tay đánh nhịp rõ hơn khi đi'],
+    ],
+  },
   {
     v: '3.3.0', date: '2026-09-26T03:12:35Z',
     title: ['Happy Feet', 'Bước Chân Vui Vẻ'],

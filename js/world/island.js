@@ -80,24 +80,24 @@ export const PATHS = {
   beachW: [[900, 2252], [760, 2250], [600, 2236], [450, 2176], [330, 2066], [250, 1960]],
   beachE: [[900, 2252], [1060, 2250], [1230, 2236], [1380, 2196], [1500, 2100], [1580, 1990]],
   east: [[1000, 1580], [1120, 1690], [1260, 1766], [1420, 1766], [1560, 1720], [1610, 1640]],
-  lane: [[1120, 1690], [1200, 1620], [1340, 1610], [1500, 1570]],
+  lane: [[1120, 1690], [1232, 1660], [1340, 1634], [1440, 1604], [1500, 1572]],
   north: [[900, 1436], [900, 1300], [900, 1186]],
-  market: [[480, 1184], [700, 1190], [900, 1188], [1100, 1186], [1340, 1176], [1450, 1140]],
-  west: [[800, 1560], [650, 1604], [500, 1600], [370, 1544], [270, 1440], [230, 1330]],
+  market: [[480, 1184], [700, 1190], [900, 1188], [1100, 1186], [1340, 1178], [1418, 1170]],
+  west: [[800, 1560], [650, 1604], [500, 1602], [362, 1558], [270, 1440], [230, 1330]],
   linh: [[300, 1392], [270, 1440]],
   lan: [[690, 1458], [760, 1500], [812, 1520]],
-  nw: [[480, 1184], [460, 1080], [456, 960], [454, 846], [440, 760]],
-  nm: [[440, 760], [430, 520]],
-  resto: [[1100, 1186], [1130, 1040], [1170, 900], [1200, 754]],
-  north2: [[1170, 900], [1040, 760], [940, 620], [900, 330]],
+  nw: [[480, 1184], [460, 1080], [456, 960], [454, 846], [446, 808]],
+  nm: [[446, 808], [440, 760], [430, 520]],
+  resto: [[1200, 1182], [1200, 1060], [1188, 900], [1200, 754]],
+  north2: [[1188, 900], [1040, 760], [940, 620], [900, 330]],
   bridgeW: [[1500, 1570], [1600, 1540], [1696, 1519]],
   bridge: [[1696, 1519], [1946, 1519]],
   islet: [[1946, 1519], [2050, 1506], [2150, 1470], [2260, 1440], [2380, 1420], [2470, 1440]],
   isletS: [[2150, 1470], [2200, 1600], [2290, 1700], [2230, 1820]],
   isletN: [[2260, 1440], [2250, 1330], [2230, 1210]],
-  paddy: [[1200, 1040], [1420, 1042], [1520, 1044], [1650, 1044]],
+  paddy: [[1195, 1040], [1420, 1042], [1520, 1044], [1628, 1044]],
   dinh: [[940, 620], [800, 590], [650, 440], [620, 392]],
-  westCoast: [[230, 1330], [180, 1200], [150, 1090], [140, 1000], [200, 860], [300, 720]],
+  westCoast: [[230, 1330], [180, 1200], [150, 1090], [140, 1000], [196, 880], [262, 810]],
 };
 const PATH_W = 30;
 
@@ -161,7 +161,9 @@ function tracePolyInto(c, pts) { c.moveTo(pts[0], pts[1]); for (let i = 2; i < p
 const mixCol = (a, b, k) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',')})`; };
 function tracePoly(c, pts) { c.beginPath(); c.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]); c.closePath(); }
 function traceLine(c, pts) { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); }
-const SMOOTH_PATHS = Object.fromEntries(Object.entries(PATHS).map(([k, p]) => [k, p.length > 2 ? chunkPts(smoothLine(p, 6)) : p]));
+// walk-only routes: inside the Night Market plaza and across the bridge deck
+const NAV_ONLY = new Set(['nm', 'bridge']);
+const SMOOTH_PATHS = Object.fromEntries(Object.entries(PATHS).filter(([k]) => !NAV_ONLY.has(k)).map(([k, p]) => [k, p.length > 2 ? chunkPts(smoothLine(p, 6)) : p]));
 function chunkPts(flat) { const o = []; for (let i = 0; i < flat.length; i += 2) o.push([flat[i], flat[i + 1]]); return o; }
 
 function paintGround(c) {
@@ -233,6 +235,24 @@ function paintGround(c) {
       for (let k = 0; k < d; k += 9) { const tt = k / d, ox = (R() - 0.5) * PATH_W * 0.8, oy = (R() - 0.5) * PATH_W * 0.8; c.fillStyle = R() < 0.5 ? 'rgba(190,150,100,.4)' : 'rgba(255,250,230,.6)'; c.fillRect(ax + (bx - ax) * tt + ox, ay + (by - ay) * tt + oy, 2.2, 1.6); }
     }
   }
+  // grassy fringe and little stones along the path edges
+  for (const pts of Object.values(SMOOTH_PATHS)) {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ax, ay] = pts[i], [bx, by] = pts[i + 1], d = Math.hypot(bx - ax, by - ay), nx = -(by - ay) / (d || 1), ny = (bx - ax) / (d || 1);
+      for (let k = 0; k < d; k += 7) {
+        const tt = k / d, sd = R() < 0.5 ? -1 : 1, off = PATH_W / 2 + 2 + R() * 2, x = ax + (bx - ax) * tt + nx * off * sd, y = ay + (by - ay) * tt + ny * off * sd;
+        if (R() < 0.7) { c.strokeStyle = R() < 0.5 ? '#6fb356' : '#86c46a'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x, y); c.lineTo(x - nx * sd * 3 + (R() - 0.5), y - ny * sd * 3 - 2); c.moveTo(x + 1.5, y); c.lineTo(x + 1.5 - nx * sd * 2.4, y - ny * sd * 2.4 - 2.6); c.stroke(); }
+        else { c.fillStyle = R() < 0.5 ? '#d9cfbe' : '#c9bfae'; c.beginPath(); c.ellipse(x - nx * sd * 4, y - ny * sd * 4, 2.2, 1.4, 0, 0, TAU); c.fill(); }
+      }
+      // worn darker centre
+      c.strokeStyle = 'rgba(200,160,100,.18)'; c.lineWidth = PATH_W * 0.35; c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by); c.stroke();
+    }
+  }
+  // clover patches and dappled meadow flowers
+  c.save(); c.beginPath(); for (const l of LANDS) { c.moveTo(l.grass[0], l.grass[1]); for (let i = 2; i < l.grass.length; i += 2) c.lineTo(l.grass[i], l.grass[i + 1]); c.closePath(); } c.clip();
+  for (let i = 0; i < 90; i++) { const x = R() * W, y = R() * H; for (let k = 0; k < 14; k++) { const px = x + (R() - 0.5) * 50, py = y + (R() - 0.5) * 24; c.fillStyle = R() < 0.5 ? '#8fcf72' : '#7fbf64'; for (const [dx, dy] of [[-1.2, 0], [1.2, 0], [0, -1.2]]) { c.beginPath(); c.arc(px + dx, py + dy, 1.3, 0, TAU); c.fill(); } } }
+  for (let i = 0; i < 40; i++) { const x = R() * W, y = R() * H, col = ['#fff', '#ffd35a', '#ff9ab5', '#c9a8ff', '#9fd8ff'][i % 5]; for (let k = 0; k < 26; k++) { c.fillStyle = col; c.beginPath(); c.arc(x + (R() - 0.5) * 70, y + (R() - 0.5) * 34, 1.3, 0, TAU); c.fill(); } }
+  c.restore();
   // plaza with a tiled rosette
   { const p = PLAZA; circ(c, p.x, p.y, p.r + 6, '#d7b77e', null); circ(c, p.x, p.y, p.r, '#ecdcc0', 'rgba(150,120,90,.6)', 2);
     for (let r = 30; r < p.r; r += 22) circ(c, p.x, p.y, r, null, 'rgba(170,140,100,.35)', 1.2);
@@ -470,8 +490,29 @@ export class Island extends Scene {
     place('frangipani', 8, 16, { trunk: 5, cullR: 40, cullH: 60 });
     place('bush', 12, 14, { trunk: 6, flowers: '#ff5a5a', col: '#5fae57', cullR: 30, cullH: 40 }); // hibiscus
     place('rock', 14, 12, { trunk: 8, cullR: 20, cullH: 20 });
+    // life on the ground: tall grass, mushrooms, stumps, pebbles
+    const scatter = (kind, n, r, o = {}, flat = false, filt = null) => {
+      let made = 0, tries = 0;
+      while (made < n && tries++ < n * 40) {
+        const x = 140 + R() * (MAIN_W - 280), y = 220 + R() * (H - 400);
+        if (avoid(x, y, r) || (filt && !filt(x, y))) continue;
+        const p = { kind, x, y, ...o }; p.draw = (c, t) => P[kind](c, t, p); p.cull = { x: x - 20, y: y - 24, w: 40, h: 30 }; if (flat) p.flat = true;
+        this.prop(p); made++;
+      }
+    };
+    scatter('tallGrass', 170, 6, { n: 7 });
+    scatter('tallGrass', 50, 6, { n: 9, seed: true, col: '#7fae4f' });
+    scatter('mushrooms', 26, 5, {}, false, (x, y) => this.props.some(q => q.kind === 'tree' && Math.abs(q.x - x) < 50 && Math.abs(q.y - y) < 30));
+    scatter('stump', 12, 9, { moss: true });
+    scatter('pebbles', 70, 6, {}, true);
+    // gardens by every home: flower beds, a bird bath, a wood pile
+    for (const b of BUILDINGS.filter(b => b.home || b.id === 'house')) {
+      for (const sd of [-1, 1]) { const p = { kind: 'flowerBed', x: b.x + sd * (b.w / 2 - 14), y: b.y + 14, w: 22 }; p.draw = (c, t) => P.flowerBed(c, t, p); p.cull = { x: p.x - 20, y: p.y - 20, w: 40, h: 26 }; this.prop(p); }
+    }
+    for (const [x, y] of [[470, 1610], [1420, 1690], [720, 1500], [1200, 1690]]) this.add2('birdBath', x, y, { solidR: 5, cullR: 20, cullH: 20 });
+    for (const [x, y] of [[372, 1530], [1610, 1930], [1070, 1640]]) this.add2('woodPile', x, y, { solidR: 8, cullR: 20, cullH: 24 });
     // non-colliding ground clutter
-    for (let i = 0; i < 520; i++) {
+    for (let i = 0; i < 900; i++) {
       const x = 140 + R() * (MAIN_W - 280), y = 200 + R() * (H - 360);
       if (avoid(x, y, 2)) continue;
       const k = R() < 0.72 ? 'grassTuft' : 'flowerPatch';

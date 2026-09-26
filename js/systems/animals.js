@@ -119,6 +119,10 @@ export function drawReact(c, a, top = 22) {
 export function tickReact(a, dt) { if (a.react) { a.react.t += dt; if (a.react.t > 1.8) a.react = null; } }
 
 // ---------------------------------------------------------------- drawing
+// point (x, y) after rotating by `ang` about (px, py): used so heads stay on
+// their necks when a body tilts (sitting, stretching)
+const rot = (x, y, px, py, ang) => { const c = Math.cos(ang), s = Math.sin(ang), dx = x - px, dy = y - py; return [px + dx * c - dy * s, py + dx * s + dy * c]; };
+const neck = (c, x0, y0, x1, y1, w, col) => { c.lineCap = 'round'; c.strokeStyle = INK; c.lineWidth = w + 1.8; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); c.strokeStyle = col; c.lineWidth = w; c.stroke(); };
 function chicken(c, t, a) {
   const walk = Math.hypot(a.vx, a.vy) > 3, peck = a.state === 'idle' && a.idle === 'peck' && Math.sin(a.t * 7) > 0.2;
   const s = a.chick ? 0.6 : 1, bob = walk ? Math.abs(Math.sin(a.t * 14)) * 1.2 : 0;
@@ -127,6 +131,7 @@ function chicken(c, t, a) {
   for (const k of [-1, 1]) { const st = walk ? Math.sin(a.t * 14 + k) * 1.6 : 0; c.strokeStyle = '#e39a3a'; c.lineWidth = 1; c.beginPath(); c.moveTo(k * 1.6, -3); c.lineTo(k * 1.6 + st, 0); c.stroke(); }
   ell(c, 0, -7, 6.5, 5, a.col, INK, 0.9);
   poly(c, [-6, -8, -10, -12, -9, -6], a.col, INK, 0.8); // tail
+  neck(c, 3, -8.5, 4, peck ? -5 : -11, 3.4, a.col);
   c.save(); c.translate(4, peck ? -5 : -11); c.rotate(peck ? 0.8 : 0);
   circ(c, 0, 0, 3.6, a.col, INK, 0.8);
   if (!a.chick) { circ(c, -0.6, -3.6, 1.3, '#e8584e', null); circ(c, 0.8, -3.4, 1.1, '#e8584e', null); }
@@ -146,12 +151,15 @@ function dog(c, t, a) {
   // tail
   c.save(); c.translate(-9, sit ? -4 : -9); c.rotate(-0.9 + wag); c.strokeStyle = INK; c.lineWidth = 3.2; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-3, -4, -1, -8); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.8; c.stroke(); c.restore();
   // body
-  c.save(); if (sit) { c.translate(-2, 0); c.rotate(-0.45); }
+  const bodyAng = sit ? -0.45 : 0;
+  c.save(); if (sit) { c.translate(-2, 0); c.rotate(bodyAng); c.translate(2, 0); }
   ell(c, 0, -8, 10, 5.4, a.col, INK, 0.9);
   c.restore();
+  const hx = 9, hy = sit ? -17 : -14, [nx, ny] = rot(6, -10.5, -2, 0, bodyAng);
+  neck(c, nx, ny, hx - 1, hy + 1.5, 5, a.col);
   if (scr) { c.save(); c.translate(-4, -6); c.rotate(Math.sin(a.t * 30) * 0.5); c.strokeStyle = a.col; c.lineWidth = 2; c.beginPath(); c.moveTo(0, 0); c.lineTo(3, -5); c.stroke(); c.restore(); }
   // head
-  c.save(); c.translate(9, sit ? -17 : -14); c.rotate(a.idle === 'sniff' && a.state === 'idle' ? 0.5 : Math.sin(a.t * 2) * 0.08);
+  c.save(); c.translate(hx, hy); c.rotate(a.idle === 'sniff' && a.state === 'idle' ? 0.5 : Math.sin(a.t * 2) * 0.08);
   ell(c, 0, 0, 6.2, 5.4, a.col, INK, 0.9);
   ell(c, 5, 1.6, 3.2, 2.4, a.col === '#fff4e0' ? '#f7e6cc' : shadeLight(a.col), INK, 0.7);
   circ(c, 7.6, 0.8, 1.1, INK, null);
@@ -178,10 +186,12 @@ function vcat(c, t, a) {
   const sit = id === 'sit' || id === 'groom', str = id === 'stretch' ? Math.max(0, Math.sin(a.t * 1.4)) : 0;
   for (const [x, k] of [[-4, 0], [-2, 1], [3, 2], [5, 3]]) { const st = walk ? Math.sin(a.t * 12 + k * 1.6) * 1.6 : 0; if (sit && x < 0) continue; c.strokeStyle = INK; c.lineWidth = 2.4; c.beginPath(); c.moveTo(x - (x > 0 ? str * 3 : 0), -4); c.lineTo(x + st - (x > 0 ? str * 4 : 0), 0); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.3; c.stroke(); }
   c.save(); c.translate(-7, sit ? -3 : -7); c.rotate(-1.2 + Math.sin(a.t * 2.4) * 0.3); c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-2, -5, 1, -9); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.4; c.stroke(); c.restore();
-  c.save(); if (sit) { c.translate(-1, 0); c.rotate(-0.55); } if (str) c.rotate(str * 0.18);
+  const cAng = (sit ? -0.55 : 0) + (str ? str * 0.18 : 0);
+  c.save(); if (sit) { c.translate(-1, 0); c.rotate(-0.55); c.translate(1, 0); } if (str) c.rotate(str * 0.18);
   ell(c, 0, -6.4, 7.4, 4, a.col, INK, 0.9);
   if (stripe) for (let i = -1; i <= 1; i++) { c.strokeStyle = stripe; c.lineWidth = 1; c.beginPath(); c.moveTo(i * 2.6, -10); c.lineTo(i * 2.6 + 0.6, -7.4); c.stroke(); }
   c.restore();
+  { const [nx, ny] = rot(4.6, -8, -1, 0, cAng); neck(c, nx, ny, 5.6 + str * 2, (sit ? -12 : -9.5) + str * 3, 4, a.col); }
   c.save(); c.translate(6 + str * 2, (sit ? -13 : -10) + str * 3); if (id === 'groom') c.rotate(Math.sin(a.t * 6) * 0.25 + 0.4);
   circ(c, 0, 0, 4.4, a.col, INK, 0.9);
   poly(c, [-3.6, -2, -3, -6.4, -0.6, -3.6], a.col, INK, 0.8); poly(c, [3.6, -2, 3, -6.4, 0.6, -3.6], a.col, INK, 0.8);
@@ -212,6 +222,7 @@ function pigeon(c, t, a) {
   ell(c, 0, -4, 4.8, 3.2, '#9aa3b4', INK, 0.8);
   if (fly) { const f = Math.sin(a.t * 26); for (const k of [-1, 1]) { c.save(); c.translate(-0.5, -5); c.rotate(k * (0.5 + f * 0.6)); ell(c, 0, -3, 2, 4, '#b7bfcc', INK, 0.6); c.restore(); } }
   else { ell(c, -1, -4.4, 3, 1.8, '#b7bfcc', null); }
+  neck(c, 2.4, -5.4, 3.4 + bob * 0.4, peck ? -3 : -7, 2.6, '#8e97aa');
   c.save(); c.translate(3.4 + bob * 0.4, peck ? -3 : -7);
   circ(c, 0, 0, 2.3, '#7f889c', INK, 0.7); circ(c, 0.8, -0.4, 0.5, INK, null); poly(c, [2, -0.2, 3.6, 0.3, 2, 0.8], '#e6a55a', null);
   c.fillStyle = 'rgba(120,200,160,.8)'; c.fillRect(-1.6, 1.6, 2.4, 1);
@@ -223,6 +234,7 @@ function goat(c, t, a) {
   c.save(); c.scale(a.face, 1);
   for (const [x, k] of [[-6, 0], [-3, 1], [4, 2], [7, 3]]) { const st = walk ? Math.sin(a.t * 10 + k * 1.6) * 1.6 : 0; c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(x, -6); c.lineTo(x + st, 0); c.stroke(); c.strokeStyle = '#f4efe6'; c.lineWidth = 1.4; c.stroke(); }
   ell(c, 0, -10, 10, 5.6, '#f4efe6', INK, 0.9);
+  neck(c, 6, -12.5, 9.4, -15, 4.2, '#f4efe6');
   c.save(); c.translate(10, -16); c.rotate(chew ? Math.sin(a.t * 5) * 0.06 : 0);
   ell(c, 0, 0, 4.4, 3.8, '#f4efe6', INK, 0.9);
   poly(c, [-2, -3, -5, -8, -1, -4], '#c9b79a', INK, 0.6); poly(c, [1, -3, 0, -8, 3, -3.6], '#c9b79a', INK, 0.6);

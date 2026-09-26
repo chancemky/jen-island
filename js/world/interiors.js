@@ -50,6 +50,7 @@ export class Interior extends Scene {
     // floor
     box(c, 0, WH - 4, w, h - WH + 4, 4, this.floor, null);
     c.save(); c.beginPath(); c.rect(0, WH, w, h - WH); c.clip();
+    if (this.floorStyle === 'wood') { const R2 = rng(11); for (let y = WH; y < h; y += 12) { let x = -R2() * 40; while (x < w) { const pw = 34 + R2() * 40; c.fillStyle = shade(this.floor, (R2() - 0.5) * 16); c.fillRect(x, y, pw, 12); if (R2() < 0.35) { c.fillStyle = 'rgba(120,70,40,.18)'; c.beginPath(); c.ellipse(x + pw * R2(), y + 6, 2, 1, 0, 0, TAU); c.fill(); } x += pw; } } }
     if (this.floorStyle === 'wood') { c.strokeStyle = shade(this.floor, -20); c.lineWidth = 1; for (let y = WH + 12; y < h; y += 12) { c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); const R = rng(y); for (let k = 0; k < 4; k++) { const x = R() * w; c.beginPath(); c.moveTo(x, y - 12); c.lineTo(x, y); c.stroke(); } } }
     else if (this.floorStyle === 'tile') { const s = 22; for (let y = WH, r = 0; y < h; y += s, r++) for (let x = 0, k = 0; x < w; x += s, k++) { c.fillStyle = (r + k) % 2 ? shade(this.floor, -10) : this.floor; c.fillRect(x, y, s, s); } }
     else if (this.floorStyle === 'concrete') { const R = rng(3); for (let i = 0; i < 120; i++) { c.fillStyle = 'rgba(0,0,0,.05)'; c.fillRect(R() * w, WH + R() * (h - WH), 3, 2); } }
@@ -68,10 +69,14 @@ export class Interior extends Scene {
     else if (this.wallStyle === 'dots') { const R = rng(4); for (let y = 8, r = 0; y < WH - 4; y += 12, r++) for (let x = (r % 2) * 9; x < w; x += 18) circ(c, x + R() * 0.1, y, 2.2, 'rgba(255,255,255,.7)', null); c.fillStyle = shade(this.wall, -12); c.fillRect(0, WH - 16, w, 3); }
     else if (this.wallStyle === 'metal') { c.fillStyle = 'rgba(255,255,255,.18)'; for (let x = 0; x < w; x += 14) c.fillRect(x, 0, 2, WH); }
     c.restore();
-    // wainscot + baseboard
+    // wainscot panels + rail + baseboard, crown molding, soft window light
     box(c, 0, WH - 16, w, 12, 0, shade(this.wall, -18), null);
+    c.strokeStyle = shade(this.wall, -30); c.lineWidth = 0.7; for (let x = 10; x < w; x += 20) { c.beginPath(); c.moveTo(x, WH - 14); c.lineTo(x, WH - 6); c.stroke(); }
     box(c, 0, WH - 6, w, 6, 0, shade(this.wall, -40), null);
     line(c, 0, WH - 16, w, WH - 16, 'rgba(91,63,54,.5)', 1);
+    line(c, 0, WH - 15, w, WH - 15, 'rgba(255,255,255,.35)', 0.8);
+    box(c, 0, 0, w, 4, 0, shade(this.wall, -12), null); line(c, 0, 4, w, 4, 'rgba(91,63,54,.3)', 0.8);
+    { const lg = c.createLinearGradient(0, 0, w * 0.6, h); lg.addColorStop(0, 'rgba(255,248,220,.16)'); lg.addColorStop(1, 'rgba(255,248,220,0)'); c.fillStyle = lg; c.beginPath(); c.moveTo(w * 0.15, WH); c.lineTo(w * 0.35, WH); c.lineTo(w * 0.7, h); c.lineTo(w * 0.35, h); c.closePath(); c.fill(); }
     box(c, 0, 0, w, WH, 3, null, INK, 1.4);
     // side walls (thin)
     box(c, -8, 0, 10, h + 10, 3, shade(this.wall, -30), INK, 1.2);

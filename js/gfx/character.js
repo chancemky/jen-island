@@ -39,7 +39,7 @@ const HIP_Y = HEM + 0.2 - EL;            // hip joint height in the leg frame
 const FOOT_Y = -1.4;                      // resting foot height
 const LEG = 5.4, ARM = 5.1;
 function pose(a, view, t) {
-  const m = a.moving || 0, ph = a.walkPh || 0, act = a.act, at = a.actT || 0;
+  const m = (a.moving || 0) * (a.running ? 1.3 : 1), ph = a.walkPh || 0, act = a.act, at = a.actT || 0;
   const s1 = Math.sin(ph), c1 = Math.cos(ph);
   const step = Math.abs(s1);                                       // 0 at footfall, 1 mid-stride
   const breathe = Math.sin(t * 2.3 + (a.seed || 0)) * (1 - m);
@@ -70,7 +70,7 @@ function pose(a, view, t) {
     const sw = s1 * 0.7 * m;
     P.arms = [{ ang: sw, far: true }, { ang: -sw }];                // angle from hanging straight down
   } else {
-    P.arms = [{ ang: -0.32 - Math.abs(s1) * 0.08 * m, fwd: s1 * m }, { ang: 0.32 + Math.abs(s1) * 0.08 * m, fwd: -s1 * m }];
+    P.arms = [{ ang: -0.3 - s1 * 0.14 * m, fwd: s1 * m }, { ang: 0.3 - s1 * 0.14 * m, fwd: -s1 * m }];
   }
   if (air > 0.05) { P.arms[0].ang -= air * 0.9; P.arms[1].ang += air * 0.9; }
   // arms can also point at a target (actions)
@@ -392,6 +392,36 @@ function hat(c, L, view, t) {
   } else if (h === 'chef') {
     box(c, -6.8, top - 3, 13.6, 7, 1.5, '#fffdf8');
     for (const x of [-4.6, 0, 4.6]) circ(c, x, top - 4.6, 4.2, '#fffdf8');
+  } else if (h === 'beanie') {
+    c.beginPath(); c.ellipse(0, HY - 4.4, HR + 0.9, HRY + 0.6, 0, Math.PI, TAU); c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    box(c, -HR - 0.8, HY - 6, (HR + 0.8) * 2, 3.4, 1.6, shade(col, -14));
+    c.strokeStyle = shade(col, -22); c.lineWidth = 0.5; for (let x = -HR + 1; x < HR; x += 2) { c.beginPath(); c.moveTo(x, HY - 5.6); c.lineTo(x, HY - 3); c.stroke(); }
+    circ(c, 0, top - 2.4, 2.8, L.hatRibbon || '#fffaf0', INK, 0.8);
+  } else if (h === 'beret') {
+    c.beginPath(); c.ellipse(view === 'side' ? -1 : 1.5, HY - 7.4, HR + 1.8, 4.8, view === 'side' ? 0 : -0.12, 0, TAU); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    c.fillStyle = shade(col, 18); c.beginPath(); c.ellipse(-2, HY - 9, 5, 1.6, -0.1, 0, TAU); c.fill();
+    limb(c, [1, top - 0.8, 1.6, top - 2.6], 1, shade(col, -25));
+  } else if (h === 'bow') {
+    const x = view === 'side' ? -1 : 6.4, y = top + 2.4;
+    for (const s of [-1, 1]) { c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + s * 5.5, y - 4.4, x + s * 5.4, y + 0.6); c.quadraticCurveTo(x + s * 4, y + 3.4, x, y); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); }
+    circ(c, x, y, 1.5, shade(col, -14), INK, 0.7);
+  } else if (h === 'crown') {
+    const y = top + 1.4;
+    c.beginPath(); c.moveTo(-6, y); c.lineTo(-6.4, y - 5.5); c.lineTo(-3, y - 2.6); c.lineTo(0, y - 6.6); c.lineTo(3, y - 2.6); c.lineTo(6.4, y - 5.5); c.lineTo(6, y); c.closePath();
+    c.fillStyle = '#ffd35a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+    for (const [x, cl] of [[-3.2, '#f36d86'], [0, '#6fbfb0'], [3.2, '#8fb7e0']]) circ(c, x, y - 1.4, 0.9, cl, null);
+    circ(c, 0, y - 6.6, 0.8, '#fff', INK, 0.4);
+  } else if (h === 'catears') {
+    c.strokeStyle = INK; c.lineWidth = 1.2; c.beginPath(); c.ellipse(0, HY - 3, HR + 0.5, HRY + 0.2, 0, Math.PI * 1.08, Math.PI * 1.92); c.stroke();
+    c.strokeStyle = col; c.lineWidth = 0.8; c.stroke();
+    for (const s of view === 'side' ? [1] : [-1, 1]) { const x = s * 6.8; poly(c, [x - 2.9, top + 3.2, x + s * 0.8, top - 4.6, x + 2.9, top + 3.2], col, INK, 0.9); poly(c, [x - 1.6 * s, top + 2.4, x + s * 0.4, top - 1.8, x + 1.6 * s, top + 2.4], '#ffc0d0', null); }
+  } else if (h === 'flowercrown') {
+    for (let i = 0; i < 9; i++) { const a = Math.PI * (1.1 + i * 0.1), x = Math.cos(a) * (HR + 0.4), y = HY - 3 + Math.sin(a) * (HRY - 0.6); circ(c, x, y, 1.6, ['#ff8fb0', '#fff', '#ffd35a', '#c9a8ff'][i % 4], INK, 0.4); if (i % 2) ell(c, x + 1.4, y + 0.6, 1.2, 0.6, '#7fc062', null); }
+  } else if (h === 'boater') {
+    const by = HY - 5.4;
+    ell(c, 0, by + 1, HR + 6, 3.2, col, INK, 1);
+    c.beginPath(); c.moveTo(-HR + 1.6, by + 0.8); c.lineTo(-HR + 2.2, top - 2.4); c.quadraticCurveTo(0, top - 3.6, HR - 2.2, top - 2.4); c.lineTo(HR - 1.6, by + 0.8); c.closePath(); c.fillStyle = shade(col, 8); c.fill(); c.stroke();
+    c.fillStyle = L.hatRibbon || '#3f4a5e'; c.fillRect(-HR + 1.8, by - 2.2, (HR - 1.8) * 2, 2.2);
   } else if (h === 'flower') {
     for (let i = 0; i < 5; i++) { const an = i / 5 * TAU; circ(c, 8.4 + Math.cos(an) * 1.7, HY - 7.6 + Math.sin(an) * 1.7, 1.45, col, INK, 0.5); }
     circ(c, 8.4, HY - 7.6, 1.1, '#ffd35a', INK, 0.5);
@@ -418,9 +448,22 @@ function legs(c, L, P, view) {
     // round little shoe
     const ang = g.stub !== undefined ? 0 : (g.ang || 0) * 0.6;
     c.save(); c.translate(ex, ey + 0.4); c.rotate(view === 'side' ? -ang : 0);
-    const fw = view === 'side' ? 2.9 : 2.5, fx = view === 'side' ? 0.8 : 0;
-    ell(c, fx, 0.1, fw, 1.8, g.far ? shade(L.shoe, -12) : L.shoe);
-    ell(c, fx - 0.6, -0.5, 1, 0.5, C.shoeH, null);
+    const fw = view === 'side' ? 2.9 : 2.5, fx = view === 'side' ? 0.8 : 0, sc = g.far ? shade(L.shoe, -12) : L.shoe, st = L.shoeStyle || 'sneaker';
+    if (st === 'boot' || st === 'rainboot') {
+      c.restore(); limb(c, [g.hx + (ex - g.hx) * 0.55, HIP_Y + (ey - HIP_Y) * 0.55, ex, ey], 4.8, sc); c.save(); c.translate(ex, ey + 0.4); c.rotate(view === 'side' ? -ang : 0);
+      ell(c, fx, 0.2, fw + 0.3, 1.9, sc); if (st === 'rainboot') { c.fillStyle = 'rgba(255,255,255,.45)'; c.fillRect(-1.6, -4, 0.9, 3.4); }
+      c.fillStyle = shade(sc, -35); c.fillRect(fx - fw, 1.3, fw * 2, 0.8);
+    } else if (st === 'sandal') {
+      ell(c, fx, 0.4, fw, 1.4, shade(sc, -10)); ell(c, fx, -0.2, fw - 0.6, 1.2, L.skin, null);
+      c.strokeStyle = sc; c.lineWidth = 1; c.beginPath(); c.moveTo(fx - fw + 0.8, -0.2); c.lineTo(fx + fw - 0.8, -0.2); c.stroke(); circ(c, fx, -0.6, 0.6, '#ffd35a', null);
+    } else if (st === 'slipper') {
+      ell(c, fx, 0, fw + 0.4, 2, sc); ell(c, fx + (view === 'side' ? 1 : 0), -1.2, 1.8, 1, '#fff', null);
+      circ(c, fx - 0.9 + (view === 'side' ? 1 : 0), -2, 0.8, sc, INK, 0.4); circ(c, fx + 0.9 + (view === 'side' ? 1 : 0), -2, 0.8, sc, INK, 0.4);
+    } else {
+      ell(c, fx, 0.1, fw, 1.8, sc);
+      c.fillStyle = '#fffaf0'; c.fillRect(fx - fw + 0.4, 0.9, fw * 2 - 0.8, 0.8);   // sneaker sole
+      ell(c, fx - 0.6, -0.5, 1, 0.5, C.shoeH, null);
+    }
     c.restore();
   };
   for (const g of P.legs) draw(g);
@@ -501,7 +544,9 @@ function arm(c, L, sx, sy, spec, side, far) {
     hx = sx + dx / d * len; hy = sy + dy / d * len;
   } else {
     const ang = spec?.ang || 0;   // 0 = straight down; + swings toward +x
-    hx = sx + Math.sin(ang) * ARM; hy = sy + Math.cos(ang) * ARM - (spec?.fwd ? Math.abs(spec.fwd) * 0.5 : 0);
+    const fw = spec?.fwd || 0;  // front view: + swinging toward the camera (reads lower), - swinging back (shorter, higher)
+    const len = ARM * (1 - Math.max(0, -fw) * 0.18);
+    hx = sx + Math.sin(ang) * len; hy = sy + Math.cos(ang) * len + fw * 0.9;
   }
   const skin = far ? C.skinS : (L.armSkin || L.skin);
   const sleeve = L.sleeve ?? 0.55;
@@ -585,6 +630,9 @@ export function drawHuman(c, a, t) {
   if (view === 'front') arm(c, L, shL[0], shL[1], P.arms[0], -1);
   if (view === 'back') { arm(c, L, shL[0], shL[1], P.arms[0], -1); arm(c, L, shR[0], shR[1], P.arms[1], 1); }
 
+  // neck: keeps the head joined to the body however it bobs or tilts
+  if (view !== 'back') ell(c, 0, SH - 0.8, 2.6, 2.4, cols(L).skinS, INK, 0.8); else ell(c, 0, SH - 0.8, 2.6, 2.2, L.hair, INK, 0.8);
+  P.headDy = Math.max(-0.35, P.headDy);   // never float up off the shoulders
   // head group
   c.save();
   headXf();

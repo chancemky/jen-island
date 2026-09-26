@@ -7,14 +7,14 @@ import { Actor } from '../world/actor.js';
 import { RESIDENTS, MERCHANTS, visitorLook } from '../data/looks.js';
 import { initAnimals, updateAnimals, animalDrawables, reactHop, drawReact, tickReact, react } from './animals.js';
 import { POND as POND_C } from '../world/island.js';
-import { ell } from '../gfx/draw.js';
+import { ell, circ } from '../gfx/draw.js';
 import { updateBarks, drawBarks } from './fun.js';
 import { nearestSeat, hopOnto } from './seats.js';
 import { updateSideQuests, drawSideQuests } from './sidequests.js';
 import { PATHS, BUILDINGS } from '../world/island.js';
 import { rand, randi, choice, chance, dist, bus, clamp, TAU, smoothLine } from '../core/util.js';
 import { drawBoatTop } from './cinematic.js';
-import { scooter as drawScooter, seagull, duck, wind } from '../gfx/props.js';
+import { scooter as drawScooter, seagull, duck, wind, LIGHT } from '../gfx/props.js';
 import { cam } from '../world/render.js';
 const windAt = x => wind(x, G.t);
 const inView = r => { const v = cam.view; return r.x < v.x + v.w && r.x + r.w > v.x && r.y < v.y + v.h && r.y + r.h > v.y; };
@@ -97,7 +97,7 @@ export function initNPCs(island) {
     makeScooter(PATHS.market, '#f28f7c', 0.1), makeScooter(PATHS.main.slice(1), '#9fd8c8', 0.5), makeScooter(PATHS.east, '#f7de8c', 0.3),
   ];
   npcs.gulls = Array.from({ length: 5 }, (_, i) => ({ cx: rand(200, 1600), cy: rand(300, 2500), r: rand(80, 200), a: rand(0, TAU), sp: rand(0.25, 0.5) * (i % 2 ? 1 : -1), seed: i * 3, h: rand(60, 110) }));
-  npcs.butterflies = Array.from({ length: 10 }, (_, i) => ({ x: rand(300, 1500), y: rand(500, 2100), vx: 0, vy: 0, t: rand(0, 10), col: choice(['#fff4b8', '#ffc0d8', '#c9e8ff', '#ffe0a8']) }));
+  npcs.butterflies = Array.from({ length: 26 }, (_, i) => ({ x: rand(300, 1500), y: rand(500, 2100), vx: 0, vy: 0, t: rand(0, 10), col: choice(['#fff4b8', '#ffc0d8', '#c9e8ff', '#ffe0a8']) }));
   npcs.ferry = { state: 'away', x: BERTH.x, y: 2950, speed: 0, next: nextFerryTime(), unload: 0, dockUntil: 0 };
   initAnimals(island);
   npcs.ducks = [0, 1, 2, 3].map(i => ({ a: i * 1.6, r: 26 + i * 9, sp: 0.12 + i * 0.03, seed: i * 3, col: i === 3 ? '#f7de8c' : '#fffaf0', x: 0, y: 0 }));
@@ -420,8 +420,49 @@ export function npcDrawables() {
   for (const b of npcs.butterflies) out.push({ x: b.x, y: b.y, sortY: b.y + 30, draw: (c, t) => { c.save(); c.translate(0, -22 - Math.sin(b.t * 3) * 4); const f = Math.abs(Math.sin(b.t * 16)); c.fillStyle = b.col; c.strokeStyle = 'rgba(91,63,54,.7)'; c.lineWidth = 0.6; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * 2.6 * f, -1, 2.6 * f + 0.4, 3, s * 0.4, 0, TAU); c.fill(); c.stroke(); } c.restore(); } });
   return out;
 }
+// ---- ambient life: drifting cloud shadows, falling petals, dragonflies, fireflies
+const CLOUDS = Array.from({ length: 7 }, (_, i) => ({ x: i * 420 + rand(0, 200), y: rand(0, 2600), rx: rand(120, 220), ry: rand(60, 110), k: rand(0.7, 1.3) }));
+const PETALS = Array.from({ length: 26 }, () => ({ x: rand(0, 400), y: rand(0, 800), ph: rand(0, 10), col: choice(['#ffc0d8', '#fff', '#ffd9a8', '#ffb3c7']), leaf: Math.random() < 0.35 }));
+const DRAGON = Array.from({ length: 5 }, (_, i) => ({ cx: i < 3 ? 770 : [560, 330][i - 3], cy: i < 3 ? 470 : [780, 990][i - 3], a: rand(0, 6), r: rand(30, 70), sp: rand(0.6, 1.1), col: choice(['#6fbfb0', '#8fb7e0', '#e8584e']) }));
+function drawAmbient(c, t) {
+  const v = cam.view; if (!v) return;
+  // cloud shadows sliding across the island with the breeze
+  c.save(); c.fillStyle = 'rgba(40,60,80,.07)';
+  for (const cl of CLOUDS) {
+    const x = ((cl.x + t * 9 * cl.k) % 3200) - 300, y = cl.y + Math.sin(t * 0.05 + cl.x) * 40;
+    if (x + cl.rx < v.x || x - cl.rx > v.x + v.w || y + cl.ry < v.y || y - cl.ry > v.y + v.h) continue;
+    c.beginPath(); c.ellipse(x, y, cl.rx, cl.ry, 0, 0, TAU); c.ellipse(x + cl.rx * 0.5, y - cl.ry * 0.3, cl.rx * 0.6, cl.ry * 0.7, 0, 0, TAU); c.ellipse(x - cl.rx * 0.5, y + cl.ry * 0.2, cl.rx * 0.55, cl.ry * 0.6, 0, 0, TAU); c.fill();
+  }
+  c.restore();
+  // petals and leaves tumbling on the wind (only around the camera)
+  const night = LIGHT.night > 0.5;
+  if (!night) for (const p of PETALS) {
+    const fx = v.x + ((p.x + t * 22 + Math.sin(t * 0.8 + p.ph) * 20) % (v.w + 40)) - 20, fy = v.y + ((p.y + t * 14) % (v.h + 40)) - 20;
+    c.save(); c.translate(fx, fy); c.rotate(t * 2 + p.ph); c.scale(1, Math.abs(Math.sin(t * 3 + p.ph)) * 0.7 + 0.3);
+    if (p.leaf) { c.fillStyle = '#8fc86a'; c.beginPath(); c.ellipse(0, 0, 2.6, 1.2, 0, 0, TAU); c.fill(); } else { c.fillStyle = p.col; c.beginPath(); c.ellipse(0, 0, 1.8, 1.2, 0, 0, TAU); c.fill(); }
+    c.restore();
+  }
+  // dragonflies over the pond and river
+  if (!night) for (const d of DRAGON) {
+    const x = d.cx + Math.cos(t * d.sp + d.a) * d.r + Math.sin(t * 3.1 + d.a) * 8, y = d.cy + Math.sin(t * d.sp * 1.3 + d.a) * d.r * 0.5 - 16;
+    if (x < v.x - 20 || x > v.x + v.w + 20 || y < v.y - 20 || y > v.y + v.h + 20) continue;
+    const ang = Math.atan2(Math.cos(t * d.sp * 1.3 + d.a), -Math.sin(t * d.sp + d.a)), f = Math.sin(t * 40) * 0.4;
+    c.save(); c.translate(x, y); c.rotate(ang);
+    c.fillStyle = 'rgba(230,245,255,.7)'; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(-1, s * (2.4 + f), 1.1, 2.6, s * 0.3, 0, TAU); c.fill(); c.beginPath(); c.ellipse(1, s * (2.2 - f), 1, 2.4, -s * 0.3, 0, TAU); c.fill(); }
+    c.strokeStyle = d.col; c.lineWidth = 1.1; c.lineCap = 'round'; c.beginPath(); c.moveTo(-5, 0); c.lineTo(3, 0); c.stroke(); circ(c, 3.4, 0, 1, d.col, null);
+    c.restore();
+  }
+  // fireflies drifting over the grass at night
+  if (LIGHT.night > 0.35) for (let i = 0; i < 30; i++) {
+    const x = v.x + ((i * 137.5 + Math.sin(t * 0.3 + i) * 40) % v.w), y = v.y + ((i * 91.3 + Math.cos(t * 0.25 + i * 1.7) * 30) % v.h);
+    const k = (Math.sin(t * 2.4 + i * 2.1) + 1) / 2; if (k < 0.3) continue;
+    c.fillStyle = `rgba(255,245,150,${(k - 0.3) * 1.2})`; c.beginPath(); c.arc(x, y, 1.1 + k * 0.8, 0, TAU); c.fill();
+    c.fillStyle = `rgba(255,240,140,${(k - 0.3) * 0.25})`; c.beginPath(); c.arc(x, y, 5, 0, TAU); c.fill();
+  }
+}
 export function drawSkyLife(c, t) {
   if (G.scene !== G.scenes.island) return;
+  drawAmbient(c, t);
   drawSideQuests(c, t);
   drawBarks(c, t);
   for (const g of npcs.gulls) {

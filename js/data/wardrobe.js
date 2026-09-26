@@ -5,6 +5,7 @@
 export const SLOTS = [
   { id: 'outfit', en: 'Outfits', vi: 'Trang phục' },
   { id: 'hat', en: 'Hats', vi: 'Mũ nón' },
+  { id: 'shoes', en: 'Shoes', vi: 'Giày dép' },
   { id: 'extra', en: 'Accessories', vi: 'Phụ kiện' },
 ];
 
@@ -51,6 +52,27 @@ export const CLOTHES = {
   flower_crown: { slot: 'hat', price: 90,  lv: 4, en: 'Flower Hairpin', vi: 'Kẹp tóc hoa', look: { hat: null, flower: '#ff8fb0' } },
   chef_hat:     { slot: 'hat', price: 100, lv: 4, en: 'Chef Hat', vi: 'Mũ đầu bếp', look: { hat: 'chef' } },
   helmet:       { slot: 'hat', price: 140, lv: 8, en: 'Scooter Helmet', vi: 'Mũ bảo hiểm', look: { hat: 'helmet', hatColor: '#f7de8c' } },
+  beanie_red:   { slot: 'hat', price: 70,  en: 'Cozy Red Beanie', vi: 'Mũ len đỏ', look: { hat: 'beanie', hatColor: '#e8584e', hatRibbon: '#fffaf0' } },
+  beanie_mint:  { slot: 'hat', price: 70,  en: 'Mint Pom Beanie', vi: 'Mũ len bạc hà', look: { hat: 'beanie', hatColor: '#9fd8c8', hatRibbon: '#f4a9b8' } },
+  beret:        { slot: 'hat', price: 120, lv: 3, en: 'Painter\'s Beret', vi: 'Mũ nồi họa sĩ', look: { hat: 'beret', hatColor: '#3d3550' } },
+  beret_pink:   { slot: 'hat', price: 120, lv: 3, en: 'Rose Beret', vi: 'Mũ nồi hồng', look: { hat: 'beret', hatColor: '#f28fa3' } },
+  bow_pink:     { slot: 'hat', price: 45,  en: 'Big Pink Bow', vi: 'Nơ hồng to', look: { hat: 'bow', hatColor: '#f28fa3' } },
+  bow_red:      { slot: 'hat', price: 45,  en: 'Cherry Bow', vi: 'Nơ đỏ anh đào', look: { hat: 'bow', hatColor: '#e8584e' } },
+  cat_ears:     { slot: 'hat', price: 150, lv: 4, en: 'Kitty Ear Headband', vi: 'Băng đô tai mèo', look: { hat: 'catears', hatColor: '#fffaf2' } },
+  flower_ring:  { slot: 'hat', price: 130, lv: 5, en: 'Flower Crown', vi: 'Vòng hoa', look: { hat: 'flowercrown' } },
+  boater:       { slot: 'hat', price: 160, lv: 7, en: 'Straw Boater', vi: 'Mũ cói dẹt', look: { hat: 'boater', hatColor: '#f3dcae', hatRibbon: '#3f4a5e' } },
+  crown:        { slot: 'hat', price: 2000, lv: 25, en: 'Island Crown', vi: 'Vương miện đảo', look: { hat: 'crown' } },
+  // ---- shoes
+  basic_shoes:  { slot: 'shoes', price: 0,  en: 'My Sneakers', vi: 'Giày thể thao của mình', look: {} },
+  sneaker_pink: { slot: 'shoes', price: 60, en: 'Pink Sneakers', vi: 'Giày thể thao hồng', look: { shoe: '#f4a9b8', shoeStyle: 'sneaker' } },
+  sneaker_blue: { slot: 'shoes', price: 60, en: 'Sky Sneakers', vi: 'Giày thể thao xanh', look: { shoe: '#8fb7e0', shoeStyle: 'sneaker' } },
+  sandals:      { slot: 'shoes', price: 40, en: 'Beach Sandals', vi: 'Dép tông đi biển', look: { shoe: '#f28f7c', shoeStyle: 'sandal' } },
+  sandals_mint: { slot: 'shoes', price: 40, en: 'Mint Sandals', vi: 'Dép quai bạc hà', look: { shoe: '#6fbfb0', shoeStyle: 'sandal' } },
+  rain_boots:   { slot: 'shoes', price: 110, lv: 4, en: 'Yellow Rain Boots', vi: 'Ủng mưa vàng', look: { shoe: '#ffd35a', shoeStyle: 'rainboot' } },
+  rain_boots_r: { slot: 'shoes', price: 110, lv: 4, en: 'Red Rain Boots', vi: 'Ủng mưa đỏ', look: { shoe: '#e8584e', shoeStyle: 'rainboot' } },
+  boots:        { slot: 'shoes', price: 180, lv: 6, en: 'Leather Boots', vi: 'Bốt da', look: { shoe: '#8a5f3e', shoeStyle: 'boot' } },
+  slippers:     { slot: 'shoes', price: 70, lv: 2, en: 'Bunny Slippers', vi: 'Dép thỏ bông', look: { shoe: '#fff4f6', shoeStyle: 'slipper' } },
+  gold_shoes:   { slot: 'shoes', price: 900, lv: 15, en: 'Golden Kicks', vi: 'Giày vàng', look: { shoe: '#ffd35a', shoeStyle: 'sneaker' } },
   // ---- accessories
   no_extra:     { slot: 'extra', price: 0, en: 'Nothing', vi: 'Không có', look: {} },
   backpack:     { slot: 'extra', price: 90,  en: 'Mint Backpack', vi: 'Ba lô bạc hà', look: { backpack: '#9fd8c8' } },
@@ -63,13 +85,13 @@ export const CLOTHES = {
   guitar:       { slot: 'extra', price: 420, lv: 9, en: 'Little Guitar', vi: 'Đàn ghi-ta nhỏ', look: { guitar: true } },
   surfboard:    { slot: 'extra', price: 480, lv: 11, en: 'Surfboard', vi: 'Ván lướt sóng', look: { surf: '#6fbfb0' } },
 };
-export const FREE_CLOTHES = ['classic', 'no_hat', 'no_extra'];
+export const FREE_CLOTHES = ['classic', 'no_hat', 'no_extra', 'basic_shoes'];
 
 // Build the look to draw: base look + the worn outfit, hat and accessory.
 export function applyOutfit(base, wardrobe) {
   const w = wardrobe || {};
   const L = { ...base };
-  for (const slot of ['outfit', 'hat', 'extra']) {
+  for (const slot of ['outfit', 'shoes', 'hat', 'extra']) {
     const it = CLOTHES[w[slot]]; if (!it) continue;
     Object.assign(L, it.look);
   }

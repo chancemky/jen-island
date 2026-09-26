@@ -1,0 +1,10 @@
+<!doctype html><body style="margin:0;background:#a3d68a"><canvas id=c></canvas><script type=module>
+import '../js/systems/state.js';
+import { drawHuman } from '../js/gfx/character.js';
+import { playerLook } from '../js/data/looks.js';
+import { CLOTHES, applyOutfit } from '../js/data/wardrobe.js';
+const ids=Object.keys(CLOTHES).filter(k=>['hat','shoes'].includes(CLOTHES[k].slot));
+const Z=5, cv=document.getElementById('c'), cols=10; cv.width=cols*40*Z; cv.height=Math.ceil(ids.length/cols)*52*Z; const c=cv.getContext('2d'); c.lineJoin='round'; c.lineCap='round';
+ids.forEach((id,i)=>{ const L=applyOutfit(playerLook({hairStyle:'bob'}),{[CLOTHES[id].slot]:id}); c.save(); c.setTransform(Z,0,0,Z,((i%cols)*40+20)*Z,(Math.floor(i/cols)*52+48)*Z); drawHuman(c,{look:L,dir:i%3===2?'right':'down',moving:0,seed:1},0.3); c.restore(); });
+window.done=1;
+</script>

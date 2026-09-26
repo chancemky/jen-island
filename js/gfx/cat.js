@@ -195,7 +195,7 @@ export function drawCat(c, a, t) {
   if (act === 'hold') pR = [4, -8.6];
   const paw = (p, shadeIt) => {
     const col = shadeIt ? FUR_S : FUR;
-    if (p[1] < -8.5) limb(c, [view === 'side' ? 0.4 : Math.sign(p[0]) * 4.6, -9.4, p[0], p[1]], 2.9, col);
+    if (p[1] < -8.5 || Math.abs(p[0]) > 6.6) limb(c, [view === 'side' ? 0.4 : Math.sign(p[0]) * 4.6, -9.4, p[0], p[1]], 2.9, col);
     ell(c, p[0], p[1], 2.1, 1.9, col, INK, 0.9);
   };
   paw(pL, view === 'side');

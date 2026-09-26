@@ -717,3 +717,41 @@ export function easel(c, t, p) {
   c.fillStyle = '#8fb7e0'; c.fillRect(-9, -30, 18, 7); c.fillStyle = '#a3d68a'; c.fillRect(-9, -23, 18, 7);
   circ(c, 5, -27, 2, '#ffd35a', null); poly(c, [-9, -23, -4, -27, 1, -23], '#6fb356', null);
 }
+
+// ---------------------------------------------------------------- ground life
+export function tallGrass(c, t, p) {
+  const n = p.n || 7, col = p.col || '#6fb356';
+  for (let i = 0; i < n; i++) {
+    const x = (i - (n - 1) / 2) * 2.2, h = 10 + ((i * 7) % 5) * 1.6, sw = wind(p.x + x, t, p.y) * 3.4 + Math.sin(t * 2.2 + i + p.x) * 0.5;
+    c.beginPath(); c.moveTo(x - 1, 0); c.quadraticCurveTo(x + sw * 0.4, -h * 0.55, x + sw, -h); c.quadraticCurveTo(x + sw * 0.4 + 0.8, -h * 0.55, x + 1, 0);
+    c.fillStyle = i % 2 ? col : shade(col, 14); c.fill();
+    if (p.seed && i % 3 === 1) ell(c, x + sw, -h - 1.2, 1, 2, '#e9d8a0', null);
+  }
+}
+export function mushrooms(c, t, p) {
+  for (const [x, y, s, cl] of [[-3, 0, 1, p.col || '#e8584e'], [3, 1, 0.75, p.col || '#e8584e'], [0.5, 2, 0.55, '#f7de8c']]) {
+    limb(c, [x, y, x, y - 3.4 * s], 1.6 * s, '#fff8ea');
+    c.beginPath(); c.ellipse(x, y - 3.6 * s, 3.2 * s, 2.2 * s, 0, Math.PI, TAU); c.closePath(); c.fillStyle = cl; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.6; c.stroke();
+    circ(c, x - 1 * s, y - 4.6 * s, 0.5 * s, '#fff', null); circ(c, x + 1.2 * s, y - 4.2 * s, 0.4 * s, '#fff', null);
+  }
+}
+export function stump(c, t, p) {
+  shadow(c, 0, 1, 9, 3, 0.15);
+  c.beginPath(); c.moveTo(-7, 0); c.lineTo(-6, -7); c.lineTo(6, -7); c.lineTo(7, 0); c.closePath(); c.fillStyle = '#9a6a44'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+  ell(c, 0, -7, 6, 2.4, '#e3c08d', INK, 0.8); ell(c, 0, -7, 3.6, 1.4, null, '#b9905a', 0.5); ell(c, 0, -7, 1.4, 0.6, null, '#b9905a', 0.5);
+  c.strokeStyle = 'rgba(80,50,30,.5)'; c.lineWidth = 0.5; for (const x of [-3, 1, 4]) { c.beginPath(); c.moveTo(x, -5); c.lineTo(x + 0.4, -1); c.stroke(); }
+  if (p.moss) ell(c, -3, -1.5, 3, 1.4, '#7fc062', null);
+}
+export function pebbles(c, t, p) { const R = rng((p.x * 3 + p.y) | 0); for (let i = 0; i < 5; i++) ell(c, (R() - 0.5) * 14, (R() - 0.5) * 5, 1.6 + R() * 1.4, 1 + R() * 0.8, ['#cfc8bc', '#bdb5a8', '#e3ddd2'][i % 3], 'rgba(91,63,54,.4)', 0.4); }
+export function birdBath(c, t, p) {
+  shadow(c, 0, 1, 8, 2.4, 0.16);
+  poly(c, [-3, 0, 3, 0, 2, -9, -2, -9], '#cfc8bc'); ell(c, 0, -10, 8, 2.8, '#d9d3c7'); ell(c, 0, -10.4, 6, 1.8, '#8fd6e6', null);
+  const k = (t * 0.7 + (p.x % 3)) % 3; if (k < 1) { c.globalAlpha = 1 - k; ell(c, 0, -10.4, 2 + k * 4, 0.8 + k, null, '#fff', 0.6); c.globalAlpha = 1; }
+}
+export function woodPile(c, t, p) { shadow(c, 0, 1, 12, 3, 0.15); for (const [x, y] of [[-6, 0], [0, 0], [6, 0], [-3, -5], [3, -5], [0, -10]]) { ell(c, x, y - 3, 3.2, 3, '#b9855a', INK, 0.7); ell(c, x, y - 3, 1.6, 1.5, '#e3c08d', null); } }
+export function flowerBed(c, t, p) {
+  const w = p.w || 40;
+  box(c, -w / 2, -6, w, 6, 2, '#b9855a', INK, 0.8); box(c, -w / 2 + 2, -8, w - 4, 3, 1, '#7a5638', null);
+  const R = rng((p.x + p.y * 3) | 0), cols = p.cols || ['#ff8fb0', '#ffd35a', '#fff', '#c9a8ff', '#ff6f6f'];
+  for (let i = 0; i < w / 4; i++) { const x = -w / 2 + 3 + i * 4 + (R() - 0.5), sw = wind(p.x + x, t, p.y) * 1.6; limb(c, [x, -7, x + sw, -12 - R() * 3], 0.8, '#5f9f45', null); circ(c, x + sw, -13 - R() * 2, 1.9, cols[i % cols.length], INK, 0.4); circ(c, x + sw, -13, 0.6, '#ffd35a', null); }
+}
