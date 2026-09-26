@@ -189,7 +189,7 @@ export function openBag() {
         if (prepped.length) { list.appendChild(h('div', 'section-title', T('Prepped at your shops', 'Đã sơ chế ở các quán'))); for (const [bid, k, n] of prepped) list.appendChild(rowEl({ icon: k, title: escapeHtml(ingName(k)), sub: escapeHtml(bizName(bid)), have: T(`${n} portions`, `${n} phần`) })); }
       } else if (i === 1) {
         const ids = Object.keys(MATERIALS).filter(k => mats(k) > 0);
-        if (!ids.length) list.appendChild(h('div', 'empty-note', T('No materials yet. Chú Bảy sells wood, metal and paint.', 'Chưa có vật liệu. Chú Bảy bán gỗ, tôn và sơn.')));
+        if (!ids.length) list.appendChild(h('div', 'empty-note', T('No materials yet. Ben Vung Materials on Market Street sells wood, metal and paint.', 'Chưa có vật liệu. VLXD Bền Vững ở Phố Chợ bán gỗ, tôn và sơn.')));
         for (const k of ids) list.appendChild(rowEl({ icon: k, title: escapeHtml(matName(k)), have: `×${mats(k)}` }));
       } else if (i === 2) {
         for (const [id, r] of Object.entries(RECIPES)) {
@@ -202,7 +202,7 @@ export function openBag() {
         if (!regs.length) list.appendChild(h('div', 'empty-note', T('Serve the same people a few times and they\'ll become regulars.', 'Phục vụ một người vài lần là họ thành khách quen.')));
         for (const [, r] of regs) list.appendChild(rowEl({ icon: RECIPES[r.fav]?.icon || 'heart', title: escapeHtml(r.name) + (r.visits >= 3 ? ` <span class="pill new">${T('Regular', 'Khách quen')}</span>` : ''), sub: T(`Visited ${r.visits} times · Favourite: ${r.fav ? recipeName(r.fav) : '—'}`, `Đã ghé ${r.visits} lần · Món ruột: ${r.fav ? recipeName(r.fav) : '—'}`) }));
       } else {
-        for (const [id, a] of Object.entries(ACHIEVEMENTS)) { const got = s.achievements.includes(id); list.appendChild(rowEl({ icon: got ? 'lantern' : 'tile', title: got ? escapeHtml(T(a.en, a.vi)) : '— — —', sub: escapeHtml(T(a.desc, a.descVi)), dim: !got })); }
+        for (const [id, a] of Object.entries(ACHIEVEMENTS)) { const got = s.achievements.includes(id); list.appendChild(rowEl({ icon: got ? 'lantern' : 'lock', title: got ? escapeHtml(T(a.en, a.vi)) : '— — —', sub: escapeHtml(T(a.desc, a.descVi)), dim: !got })); }
       }
     }, 0, api);
   } });
@@ -236,13 +236,12 @@ export function openBizMenu(bizId, { onUpgrade } = {}) {
         for (let lv = 2; lv < ups.length; lv++) {
           const u = ups[lv]; if (!u) continue;
           const done = b.level >= lv, req = SHOP_LEVEL_REQ[lv] || 0, locked = level() < req, next = b.level === lv - 1 && !locked;
-          const need = h('div', 'need');
-          need.innerHTML = `<span class="${s.money >= u.cost ? 'ok' : 'no'}"><img src="${iconURL('coin', 22)}">${u.cost}k</span>` + Object.entries(u.mats || {}).map(([k, n]) => `<span class="${mats(k) >= n ? 'ok' : 'no'}"><img src="${iconURL(k, 22)}">${mats(k)}/${n}</span>`).join('');
+          const need = needChips(u.mats, u.cost);
           const perk = u.tables ? T(`${u.tables} tables`, `${u.tables} bàn`) : T(`queue of ${u.queue}`, `hàng chờ ${u.queue}`);
           const r = rowEl({ icon: lv === 2 ? 'lantern' : lv === 3 ? 'cable' : 'star', dim: locked && !done, title: T(`Level ${lv}: ${u.label}`, `Cấp ${lv}: ${u.labelVi || u.label}`), sub: done ? T('Done', 'Đã nâng cấp') : locked ? T(`Needs island level ${req}`, `Cần đảo cấp ${req}`) : T(`${perk} · attracts more customers${u.price ? ` · prices +${Math.round((u.price - 1) * 100)}%` : ''}`, `${perk} · hút khách hơn${u.price ? ` · giá +${Math.round((u.price - 1) * 100)}%` : ''}`) });
           r.querySelector('.info').appendChild(need);
           if (!done) r.appendChild(btn(T('Upgrade', 'Nâng cấp'), () => {
-            if (s.money < u.cost || !hasMats(u.mats)) { sfx('error'); toast({ text: T('Not enough yet', 'Chưa đủ'), sub: T('You need more money or materials — Chú Bảy sells them.', 'Cần thêm tiền hoặc vật liệu — Chú Bảy có bán.'), bad: true }); return; }
+            if (s.money < u.cost || !hasMats(u.mats)) { sfx('error'); toast({ text: T('Not enough yet', 'Chưa đủ'), sub: T('You need more money or materials — tap a material to see where to buy it (Ben Vung Materials).', 'Cần thêm tiền hoặc vật liệu — chạm vào vật liệu để xem nơi mua (VLXD Bền Vững).'), bad: true }); return; }
             api.close(true); onUpgrade?.(lv);
           }, 'buy', !next));
           list.appendChild(r);
@@ -297,16 +296,37 @@ export function openRequirement({ title, sub = '', cost = 0, mats: need = {}, ac
   return openSheet({ title, sub, who, build: (body, api) => {
     const wrap = h('div', 'scroll'); body.appendChild(wrap);
     if (note) wrap.appendChild(h('div', 'empty-note', escapeHtml(note)));
-    const n = h('div', 'need');
-    if (cost) n.innerHTML += `<span class="${s.money >= cost ? 'ok' : 'no'}"><img src="${iconURL('coin', 22)}">${money(cost)}</span>`;
-    for (const [k, v] of Object.entries(need)) n.innerHTML += `<span class="${mats(k) >= v ? 'ok' : 'no'}"><img src="${iconURL(k, 22)}">${escapeHtml(matName(k))} ${mats(k)}/${v}</span>`;
-    wrap.appendChild(n);
+    wrap.appendChild(needChips(need, cost));
     const ready = s.money >= cost && hasMats(need);
     const foot = h('div', 'foot');
     foot.appendChild(btn(actionLabel, () => { if (!ready) return; api.close(true); action(); }, 'btn big' + (ready ? ' pink' : ''), !ready));
     body.appendChild(foot);
-    if (!ready) wrap.appendChild(h('div', 'empty-note', Object.keys(need).length ? T('Ben Vung Materials on Market Street sells what you need.', 'Tiệm VLXD Bền Vững ở Phố Chợ có bán đủ thứ bạn cần.') : T('Keep earning — you\'re nearly there!', 'Cố gắng thêm chút nữa — sắp đủ rồi!')));
+    if (!ready) wrap.appendChild(h('div', 'empty-note', Object.keys(need).length ? T('Tap a material to see what it is and where to buy it. Ben Vung Materials on Market Street sells them all.', 'Chạm vào vật liệu để xem tên và nơi mua. VLXD Bền Vững ở Phố Chợ bán đủ cả.') : T('Keep earning — you\'re nearly there!', 'Cố gắng thêm chút nữa — sắp đủ rồi!')));
   } });
+}
+
+// Requirement chips: tap a material to see its name and where to buy it; "?" explains all of them
+const MAT_SHOP = () => T('Ben Vung Materials (Market Street)', 'VLXD Bền Vững (Phố Chợ)');
+function matWhere(k) {
+  const m = MATERIALS[k]; if (!m) return '';
+  const lv = m.unlock, locked = lv && level() < lv;
+  return locked ? T(`Sold at ${MAT_SHOP()} from island level ${lv} (you're level ${level()})`, `Bán ở ${MAT_SHOP()} từ đảo cấp ${lv} (bạn đang cấp ${level()})`) : T(`Sold at ${MAT_SHOP()}`, `Có bán ở ${MAT_SHOP()}`);
+}
+export function needChips(need, cost = 0) {
+  const s = G.state, n = h('div', 'need');
+  if (cost) n.appendChild(h('span', s.money >= cost ? 'ok' : 'no', `<img src="${iconURL('coin', 22)}">${money(cost)}`));
+  for (const [k, v] of Object.entries(need || {})) {
+    const chip = h('button', 'chip ' + (mats(k) >= v ? 'ok' : 'no'), `<img src="${iconURL(k, 22)}">${escapeHtml(matName(k))} ${mats(k)}/${v}`);
+    chip.type = 'button';
+    chip.onclick = e => { e.stopPropagation(); sfx('ui'); toast({ text: `${matName(k)} · ${mats(k)}/${v}`, sub: matWhere(k), icon: k, ms: 3600 }); };
+    n.appendChild(chip);
+  }
+  if (Object.keys(need || {}).length) {
+    const q = h('button', 'chip help', '?'); q.type = 'button';
+    q.onclick = e => { e.stopPropagation(); sfx('ui'); toast({ text: T('Where to get materials', 'Mua vật liệu ở đâu'), sub: Object.keys(need).map(k => `${matName(k)}: ${matWhere(k)}`).join(' · '), icon: 'wood', ms: 6000 }); };
+    n.appendChild(q);
+  }
+  return n;
 }
 
 // ---------------------------------------------------------------- Mèo Mây's recipe notebook
@@ -355,11 +375,11 @@ const LORE = [
 ];
 export function openJournal() {
   const s = G.state;
-  openSheet({ title: T('Island Memories', 'Kỷ niệm của đảo'), who: 'meo', full: true, build: (body) => {
+  openSheet({ title: T('Chapters & Story', 'Các chương & câu chuyện'), sub: T('Every chapter of your island, the ones still to come, side quests and Mèo Mây\'s stories', 'Các chương của hòn đảo, những chương sắp tới, nhiệm vụ phụ và chuyện Mèo Mây kể'), who: 'meo', full: true, build: (body) => {
     const list = h('div', 'list scroll'); list.style.flex = '1'; body.appendChild(list);
     for (let i = 1; i < CHAPTERS.length; i++) {
       const ch = CHAPTERS[i], got = s.story.chapter >= i;
-      list.appendChild(rowEl({ icon: got ? 'lantern' : 'tile', title: got ? escapeHtml(T(`Chapter ${i}: ${ch.title}`, `Chương ${i}: ${ch.vi}`)) : T(`Chapter ${i}: ???`, `Chương ${i}: ???`), dim: !got }));
+      list.appendChild(rowEl({ icon: got ? 'lantern' : 'lock', title: got ? escapeHtml(T(`Chapter ${i}: ${ch.title}`, `Chương ${i}: ${ch.vi}`)) : T(`Chapter ${i}: ???`, `Chương ${i}: ???`), dim: !got }));
     }
     const qs = activeQuests();
     if (qs.length) {

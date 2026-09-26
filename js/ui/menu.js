@@ -70,7 +70,7 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
         const wrap = h('div', 'map-wrap'); pane.appendChild(wrap);
         wrap.style.minHeight = '420px';
         mountMap(wrap);
-        const j = btn(T('Island memories', 'Kỷ niệm của đảo'), () => { api.close(true); openJournal(); }, 'btn ghost');
+        const j = btn(T('📖 Chapters & story', '📖 Các chương & câu chuyện'), () => { api.close(true); openJournal(); }, 'btn ghost');
         j.style.marginTop = '10px'; pane.appendChild(j);
       } else if (i === 1) {
         const list = h('div', 'list'); pane.appendChild(list);

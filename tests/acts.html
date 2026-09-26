@@ -1,0 +1,9 @@
+<!doctype html><body style="margin:0;background:#a3d68a"><canvas id=c></canvas><script type=module>
+import '../js/systems/state.js';
+import { drawHuman } from '../js/gfx/character.js';
+import { playerLook } from '../js/data/looks.js';
+const q=new URLSearchParams(location.search), Z=+(q.get('z')||5), acts=(q.get('acts')||'hammer,stir,chop').split(','), yaws=[Math.PI, Math.PI*0.75, Math.PI*1.25, Math.PI/2, 0], cv=document.getElementById('c');
+cv.width=yaws.length*2*40*Z; cv.height=acts.length*54*Z; const c=cv.getContext('2d'); c.lineJoin='round'; c.lineCap='round';
+acts.forEach((act,r)=>yaws.forEach((yw,i)=>[0.05,0.2].forEach((at,j)=>{ const L={...playerLook({hairStyle:q.get('hs')||'bob'})}; c.save(); c.setTransform(Z,0,0,Z,((i*2+j)*40+20)*Z,(r*54+50)*Z); drawHuman(c,{look:L,dir:'up',yawOverride:yw,moving:0,seed:1,act,actT:at},at+0.1); c.restore(); })));
+window.done=1;
+</script>

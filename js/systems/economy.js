@@ -16,12 +16,13 @@ import { fx } from '../world/render.js';
 
 // ---------------------------------------------------------------- places, rent & property
 export const PLACES = {
-  house: { en: 'Your home', vi: 'Nhà của bạn', rent: 18 },
-  shed1: { rent: 22 }, shed2: { rent: 30 }, truck: { rent: 40, en2: 'Parking spot', vi2: 'Chỗ đậu xe' }, night: { rent: 28 },
-  nm1: { rent: 28 }, nm2: { rent: 28 }, nm3: { rent: 28 }, nm5: { rent: 28 }, nm6: { rent: 28 },
-  restaurant: { rent: 110 }, cafe: { rent: 70 }, grill: { rent: 90 },
+  house: { en: 'Your home', vi: 'Nhà của bạn', rent: 54 },
+  shed1: { rent: 66 }, shed2: { rent: 90 }, truck: { rent: 120, en2: 'Parking spot', vi2: 'Chỗ đậu xe' }, night: { rent: 84 },
+  nm1: { rent: 84 }, nm2: { rent: 84 }, nm3: { rent: 84 }, nm5: { rent: 84 }, nm6: { rent: 84 },
+  restaurant: { rent: 330 }, cafe: { rent: 210 }, grill: { rent: 270 },
 };
-export const propertyPrice = id => Math.round(PLACES[id].rent * 70 / 10) * 10;
+// buying outright is a big goal: about 160 days of (the new, higher) rent — 7× the old price
+export const propertyPrice = id => Math.round(PLACES[id].rent / 3 * 70 * 7 / 10) * 10;
 export const placeName = id => id === 'house' ? T(PLACES.house.en, PLACES.house.vi) : bizName(id);
 const RENT_FROM_DAY = 3;                                     // a couple of rent-free days to settle in
 export function usedPlaces() {

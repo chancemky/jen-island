@@ -119,7 +119,7 @@ export async function talkToVendor(a) {
     if (!canAfford(item.price)) { sfx('error'); await say(a, T('Short on coins? Next time, dear.', 'Hết tiền hả? Lần sau nha cháu.')); return; }
     addMoney(-item.price, 'snack'); sfx('coin');
     a.setAct('hold', item.id); await sleep(500); a.setAct('wave'); setTimeout(() => a.setAct(null), 800);
-    await say(a, T('Here you go! Enjoy it while it\'s fresh.', 'Của con đây! Ăn liền cho ngon nha.'));
+    await say(a, v.act === 'drink' ? T('Here you go! Drink it while it\'s nice and cold.', 'Của con đây! Uống liền cho mát nha.') : T('Here you go! Enjoy it while it\'s fresh.', 'Của con đây! Ăn liền cho ngon nha.'));
     return item;
   } finally { a.data.busy = false; }
 }

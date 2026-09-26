@@ -109,3 +109,6 @@ export function applyOutfit(base, wardrobe) {
   delete L._c; delete L._v;
   return L;
 }
+
+// v4.3: clothes are a luxury now
+for (const v of Object.values(CLOTHES)) if (v.price) v.price = Math.round(v.price * 6 / 10) * 10;

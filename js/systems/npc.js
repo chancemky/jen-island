@@ -156,6 +156,7 @@ function goTo(island, a, x, y, then) {
 
 function updateResident(island, a, dt) {
   const d = a.data, s = G.state, h = s.time / 60;
+  if (d.inTalk) return;                                  // never walk off mid-conversation
   const bedtime = s.nightMarket.restored ? 22.5 : 21.3;
   if (d.state === 'busy') return;
   if (d.state === 'indoors') {
@@ -249,10 +250,18 @@ function spawnTourists(island, n) {
 }
 function updateTourist(island, a, dt) {
   const d = a.data, s = G.state;
-  if (d.state === 'disembark' || d.state === 'walking' || d.state === 'busy' || d.state === 'boarding') return;
+  if (d.inTalk) return;
+  // safety net: nobody is left wandering or waiting once the island is asleep
+  if (s.time >= 24 * 60 + 30 && !a.fadeOut) { a.stop(); a.fadeOut = true; const k = npcs.tourists.indexOf(a); if (k >= 0) npcs.tourists.splice(k, 1); return; }
+  if (d.state === 'disembark' || d.state === 'walking' || d.state === 'busy' || d.state === 'boarding' || d.state === 'to-pier') return;
+  if (d.state === 'queue') { a.face('down'); return; }       // waiting on the pier for the ferry
   if (s.time >= d.leaveAt || s.time > 22 * 60) {
-    d.state = 'boarding';
-    a.walkTo(island.nav.path(a.x, a.y, 900, 2560).concat([[960, 2583]])).then(() => { a.fadeOut = true; npcs.tourists.splice(npcs.tourists.indexOf(a), 1); });
+    // head for the pier and wait in line; only the ferry takes visitors off the island
+    if (a.sit) { a.sit = false; a.seatH = undefined; a.doHop(60); a.y += 10; }
+    a.setAct(null);
+    d.state = 'to-pier';
+    const slot = pierSlot();
+    a.walkTo(island.nav.path(a.x, a.y, 900, 2440).concat([[900, slot[1]]])).then(() => { d.state = 'queue'; a.face('down'); });
     return;
   }
   if (s.time >= (d.until || 0)) {
@@ -267,9 +276,25 @@ function updateTourist(island, a, dt) {
     });
   }
 }
+// the line on the pier: the first spot is at the end, the rest step back towards the beach
+function pierSlot() {
+  const taken = npcs.tourists.filter(t => t.data.state === 'queue' || t.data.state === 'to-pier').length;
+  return [900, 2578 - Math.min(taken, 12) * 13];
+}
+const waitingForBoat = () => npcs.tourists.some(t => t.data.state === 'queue' || t.data.state === 'to-pier' || t.data.state === 'boarding');
+function boardWaiting(island) {
+  // everyone in line walks to the gangway in order and steps aboard
+  const line = npcs.tourists.filter(t => t.data.state === 'queue').sort((a, b) => b.y - a.y);
+  line.forEach((a, i) => {
+    a.data.state = 'boarding';
+    setTimeout(() => a.walkTo([[900, 2578], [962, BERTH.y], [BERTH.x - 12, BERTH.y]], { speed: 55 }).then(() => { a.fadeOut = true; const k = npcs.tourists.indexOf(a); if (k >= 0) npcs.tourists.splice(k, 1); }), i * 500);
+  });
+}
 function updateFerry(island, dt) {
   const f = npcs.ferry, s = G.state;
   if (f.state === 'away') {
+    // visitors still waiting after the day's last ferry: a late boat comes for them (before the island sleeps)
+    if (f.next > 23 * 60 + 40 && s.time >= 21.5 * 60 && waitingForBoat()) f.next = Math.max(s.time + 8, Math.min(23 * 60 + 20, s.time + 30));
     if (s.time >= f.next) { f.state = 'arriving'; f.x = BERTH.x; f.y = 2980; f.speed = 70; sfx('horn'); }
   } else if (f.state === 'arriving') {
     const dy = f.y - BERTH.y;
@@ -277,13 +302,17 @@ function updateFerry(island, dt) {
     f.y -= f.speed * dt;
     if (dy < 1) { f.y = BERTH.y; f.speed = 0; f.state = 'docked'; f.dockUntil = s.time + 28; f.unload = 1;
       const n = clamp(1 + Math.floor(s.reputation / 25) + (s.story.chapter >= 3 ? 1 : 0) + (s.nightMarket.restored ? 2 : 0), 1, 9);
-      if (npcs.tourists.length < 16 && s.story.chapter >= 2 && !G.runtime.introBoat) spawnTourists(island, n);
+      if (npcs.tourists.length < 16 && s.story.chapter >= 2 && !G.runtime.introBoat && s.time < 21 * 60) spawnTourists(island, n);
+      boardWaiting(island);
       G.runtime.boatBoost = 30;
       bus.emit('ferry', n);
       fx.burst('splash', f.x - 20, f.y + 20, 8, { up: 50, life: 0.6 });
     }
   } else if (f.state === 'docked') {
-    if (s.time >= f.dockUntil && !G.runtime.introBoat) { f.state = 'leaving'; sfx('horn'); }
+    // anyone who reaches the pier while the boat is in gets on too; it waits for the last one
+    if (npcs.tourists.some(t => t.data.state === 'queue')) boardWaiting(island);
+    const stillComing = npcs.tourists.some(t => t.data.state === 'boarding' || (t.data.state === 'to-pier' && s.time > 22 * 60));
+    if (s.time >= f.dockUntil && !stillComing && !G.runtime.introBoat) { f.state = 'leaving'; sfx('horn'); }
   } else if (f.state === 'leaving') {
     f.speed = Math.min(90, f.speed + dt * 30);
     f.y += f.speed * dt;
@@ -435,7 +464,8 @@ export function updateNPCs(dt) {
   updateVendors(island);
   for (const a of [...npcs.tourists]) updateTourist(island, a, dt);
   updateFerry(island, dt);
-  for (const sc of npcs.scooters) updateScooter(sc, dt);
+  const ridersOut = G.state.time >= 6 * 60 && G.state.time < 24 * 60;   // nobody rides around after midnight
+  if (ridersOut) for (const sc of npcs.scooters) updateScooter(sc, dt);
   for (const g of npcs.gulls) g.a += g.sp * dt;
   updateDucks(dt);
   // leaves and petals drift down from trees in view when the wind picks up
@@ -463,7 +493,7 @@ export function npcDrawables() {
   for (const b of npcs.crumbs || []) out.push({ x: b.x, y: b.y, sortY: b.y + 2, draw: c => { if (b.z > 0) { c.save(); c.globalAlpha = 0.25; ell(c, 0, 0, 1.6, 0.8, '#2a4a50', null); c.restore(); } ell(c, 0, -b.z, 1.6, 1.3, '#e3b36a', 'rgba(91,63,54,.6)', 0.4); if (b.landed && b.landed < 0.6) { c.save(); c.globalAlpha = 1 - b.landed / 0.6; ell(c, 0, 0, 2 + b.landed * 12, 1 + b.landed * 4, null, '#fff', 0.8); c.restore(); } } });
   const f = ferryDrawable(); if (f) out.push(f);
   out.push(...animalDrawables());
-  for (const sc of npcs.scooters) out.push(scooterDrawable(sc));
+  if (G.state.time >= 6 * 60 && G.state.time < 24 * 60) for (const sc of npcs.scooters) out.push(scooterDrawable(sc));
   for (const d of sideQuestDrawables()) out.push(d);
   for (const b of npcs.butterflies) out.push({ x: b.x, y: b.y, sortY: b.y + 30, draw: (c, t) => { c.save(); c.translate(0, -22 - Math.sin(b.t * 3) * 4); const f = Math.abs(Math.sin(b.t * 16)); c.fillStyle = b.col; c.strokeStyle = 'rgba(91,63,54,.7)'; c.lineWidth = 0.6; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * 2.6 * f, -1, 2.6 * f + 0.4, 3, s * 0.4, 0, TAU); c.fill(); c.stroke(); } c.restore(); } });
   return out;

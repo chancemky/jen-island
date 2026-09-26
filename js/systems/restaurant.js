@@ -364,7 +364,7 @@ export function updateRestaurant(dt, gameMin) {
   if (sc !== G.scene) sc.update(dt, G.t);   // keep simulating while the player is elsewhere
   // guests arrive while open
   if (b.open) {
-    if (G.state.time >= 24 * 60) { b.open = false; bus.emit('biz:close', 'restaurant', 'hours'); }
+    if (G.state.time >= 23 * 60) { b.open = false; bus.emit('biz:close', 'restaurant', 'hours'); }   // no new guests after 11 pm (seated ones finish)
     r.spawnT -= dt;
     if (r.spawnT <= 0) {
       const rep = 1 + Math.min(3, G.state.reputation / 80);

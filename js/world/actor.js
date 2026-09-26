@@ -69,6 +69,7 @@ export class Actor {
         this.x = tx; this.y = ty; this.path.shift();
         if (!this.path.length) { this.path = null; const r = this._resolve; this._resolve = null; if (r) r(true); }
       } else {
+        if (this.sit && this.kind !== 'pet') { this.sit = false; this.seatH = undefined; if (this.act === 'ride') this.act = null; }   // walking always means standing up
         this.x += (dx / d) * step; this.y += (dy / d) * step;
         this.moveAng = Math.atan2(dx, dy);   // body turns to face where it walks (8+ directions)
         this.setDirFromVel(dx, dy);
@@ -125,6 +126,13 @@ export class Actor {
     if (this.alpha !== undefined) c.globalAlpha = this.alpha;
     if (this.kind === 'cat') drawCat(c, this, t);
     else if (this.kind === 'pet') this.petDraw?.(c, this, t);
+    else if (this.lie) {
+      // lying back in a hammock: rotate the whole body a quarter turn, rocking with the hammock
+      const k = this.lie.k, e = k * k * (3 - 2 * k), rock = Math.sin(t * 1.2 + this.x) * 3 * e;
+      c.translate(rock + 18 * e, -this.lie.h * e - (1 - e) * this.lie.h * 0.6);
+      c.rotate(-Math.PI / 2 * e + Math.sin(t * 1.2) * 0.03 * e);
+      drawHuman(c, { ...this, sit: false, seatH: undefined, moving: 0, dir: 'down', yawOverride: 0, emo: e > 0.8 ? 'happy' : this.emo, blinkAmt: e > 0.9 ? 1 : this.blinkAmt, act: null }, t);
+    }
     else drawHuman(c, this, t);
     c.restore();
   }

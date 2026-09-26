@@ -3,9 +3,44 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '4.2.0';
+export const APP_VERSION = '4.3.0';
 
 export const CHANGELOG = [
+  {
+    v: '4.3.0', date: '2026-09-26T18:32:30Z',
+    title: ['The Grind', 'Cày Cuốc'],
+    items: [
+      ['Everyone starts fresh again: all accounts were reset — sign up and begin on the boat', 'Mọi người bắt đầu lại: tất cả tài khoản đã được xóa — hãy đăng ký và bắt đầu từ chuyến tàu'],
+      ['Money is a real grind now: fewer customers, ingredients cost more, smaller tips', 'Kiếm tiền giờ phải cày thật sự: ít khách hơn, nguyên liệu đắt hơn, tiền boa ít hơn'],
+      ['Furniture and clothes cost 6× more, haircuts and pets 3×, materials and upgrades 2×', 'Nội thất và quần áo đắt gấp 6, cắt tóc và thú cưng gấp 3, vật liệu và nâng cấp gấp 2'],
+      ['Rent is 3× higher and buying a property costs about 7× more — owning is a big goal', 'Tiền thuê gấp 3 và mua đứt đắt gấp khoảng 7 — sở hữu nhà là mục tiêu lớn'],
+      ['Raising prices really scares customers off (160% brings far fewer people than 100%)', 'Tăng giá thật sự làm khách ngại (160% ít khách hơn hẳn 100%)'],
+      ['Perfect orders are easy to get: make the order right (any order of steps) and serve it in time', 'Món hoàn hảo dễ đạt hơn: làm đúng món (thứ tự bước nào cũng được) và phục vụ kịp lúc'],
+      ["Your shops close at 11 pm; if you're at the counter you can still serve everyone already in line", 'Quán của bạn đóng lúc 23 giờ; nếu đang đứng quầy, bạn vẫn phục vụ nốt khách đang xếp hàng'],
+      ['You still get sleepy only after midnight', 'Bạn chỉ buồn ngủ sau nửa đêm như cũ'],
+      ["The closing-time message says it's your shops that are closed (islanders keep their own hours)", 'Thông báo đóng cửa nói rõ là quán của bạn đóng (quán người dân có giờ riêng)'],
+      ['Animals sleep after midnight and nobody rides scooters around at night', 'Con vật ngủ sau nửa đêm và không ai chạy xe máy lòng vòng ban đêm'],
+      ['Tourists only leave by ferry: they line up on the pier, and a late boat takes everyone home before the island sleeps', 'Du khách chỉ rời đảo bằng tàu: họ xếp hàng trên bến, và chuyến tàu muộn đón hết mọi người trước khi đảo ngủ'],
+      ['Islanders no longer walk off in the middle of a conversation, or glide around in a sitting pose', 'Người dân không bỏ đi giữa câu chuyện, cũng không trôi đi trong tư thế ngồi nữa'],
+      ["Every islander has their own jokes, and nobody repeats one until they've told them all", 'Mỗi người dân có chuyện cười riêng, và không ai kể lại chuyện cũ trước khi kể hết'],
+      ['The prep table screen has a step-by-step guide with an arrow showing what to tap', 'Màn hình sơ chế có hướng dẫn từng bước và mũi tên chỉ chỗ cần chạm'],
+      ['The prep table looks like a real prep station: butcher block, board, cleaver, bowls and baskets', 'Bàn sơ chế trông như bàn sơ chế thật: mặt gỗ dày, thớt, dao, tô và giỏ rau'],
+      ['Tap a required material to see its name and where to buy it; “?” explains them all (roof tiles unlock at level 7)', 'Chạm vào vật liệu cần để xem tên và nơi mua; “?” giải thích hết (ngói mở ở cấp 7)'],
+      ['Roof tiles have a clearer icon, locked chapters show a padlock, and “Island memories” is now “Chapters & story”', 'Ngói có biểu tượng rõ hơn, chương chưa mở hiện ổ khóa, và “Kỷ niệm của đảo” giờ là “Các chương & câu chuyện”'],
+      ['Updated old shop names (Ben Vung Materials) and clearer upgrade wording in Vietnamese', 'Cập nhật tên tiệm cũ (VLXD Bền Vững) và chữ “nâng cấp” rõ hơn trong tiếng Việt'],
+      ['Hammer, ladle and knife show in front of your head when you face away', 'Búa, vá và dao hiện trước đầu khi bạn quay lưng lại'],
+      ['Get into hammocks — on the beach or at home — and rock gently', 'Nằm võng — ngoài bãi biển hay trong nhà — và đung đưa nhè nhẹ'],
+      ['Long hair flows from the crown to the ends when seen from behind', 'Tóc dài chảy liền từ đỉnh đầu xuống khi nhìn từ phía sau'],
+      ['Sunglasses cover the eyes; the bandana knot only shows at the back; bunny slipper ears hide from behind', 'Kính râm che kín mắt; nút khăn bandana chỉ hiện phía sau; tai dép thỏ ẩn khi nhìn từ sau'],
+      ['A proper acoustic guitar, a surfboard carried at your side, and a tote that stays on your shoulder from every angle', 'Cây đàn guitar đúng kiểu, ván lướt cầm bên hông, và túi tote luôn trên vai ở mọi góc nhìn'],
+      ['The Night Market sits fully on grass (on the map too), and the fountain is centred in the plaza', 'Chợ Đêm nằm trọn trên cỏ (cả trên bản đồ), và đài phun nước nằm giữa quảng trường'],
+      ['Roads never run under buildings or decorations; the road behind the food truck is gone; the supermarket door is clear', 'Đường không chạy dưới nhà hay đồ trang trí; bỏ con đường sau xe cuốn; cửa siêu thị thông thoáng'],
+      ['House labels are centred; the food truck sign is straight; signpost text always fits', 'Bảng tên nhà nằm giữa; bảng xe cuốn thẳng; chữ trên biển chỉ đường luôn vừa khung'],
+      ['Flowers and fruit stay on the trees; sugarcane juice is something you drink', 'Hoa và trái luôn ở trên cây; nước mía là để uống'],
+      ['Counter screen: hats never cut off, the close button never squishes, the patience bar fills completely', 'Màn hình quầy: nón không bị cắt, nút đóng không bị bóp, thanh kiên nhẫn đầy đủ'],
+      ['Money shows as 10M (no ₫)', 'Tiền hiển thị 10M (không có ₫)'],
+    ],
+  },
   {
     v: '4.2.0', date: '2026-09-26T17:46:57Z',
     title: ['A Fresh Start', 'Khởi Đầu Mới'],

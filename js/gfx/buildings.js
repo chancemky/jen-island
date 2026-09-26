@@ -201,7 +201,7 @@ function houseExtras(c, t, b, w, h) {
       for (const x of [-Math.min(32, w * 0.5 - 20), Math.min(32, w * 0.5 - 20)]) { box(c, x - 13, -h + 31, 26, 5, 2, '#b77a4f', INK, 0.8); for (let i = 0; i < 4; i++) flower(c, x - 9 + i * 6, -h + 29.6, 2.4, ['#ff8fb0', '#ffd35a', '#fff', '#f36d86'][i], i === 2 ? 1 : 0); }
       box(c, -12, -h - 34, 24, 18, 3, b.wall || '#f7dd8a', INK, 1); box(c, -7, -h - 30, 14, 11, 2, '#bfe6ef', INK, 0.8); poly(c, [-15, -h - 34, 0, -h - 44, 15, -h - 34], b.roof || '#d9784f', INK, 1);
       const nm = (G.state?.player?.name || '').slice(0, 10);
-      if (nm) signBoard(c, -w / 2 + 14, -18, 26, 7, nm, '#fff5df', INK);
+      if (nm) signBoard(c, 0, -h + 4, Math.max(30, nm.length * 3.6 + 10), 7, nm, '#fff5df', INK);   // centred over the door, like every home
       break;
     }
     case 'wood': { // Bà Tư: kumquat pots and a rocking chair on the porch
@@ -258,7 +258,7 @@ function houseExtras(c, t, b, w, h) {
       box(c, gx0 - 2, -h + 10, gx1 - gx0 + 4, h - 10, 2, shade(b.wall || '#d6e6f5', -22), INK, 0.8);
       box(c, gx0, -h + 13, gx1 - gx0, h - 13, 1.5, '#b9c3cb', INK, 0.8); for (let y = -h + 17; y < -2; y += 4) line(c, gx0 + 1, y, gx1 - 1, y, '#8a96a0', 0.6);
       box(c, (gx0 + gx1) / 2 - 4, -6, 8, 2.4, 1, '#6b737c', INK, 0.5);
-      signBoard(c, -w / 2 + 18, -h - 4, 30, 8, 'TAXI', '#f7de8c', INK);
+      signBoard(c, 0, -h + 4, 30, 7, 'TAXI', '#f7de8c', INK);
       break;
     }
     case 'clinic': { // Doctor An's clinic: white and mint, a glowing green cross, a ramp, a bench and opening hours
@@ -496,7 +496,7 @@ export function drawFoodTruck(c, t, b) {
   if (flap > 0.02) awning(c, -10, -56, 66, ['#fff5df', '#f28f7c'], 14 * flap);
   box(c, -44, -32, 68, 5, 2, '#c9955e');
   c.restore();
-  if (!owned) { signBoard(c, -10, -76, 60, 14, T('FOR SALE', 'BÁN'), '#fff5df', '#e8584e', { tilt: 0.05 }); ell(c, 0, -30, 40, 14, 'rgba(160,150,140,.12)', null); }
+  if (!owned) { signBoard(c, -10, -76, 60, 14, T('FOR SALE', 'BÁN'), '#fff5df', '#e8584e'); ell(c, 0, -30, 40, 14, 'rgba(160,150,140,.12)', null); }
   else signBoard(c, -10, -76, 76, 14, s.sign || T('FOOD TRUCK', 'XE BÁNH'), '#f28f7c', '#fff5df');
   if (open && nightA() > 0.05) stringLights(c, 90, -68, t, b);
 }

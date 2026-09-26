@@ -179,8 +179,8 @@ bus.on('enter', id => {
 bus.on('leave', () => resetArea());
 bus.on('lang', () => { applyStaticText(); refreshQuest(); resetArea(); });
 bus.on('late', () => {
-  for (const id of Object.keys(BUSINESSES)) if (bizOf(id).open) closeBiz(id, 'midnight');
-  toast({ text: T('It\'s past midnight!', 'Đã quá nửa đêm!'), sub: T('Shops are closed. You\'re getting sleepy — sleep in your bed to start fresh.', 'Các quán đã đóng cửa. Bạn buồn ngủ rồi — về giường ngủ để bắt đầu ngày mới nhé.'), icon: 'sleep_moon', ms: 5000 });
+  for (const id of Object.keys(BUSINESSES)) if (bizOf(id).open && !(G.runtime.serviceOpen === id && bizRT(id).queue.length)) closeBiz(id, 'midnight');
+  toast({ text: T('It\'s past midnight!', 'Đã quá nửa đêm!'), sub: T('You\'re getting sleepy — sleep in your bed to start a new day.', 'Bạn buồn ngủ rồi — về giường ngủ để bắt đầu ngày mới nhé.'), icon: 'sleep_moon', ms: 5000 });
 });
 bus.on('regular', c => toast({ text: T(`${c.name} is now a regular!`, `${c.name} đã thành khách quen!`), sub: '♥', icon: 'heart' }));
 bus.on('ferry', n => { if (G.scene === scenes.island && flag('freeRoam') && !cs.active && G.state.story.chapter >= 2) toast({ text: T('The ferry has arrived', 'Tàu khách đã cập bến'), sub: T(`It brought ${n} visitor${n > 1 ? 's' : ''}!`, `Tàu chở ${n} du khách tới!`), icon: 'photo', ms: 2200 }); });
@@ -311,7 +311,7 @@ function updateInteraction(dt) {
   }
   // benches, chairs, stools, sofas, cushions
   const seat = nearestSeat(sc, pl.x, pl.y, 18);
-  if (seat) { setAction(T('Sit', 'Ngồi'), () => sitDown(seat), 'sofa'); return; }
+  if (seat) { setAction(seat.lie ? T('Lie down', 'Nằm võng') : T('Sit', 'Ngồi'), () => sitDown(seat), seat.lie ? 'zzz' : 'sofa'); return; }
   // the lotus pond: feed the ducks
   if (sc === scenes.island && nearPond(pl.x, pl.y)) { setAction(T('Feed ducks', 'Cho vịt ăn'), () => feedDucks(), 'bread_split'); return; }
   // the Long Bridge repair spot
@@ -349,14 +349,17 @@ async function talkTo(a) {
   releaseJoystick();
   if (a === G.meo) return talkToMeo();
   if (a.kind === 'pet') return petMenu(a);
-  await cs.run('talk', async () => {
+  // they stay put for the whole conversation (and a moment after)
+  if (a.data) { a.data.inTalk = true; if (a.path && !a.data.cart) a.stop?.(); }
+  try { await cs.run('talk', async () => {
     if (a.data?.rid) await talkToResident(a);
     else if (a.data?.mid) await talkToMerchant(a);
     else if (a.data?.emp) await talkToStaff(a);
     else if (a.data?.tourist) await talkToVisitor(a);
     else if (a.data?.cart) await buyFromVendor(a);
     else await say(a, T('Hello!', 'Xin chào!'));
-  }, { bars: false, keepHud: true });
+  }, { bars: false, keepHud: true }); }
+  finally { if (a.data) { const d = a.data; d.inTalk = false; if (!a.path && ['walking', 'going-home', 'boarding'].includes(d.state)) d.state = 'idle'; if (d.state === 'idle') d.until = Math.max(d.until || 0, G.state.time + 4); } }
 }
 function enterable(bid) {
   const b = BUILDINGS.find(x => x.id === bid);
@@ -602,7 +605,7 @@ $('mapBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() |
 $('menuBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen()) return; sfx('ui'); openMenu({ onLogout: logout }); });
 $('questPill').addEventListener('click', () => { if (cs.active) return; const st = currentStep(); if (st?.text) toast({ text: T('Objective', 'Mục tiêu'), sub: st.text(), icon: 'star', ms: 4000 }); });
 $('repChip').addEventListener('click', () => { const s = G.state, need = Math.round(90 * Math.pow(s.level || 1, 1.5)); toast({ text: T(`Level ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} XP`, `Cấp ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} KN`), sub: T(`Reputation ${Math.floor(s.reputation)}. Serve customers, repair and upgrade to level up!`, `Danh tiếng ${Math.floor(s.reputation)}. Phục vụ khách, sửa và nâng cấp quán để lên cấp!`), icon: 'trophy' }); });
-$('clockChip').addEventListener('click', () => toast({ text: T(`Day ${G.state.day}`, `Ngày ${G.state.day}`), sub: T('Shops close at midnight. Sleep in your bed to start a new day.', 'Các quán đóng cửa lúc nửa đêm. Ngủ trên giường để sang ngày mới.'), icon: 'sleep_moon' }));
+$('clockChip').addEventListener('click', () => toast({ text: T(`Day ${G.state.day}`, `Ngày ${G.state.day}`), sub: T('Your shops close at 11 pm. Sleep in your bed to start a new day.', 'Các quán của bạn đóng cửa lúc 23 giờ. Ngủ trên giường để sang ngày mới.'), icon: 'sleep_moon' }));
 
 // tapping animals on the island makes them squeak, hop and show hearts
 function onWorldTap(cx, cy) {

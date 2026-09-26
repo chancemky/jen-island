@@ -100,8 +100,10 @@ export function tree(c, t, p) {
   }
   // soft top highlight
   ell(c, -5 * s + w * 5 * s, -68 * s, 7 * s, 3.2 * s, 'rgba(255,255,230,.35)', null);
-  if (p.flowers) { const R = rng(p.x | 0); for (let i = 0; i < 18; i++) { const fx0 = (R() - 0.5) * 50 * s, fy = -34 * s - R() * 36 * s; flower5(c, fx0 + w * (2 + -fy / 60 * 3) * s, fy, 2.1 * s, p.flowers); } }
-  if (p.fruit) { const R = rng((p.x | 0) + 1); for (let i = 0; i < 7; i++) { const fx0 = (R() - 0.5) * 40 * s, fy = -32 * s - R() * 24 * s; circ(c, fx0 + w * 3 * s, fy, 2.8 * s, p.fruit, INK, 0.6); circ(c, fx0 + w * 3 * s - 0.8, fy - 0.9, 0.8, 'rgba(255,255,255,.6)', null); } }
+  // flowers and fruit sit inside a canopy cluster (and sway with it), never out in the air
+  const inCluster = (R, k) => { const [i, [x, y, r]] = [...clusters.entries()][Math.floor(R() * clusters.length)], a = R() * TAU, rr = Math.sqrt(R()) * r * k; return [x * s + w * (2 + (-y / 60) * 3.2) * s + Math.sin(t * 2.2 + i + seed) * 0.35 + Math.cos(a) * rr * s, y * s + Math.sin(a) * rr * s * 0.85]; };
+  if (p.flowers) { const R = rng(p.x | 0); for (let i = 0; i < 18; i++) { const [fx, fy] = inCluster(R, 0.72); flower5(c, fx, fy, 2.1 * s, p.flowers); } }
+  if (p.fruit) { const R = rng((p.x | 0) + 1); for (let i = 0; i < 7; i++) { const [fx, fy] = inCluster(R, 0.62); circ(c, fx, fy, 2.8 * s, p.fruit, INK, 0.6); circ(c, fx - 0.8, fy - 0.9, 0.8, 'rgba(255,255,255,.6)', null); } }
 }
 // Hoa phượng — the red flame tree of Vietnamese summers.
 export function flameTree(c, t, p) { tree(c, t, { ...p, col: '#8ccf6a', flowers: '#f0553f', s: p.s || 1.15 }); }
@@ -138,7 +140,7 @@ export function bush(c, t, p) {
   leafBlob(c, 7 * s + w * 0.6, -8 * s, 9 * s, shade(col, -6), seed + 1, 7);
   leafBlob(c, 0 + w, -14 * s, 10 * s, col, seed + 2, 8);
   leafMarks(c, w, -14 * s, 10 * s, shade(col, 40), seed);
-  if (p.flowers) { const R = rng(p.x | 0); for (let i = 0; i < 8; i++) { const x = (R() - 0.5) * 26 * s + w, y = -6 * s - R() * 16 * s; flower5(c, x, y, 2.4 * s, p.flowers); } }
+  if (p.flowers) { const R = rng(p.x | 0), B = [[-7, -8, 9, 0.6], [7, -8, 9, 0.6], [0, -14, 10, 1]]; for (let i = 0; i < 8; i++) { const [bx, by, br, wk] = B[Math.floor(R() * 3)], a = R() * TAU, rr = Math.sqrt(R()) * br * 0.7; flower5(c, bx * s + w * wk + Math.cos(a) * rr * s, by * s + Math.sin(a) * rr * s * 0.85, 2.4 * s, p.flowers); } }
 }
 function flower5(c, x, y, r, col) { flower(c, x, y, r * 1.1, col, ((x * 13 + y * 7) | 0) % 5 === 0 ? 1 : 0); }
 export function bamboo(c, t, p) {
@@ -417,12 +419,14 @@ export function signpost(c, t, p) {
     const dx = s.to ? s.to[0] - p.x : (s.dir || 1), dy = s.to ? (s.to[1] - p.y) : 0;
     const ang = Math.atan2(dy, dx), side = Math.abs(Math.cos(ang)) > 0.55, dir = dx >= 0 ? 1 : -1;
     const y = -40 + i * 11;
+    // the words always fit the board: shrink the text, and widen the board for long names
+    const lab = tr(s.label), fs = Math.max(3.6, Math.min(5.2, 27 / (lab.length * 0.64))), ext = Math.max(0, Math.ceil(lab.length * fs * 0.64 - 27));
     c.save(); c.translate(0, y);
-    if (side) poly(c, dir > 0 ? [-2, -4.5, 38, -4.5, 44, 0, 38, 4.5, -2, 4.5] : [2, -4.5, -38, -4.5, -44, 0, -38, 4.5, 2, 4.5], s.col || '#f3dcae', INK, 0.9);
-    else box(c, dir > 0 ? -2 : -40, -4.5, 42, 9, 2, s.col || '#f3dcae', INK, 0.9);
-    stext(c, tr(s.label), dir * (side ? 16 : 15), 0.4, 5.2, INK, 900);
+    if (side) poly(c, dir > 0 ? [-2, -4.5, 38 + ext, -4.5, 44 + ext, 0, 38 + ext, 4.5, -2, 4.5] : [2, -4.5, -38 - ext, -4.5, -44 - ext, 0, -38 - ext, 4.5, 2, 4.5], s.col || '#f3dcae', INK, 0.9);
+    else box(c, dir > 0 ? -2 : -40 - ext, -4.5, 42 + ext, 9, 2, s.col || '#f3dcae', INK, 0.9);
+    stext(c, lab, dir * ((side ? 16 : 15) + ext / 2), 0.4, fs, INK, 900);
     // arrow badge
-    c.save(); c.translate(dir * (side ? 34 : 33), 0);
+    c.save(); c.translate(dir * ((side ? 34 : 33) + ext), 0);
     circ(c, 0, 0, 4.2, '#fff8ea', INK, 0.7);
     c.rotate(ang); c.fillStyle = '#e56b4e'; c.strokeStyle = '#9c3a2a'; c.lineWidth = 0.4;
     c.beginPath(); c.moveTo(3.4, 0); c.lineTo(0, -2.9); c.lineTo(0, -1.2); c.lineTo(-2.8, -1.2); c.lineTo(-2.8, 1.2); c.lineTo(0, 1.2); c.lineTo(0, 2.9); c.closePath(); c.fill(); c.stroke();

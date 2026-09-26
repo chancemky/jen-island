@@ -333,8 +333,8 @@ function drawFace(c, a, L, S, yawFace, t, P) {
     else if (open > 0.15 || emo === 'happy' || emo === 'love') { const w = 1.5 * fx, h = emo === 'happy' || emo === 'love' ? Math.max(open, 0.8) * 1.5 : open * 1.5; c.beginPath(); c.moveTo(pp[0] - w, pp[1] - 0.3); c.quadraticCurveTo(pp[0], pp[1] + h * 1.4, pp[0] + w, pp[1] - 0.3); c.closePath(); c.fillStyle = '#8e3f3e'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.5; c.stroke(); if (h > 1) ell(c, pp[0], pp[1] + h * 0.55, w * 0.5, h * 0.28, '#f28b95', null); }
     else { c.beginPath(); if (emo === 'sad') { c.moveTo(pp[0] - 1.2 * fx, pp[1] + 0.6); c.quadraticCurveTo(pp[0], pp[1] - 0.4, pp[0] + 1.2 * fx, pp[1] + 0.6); } else if (emo === 'angry') { c.moveTo(pp[0] - 1.1 * fx, pp[1]); c.lineTo(pp[0] + 1.1 * fx, pp[1] - 0.2); } else { c.moveTo(pp[0] - 1.1 * fx, pp[1] - 0.2); c.quadraticCurveTo(pp[0], pp[1] + 0.9, pp[0] + 1.1 * fx, pp[1] - 0.2); } c.strokeStyle = '#6e3230'; c.lineWidth = 0.75; c.stroke(); }
   }
-  if (L.shades) { const pts = []; for (const s of [-1, 1]) { const g = onHead(S, yawFace, s * 0.4, -0.06, HR + 0.5); if (g.dz < 0.1) continue; const pp = proj(g.p), fx = Math.max(0.4, g.dz); pts.push(pp);
-      if (L.shadesHeart) heart(c, pp[0], pp[1] + 0.8, 3.2 * Math.max(0.6, fx), L.shades, INK, 0.7); else { c.beginPath(); c.roundRect ? c.roundRect(pp[0] - 3.2 * fx, pp[1] - 2.3, 6.4 * fx, 4.6, 1.8) : c.rect(pp[0] - 3.2 * fx, pp[1] - 2.3, 6.4 * fx, 4.6); c.fillStyle = L.shades; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke(); }
+  if (L.shades) { const pts = []; for (const s of [-1, 1]) { const g = onHead(S, yawFace, s * 0.42, -0.1, HR + 0.5); if (g.dz < 0.1) continue; const pp = proj(g.p), fx = Math.max(0.4, g.dz); pts.push(pp);
+      if (L.shadesHeart) heart(c, pp[0], pp[1] + 0.9, 4 * Math.max(0.6, fx), L.shades, INK, 0.7); else { c.beginPath(); c.roundRect ? c.roundRect(pp[0] - 3.4 * fx, pp[1] - 3.3, 6.8 * fx, 6.6, 2.2) : c.rect(pp[0] - 3.4 * fx, pp[1] - 3.3, 6.8 * fx, 6.6); c.fillStyle = L.shades; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke(); }
       c.fillStyle = 'rgba(255,255,255,.55)'; c.fillRect(pp[0] - 1.8 * fx, pp[1] - 1.4, 1.1, 1.8); }
     if (pts.length === 2) line(c, pts[0][0] + 2.6, pts[0][1] - 0.8, pts[1][0] - 2.6, pts[1][1] - 0.8, INK, 0.8); }
   if (L.glasses) for (const s of [-1, 1]) { const g = onHead(S, yawFace, s * 0.4, -0.06, HR + 0.5); if (g.dz < 0.1) continue; const pp = proj(g.p); c.strokeStyle = L.glasses; c.lineWidth = 0.8; c.beginPath(); c.ellipse(pp[0], pp[1], 3 * Math.max(0.4, g.dz), 3, 0, 0, TAU); c.stroke(); }
@@ -388,7 +388,7 @@ function drawHat(c, L, S, yawFace, t) {
     }
     if (h === 'beanie') { circ(c, top[0], top[1] - 1.5, 2.8, L.hatRibbon || '#fffaf0', INK, 0.8); }
     if (h === 'helmet') { c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.ellipse(hc[0] - 3, hc[1] - HR * 0.6, 4, 1.6, -0.3, 0, TAU); c.fill(); }
-    if (h === 'bandana') { const k = onHead(S, yawFace, Math.PI, 0.2, HR * 1.08); if (k.dz < 0.2) { const kp = proj(k.p); poly(c, [kp[0], kp[1], kp[0] - 4, kp[1] + 3, kp[0] - 3, kp[1] - 1], col, INK, 0.7); } for (let i = -2; i <= 2; i++) { const q = onHead(S, yawFace, i * 0.35, 0.5, HR * 1.07); if (q.dz > 0.1) { const pp = proj(q.p); circ(c, pp[0], pp[1], 0.5, 'rgba(255,255,255,.9)', null); } } }
+    if (h === 'bandana') { const k = onHead(S, yawFace, Math.PI, 0.2, HR * 1.08); if (k.dz > -0.2) { const kp = proj(k.p); poly(c, [kp[0], kp[1], kp[0] - 4, kp[1] + 3, kp[0] - 3, kp[1] - 1], col, INK, 0.7); } for (let i = -2; i <= 2; i++) { const q = onHead(S, yawFace, i * 0.35, 0.5, HR * 1.07); if (q.dz > 0.1) { const pp = proj(q.p); circ(c, pp[0], pp[1], 0.5, 'rgba(255,255,255,.9)', null); } } }
     return;
   }
   if (h === 'sunhat' || h === 'bucket' || h === 'boater') {
@@ -465,13 +465,6 @@ function drawTorso(c, L, S, a, t) {
   if (L.necklace && facing > 0.1) { for (let i = 0; i <= 8; i++) { const u = i / 8 - 0.5, px = fx + u * 8 * k, py = top[1] + 0.9 + (1 - 4 * u * u) * 2.6; circ(c, px, py, 0.62, L.necklace, 'rgba(91,63,54,.55)', 0.3); } }
   // backpack straps (the pack itself hangs on the back)
   if (L.backpack && facing > 0.1) { c.strokeStyle = shade(L.backpack, -18); c.lineWidth = 1.5; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(fx + sd * 3 * k, top[1] - 1.6); c.quadraticCurveTo(fx + sd * 3.6 * k, top[1] + 3, fx + sd * 3.2 * k, bot[1] - 2); c.stroke(); } }
-  // tote bag over the right shoulder
-  if (L.tote) {
-    const sd = Math.cos(yaw) >= 0 ? 1 : -1, bx = bot[0] + sd * (wB + 1.2) * Math.max(0.35, Math.abs(Math.cos(yaw))), by = bot[1] - 1;
-    c.strokeStyle = shade(L.tote, -30); c.lineWidth = 0.9; c.beginPath(); c.moveTo(top[0] + sd * wT * 0.5, top[1] - 1.6); c.lineTo(bx - sd * 1.5, by - 3); c.moveTo(top[0] + sd * wT * 0.7, top[1] - 1.4); c.lineTo(bx + sd * 1.5, by - 3); c.stroke();
-    c.beginPath(); c.moveTo(bx - 3.2, by - 3); c.lineTo(bx + 3.2, by - 3); c.lineTo(bx + 3.8, by + 4); c.lineTo(bx - 3.8, by + 4); c.closePath(); c.fillStyle = L.tote; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
-    heart(c, bx, by + 0.8, 1.1, '#f28fa3', null);
-  }
   if (L.cape) { c.beginPath(); c.moveTo(neck[0] - 3, top[1] - 2); c.lineTo(neck[0] + 3, top[1] - 2); c.lineTo(bot[0] + wB + 3.5, hemY + 2.5); c.quadraticCurveTo(bot[0], hemY + 4.5, bot[0] - wB - 3.5, hemY + 2.5); c.closePath(); c.fillStyle = L.cape; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke(); c.strokeStyle = 'rgba(111,191,176,.6)'; c.lineWidth = 0.6; for (let i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(neck[0] + i * 0.8, top[1]); c.lineTo(bot[0] + i * 2.4, hemY + 3); c.stroke(); } }
   if (L.scarf) { ell(c, neck[0], neck[1] + 1.4, w(4.8, 3.6), 1.9, L.scarf, INK, 0.8); }
   // work gear that says who someone is
@@ -575,7 +568,7 @@ function drawFoot(c, L, lg) {
     if (st === 'hightop') { const sp = T(-0.9, 0); circ(c, sp[0], sp[1] - 1.8, 0.9, '#fffaf0', INK, 0.4); }
   } else if (st === 'loafer') {
     const a1 = T(0.2, -1.05), a2 = T(0.2, 1.05), m = T(0.35, 0); c.strokeStyle = dark; c.lineWidth = 0.9; c.beginPath(); c.moveTo(a1[0], a1[1]); c.quadraticCurveTo(m[0], m[1] + 0.3, a2[0], a2[1]); c.stroke(); circ(c, m[0], m[1], 0.5, '#f2c14e', null);
-  } else if (st === 'slipper') {
+  } else if (st === 'slipper' && fwd[2] > -0.25) {        // the bunny face is on the toe: hidden when the toes point away from you
     for (const v of [-0.7, 0.7]) { const e = T(A * 0.2, v); ell(c, e[0], e[1] - 1.8, 0.8, 1.9, sc, INK, 0.5); ell(c, e[0], e[1] - 1.8, 0.35, 1.2, '#ffc0d0', null); }
     const n = T(A * 0.72, 0); circ(c, n[0], n[1], 0.5, '#f28fa3', null);
     for (const v of [-0.45, 0.45]) { const e = T(A * 0.5, v); circ(c, e[0], e[1], 0.3, INK, null); }
@@ -603,12 +596,49 @@ function drawArm(c, L, arm) {
   void C;
   return h;
 }
+// tote bag: strap over the right shoulder, the bag at the right hip
+function drawTote(c, L, S, yaw, swing) {
+  const sho = proj(add(S.chest, rotY([SHO_X - 0.6, 1.6, 0], yaw))), bag = add(S.waist, rotY([SHO_X + 1.6, -1.2, 0.4 + swing * 0.8], yaw)), b = proj(bag);
+  const w = 3.6 * Math.max(0.45, Math.abs(Math.sin(yaw)) * 0.2 + Math.abs(Math.cos(yaw))), bx = b[0] + swing * 0.6, by = b[1];
+  c.strokeStyle = shade(L.tote, -30); c.lineWidth = 0.9; c.beginPath(); c.moveTo(sho[0] - 1, sho[1]); c.lineTo(bx - w * 0.5, by - 3); c.moveTo(sho[0] + 1, sho[1]); c.lineTo(bx + w * 0.5, by - 3); c.stroke();
+  c.beginPath(); c.moveTo(bx - w, by - 3); c.lineTo(bx + w, by - 3); c.lineTo(bx + w * 1.15, by + 4); c.lineTo(bx - w * 1.15, by + 4); c.closePath(); c.fillStyle = L.tote; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+  if (Math.cos(yaw) > -0.2 || Math.abs(Math.sin(yaw)) > 0.5) heart(c, bx, by + 0.8, 1.1 * Math.min(1, w / 3.6), '#f28fa3', null);
+}
+// surfboard carried upright under the right arm: edge-on from the front, its face from the side
+function drawSurf(c, L, S, yaw, swing) {
+  const pos = proj(add(S.waist, rotY([SHO_X + 4.2, 3, 0.8], yaw))), face = Math.max(0.28, Math.abs(Math.sin(yaw)));
+  c.save(); c.translate(pos[0], pos[1] - 2 + swing * 0.4); c.rotate(0.12 * Math.sign(Math.cos(yaw) || 1) + swing * 0.03);
+  const hw = 4.2 * face, top = -15, bot = 14;
+  c.beginPath(); c.moveTo(0, top); c.bezierCurveTo(hw * 1.1, top + 5, hw, bot - 6, 0, bot); c.bezierCurveTo(-hw, bot - 6, -hw * 1.1, top + 5, 0, top); c.closePath();
+  c.fillStyle = L.surf; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+  if (face > 0.45) { line(c, 0, top + 2, 0, bot - 2, 'rgba(255,255,255,.85)', 0.8); line(c, -hw * 0.45, top + 7, -hw * 0.45, bot - 6, 'rgba(255,255,255,.45)', 0.6); }
+  c.restore();
+}
 function drawBackGear(c, L, S) {
   // backpack / guitar / surfboard hang on the back (−z of the chest)
   const back = add(S.chest, rotY([0, -2.2, -3.8], S.yaw)), bp = proj(back);
   if (L.backpack) { c.beginPath(); c.roundRect ? c.roundRect(bp[0] - 4.6, bp[1] - 3, 9.2, 9.4, 3) : c.rect(bp[0] - 4.6, bp[1] - 3, 9.2, 9.4); c.fillStyle = L.backpack; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); c.fillStyle = shade(L.backpack, -18); c.fillRect(bp[0] - 3.2, bp[1] + 2.4, 6.4, 3); }
-  if (L.surf) { c.save(); c.translate(bp[0] + 2, bp[1] - 2); c.rotate(0.2); ell(c, 0, -3, 4, 15, L.surf, INK, 1); line(c, 0, -17, 0, 11, '#fff', 1); c.restore(); }
-  if (L.guitar) { c.save(); c.translate(bp[0] - 3, bp[1] + 4); c.rotate(-0.6); limb(c, [0, -3, 0, -20], 2, '#8a5f3e'); ell(c, 0, 2, 5, 6, '#e9a24a', INK, 1); ell(c, 0, -3.2, 4, 3.8, '#e9a24a', INK, 1); circ(c, 0, 0, 1.6, '#5a3a24', null); c.restore(); }
+  // (the surfboard is carried at your side — see drawSurf)
+  if (L.guitar) {
+    // an acoustic guitar slung diagonally across the back, neck up over the right shoulder
+    c.save(); c.translate(bp[0] - 2, bp[1] + 5); c.rotate(-0.55);
+    const wood = '#e39a45', edge = '#b86b2c';
+    box(c, -1.1, -24, 2.2, 15, 0.6, '#6b4431', INK, 0.7);                                            // neck / fretboard
+    for (let k = 0; k < 5; k++) line(c, -1.1, -22 + k * 2.6, 1.1, -22 + k * 2.6, '#d9c8a8', 0.35);   // frets
+    c.beginPath(); c.moveTo(-1.6, -24); c.lineTo(1.6, -24); c.lineTo(1.9, -28.5); c.lineTo(-1.9, -28.5); c.closePath(); c.fillStyle = '#4a3226'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.6; c.stroke();   // headstock
+    for (const y of [-25.3, -26.6, -27.8]) { circ(c, -2.4, y, 0.55, '#e6ecef', INK, 0.3); circ(c, 2.4, y, 0.55, '#e6ecef', INK, 0.3); }   // tuning pegs
+    // body: upper bout, waist, lower bout
+    c.beginPath(); c.ellipse(0, 1.6, 5.6, 5.2, 0, 0, TAU); c.ellipse(0, -5.2, 4.2, 3.9, 0, 0, TAU); c.fillStyle = edge; c.fill();
+    c.beginPath(); c.ellipse(0, 1.6, 5.2, 4.8, 0, 0, TAU); c.moveTo(3.9, -5.2); c.ellipse(0, -5.2, 3.9, 3.6, 0, 0, TAU); c.fillStyle = wood; c.fill();
+    c.beginPath(); c.ellipse(0, 1.6, 5.6, 5.2, 0, 0.35, Math.PI - 0.35); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+    c.beginPath(); c.ellipse(0, -5.2, 4.2, 3.9, 0, Math.PI + 0.5, TAU - 0.5); c.stroke();
+    c.beginPath(); c.moveTo(-5.4, 0.2); c.quadraticCurveTo(-3.2, -2.2, -4, -4.4); c.moveTo(5.4, 0.2); c.quadraticCurveTo(3.2, -2.2, 4, -4.4); c.stroke();   // the waist
+    circ(c, 0, -2.2, 1.9, '#3a2418', null); c.beginPath(); c.arc(0, -2.2, 2.5, 0, TAU); c.strokeStyle = '#f7de8c'; c.lineWidth = 0.4; c.stroke();   // sound hole + rosette
+    box(c, -2.2, 2.8, 4.4, 1.1, 0.4, '#6b4431', null);                                             // bridge
+    ell(c, 2.4, 0.6, 1.3, 2, 'rgba(90,50,30,.35)', null, 0, 0.4);                                 // pickguard
+    c.strokeStyle = 'rgba(255,255,240,.8)'; c.lineWidth = 0.22; for (const x of [-0.6, -0.2, 0.2, 0.6]) { c.beginPath(); c.moveTo(x, 3); c.lineTo(x * 0.8, -24); c.stroke(); }   // strings
+    c.restore();
+  }
 }
 
 // ---------------------------------------------------------------- main entry
@@ -648,11 +678,35 @@ export function drawVillager(c, a, t) {
     } });
   }
   parts.push({ z: 0, torso: true, draw: () => drawTorso(c, L, S, a, t) });
-  if (L.backpack || L.surf || L.guitar) parts.push({ z: -3.8 * facing, draw: () => drawBackGear(c, L, S) });
+  if (L.backpack || L.guitar) parts.push({ z: -3.8 * facing, draw: () => drawBackGear(c, L, S) });
+  // things that hang at the right side: they turn with you and swing as you walk
+  const rside = rotY([1, 0, 0], yaw), swing = Math.sin((a.walkPh || 0) * 2) * (a.moving || 0);
+  if (L.tote) parts.push({ z: rside[2] * 6 + 0.2, draw: () => drawTote(c, L, S, yaw, swing) });
+  if (L.surf) parts.push({ z: rside[2] * 9 + 0.1, draw: () => drawSurf(c, L, S, yaw, swing) });
   // long hair curtain hangs behind the head (in front of the back when seen from behind)
   const H = HAIR[L.hairStyle] || HAIR.bob;
   const covered = HAT_COVERS.includes(L.hat);
-  if (H.curtain) parts.push({ z: -2 * facing - 0.5, draw: () => {
+  // seen from behind, long hair is one shape from the crown to the ends (drawn over the head)
+  if (H.curtain && facing < -0.15 && !covered) parts.push({ z: 99, overHead: true, draw: () => {
+    const hc0 = proj(S.head), hc = [hc0[0], hc0[1] - 0.8], R = HR * 1.16, cl = H.curtain + 0.8, w2 = HR * (0.95 + 0.1 * Math.abs(Math.sin(yaw))) * (H.narrow ? 0.62 : 1);
+    c.beginPath();
+    c.moveTo(hc[0] - R, hc[1]);
+    c.arc(hc[0], hc[1], R, Math.PI, TAU);                                          // over the crown
+    c.lineTo(hc[0] + Math.max(w2, R * 0.92), hc[1] + 3);
+    c.lineTo(hc[0] + w2 + 0.6, hc[1] + cl);
+    if (H.wavy || H.curls || H.messy) { const n = H.curls ? 6 : 4; for (let i = n - 1; i >= 0; i--) { const x = hc[0] - w2 + (i + 0.5) * (w2 * 2 / n); c.quadraticCurveTo(x + w2 / (n * 2), hc[1] + cl + (H.curls ? 3 : 2.2), x - w2 / n + w2 / (n * 2), hc[1] + cl); } }
+    else c.quadraticCurveTo(hc[0], hc[1] + cl + (H.blunt ? 0.6 : 3.4), hc[0] - w2 - 0.6, hc[1] + cl);
+    c.lineTo(hc[0] - Math.max(w2, R * 0.92), hc[1] + 3);
+    c.closePath();
+    c.fillStyle = L.hair; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    // strands run all the way from the crown down, plus a soft shine
+    c.strokeStyle = cols(L).hairS; c.lineWidth = 0.6; c.globalAlpha = 0.6;
+    for (const k of [-0.55, -0.2, 0.2, 0.55]) { c.beginPath(); c.moveTo(hc[0] + k * R * 0.5, hc[1] - R * 0.7); c.quadraticCurveTo(hc[0] + k * R * 0.95, hc[1], hc[0] + k * w2 * 1.05, hc[1] + cl - 1.5); c.stroke(); }
+    c.globalAlpha = 1;
+    c.fillStyle = 'rgba(255,255,255,.14)'; c.beginPath(); c.ellipse(hc[0] - R * 0.25, hc[1] - R * 0.55, R * 0.45, R * 0.18, -0.2, 0, TAU); c.fill();
+    if (H.pony || H.tails) void 0;
+  } });
+  if (H.curtain && !(facing < -0.15 && !covered)) parts.push({ z: -2 * facing - 0.5, draw: () => {
     const hc = proj(S.head), w2 = HR * (0.95 + 0.1 * Math.abs(Math.sin(yaw))) * (H.narrow ? 0.62 : 1), cl = H.curtain;
     c.beginPath(); c.moveTo(hc[0] - w2, hc[1] - 2);
     c.lineTo(hc[0] - w2 - 0.6, hc[1] + cl);
@@ -681,12 +735,21 @@ export function drawVillager(c, a, t) {
   parts.push({ z: 0.5, head: true, draw: () => {
     drawHead(c, a, L, S, yaw, t, P, H);
   } });
-  parts.sort((p, q) => (p.head ? 1 : 0) - (q.head ? 1 : 0) || p.z - q.z);
+  parts.sort((p, q) => (p.overHead ? 2 : p.head ? 1 : 0) - (q.overHead ? 2 : q.head ? 1 : 0) || p.z - q.z);
   for (const p of parts) p.draw();
   // held item in the right hand (or both hands)
   if (P.held && P.hR) {
     if (P.heldHand === 'both' && P.hL) drawHeld(c, P.held, (P.hL[0] + P.hR[0]) / 2, (P.hL[1] + P.hR[1]) / 2 - 1.5, t, 'front');
-    else drawHeld(c, P.held, P.hR[0], P.hR[1], t, facing > -0.2 ? 'front' : 'back', P);
+    else {
+      let [hx, hy] = P.hR;
+      // facing away (hammering a wall, stirring at the stove): keep the tool clear of
+      // the head so it reads in front of it — out to the right hand's side, a hammer up high
+      if (facing < -0.3) {
+        const hc = proj(S.head), side = Math.sign(Math.cos(yaw) * -1) || 1;
+        if (Math.hypot(hx - hc[0], hy - hc[1]) < HR + 3) { hx = hc[0] + side * (HR + 2.5); if (P.held === 'hammer') hy = Math.min(hy, hc[1] - 2); circ(c, hx, hy, 1.85, L.skin, INK, 0.9); }   // the hand holding it
+      }
+      drawHeld(c, P.held, hx, hy, t, facing > -0.2 ? 'front' : 'back', P);
+    }
   }
   c.restore();
   void L2;

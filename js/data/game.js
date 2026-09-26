@@ -361,7 +361,7 @@ export const ACHIEVEMENTS = {
   recipes_5:      { en: 'Recipe Collector', desc: 'Discover 5 recipes.', vi: 'Nhà sưu tầm công thức', descVi: 'Khám phá 5 công thức.' },
   recipes_all:    { en: 'Island Cookbook', desc: 'Discover every recipe.', vi: 'Sổ tay của đảo', descVi: 'Khám phá mọi công thức.' },
   money_1000:     { en: 'Pocket Full of Đồng', desc: 'Earn 1,000k in total.', vi: 'Túi đầy tiền', descVi: 'Kiếm tổng cộng 1.000k.' },
-  money_10000:    { en: 'Island Tycoon', desc: 'Earn 10M₫ in total.', vi: 'Đại gia của đảo', descVi: 'Kiếm tổng cộng 10 triệu.' },
+  money_10000:    { en: 'Island Tycoon', desc: 'Earn 10M in total.', vi: 'Đại gia của đảo', descVi: 'Kiếm tổng cộng 10 triệu.' },
   two_biz:        { en: 'Second Shop', desc: 'Own two working businesses.', vi: 'Quán thứ hai', descVi: 'Có hai cửa hàng hoạt động.' },
   truck:          { en: 'On Wheels', desc: 'Buy the food truck.', vi: 'Lăn bánh', descVi: 'Mua xe bán đồ ăn.' },
   night_market:   { en: 'Lanterns Lit', desc: 'Restore the Night Market.', vi: 'Lồng đèn sáng rực', descVi: 'Khôi phục Chợ Đêm.' },
@@ -375,3 +375,16 @@ export const ACHIEVEMENTS = {
   tip_big:        { en: 'Big Tipper', desc: 'Receive a tip of 20k or more.', vi: 'Khách sộp', descVi: 'Nhận tiền boa từ 20k trở lên.' },
 };
 export const STATUE_COST = { cost: 3000, mats: { paint: 10, tile: 10 } };
+
+// ---------------------------------------------------------------- economy tuning (v4.3: a real grind)
+// Everything you buy costs more; money comes in slower (see nextSpawnDelay and tips).
+export const ECON = { ingredients: 2.2, materials: 2, furniture: 6, equipment: 2.5, upgrades: 2, buy: 2 };
+for (const v of Object.values(INGREDIENTS)) v.price = Math.round(v.price * ECON.ingredients);
+for (const v of Object.values(MATERIALS)) if (v.price) v.price = Math.round(v.price * ECON.materials);
+for (const v of Object.values(FURNITURE)) v.price = Math.round(v.price * ECON.furniture / 10) * 10;
+for (const e of EQUIPMENT) if (e.price) e.price = Math.round(e.price * ECON.equipment / 10) * 10;
+for (const b of Object.values(BUSINESSES)) {
+  if (b.buy) b.buy = Math.round(b.buy * ECON.buy);
+  for (const u of b.upgrades || []) if (u?.cost) u.cost = Math.round(u.cost * ECON.upgrades);
+}
+STATUE_COST.cost *= 2;

@@ -37,10 +37,10 @@ export function seedLevel(s) {
 // ---------------------------------------------------------------- store gates
 // Only the first stand is free. Every other shop's key belongs to Mèo Mây.
 export const GATES = {
-  shed2: { level: 4, cost: 800, en: 'the Bánh Mì Corner', vi: 'Bánh Mì Góc Phố' },
-  truck: { level: 8, cost: 2500, en: 'the Roll Truck', vi: 'Xe Cuốn' },
-  night: { level: 12, cost: 3000, en: 'the Night Market stall', vi: 'Sạp Chợ Đêm' },
-  restaurant: { level: 18, cost: 12000, en: 'the Restaurant on the Hill', vi: 'Nhà Hàng trên đồi' },
+  shed2: { level: 4, cost: 1200, en: 'the Bánh Mì Corner', vi: 'Bánh Mì Góc Phố' },
+  truck: { level: 8, cost: 3800, en: 'the Roll Truck', vi: 'Xe Cuốn' },
+  night: { level: 12, cost: 4500, en: 'the Night Market stall', vi: 'Sạp Chợ Đêm' },
+  restaurant: { level: 18, cost: 18000, en: 'the Restaurant on the Hill', vi: 'Nhà Hàng trên đồi' },
 };
 export function gateText(id) {
   const g = GATES[id], lv = level();

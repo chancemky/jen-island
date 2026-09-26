@@ -13,7 +13,7 @@ export const W = 3500, H = 2640;
 const MAIN_W = 1800; // the main island's width (the islet lies beyond)
 
 // ---------------------------------------------------------------- geometry
-const SAND_CP = [[900, 170], [1120, 190], [1330, 260], [1500, 380], [1610, 560], [1650, 780], [1640, 1000], [1680, 1220], [1700, 1450], [1720, 1700], [1700, 1950], [1610, 2170], [1440, 2330], [1200, 2410], [900, 2440], [620, 2420], [400, 2340], [230, 2190], [140, 1980], [110, 1720], [100, 1450], [120, 1220], [130, 980], [170, 740], [260, 540], [410, 360], [610, 240]];
+const SAND_CP = [[900, 170], [1120, 190], [1330, 260], [1500, 380], [1610, 560], [1650, 780], [1640, 1000], [1680, 1220], [1700, 1450], [1720, 1700], [1700, 1950], [1610, 2170], [1440, 2330], [1200, 2410], [900, 2440], [620, 2420], [400, 2340], [230, 2190], [140, 1980], [110, 1720], [100, 1450], [120, 1220], [130, 980], [150, 740], [185, 470], [330, 290], [590, 205]];   // the north-west bulge keeps the Night Market on grass
 export const SAND = smoothLoop(SAND_CP, 10);
 const CX = 900, CY = 1300;
 function insetPoly(poly, fn, cx = CX, cy = CY) {
@@ -172,6 +172,57 @@ export const BUILDINGS = [
   { id: 'grill', type: 'kiosk', style: 'grill', x: 2250, y: 2204, w: 112, fp: 40, biz: 'grill', region: 'cove' },
   { id: 'h_vy', type: 'house', interior: 'home_vy', door: [0, 0], x: 2350, y: 1668, w: 96, fp: 50, wall: '#fdf0d8', roof: '#8fb7e0', shutter: '#f28f7c', home: 'vy', style: 'painter' },
 ];
+
+// Decorations keep off the roads: nudge a spot sideways out of the road (or give up)
+const OFFROAD = new Set(['pot', 'flowerBed', 'birdBath', 'woodPile', 'bicycle', 'scooter', 'frangipani', 'reeds', 'bush', 'rock', 'stool', 'lowTable', 'planter', 'crates']);
+function nearestRoad(x, y) {
+  let best = null;
+  for (const [k, pts] of Object.entries(PATHS)) {
+    if (NAV_ONLY.has(k)) continue;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ax, ay] = pts[i], [bx, by] = pts[i + 1], dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy || 1, t = clamp(((x - ax) * dx + (y - ay) * dy) / l, 0, 1);
+      const px = ax + dx * t, py = ay + dy * t, d = Math.hypot(x - px, y - py);
+      if (!best || d < best.d) best = { d, px, py };
+    }
+  }
+  return best;
+}
+export function offRoad(x, y, r = 8) {
+  for (let pass = 0; pass < 3; pass++) {
+    const n = nearestRoad(x, y), need = PATH_W / 2 + r + 2;
+    if (!n || n.d >= need) return [x, y];
+    const ux = n.d > 0.5 ? (x - n.px) / n.d : 0, uy = n.d > 0.5 ? (y - n.py) / n.d : 1;
+    x = n.px + ux * need; y = n.py + uy * need;
+  }
+  const n = nearestRoad(x, y);
+  return n && n.d < PATH_W / 2 + r ? null : [x, y];
+}
+// Roads never run under a building: each road is subdivided and any point that
+// falls on a building's footprint is pushed out in front of it.
+(function clearRoadsOfBuildings() {
+  const STEP = 22;
+  for (const [k, pts] of Object.entries(PATHS)) {
+    if (k === 'bridge' || k === 'hbridge' || k === 'cbridge') continue;
+    const out = [pts[0]];
+    for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i], n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay) / STEP)); for (let j = 1; j <= n; j++) out.push([ax + (bx - ax) * j / n, ay + (by - ay) * j / n]); }
+    for (let i = 0; i < out.length; i++) {
+      const p = out[i], end = i === 0 || i === out.length - 1;
+      for (const b of BUILDINGS) {
+        const half = b.w / 2 + PATH_W / 2 + 2, front = b.y + PATH_W / 2 + 3, back = b.y - (b.fp || 40) - 8;
+        if (p[0] > b.x - half && p[0] < b.x + half && p[1] > back && p[1] < front) {
+          // a road that leads to this door may end right at the doorstep; otherwise it passes in front
+          if (end && Math.abs(p[0] - b.x - (b.door?.[0] || 0)) < 20 && p[1] > b.y - 12) { p[1] = Math.max(p[1], b.y + 2); continue; }
+          p[1] = front;
+        }
+      }
+    }
+    // drop the extra points again where the road is straight
+    const slim = [out[0]];
+    for (let i = 1; i < out.length - 1; i++) { const a = slim[slim.length - 1], b = out[i], c = out[i + 1]; if (Math.abs((b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0])) > 12 || Math.hypot(b[0] - a[0], b[1] - a[1]) > 90) slim.push(b); }
+    slim.push(out[out.length - 1]);
+    PATHS[k] = slim.map(([x, y]) => [Math.round(x), Math.round(y)]);
+  }
+})();
 export const STALLS = [
   { id: 'nm1', biz: 'nm1', x: 340, y: 580, label: ['GRANDMA SÁU', 'BÀ SÁU'], goods: ['#f2c46b', '#e3703a'], cloth: ['#e8584e', '#fff5df'] },
   { id: 'nm2', biz: 'nm2', x: 530, y: 580, label: ['SWEET SOUP', 'CHÈ'], goods: ['#a8423a', '#9fd67a'], cloth: ['#6fbfb0', '#fff5df'] },
@@ -220,7 +271,7 @@ const mixCol = (a, b, k) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice
 function tracePoly(c, pts) { c.beginPath(); c.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]); c.closePath(); }
 function traceLine(c, pts) { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); }
 // walk-only routes: inside the Night Market plaza and across the bridge deck
-const NAV_ONLY = new Set(['nm', 'bridge', 'hbridge', 'cbridge']);
+export const NAV_ONLY = new Set(['nm', 'bridge', 'hbridge', 'cbridge', 'beachE']);   // walkable routes for NPCs with no road drawn (beachE: no road behind the food truck)
 const SMOOTH_PATHS = Object.fromEntries(Object.entries(PATHS).filter(([k]) => !NAV_ONLY.has(k)).map(([k, p]) => [k, p.length > 2 ? chunkPts(smoothLine(p, 6)) : p]));
 function chunkPts(flat) { const o = []; for (let i = 0; i < flat.length; i += 2) o.push([flat[i], flat[i + 1]]); return o; }
 
@@ -444,6 +495,7 @@ export class Island extends Scene {
   terrain(x, y) { return !isWater(x, y) && !isPaddy(x, y) && x > 0 && y > 0 && x < W && y < H; }
 
   add2(kind, x, y, o = {}) {
+    if (OFFROAD.has(kind) && !o.onRoad) { const q = offRoad(x, y, o.solidR || 8); if (!q) return null; if (Math.hypot(q[0] - x, q[1] - y) > 40) return null; [x, y] = q; }
     const fn = P[kind];
     const p = { kind, x, y, ...o, draw: (c, t) => fn(c, t, p) };
     if ((kind === 'signpost' || kind === 'foodCart' || kind === 'sugarcaneCart' || kind === 'fruitStand') && this.keepOut) this.keepOut.push({ x, y, w: kind === 'signpost' ? 64 : 70 });   // keep these readable
@@ -476,7 +528,7 @@ export class Island extends Scene {
     this.circle(848, 2394, 7); this.circle(952, 2394, 7);
     this.add2('lighthouse', 900, 300, { cullR: 40, cullH: 160, solidR: 16 });
     this.trigger({ id: 'lighthouse', kind: 'act', x: 886, y: 302, w: 28, h: 26, label: 'Lên hải đăng', en: 'Climb up', icon: 'star', action: 'lighthouse' });   // the gallery view (ui/lookout.js)
-    const fountain = this.add2('fountain', PLAZA.x, PLAZA.y + 16, { cullR: 60, cullH: 130, solidR: 40 });
+    const fountain = this.add2('fountain', PLAZA.x, PLAZA.y + 6, { cullR: 60, cullH: 130, solidR: 40 });   // basin centred on the plaza's rosette
     const baseDraw = fountain.draw;
     fountain.draw = (c, t) => { baseDraw(c, t); if (G.state.statue) drawFounderStatue(c, t); };
     // plaza banyan & benches
@@ -512,7 +564,7 @@ export class Island extends Scene {
     // lamp posts
     for (const [x, y] of [[872, 2268], [936, 2040], [872, 1740], [930, 1300], [560, 1160], [1240, 1160], [1150, 1700], [440, 1620], [1160, 960], [960, 700], [502, 1100]]) this.add2('lampPost', x, y, { solidR: 3, cullR: 40, cullH: 60 });
     // pots and flowers by buildings
-    for (const [x, y] of [[640, 1162], [760, 1162], [1400, 1742], [1540, 1740], [1200, 1744], [1330, 1742]]) this.add2('pot', x, y, { flowers: ['#ff8fb0', '#ffd35a', '#fff'][((x + y) | 0) % 3], solidR: 5 });
+    for (const [x, y] of [[640, 1162], [788, 1162], [1400, 1742], [1540, 1740], [1200, 1744], [1330, 1742]]) this.add2('pot', x, y, { flowers: ['#ff8fb0', '#ffd35a', '#fff'][((x + y) | 0) % 3], solidR: 5 });
     // ---- hand-placed decorations
     const deco = (kind, x, y, o = {}) => { if (!this.terrain(x, y)) return null; return this.add2(kind, x, y, o); };
     for (const [x, dx] of [[630, -150], [480, -150]]) deco('powerPole', x, 1634, { to: [dx, -8], cull: { x: x - 170, y: 1540, w: 200, h: 110 }, solidR: 3 });
@@ -620,7 +672,7 @@ export class Island extends Scene {
     scatter('pebbles', 70, 6, {}, true);
     // gardens by every home: flower beds, a bird bath, a wood pile
     for (const b of BUILDINGS.filter(b => b.home || b.id === 'house')) {
-      for (const sd of [-1, 1]) { const p = { kind: 'flowerBed', x: b.x + sd * (b.w / 2 - 14), y: b.y + 14, w: 22 }; p.draw = (c, t) => P.flowerBed(c, t, p); p.cull = { x: p.x - 20, y: p.y - 20, w: 40, h: 26 }; this.prop(p); }
+      for (const sd of [-1, 1]) { const q = offRoad(b.x + sd * (b.w / 2 - 14), b.y + 14, 12); if (!q || Math.abs(q[1] - (b.y + 14)) > 30) continue; const p = { kind: 'flowerBed', x: q[0], y: q[1], w: 22 }; p.draw = (c, t) => P.flowerBed(c, t, p); p.cull = { x: p.x - 20, y: p.y - 20, w: 40, h: 26 }; this.prop(p); }
     }
     for (const [x, y] of [[470, 1610], [1420, 1690], [720, 1500], [1200, 1690]]) this.add2('birdBath', x, y, { solidR: 5, cullR: 20, cullH: 20 });
     for (const [x, y] of [[372, 1530], [1610, 1930], [1070, 1640]]) this.add2('woodPile', x, y, { solidR: 8, cullR: 20, cullH: 24 });

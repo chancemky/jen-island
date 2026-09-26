@@ -596,7 +596,7 @@ async function afterFirstCustomers() {
     G.runtime.inCutscene = true;
     await summonMeo(30);
     await say('meo', T('Your first customers! Did you see their faces? That\'s the face of someone who just had a *really* good kumquat tea.', 'Những vị khách đầu tiên! Bạn thấy mặt họ không? Đó là gương mặt của người vừa uống ly trà tắc *cực* ngon.'), { emo: 'happy' });
-    await say('meo', T('Keep going as long as you like. Shops close at midnight.', 'Cứ bán tiếp bao lâu tùy thích. Quán đóng cửa lúc nửa đêm.'));
+    await say('meo', T('Keep going as long as you like. Your shops close at 11 pm.', 'Cứ bán tiếp bao lâu tùy thích. Quán của bạn đóng cửa lúc 23 giờ.'));
     await say('meo', T('When you\'re tired, go home and sleep in your bed. Tomorrow the ferry brings new visitors — word travels fast here.', 'Khi mệt thì về nhà ngủ nhé. Mai tàu sẽ đưa khách mới tới — tin đồn ở đây lan nhanh lắm.'), { emo: 'happy' });
     m.setAct('wave'); await wait(0.6); m.setAct(null);
     if (G.scene.kind === 'island') walk(m, 700, 2296, { speed: 70 }).then(() => releaseMeo('beach'));
@@ -806,7 +806,7 @@ export async function restoreNightMarket() {
     await say('meo', T('The Night Market is open! And one of these stalls is *yours*, partner.', 'Chợ Đêm mở cửa rồi! Và một trong những sạp này là *của bạn* đó, cộng sự.'), { emo: 'happy' });
     await discoverRecipe('banh_trang_nuong');
     await discoverRecipe('che_ba_mau');
-    await say('meo', T('Your stall opens from 17:00 to midnight. Grilled rice paper and sweet chè — the two best smells in Việt Nam.', 'Sạp của bạn mở từ 17:00 tới nửa đêm. Bánh tráng nướng và chè — hai mùi thơm nhất Việt Nam.'));
+    await say('meo', T('Your stall opens from 17:00 to 23:00. Grilled rice paper and sweet chè — the two best smells in Việt Nam.', 'Sạp của bạn mở từ 17:00 tới 23:00. Bánh tráng nướng và chè — hai mùi thơm nhất Việt Nam.'));
     unlockAchievement('night_market');
     releaseMeo('nightmarket');
     ba.walkTo([[340, 610]]).then(() => ba.face('down'));

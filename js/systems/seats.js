@@ -21,6 +21,9 @@ const KINDS = {
   rocking_chair: [{ dx: 0, dy: 1.5, h: 10 }],
   salonChair: [{ dx: 0, dy: 1.5, h: 11 }],
   rattanSet: [{ dx: -16, dy: 1.5, h: 10.5 }, { dx: 16, dy: 1.5, h: 10.5 }],
+  // hammocks: you climb in and lie back (see Actor.draw)
+  hammock: [{ dx: 0, dy: 1.5, h: 15, lie: true }],
+  beachHammock: [{ dx: 0, dy: 1.5, h: 16, lie: true }],
 };
 function kindOf(p) { return p.homeFurn ? p.homeFurn.id : p.kind; }
 
@@ -31,7 +34,7 @@ export function seatsIn(scene) {
     const k = kindOf(p), defs = KINDS[k];
     if (!defs || p.noBack || p.hidden?.()) continue;
     const x = p.homeFurn ? p.homeFurn.x : p.x, y = p.homeFurn ? p.homeFurn.y : p.y;
-    for (const d of defs) out.push({ x: x + d.dx, y: y + d.dy, h: d.h, prop: p });
+    for (const d of defs) out.push({ x: x + d.dx, y: y + d.dy, h: d.h, lie: !!d.lie, prop: p });
   }
   return out;
 }
@@ -51,7 +54,7 @@ export async function hopOnto(a, s) {
     const k = Math.min(1, (performance.now() - t0) / 1000 / T), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     a.x = x0 + (s.x - x0) * e; a.y = y0 + (s.y - y0) * e;
     a.hop = Math.sin(k * Math.PI) * 9;
-    if (k > 0.45 && !a.sit) { a.sit = true; a.seatH = s.h; }
+    if (k > 0.45 && !a.sit && !a.path) { a.sit = true; a.seatH = s.h; }   // (not if they've already set off walking)
     if (k >= 1) break;
     await sleep(16);
   }
@@ -85,6 +88,11 @@ export async function sitDown(s) {
     pl.face('down'); await sleep(90);
     await hopOnto(pl, s);
     pl.seat = s; pl.setEmo('happy', 1.2);
+    if (s.lie) {                                          // settle back into the hammock
+      pl.lie = { h: s.h, k: 0 };
+      for (let i = 0; i <= 12; i++) { pl.lie.k = i / 12; await sleep(22); }
+      sfx('pop');
+    }
   } finally { busy = false; }
 }
 export async function standUp() {
@@ -92,6 +100,7 @@ export async function standUp() {
   busy = true;
   try {
     const s = pl.seat; pl.seat = null;
+    if (pl.lie) { for (let i = 12; i >= 0; i--) { pl.lie.k = i / 12; await sleep(18); } pl.lie = null; }
     await hopOff(pl, s);
   } finally { pl.control = true; busy = false; }
 }

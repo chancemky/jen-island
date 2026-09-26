@@ -68,7 +68,7 @@ export function recipePrice(bizId, id, size = 'M') {
 // the price the player set (1 = the fair price)
 export const priceMul = id => G.state.prices?.[id] || 1;
 // how customers feel about a price: <1 means fewer people want it
-export const priceAppeal = id => Math.pow(priceMul(id), -1.6);
+export const priceAppeal = id => Math.pow(priceMul(id), -2.8);   // at 160% only about a quarter as many people come
 // equipment effect multiplier for a shop
 export function eq(bizId, key) {
   const own = bizOf(bizId)?.equip; if (!own) return 1;
@@ -77,15 +77,17 @@ export function eq(bizId, key) {
 }
 
 // ---------------------------------------------------------------- open / close
+// your shops close at 11 pm (islanders' own shops keep their own hours)
+export const CLOSE_TIME = 23 * 60;
 export function isOpenHours(bizId, minutes = G.state.time) {
   const h = BUSINESSES[bizId].hours;
-  if (h) return minutes >= h[0] && minutes < h[1];
-  return minutes >= 6 * 60 && minutes < 24 * 60;
+  if (h) return minutes >= h[0] && minutes < Math.min(h[1], CLOSE_TIME);
+  return minutes >= 6 * 60 && minutes < CLOSE_TIME;
 }
 export function openBiz(bizId) {
   const b = bizOf(bizId);
   if (b.open) return { ok: true };
-  if (!isOpenHours(bizId)) return { ok: false, why: bizId === 'night' && G.state.time < 17 * 60 ? T('The night market opens at 17:00.', 'Chợ đêm mở lúc 17:00.') : T('It\'s after midnight — everything is closed until 6:00.', 'Quá nửa đêm rồi — mọi quán đóng cửa tới 6:00.') };
+  if (!isOpenHours(bizId)) return { ok: false, why: bizId === 'night' && G.state.time < 17 * 60 ? T('The night market opens at 17:00.', 'Chợ đêm mở lúc 17:00.') : T('It\'s past 11 pm — your shops are closed until 6:00. (Islanders\' own shops keep their own hours.)', 'Đã quá 23 giờ — các quán của bạn đóng cửa tới 6:00. (Quán của người dân trên đảo có giờ riêng.)') };
   if (!bizRecipes(bizId).length) return { ok: false, why: T('You don\'t know a recipe for this shop yet.', 'Bạn chưa biết món nào cho quán này.') };
   if (!makeableRecipes(bizId).length) return { ok: false, why: T('Not enough ingredients!\nBuy supplies and prep them first.', 'Hết nguyên liệu!\nMua và sơ chế nguyên liệu trước nhé.') };
   b.open = true;
@@ -287,7 +289,7 @@ export function orderChips(order) {
 }
 
 // ---------------------------------------------------------------- results
-export function evaluate(order, made) {
+export function evaluate(order, made, patience = 1) {
   const R = RECIPES[order.recipe];
   const need = R.steps, got = made.steps;
   const sameSet = need.length === got.length && [...need].sort().join() === [...got].sort().join();
@@ -300,7 +302,10 @@ export function evaluate(order, made) {
   }
   if (!sameSet) return { q: 'wrong', why: 'recipe', mism };
   if (mism.length) return { q: 'wrong', why: 'options', mism };
-  return { q: exact ? 'perfect' : 'good', why: exact ? '' : 'order' };
+  // perfect = everything in it is right (the order you add things in doesn't matter);
+  // only a customer who was left waiting until nearly the end calls it just "good"
+  void exact;
+  return { q: patience < 0.2 ? 'good' : 'perfect', why: '' };
 }
 
 export function completeOrder(c, quality) {
@@ -308,7 +313,7 @@ export function completeOrder(c, quality) {
   const order = c.order, lv = RECIPE_UPGRADES[s.recipeLevels[order.recipe] || 1];
   const price = order.price;
   const speed = c.patienceRatio;
-  let tipRate = quality === 'perfect' ? 0.08 + speed * 0.22 : 0.02 + speed * 0.06;
+  let tipRate = quality === 'perfect' ? 0.05 + speed * 0.12 : 0.01 + speed * 0.04;
   tipRate *= P.tip * (lv?.tip || 1) * (order.special ? 1.25 : 1);
   if (G.state.regulars[c.key]?.visits >= 3) tipRate *= 1.15 * eq(c.bizId, 'regTip');
   tipRate *= eq(c.bizId, 'tip') * Math.min(1.5, Math.pow(priceMul(order.recipe), -1.5)); // pricey food, smaller tips
@@ -372,9 +377,14 @@ export function updateBusinesses(dt, gameMin) {
     r.flap += ((b.open ? 1 : 0) - r.flap) * Math.min(1, dt * 5);
     r.signFlip += ((b.open ? 1 : 0) - r.signFlip) * Math.min(1, dt * 4);
     if (!b.open) continue;
-    if (!isOpenHours(id)) { closeBiz(id, 'hours'); continue; }
+    // closing time: no one new joins the line. If you're behind the counter you can
+    // finish serving whoever is still waiting; otherwise they leave right away.
+    const lastCall = !isOpenHours(id);
+    if (lastCall && !(G.runtime.serviceOpen === id && r.queue.length)) { closeBiz(id, 'hours'); continue; }
+    if (lastCall && !r.lastCall) { r.lastCall = true; bus.emit('toast', { text: T('Last orders!', 'Phục vụ lượt cuối!'), sub: T('The shop is closing — serve the customers still in line.', 'Quán sắp đóng — phục vụ nốt khách đang xếp hàng nhé.'), icon: 'sleep_moon' }); }
+    if (!lastCall) r.lastCall = false;
     // spawn
-    r.spawnT -= dt;   // real seconds, so the day's length doesn't change customer flow
+    r.spawnT -= lastCall ? 0 : dt;   // real seconds, so the day's length doesn't change customer flow
     if (r.spawnT <= 0) {
       const made = makeableRecipes(id).length;
       if (!made) { if (!r.noStockWarned) { r.noStockWarned = true; bus.emit('toast', { text: T('Out of ingredients!', 'Hết nguyên liệu!'), sub: T(`${bizName(id)}: restock or prep more.`, `${bizName(id)}: mua thêm hoặc sơ chế nhé.`), bad: true }); } r.spawnT = 6; }
@@ -404,7 +414,7 @@ export function updateBusinesses(dt, gameMin) {
 function nextSpawnDelay(id) {
   const s = G.state, def = BUSINESSES[id], b = s.biz[id];
   const attract = def.upgrades?.[b.level]?.attract || 1;
-  const rep = 1 + Math.min(3, s.reputation / 45);
+  const rep = 1 + Math.min(1.6, s.reputation / 90);
   const h = s.time / 60;
   let tf = 1;
   if (h < 8) tf = 0.7; else if (h >= 11 && h < 13.5) tf = 1.45; else if (h >= 17 && h < 19.5) tf = 1.3; else if (h >= 21) tf = 0.6;
@@ -416,7 +426,7 @@ function nextSpawnDelay(id) {
   const appeal = recs.length ? recs.reduce((a, r) => a + priceAppeal(r), 0) / recs.length : 1;
   const gear = eq(id, 'attract') * (h >= 18 ? eq(id, 'night') : 1);
   const rate = attract * rep * tf * boat * special * early * appeal * gear; // customers per ~34 game-minutes baseline
-  return clamp(rand(15, 28) / (rate * 1.25), 3, 34);   // quicker arrivals
+  return clamp(rand(26, 44) / rate, 7, 60);   // v4.3: fewer customers — business is a grind
 }
 
 export function stationStock(bizId, key) { return stockOf(bizId, key); }

@@ -24,6 +24,8 @@ export function openPrep(bizId, { onClose } = {}) {
   const raws = ingredientsForBiz(bizId).filter(k => INGREDIENTS[k].prep);
   const el = h('div', 'prep');
   el.innerHTML = `<div class="prep-head"><h2>${T('Prep table', 'Bàn sơ chế')}<small>${escapeHtml(bizName(bizId))}</small></h2><div class="svc-clock"><span class="sun"></span><b class="clk"></b></div><button class="btn gold all hidden" type="button">${T('Prep all', 'Sơ chế hết')}</button><button class="svc-close" type="button">✕</button></div>
+    <div class="prep-guide"><p>${T('Prepping turns raw ingredients from the supermarket into what your recipes use. Each round preps a batch.', 'Sơ chế biến nguyên liệu thô mua ở siêu thị thành thứ công thức cần dùng. Mỗi lượt sơ chế một mẻ.')}</p>
+      <ol><li data-s="1"><b>1</b>${T('Tap a raw ingredient', 'Chạm nguyên liệu thô')}</li><li data-s="2"><b>2</b>${T('Tap the board to prep it', 'Chạm thớt để sơ chế')}</li><li data-s="3"><b>3</b>${T('Tap its bowl to store it', 'Chạm tô để cất vào')}</li></ol></div>
     <div class="prep-raw"></div>
     <div class="prep-table"><div class="prep-station board"><canvas width="360" height="240"></canvas><div class="tip"></div></div></div>
     <div class="prep-bowls"></div>`;
@@ -70,13 +72,17 @@ function build() {
 }
 function hint() {
   const tip = P.el.querySelector('.tip');
-  for (const e of P.el.querySelectorAll('.hint, .target')) e.classList.remove('hint', 'target');
+  for (const e of P.el.querySelectorAll('.hint, .target, .point')) e.classList.remove('hint', 'target', 'point');
+  // the step guide: light up what to do now, and point a bouncing arrow at it
+  const step = P.stage === 'empty' ? 1 : P.stage === 'placed' ? 2 : 3;
+  for (const li of P.el.querySelectorAll('.prep-guide li')) { li.classList.toggle('now', +li.dataset.s === step); li.classList.toggle('done', +li.dataset.s < step); }
+  if (step === 2) P.el.querySelector('.prep-station')?.classList.add('point');
   if (P.stage === 'empty') {
     tip.textContent = P.raws.some(k => pantry(k) > 0) ? T('Tap an ingredient', 'Chạm vào một nguyên liệu') : T('No raw ingredients — visit the supermarket', 'Hết nguyên liệu — ghé siêu thị nhé');
     const first = P.raws.find(k => pantry(k) > 0);
-    if (first && !flag('prepAllUnlocked')) P.el.querySelector(`.ing[data-k="${first}"]`)?.classList.add('hint');
-  } else if (P.stage === 'placed') { const v = PREP_VERB[INGREDIENTS[P.item].prep.method]; tip.textContent = T(`${v[0]} it — tap the station`, `${v[1]} — chạm vào thớt`); }
-  else if (P.stage === 'done') { tip.textContent = T('Tap the bowl', 'Cho vào tô'); P.el.querySelector(`.bowl[data-k="${INGREDIENTS[P.item].prep.to}"]`)?.classList.add('target'); }
+    if (first) P.el.querySelector(`.ing[data-k="${first}"]`)?.classList.add('hint', 'point');
+  } else if (P.stage === 'placed') { const v = PREP_VERB[INGREDIENTS[P.item].prep.method]; tip.textContent = T(`${v[0]} it — tap the board`, `${v[1]} — chạm vào thớt`); }
+  else if (P.stage === 'done') { tip.textContent = T(`Now tap the ${ingName(INGREDIENTS[P.item].prep.to).toLowerCase()} bowl`, `Giờ chạm vào tô ${ingName(INGREDIENTS[P.item].prep.to).toLowerCase()}`); P.el.querySelector(`.bowl[data-k="${INGREDIENTS[P.item].prep.to}"]`)?.classList.add('target', 'point'); }
 }
 function setStation(method) {
   const st = P.el.querySelector('.prep-station');

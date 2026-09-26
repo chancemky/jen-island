@@ -8,7 +8,7 @@ import { bus } from '../core/util.js';
 import { leaderboardRow, shouldPushLeaderboard } from './progress.js';
 
 // v5: older saves are not loaded — everyone starts fresh
-const localKey = uid => 'jenisland.save5.' + uid;
+const localKey = uid => 'jenisland.save6.' + uid;
 let lastLocal = 0, lastCloud = 0, cloudDirty = false, cloudBusy = false;
 export const saveStatus = { cloudAt: 0, localAt: 0, offline: false, error: '' };
 
@@ -58,8 +58,8 @@ export async function loadGame(user) {
     catch (e) { saveStatus.offline = true; saveStatus.error = e.message; console.warn('cloud load failed', e); }
   }
   // everyone restarts (v4.2 reset): saves from before version 5 are ignored
-  if (remote && (remote.v || 1) < 5) remote = null;
-  if (local && (local.v || 1) < 5) local = null;
+  if (remote && (remote.v || 1) < 6) remote = null;
+  if (local && (local.v || 1) < 6) local = null;
   const pick = !remote ? local : !local ? remote : ((remote.savedAt || 0) >= (local.savedAt || 0) ? remote : local);
   return pick ? migrate(pick) : defaultState();
 }

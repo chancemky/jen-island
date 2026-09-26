@@ -93,11 +93,38 @@ export const F = {
     for (let i = 0; i < n; i++) { const x = -((n - 1) * 24) / 2 + i * 24; circ(c, x, -36, 7, '#3d3a42', INK, 0.8); if (p.on?.(i)) { for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + t * 3; circ(c, x + Math.cos(a) * 4, -36 + Math.sin(a) * 2, 1.4, '#4aa3ff', null); } g(p, x, -38, 18, 'rgba(255,160,90,.35)'); } }
   },
   sink(c, t, p) { counterBox(c, p.w || 40, 30, 12, '#9fd8c8', '#fff8ea'); box(c, -12, -40, 24, 8, 3, '#b9dcee', INK, 0.8); limb(c, [8, -42, 8, -48, 3, -48], 1.4, '#b9c3cb'); },
+  // the prep station: a butcher-block table with a big board, a cleaver, things half
+  // chopped, a bowl of prepped food, baskets underneath and a utensil rail
   prepTable(c, t, p) {
-    counterBox(c, p.w || 60, 28, 14, '#c98f5a', '#e6bc85');
-    box(c, -20, -40, 28, 10, 2, '#efc893', INK, 0.8); // cutting board
-    c.save(); c.translate(16, -36); c.rotate(-0.4); poly(c, [0, 0, 2, 0, 2, -9, 0, -8], '#e6ecef', INK, 0.5); c.restore();
-    for (let i = 0; i < 3; i++) { ell(c, -22 + i * 9, -30, 4, 2, '#fff', INK, 0.6); }
+    const w = p.w || 60, top = -30;
+    shadow(c, 0, 1, w / 2 + 3, 5, 0.2);
+    // utensil rail behind (ladle, whisk, strainer)
+    line(c, -w / 2 + 6, top - 30, w / 2 - 6, top - 30, '#8f9aa3', 1.4);
+    for (const [x, k] of [[-14, 0], [-4, 1], [8, 2]]) {
+      line(c, x, top - 30, x, top - 26, '#8f9aa3', 0.7);
+      if (k === 0) { line(c, x, top - 26, x, top - 15, '#b9c3cb', 1); ell(c, x, top - 14, 2.8, 1.8, '#b9c3cb', INK, 0.5); }
+      if (k === 1) { line(c, x, top - 26, x, top - 20, '#b77a4f', 1.2); ell(c, x, top - 15, 2.2, 5, null, '#8f9aa3', 0.7); }
+      if (k === 2) { line(c, x, top - 26, x, top - 22, '#b77a4f', 1.2); circ(c, x, top - 18, 3.6, 'rgba(200,210,215,.6)', INK, 0.6); }
+    }
+    // legs and the lower shelf with baskets of produce
+    for (const x of [-w / 2 + 3, w / 2 - 6]) box(c, x, top + 6, 3.5, -top - 6, 1, '#a8763f', INK, 0.7);
+    box(c, -w / 2 + 2, -9, w - 4, 3, 1, '#b98450', INK, 0.7);
+    ell(c, -w / 4, -10, 9, 3.6, '#c9975f', INK, 0.7); for (let i = 0; i < 4; i++) circ(c, -w / 4 - 5 + i * 3.4, -12 - (i % 2), 1.8, '#ffa53a', INK, 0.4);
+    ell(c, w / 4, -10, 9, 3.6, '#c9975f', INK, 0.7); for (let i = 0; i < 4; i++) ell(c, w / 4 - 5 + i * 3.2, -12.4, 1.2, 2.6, '#6fb356', INK, 0.4, 0.3 * (i - 1.5));
+    // thick butcher-block top with end grain
+    box(c, -w / 2 - 2, top, w + 4, 8, 2, '#d9a466', INK, 1);
+    c.strokeStyle = 'rgba(140,90,40,.45)'; c.lineWidth = 0.6; for (let x = -w / 2 + 3; x < w / 2; x += 5) { c.beginPath(); c.moveTo(x, top + 1); c.lineTo(x, top + 7); c.stroke(); }
+    box(c, -w / 2 - 2, top - 4, w + 4, 5, 2, '#e6bc85', INK, 0.9);
+    // a big cutting board: sliced cucumber and halved kumquats, a cleaver
+    box(c, -w / 2 + 3, top - 9, 30, 7, 2, '#f3d6a4', INK, 0.8);
+    for (let i = 0; i < 4; i++) { ell(c, -w / 2 + 8 + i * 3, top - 6, 2, 2, '#b9e08a', '#5f9f45', 0.5); }
+    for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(-w / 2 + 22 + i * 3.4, top - 5, 1.8, Math.PI, 0); c.fillStyle = '#ffa53a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.4; c.stroke(); }
+    c.save(); c.translate(-w / 2 + 29, top - 9); c.rotate(-0.15); box(c, 0, -5, 9, 5, 0.8, '#dfe6ea', INK, 0.6); box(c, 8.5, -3.5, 5, 2, 0.8, '#6b4431', INK, 0.5); c.restore();
+    // a bowl of prepped food, ready for orders
+    c.beginPath(); c.moveTo(w / 2 - 20, top - 7); c.quadraticCurveTo(w / 2 - 12, top + 1, w / 2 - 4, top - 7); c.closePath(); c.fillStyle = '#fff'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke();
+    for (let i = 0; i < 4; i++) circ(c, w / 2 - 17 + i * 3.4, top - 8, 1.5, ['#ffa53a', '#b9e08a', '#ffa53a', '#f28f7c'][i], INK, 0.3);
+    // name plate on the front edge
+    box(c, -9, top + 1.2, 18, 5.6, 1, '#fff5df', INK, 0.5); stext(c, T('PREP', 'SƠ CHẾ'), 0, top + 4.1, 3.4, '#8a5f3e', 900);
   },
   drinkStation(c, t, p) {
     const w = p.w || 110;

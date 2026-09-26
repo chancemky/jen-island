@@ -15,7 +15,7 @@ import { fx } from '../world/render.js';
 import { camTo, camFollow } from '../systems/cutscene.js';
 import { baseLook, refreshPlayerLook } from './clothes.js';
 
-const DYE_PRICE = 60;
+const DYE_PRICE = 180;
 const COLOR_NAMES = [['Dark brown', 'Nâu đậm'], ['Soft black', 'Đen tuyền'], ['Chestnut', 'Hạt dẻ'], ['Caramel', 'Nâu caramel'], ['Honey', 'Mật ong'], ['Blonde', 'Vàng hoe'], ['Ash grey', 'Xám tro'], ['Sakura pink', 'Hồng anh đào'], ['Ocean blue', 'Xanh biển'], ['Mint', 'Xanh bạc hà'], ['Plum', 'Tím mận'], ['Silver', 'Bạch kim']];
 
 function head(cv, look) {
@@ -88,7 +88,7 @@ export function openSalon() {
         const g = i === 0 ? 'f' : 'm';
         const ids = Object.keys(HAIRCUTS).filter(k => HAIRCUTS[k].g === g).sort((a, b) => HAIRCUTS[a].price - HAIRCUTS[b].price);
         for (const id of ids) {
-          const it = HAIRCUTS[id], cur = me.hairStyle === id, price = Math.max(40, it.price);
+          const it = HAIRCUTS[id], cur = me.hairStyle === id, price = Math.max(120, it.price);
           const b = cur ? btn(T('Current', 'Đang để'), () => {}, 'buy pink', true) : btn(money(price), () => {
             if (!canAfford(price)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
             addMoney(-price, 'salon'); addXP(8, 'salon');

@@ -248,7 +248,7 @@ function serve() {
   for (const u of optUse) takeStock(S.bizId, u);
   refreshCounts();
   S.asm.triedServe = true;
-  const res = evaluate(c.order, S.asm);
+  const res = evaluate(c.order, S.asm, c.patienceRatio);
   S.busy = true;
   S.asm.servedAnim = 0.001;
   if (S.single) {
@@ -436,7 +436,9 @@ function drawPortrait(dt, t) {
   const emo = S.react?.emo || (k < 0.25 ? 'angry' : k < 0.45 ? 'sad' : S.talkT > 0 ? 'neutral' : S.asm.steps.length ? 'think' : 'neutral');
   const a = { look: cust.actor.look, dir: 'down', moving: 0, walkPh: 0, seed: 1, emo, talking: S.talkT > 0.15, blinkAmt: (Math.sin(t * 1.3 + 1) > 0.985) ? 1 : 0, hop: S.react && (S.react.emo === 'love' || S.react.emo === 'happy') ? Math.abs(Math.sin(t * 9)) * 2 : 0, act: S.react?.emo === 'love' ? 'cheer' : k < 0.45 && !S.react ? 'wait' : null, actT: t, headTilt: S.asm.steps.length && !S.react ? Math.sin(t * 1.2) * 0.06 : 0, portrait: true };
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
-  const sc = 6.3; c.translate(cv.width / 2, cv.height + 34 + EL * sc); c.scale(sc, sc);
+  // hats are tall: draw a hatted customer a little lower so the crown is never cut off
+  const hat = a.look.hat, drop = !hat ? 0 : ['nonla', 'chef', 'sunhat', 'crown'].includes(hat) ? 40 : 22;
+  const sc = 6.3; c.translate(cv.width / 2, cv.height + 34 + drop + EL * sc); c.scale(sc, sc);
   drawHuman(c, a, t);
   c.restore();
 }

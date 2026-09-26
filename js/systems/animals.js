@@ -5,7 +5,7 @@
 
 import { G } from './state.js';
 import { rand, choice, dist, TAU } from '../core/util.js';
-import { INK, ell, circ, shadow, poly, box } from '../gfx/draw.js';
+import { INK, ell, circ, shadow, poly, box, stext } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
 
 const A = [];
@@ -40,8 +40,15 @@ const RANGE = { chicken: 60, dog: 150, cat: 80, crab: 70, pigeon: 60, goat: 70 }
 export function updateAnimals(dt) {
   const island = G.scenes?.island; if (!island) return;
   const pl = G.player, here = G.scene === island;
+  const night = G.state.time >= 24 * 60 || G.state.time < 5.5 * 60;   // after midnight every animal is asleep
   for (const a of A) {
-    a.t += dt; a.until -= dt; tickReact(a, dt);
+    a.t += dt; tickReact(a, dt);
+    if (night) {
+      if (!a.sleeping) { a.sleeping = true; a.state = 'idle'; a.vx = a.vy = 0; a.idle = a.kind === 'cat' ? 'nap' : 'sit'; if (a.kind === 'pigeon' || a.kind === 'crab') a.idle = 'look'; }
+      continue;
+    }
+    if (a.sleeping) { a.sleeping = false; a.until = rand(0.5, 3); }
+    a.until -= dt;
     const pd = here && pl ? dist(pl.x, pl.y, a.x, a.y) : 999;
     const running = pl?.moving > 0.8;
     // reactions
@@ -276,9 +283,11 @@ export function animalDrawables() {
     c.save(); c.translate(0, -hop); c.scale(SC[a.kind] / Math.sqrt(sq), SC[a.kind] * sq);
     if (a.react && a.kind === 'dog') c.rotate(Math.sin(k * 20) * 0.08);          // excited wiggle
     if (a.react && a.kind === 'crab') c.translate(Math.sin(k * 30) * 1.5, 0);   // side shuffle
+    if (a.sleeping) c.scale(1.06, 0.84);                                        // curled up low
     DRAW[a.kind](c, t, a);
     if (a.react && a.kind === 'chicken' && k < 1) { c.strokeStyle = INK; c.lineWidth = 0.8; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * 5, -8); c.lineTo(s * (9 + Math.sin(k * 40) * 2), -12 - Math.abs(Math.sin(k * 40)) * 3); c.stroke(); } }
     c.restore();
+    if (a.sleeping) for (let i = 0; i < 2; i++) { const k2 = (t * 0.35 + i * 0.5 + a.seed) % 1; c.globalAlpha = Math.sin(k2 * Math.PI) * 0.8; stext(c, 'z', 5 + k2 * 6, -TOP[a.kind] * SC[a.kind] * 0.7 - k2 * 12, 4 + k2 * 3, '#fff', 900, 'center', INK, 1.2); c.globalAlpha = 1; }
     drawReact(c, a, TOP[a.kind] * SC[a.kind] + hop);
   } });
   for (const f of fish) if (f.jump) {

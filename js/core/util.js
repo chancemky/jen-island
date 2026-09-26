@@ -65,8 +65,8 @@ export const nextFrame = () => new Promise(r => requestAnimationFrame(r));
 // Money is stored in thousands of đồng ("k"), the way Vietnamese menus show it.
 export function money(k) {
   const v = Math.round(k);
-  if (Math.abs(v) >= 1000000) return (v / 1000000).toFixed(1).replace('.0', '') + 'B₫';
-  if (Math.abs(v) >= 10000) return (v / 1000).toFixed(1).replace('.0', '') + 'M₫';
+  if (Math.abs(v) >= 1000000) return (v / 1000000).toFixed(1).replace('.0', '') + 'B';
+  if (Math.abs(v) >= 10000) return (v / 1000).toFixed(1).replace('.0', '') + 'M';
   return v.toLocaleString('en-US') + 'k';
 }
 export const pad2 = n => String(n).padStart(2, '0');

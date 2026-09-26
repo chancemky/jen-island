@@ -4,7 +4,7 @@
 // with live markers on top (you, Mèo Mây, your goal, lost items).
 
 import { G, T } from '../systems/state.js';
-import { RIVER, RIVER_W, POND, PATHS, BUILDINGS, STALLS, PLAZA, NM_PLAZA, PIER, PIER_END, LANDS, PADDIES, BRIDGES, SEA_BRIDGES, W, H } from '../world/island.js';
+import { NAV_ONLY, RIVER, RIVER_W, POND, PATHS, BUILDINGS, STALLS, PLAZA, NM_PLAZA, PIER, PIER_END, LANDS, PADDIES, BRIDGES, SEA_BRIDGES, W, H } from '../world/island.js';
 import { activeQuests, questSpot } from '../systems/sidequests.js';
 import { currentStep } from '../systems/story.js';
 import { iconURL } from '../gfx/food.js';
@@ -75,7 +75,7 @@ function buildBase() {
   }
   // roads: a darker edge under a light sandy fill
   const road = (pts, w, col) => { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (const q of pts.slice(1)) c.lineTo(q[0], q[1]); c.strokeStyle = col; c.lineWidth = w; c.stroke(); };
-  const skip = k => k === 'bridge' || k === 'hbridge' || k === 'cbridge';
+  const skip = k => NAV_ONLY.has(k);
   for (const [k, p] of Object.entries(PATHS)) if (!skip(k)) road(p, 36, '#c7a574');
   for (const [k, p] of Object.entries(PATHS)) if (!skip(k)) road(p, 26, '#f1ddb0');
   // bridges (dashed when not built yet)
