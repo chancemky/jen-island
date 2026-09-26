@@ -41,6 +41,17 @@ function tone(freq, dur, { type = 'sine', vol = 0.3, attack = 0.005, decay = nul
   o.connect(g); g.connect(dest);
   o.start(t); o.stop(t + (decay ?? dur) + 0.05);
 }
+// Scooter horn: two slightly dissonant buzzy tones through a small speaker (band-limited), with a flutter
+function horn(when, dur) {
+  if (!ctx || !sfxGain) return;
+  const t = ctx.currentTime + when;
+  const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1100; f.Q.value = 0.9;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.11, t + 0.012); g.gain.setValueAtTime(0.11, t + dur - 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 38; lg.gain.value = 0.025; lfo.connect(lg); lg.connect(g.gain);
+  for (const [hz, type] of [[415, 'sawtooth'], [498, 'square']]) { const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(hz * 0.97, t); o.frequency.linearRampToValueAtTime(hz, t + 0.03); o.connect(f); o.start(t); o.stop(t + dur + 0.05); }
+  f.connect(lp); lp.connect(g); g.connect(sfxGain); lfo.start(t); lfo.stop(t + dur + 0.05);
+}
 function noise(dur, { vol = 0.2, freq = 1200, q = 1, when = 0, type = 'bandpass' } = {}) {
   if (!ctx) return;
   const t = ctx.currentTime + when;
@@ -113,7 +124,7 @@ export function sfx(name, opt = {}) {
     case 'sad': tone(392, 0.2, { type: 'triangle', vol: 0.1 }); tone(330, 0.3, { type: 'triangle', vol: 0.1, when: 0.16 }); break;
     case 'bell': tone(1318, 0.8, { type: 'sine', vol: 0.12, decay: 0.9 }); tone(1975, 0.6, { type: 'sine', vol: 0.05, decay: 0.7 }); break;
     case 'horn': tone(220, 0.5, { type: 'sawtooth', vol: 0.05, attack: 0.05 }); tone(277, 0.5, { type: 'sawtooth', vol: 0.04, attack: 0.05 }); break;
-    case 'beep': tone(880, 0.07, { type: 'square', vol: 0.04 }); tone(880, 0.07, { type: 'square', vol: 0.04, when: 0.11 }); break;
+    case 'beep': horn(0, 0.13); horn(0.2, 0.26); break;          // a scooter's two-tone electric horn: bíp-bíiip
     case 'splash': noise(0.3, { vol: 0.12, freq: 1600, q: 0.7 }); break;
     case 'blend': noise(0.6, { vol: 0.1, freq: 500, q: 3 }); tone(140, 0.6, { type: 'sawtooth', vol: 0.03, slide: 60 }); break;
     case 'page': noise(0.12, { vol: 0.08, freq: 3000, q: 0.8 }); break;

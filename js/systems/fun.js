@@ -2,6 +2,7 @@
 // game of oẳn tù tì (rock-paper-scissors) with the neighbours, floating
 // speech bubbles when you walk past, and Mèo Mây's silly antics.
 
+import { applyPlayerPronouns, profileOf } from './pronouns.js';
 import { G, T, tr, markDirty, addMoney, addPantry, addMat } from './state.js';
 import { say, ask } from '../ui/dialogue.js';
 import { showReward } from '../ui/sheets.js';
@@ -16,16 +17,16 @@ import { questOption, questTalk } from './sidequests.js';
 export const JOKES = [
   ['Why did the kumquat stop halfway up the hill? It ran out of juice.', 'Tại sao trái tắc leo nửa dốc thì dừng? Vì hết nước.'],
   ['What do you call a sleepy bánh mì? A baguette-to-bed.', 'Gọi ổ bánh mì buồn ngủ là gì? Bánh mì… ngủ gật.'],
-  ['I tried to catch fog this morning. I mist.', 'Sáng nay mình cố bắt sương mù. Mà trượt. Mù thật.'],
+  ['I tried to catch fog this morning. I mist.', 'Sáng nay {me} cố bắt sương mù. Mà trượt. Mù thật.'],
   ['Why don\'t crabs share their snacks? Because they\'re shellfish.', 'Sao cua không chia đồ ăn? Vì nó… “cua” lắm.'],
   ['What did the ocean say to the beach? Nothing, it just waved.', 'Biển nói gì với bờ cát? Không nói gì, chỉ vẫy tay thôi.'],
   ['Coffee has a rough life. It gets mugged every morning.', 'Cà phê khổ lắm. Sáng nào cũng bị “phin” cho một trận.'],
   ['Why was the phở so calm? It had plenty of broth-er-ly love.', 'Sao tô phở bình tĩnh thế? Vì có nước dùng… “hầm” lâu rồi.'],
-  ['My fishing rod and I broke up. It was too clingy — always reeling me in.', 'Mình với cần câu chia tay rồi. Nó bám dai quá, cứ kéo mình lại hoài.'],
+  ['My fishing rod and I broke up. It was too clingy — always reeling me in.', '{Me} với cần câu chia tay rồi. Nó bám dai quá, cứ kéo {me} lại hoài.'],
   ['What do you call a noodle that tells lies? An im-pasta. Don\'t tell the phở.', 'Gọi sợi mì hay nói dối là gì? Mì… “xạo”. Đừng nói với tô phở nha.'],
-  ['The seagull stole my sandwich, so now I\'m on a sea-food diet. I see food, I lose it.', 'Chim hải âu giật ổ bánh mì của mình. Giờ mình ăn kiêng kiểu “thấy là mất”.'],
+  ['The seagull stole my sandwich, so now I\'m on a sea-food diet. I see food, I lose it.', 'Chim hải âu giật ổ bánh mì của {me}. Giờ {me} ăn kiêng kiểu “thấy là mất”.'],
   ['Why did the scooter get a medal? It was outstanding in its field. It was parked in a field.', 'Sao xe máy được huy chương? Vì nó nổi bật giữa đồng. Nó đậu ngoài đồng thật.'],
-  ['I told the lighthouse a joke. It was very bright about it.', 'Mình kể chuyện cười cho ngọn hải đăng nghe. Nó sáng dạ lắm.'],
+  ['I told the lighthouse a joke. It was very bright about it.', '{Me} kể chuyện cười cho ngọn hải đăng nghe. Nó sáng dạ lắm.'],
 ];
 const MEO_JOKES = [
   ['Why did the cat sit on the computer? To keep an eye on the mouse. I don\'t know what a computer is.', 'Sao con mèo ngồi lên máy tính? Để canh con chuột. Mình không biết máy tính là gì.'],
@@ -45,9 +46,9 @@ const GIFTS = {
   minh: [{ money: 40, why: ['A magazine bought my island photos. Coffee is on me — well, this is coffee money.', 'Tạp chí mua ảnh đảo của mình. Mình bao cà phê — à, đây là tiền cà phê.'] }],
   co_lan: [{ ing: 'herbs', n: 8, why: ['My garden is basically a jungle now. Please take some herbs.', 'Vườn cô thành rừng rồi. Lấy bớt rau thơm giùm cô.'] }, { mat: 'paint', n: 2, why: ['Leftover paint from my flower cart. It\'s a very cheerful pink.', 'Sơn thừa từ xe hoa của cô. Màu hồng vui lắm.'] }],
   be_na: [{ ing: 'beans', n: 6, why: ['I saved these beans for chè! You make it, I eat it. Deal?', 'Em để dành đậu nấu chè nè! {You} nấu, em ăn. Chịu không?'] }, { money: 5, why: ['This is all my money. Five thousand! Buy something nice.', 'Đây là hết tiền của em. Năm nghìn! Mua gì đó đẹp nha.'] }],
-  anh_tuan: [{ mat: 'metal', n: 3, why: ['Old scooter panels. Better on your roof than in my shed.', 'Tôn xe cũ. Lên mái nhà bạn còn hơn nằm trong kho.'] }],
+  anh_tuan: [{ mat: 'metal', n: 3, why: ['Old scooter panels. Better on your roof than in my shed.', 'Tôn xe cũ. Lên mái nhà em còn hơn nằm trong kho của anh.'] }],
   vy: [{ mat: 'paint', n: 3, why: ['Extra paint! My easel only has two hands. I mean legs. Three legs.', 'Sơn dư nè! Giá vẽ của mình chỉ có hai tay. À không, ba chân.'] }, { money: 45, why: ['Someone bought a painting of your shop. Half is yours — it was your shop!', 'Có người mua bức tranh quán bạn. Chia bạn nửa — quán của bạn mà!'] }],
-  chi_mai: [{ ing: 'lime', n: 8, why: ['Doctor\'s orders: vitamin C. Also I bought too many limes.', 'Lời khuyên của y tá: vitamin C. Mà chị cũng lỡ mua nhiều chanh quá.'] }, { money: 20, why: ['A thank-you from a patient. They said the tea stand made them better!', 'Quà cảm ơn từ bệnh nhân. Họ nói uống trà quán em là khỏe!'] }],
+  chi_mai: [{ ing: 'lime', n: 8, why: ['Doctor\'s orders: vitamin C. Also I bought too many limes.', 'Lời khuyên của bác sĩ: vitamin C. Mà anh cũng lỡ mua nhiều chanh quá.'] }, { money: 20, why: ['A thank-you from a patient. They said the tea stand made them better!', 'Quà cảm ơn từ bệnh nhân. Họ nói uống trà quán em là khỏe!'] }],
 };
 function tryGift(rid) {
   const s = G.state, key = 'gift:' + rid;
@@ -90,10 +91,10 @@ export async function playRPS(a, who) {
       const prize = Math.round(rand(8, 25));
       sfx('success'); addMoney(prize, 'game'); addXP(8, 'game');
       if (a.data?.rid) s.friends[a.data.rid] = (s.friends[a.data.rid] || 0) + 1;
-      await say(a, choice([T(`Nooo! You win. Here's ${prize}k — a deal's a deal.`, `Khônggg! Bạn thắng. ${prize}k nè — chơi là chịu.`), T(`How?! Fine, ${prize}k. You must have practised on Mèo Mây.`, `Sao được vậy?! Thôi, ${prize}k. Chắc bạn luyện với Mèo Mây rồi.`)]), { emo: 'sad' });
+      await say(a, choice([T(`Nooo! You win. Here's ${prize}k — a deal's a deal.`, `Khônggg! {You} thắng. ${prize}k nè — chơi là chịu.`), T(`How?! Fine, ${prize}k. You must have practised on Mèo Mây.`, `Sao được vậy?! Thôi, ${prize}k. Chắc {you} luyện với Mèo Mây rồi.`)]), { emo: 'sad' });
     } else {
       sfx('sad');
-      await say(a, choice([T('Ha! I win! I\'ll tell the whole island.', 'Ha! Tui thắng! Tui kể cả đảo nghe.'), T('Victory! I\'m the rock-paper-scissors champion of this beach.', 'Chiến thắng! Tui là vua oẳn tù tì của bãi biển này.'), T('Better luck next time. My scissors are undefeated. Mostly.', 'Lần sau may hơn nha. Cái kéo của tui bất bại. Gần như vậy.')]), { emo: 'happy' });
+      await say(a, choice([T('Ha! I win! I\'ll tell the whole island.', 'Ha! {Me} thắng! {Me} kể cả đảo nghe.'), T('Victory! I\'m the rock-paper-scissors champion of this beach.', 'Chiến thắng! {Me} là vua oẳn tù tì của bãi biển này.'), T('Better luck next time. My scissors are undefeated. Mostly.', 'Lần sau may hơn nha {you}. Cái kéo của {me} bất bại. Gần như vậy.')]), { emo: 'happy' });
     }
     return;
   }
@@ -102,10 +103,11 @@ export async function playRPS(a, who) {
 
 // ---------------------------------------------------------------- resident conversation menu
 export async function residentMenu(a, rid, chat) {
-  const opts = [T('Chat', 'Trò chuyện'), T('Tell me a joke!', 'Kể chuyện cười đi!'), T('Rock, paper, scissors?', 'Oẳn tù tì không?'), T('Bye!', 'Tạm biệt!')];
+  const P = x => applyPlayerPronouns(x, profileOf(rid));   // what you say, addressed properly (bà / cô / anh / bạn…)
+  const opts = [T('Chat', 'Trò chuyện'), T('Tell me a joke!', P('{Them} kể chuyện cười cho {i} nghe đi!')), T('Rock, paper, scissors?', P('{Them} chơi oẳn tù tì với {i} không?')), T('Bye!', P('{I} chào {them} nha!'))];
   const qo = questOption(rid);
   if (qo) opts.unshift(qo);
-  let pick = await ask(a, choice([T('Oh, hi!', 'Ơ, chào!'), T(`Hey ${G.state.player.name}!`, `Ê ${G.state.player.name}!`), T('What\'s up?', 'Có chuyện gì vậy?')]), opts, { emo: 'happy' });
+  let pick = await ask(a, choice([T('Oh, hi!', 'Ơ, chào {you}!'), T(`Hey ${G.state.player.name}!`, `Ê ${G.state.player.name}!`), T('What\'s up?', 'Có chuyện gì vậy?')]), opts, { emo: 'happy' });
   if (qo) { if (pick === 0) { await questTalk(a, rid); return; } pick--; }
   if (pick === 0) await chat();
   else if (pick === 1) { await say(a, randomJoke(), { emo: 'happy' }); a.setAct('cheer'); G.player.showEmote('happy', 1.4); sfx('pop'); setTimeout(() => a.act === 'cheer' && a.setAct(null), 1200); }

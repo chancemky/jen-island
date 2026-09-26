@@ -94,14 +94,7 @@ function buildBase() {
   c.beginPath(); c.arc(PLAZA.x, PLAZA.y, 30, 0, TAU); c.fillStyle = '#8fd6e2'; c.fill(); c.strokeStyle = '#9aa3ad'; c.lineWidth = 6; c.stroke();
   // Night Market: tiled square, two rows of striped stall roofs, lantern strings
   drawNightMarket(c);
-  // buildings as tiny houses (wall + roof)
-  for (const b of BUILDINGS) {
-    const w = b.w * 0.9, hh = Math.max(40, b.fp * 0.9), x = b.x - w / 2, y = b.y - hh;
-    c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(x + 6, y + 8, w, hh);
-    c.fillStyle = b.wall || '#fff1dc'; c.fillRect(x, y + hh * 0.35, w, hh * 0.65); c.strokeStyle = '#5b3f36'; c.lineWidth = 4; c.strokeRect(x, y + hh * 0.35, w, hh * 0.65);
-    c.beginPath(); c.moveTo(x - 8, y + hh * 0.4); c.lineTo(x + w * 0.2, y); c.lineTo(x + w * 0.8, y); c.lineTo(x + w + 8, y + hh * 0.4); c.closePath();
-    c.fillStyle = b.roof || ({ shop: '#e8584e', shed: '#b8845a', truck: '#9fd8c8', restaurant: '#d9784f', kiosk: '#f2a14e', dinh: '#b8603f', meo: '#9fb4dc' }[b.type] || '#d9784f'); c.fill(); c.stroke();
-  }
+  // properties are marked by their badge circles only (drawn live on top)
   return cv;
 }
 function drawNightMarket(c) {
@@ -111,15 +104,6 @@ function drawNightMarket(c) {
   c.fillStyle = on ? '#f0d7b4' : '#ddd2bd'; c.fill(); c.strokeStyle = '#b89a6e'; c.lineWidth = 6; c.stroke(); c.clip();
   c.strokeStyle = 'rgba(160,130,90,.28)'; c.lineWidth = 3; for (let x = R.x; x < R.x + R.w; x += 40) { c.beginPath(); c.moveTo(x, R.y); c.lineTo(x, R.y + R.h); c.stroke(); } for (let y = R.y; y < R.y + R.h; y += 40) { c.beginPath(); c.moveTo(R.x, y); c.lineTo(R.x + R.w, y); c.stroke(); }
   c.restore();
-  for (const s of STALLS) {
-    const cols = on ? (s.cloth || ['#e8584e', '#fff5df']) : ['#a89a8c', '#c9bdb0'], x = s.x - 38, y = s.y - 46;
-    c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(x + 6, y + 8, 76, 44);
-    for (let i = 0; i < 6; i++) { c.fillStyle = cols[i % 2]; c.fillRect(x + i * 76 / 6, y, 76 / 6, 30); }
-    c.strokeStyle = '#5b3f36'; c.lineWidth = 4; c.strokeRect(x, y, 76, 30);
-    c.fillStyle = on ? '#c9955e' : '#9a8a7e'; c.fillRect(x + 4, y + 30, 68, 16); c.strokeRect(x + 4, y + 30, 68, 16);
-    const own = s.biz && G.state.biz[s.biz]?.owned;
-    if (own) { c.beginPath(); c.arc(s.x, y - 12, 12, 0, TAU); c.fillStyle = '#f08ca0'; c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 4; c.stroke(); }
-  }
   // lantern strings
   for (const y of [R.y + 24, R.y + R.h - 20]) for (let x = R.x + 30; x < R.x + R.w - 20; x += 34) { c.beginPath(); c.arc(x, y + Math.sin(x) * 4, 7, 0, TAU); c.fillStyle = on ? ['#ea5a4f', '#f2c14e', '#f08ca0'][(x / 34 | 0) % 3] : '#b3a79a'; c.fill(); }
 }
@@ -199,12 +183,13 @@ function draw(cv, view) {
     if (bd.id === 'h_vy' && !regionOpen('islet')) continue;
     if (!ic) continue;
     const zoomed = view.s > (view.fit || 0) * 2.4;
-    if (bd.home && bd.id !== 'h_mai' && !zoomed) continue;          // homes appear when you zoom in
+    const small = bd.home && bd.id !== 'h_mai' && !zoomed;          // homes are small dots until you zoom in
     const own = G.state.biz[bd.id], owned = own?.owned && (own.repair >= 1 || bd.type === 'kiosk' || bd.type === 'truck');
-    const r = 11 * k, y = bd.y - bd.fp - 20;
+    const r = (small ? 6 : 11) * k, y = bd.y - bd.fp * 0.45;          // the circle sits right on the property
+    if (small) { c.beginPath(); c.arc(bd.x, y, 5 * k, 0, TAU); c.fillStyle = '#e9d6bb'; c.fill(); c.lineWidth = 2.5 * k; c.strokeStyle = '#5b3f36'; c.stroke(); continue; }
     c.beginPath(); c.arc(bd.x, y, r + 3 * k, 0, TAU); c.fillStyle = owned ? '#f08ca0' : bd.home ? '#e9d6bb' : '#fff8ea'; c.fill(); c.lineWidth = 3 * k; c.strokeStyle = '#5b3f36'; c.stroke();
     const img = icon(ic); if (img.complete && img.naturalWidth) c.drawImage(img, bd.x - r, y - r, r * 2, r * 2);
-    if (lab && (zoomed || !bd.home)) {
+    if (lab && !small && (zoomed || !bd.home)) {
       // place the name above the badge, or below if that spot is taken; skip if both are
       const txt = T(lab[0], lab[1]), fs = 9 * k; c.font = `900 ${fs}px Nunito, sans-serif`;
       const tw = c.measureText(txt).width + 4 * k, th = fs * 1.2;
@@ -215,6 +200,12 @@ function draw(cv, view) {
         placed.push(rect); label(c, txt, bd.x, ly, fs, '#5b3f36', '#fff8ea'); break;
       }
     }
+  }
+  // night market stalls: a lantern badge each (pink when it's yours)
+  if (G.state.story.chapter >= 8 || G.state.nightMarket.restored) for (const st of STALLS) {
+    const own = st.biz && G.state.biz[st.biz]?.owned, r = 9 * k, y = st.y - 24;
+    c.beginPath(); c.arc(st.x, y, r + 3 * k, 0, TAU); c.fillStyle = own ? '#f08ca0' : '#fff8ea'; c.fill(); c.lineWidth = 3 * k; c.strokeStyle = '#5b3f36'; c.stroke();
+    const img = icon('lantern'); if (img.complete && img.naturalWidth) c.drawImage(img, st.x - r, y - r, r * 2, r * 2);
   }
   // side quest stars
   for (const q of activeQuests()) if (G.state.sideQuests[q.id] === 'active') { const sp = questSpot(q); starAt(c, sp.x, sp.y, 12 * k); }

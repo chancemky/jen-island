@@ -4,7 +4,7 @@
 
 import { TAU, shade, rng } from '../core/util.js';
 import { T, tr } from '../systems/state.js';
-import { INK, ell, circ, box, poly, line, limb, shadow, glow, text } from './draw.js';
+import { INK, ell, circ, box, poly, line, limb, shadow, glow, text, stext, flower } from './draw.js';
 
 // Shared night-light factor (0 day … 1 night), set by the time system each frame.
 export const LIGHT = { night: 0, dusk: 0, wind: 1 };
@@ -140,10 +140,7 @@ export function bush(c, t, p) {
   leafMarks(c, w, -14 * s, 10 * s, shade(col, 40), seed);
   if (p.flowers) { const R = rng(p.x | 0); for (let i = 0; i < 8; i++) { const x = (R() - 0.5) * 26 * s + w, y = -6 * s - R() * 16 * s; flower5(c, x, y, 2.4 * s, p.flowers); } }
 }
-function flower5(c, x, y, r, col) {
-  for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; circ(c, x + Math.cos(a) * r * 0.7, y + Math.sin(a) * r * 0.7, r * 0.6, col, INK, 0.45); }
-  circ(c, x, y, r * 0.4, '#ffd35a', null);
-}
+function flower5(c, x, y, r, col) { flower(c, x, y, r * 1.1, col, ((x * 13 + y * 7) | 0) % 5 === 0 ? 1 : 0); }
 export function bamboo(c, t, p) {
   shadow(c, 0, 1, 22, 6, 0.14);
   const R = rng(p.x | 0), n = p.n || 6;
@@ -423,7 +420,7 @@ export function signpost(c, t, p) {
     c.save(); c.translate(0, y);
     if (side) poly(c, dir > 0 ? [-2, -4.5, 38, -4.5, 44, 0, 38, 4.5, -2, 4.5] : [2, -4.5, -38, -4.5, -44, 0, -38, 4.5, 2, 4.5], s.col || '#f3dcae', INK, 0.9);
     else box(c, dir > 0 ? -2 : -40, -4.5, 42, 9, 2, s.col || '#f3dcae', INK, 0.9);
-    text(c, tr(s.label), dir * (side ? 16 : 15), 0.4, 5.2, INK, 900);
+    stext(c, tr(s.label), dir * (side ? 16 : 15), 0.4, 5.2, INK, 900);
     // arrow badge
     c.save(); c.translate(dir * (side ? 34 : 33), 0);
     circ(c, 0, 0, 4.2, '#fff8ea', INK, 0.7);
@@ -446,17 +443,58 @@ export function clothesline(c, t, p) {
   const cols = ['#f4a9b8', '#a9d4f0', '#fff5df', '#f7de8c'];
   for (let i = 0; i < 4; i++) { const x = 6 + i * (w - 12) / 3, y = -30 + Math.sin((x / w) * Math.PI) * 5, sw = Math.sin(t * 2.4 + i) * 1.4 * LIGHT.wind; c.save(); c.translate(x, y); c.rotate(sw * 0.05); poly(c, [-4, 0, 4, 0, 5 + sw * 0.3, 10, -5 + sw * 0.3, 10], cols[i], INK, 0.7); c.restore(); }
 }
-export function foodCart(c, t, p) {
-  // xe đẩy — a street-food push cart
+// which grandma carts are shut for the night (set by the vendors each evening)
+export const CART_CLOSED = {};
+function cartBase(c, body, trim) {
   shadow(c, 0, 1, 22, 5, 0.18);
   for (const x of [-14, 12]) { circ(c, x, -5, 5, '#3d3a42'); circ(c, x, -5, 1.8, '#b9c3cb', null); }
-  box(c, -20, -26, 40, 20, 3, '#fff5df');
-  box(c, -20, -30, 40, 5, 2, '#6fbfb0');
-  box(c, -16, -44, 32, 14, 2, 'rgba(210,240,250,.55)');
-  for (let i = 0; i < 3; i++) ell(c, -10 + i * 10, -34, 4, 2, ['#e0a052', '#f7de8c', '#ff9a7a'][i]);
+  box(c, -20, -26, 40, 20, 3, body);
+  box(c, -20, -30, 40, 5, 2, trim);
   limb(c, [20, -18, 30, -24], 2, '#8f96a0');
-  text(c, tr(p.label) || 'BÁNH MÌ', 0, -16, 5.4, '#e8584e', 900);
-  if (LIGHT.night > 0.05) glowLater(p, 0, -30, 40, 'rgba(255,210,140,.45)');
+}
+function cartCover(c, w, y, h) {       // a cloth thrown over the display at closing time
+  c.beginPath(); c.moveTo(-w / 2 - 2, y + h); c.quadraticCurveTo(-w / 2 - 1, y - 2, -w / 4, y - 3); c.quadraticCurveTo(0, y - 5, w / 4, y - 3); c.quadraticCurveTo(w / 2 + 1, y - 2, w / 2 + 2, y + h); c.closePath();
+  c.fillStyle = '#c9b8a8'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+  c.strokeStyle = 'rgba(91,63,54,.35)'; c.lineWidth = 0.6; for (const x of [-8, 2, 10]) { c.beginPath(); c.moveTo(x, y - 2); c.quadraticCurveTo(x + 1, y + h * 0.5, x - 1, y + h); c.stroke(); }
+}
+// xe đẩy — each grandma's push cart shows off what she sells
+export function foodCart(c, t, p) {
+  const closed = CART_CLOSED[p.type];
+  if (p.type === 'icecream') {
+    // a pastel freezer cart with a striped umbrella and tubs of scoops under the glass
+    if (!closed) { limb(c, [-15, -30, -15, -62], 1.4, '#8f96a0'); c.beginPath(); c.moveTo(-40, -58); c.quadraticCurveTo(-15, -76, 10, -58); c.closePath(); c.fillStyle = '#fff5df'; c.fill(); for (let i = 0; i < 5; i++) { if (i % 2) continue; c.beginPath(); c.moveTo(-15, -70); c.lineTo(-40 + i * 10, -58); c.lineTo(-30 + i * 10, -58); c.closePath(); c.fillStyle = '#f4a9b8'; c.fill(); } c.beginPath(); c.moveTo(-40, -58); c.quadraticCurveTo(-15, -76, 10, -58); c.closePath(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); }
+    cartBase(c, '#dff1f7', '#f4a9b8');
+    for (let i = 0; i < 4; i++) box(c, -18 + i * 10, -22, 6, 1.2, 0.5, '#bfe3ee', null);          // freezer vents
+    box(c, -18, -44, 36, 14, 3, 'rgba(225,245,252,.7)');
+    if (closed) cartCover(c, 36, -44, 14);
+    else {
+      const scoop = ['#f7b6c8', '#fff4d8', '#9fd67a', '#7a4a36', '#f7de8c'];
+      for (let i = 0; i < 5; i++) { const x = -14 + i * 7; box(c, x - 3, -36, 6, 5, 1, '#f3f3f0', INK, 0.5); c.beginPath(); c.arc(x, -36, 2.9, Math.PI, 0); c.fillStyle = scoop[i]; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.5; c.stroke(); }
+      // big cone sign on top
+      c.save(); c.translate(12, -48); poly(c, [-3.2, 0, 3.2, 0, 0, 10], '#e3a85a', INK, 0.8); line(c, -1.6, 2, 1.6, 5, '#b9803e', 0.5); line(c, 1.6, 2, -1.6, 5, '#b9803e', 0.5); circ(c, 0, -2, 3.6, '#f7b6c8', INK, 0.8); circ(c, 0.4, -5.6, 2.8, '#fff4d8', INK, 0.8); circ(c, 0.4, -8.6, 1, '#e8584e', null); c.restore();
+    }
+    stext(c, tr(p.label) || T('ICE CREAM', 'KEM'), 0, -16, 5.4, '#e56b8b', 900);
+  } else if (p.type === 'banhtrang') {
+    // bánh tráng trộn: rice paper stacks, a jar of mango, quail eggs, chili, and ready bags on hooks
+    cartBase(c, '#fff5df', '#f2a14e');
+    box(c, -18, -44, 36, 14, 2, 'rgba(210,240,250,.5)');
+    if (closed) cartCover(c, 36, -44, 14);
+    else {
+      for (let k = 0; k < 4; k++) ell(c, -11, -32 - k * 1.4, 6, 2, 'rgba(250,240,215,.95)', 'rgba(150,120,80,.8)', 0.5);   // stack of rice paper
+      box(c, -3, -41, 6, 10, 1.5, 'rgba(255,230,140,.8)', INK, 0.6); for (let k = 0; k < 4; k++) line(c, -1.8 + k * 1.2, -39, -1.4 + k * 1.2, -32, '#f2a93a', 0.9);   // jar of green mango strips
+      for (let k = 0; k < 5; k++) ell(c, 6 + (k % 3) * 2.6, -32.6 - (k > 2 ? 2 : 0), 1.3, 1, '#f3ead8', INK, 0.4);          // quail eggs
+      circ(c, 14, -33, 2.2, '#e8584e', INK, 0.5); line(c, 14, -35.2, 14.6, -36.6, '#6fb356', 0.7);                          // chili
+    }
+    // little bags of mixed bánh tráng hanging on the side
+    if (!closed) for (const x of [-26, -21]) { line(c, x, -30, x, -26, INK, 0.5); poly(c, [x - 2.4, -26, x + 2.4, -26, x + 2, -18, x - 2, -18], 'rgba(255,255,255,.75)', INK, 0.5); for (let k = 0; k < 3; k++) line(c, x - 1.4 + k * 1.2, -24, x - 1 + k * 1.1, -19.5, ['#e3703a', '#9fd67a', '#f7de8c'][k], 0.8); }
+    stext(c, tr(p.label) || T('RICE PAPER', 'BÁNH TRÁNG'), 0, -16, 5, '#d9602e', 900);
+  } else {
+    cartBase(c, '#fff5df', '#6fbfb0');
+    box(c, -16, -44, 32, 14, 2, 'rgba(210,240,250,.55)');
+    for (let i = 0; i < 3; i++) ell(c, -10 + i * 10, -34, 4, 2, ['#e0a052', '#f7de8c', '#ff9a7a'][i]);
+    stext(c, tr(p.label) || 'BÁNH MÌ', 0, -16, 5.4, '#e8584e', 900);
+  }
+  if (!closed && LIGHT.night > 0.05) glowLater(p, 0, -30, 40, 'rgba(255,210,140,.45)');
 }
 export function fountain(c, t, p) {
   shadow(c, 0, 3, 44, 12, 0.14);
@@ -478,8 +516,8 @@ export function welcomeGate(c, t, p) {
   c.beginPath(); c.moveTo(-w / 2 - 18, -70); c.quadraticCurveTo(0, -80, w / 2 + 18, -70); c.lineTo(w / 2 + 22, -76); c.quadraticCurveTo(0, -90, -w / 2 - 22, -76); c.closePath();
   c.fillStyle = '#d9784f'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke();
   box(c, -w / 2 + 2, -64, w - 4, 16, 3, '#f2c14e');
-  text(c, p.label?.() || 'JEN ISLAND', 0, -55.6, Math.min(9, 150 / Math.max(6, (p.label?.() || '').length)), '#9a3a2e', 900);
-  text(c, T('Welcome', 'Chào mừng'), 0, -42, 5.5, '#fff5df', 900, 'center', INK, 2);
+  stext(c, p.label?.() || 'JEN ISLAND', 0, -55.6, Math.min(9, 150 / Math.max(6, (p.label?.() || '').length)), '#9a3a2e', 900);
+  stext(c, T('Welcome', 'Chào mừng'), 0, -42, 5.5, '#fff5df', 900, 'center', INK, 2);
   lanternShape(c, -w / 2 + 12, -48, 0.7, '#ea5a4f', t, 1); lanternShape(c, w / 2 - 12, -48, 0.7, '#ea5a4f', t, 2);
   if (LIGHT.night > 0.05) { glowLater(p, -w / 2 + 12, -40, 30, 'rgba(255,190,110,.55)'); glowLater(p, w / 2 - 12, -40, 30, 'rgba(255,190,110,.55)'); }
 }
@@ -510,7 +548,7 @@ export function statue(c, t, p) {
   shadow(c, 0, 2, 30, 9, 0.18);
   box(c, -24, -18, 48, 18, 3, '#d9d2c4');
   box(c, -18, -30, 36, 12, 3, '#e9e2d4');
-  text(c, p.label?.() || 'FOUNDER', 0, -9, 5, '#8a7a6a', 900);
+  stext(c, p.label?.() || 'FOUNDER', 0, -9, 5, '#8a7a6a', 900);
   if (p.drawFigure) { c.save(); c.translate(0, -30); c.scale(1.6, 1.6); p.drawFigure(c, t); c.restore(); }
 }
 export function buoy(c, t, p) { const b = Math.sin(t * 2 + p.x) * 1.5; c.save(); c.translate(0, b); ell(c, 0, 1, 7, 2.4, 'rgba(255,255,255,.4)', null); poly(c, [-5, 0, 5, 0, 3, -10, -3, -10], '#e8584e'); box(c, -3, -10, 6, 3, 1, '#fff'); c.restore(); }
@@ -569,7 +607,7 @@ export function flowerArch(c, t, p) {
   for (const x of [-w / 2, w / 2]) { shadow(c, x, 1, 5, 2, 0.16); limb(c, [x, 0, x, -46], 3, '#8a6a4e'); }
   c.beginPath(); c.moveTo(-w / 2, -46); c.quadraticCurveTo(0, -66, w / 2, -46); c.strokeStyle = INK; c.lineWidth = 5; c.stroke(); c.strokeStyle = '#8a6a4e'; c.lineWidth = 3.2; c.stroke();
   const R = rng(p.x | 0);
-  for (let i = 0; i < 26; i++) { const k = i / 25, x = -w / 2 + w * k + (R() - 0.5) * 6, y = -46 - Math.sin(k * Math.PI) * 18 + (R() - 0.5) * 8 + (i % 5 === 0 ? 14 : 0); circ(c, x + sw * 1.2, y, 3.2 + R() * 1.4, ['#e97ad0', '#f36d9e', '#6fb356', '#e97ad0'][i % 4], INK, 0.5); }
+  for (let i = 0; i < 26; i++) { const k = i / 25, x = -w / 2 + w * k + (R() - 0.5) * 6, y = -46 - Math.sin(k * Math.PI) * 18 + (R() - 0.5) * 8 + (i % 5 === 0 ? 14 : 0); const rr = 3.2 + R() * 1.4; if (i % 4 === 2) ell(c, x + sw * 1.2, y, rr, rr * 0.6, '#6fb356', INK, 0.5, R() * 3); else flower(c, x + sw * 1.2, y, rr * 1.05, ['#e97ad0', '#f36d9e', '#e97ad0'][i % 4 % 3]); }
 }
 export function fruitStand(c, t, p) {
   shadow(c, 0, 2, 30, 7, 0.18);
@@ -587,8 +625,11 @@ export function sugarcaneCart(c, t, p) {
   box(c, -20, -24, 40, 18, 3, '#6fbf73');
   for (let i = 0; i < 6; i++) { c.save(); c.translate(-16 + i * 3.4, -24); c.rotate(-0.25 + i * 0.05); box(c, -1.2, -24, 2.4, 24, 1, '#b8c86a', INK, 0.5); for (let k = 1; k < 4; k++) line(c, -1.2, -k * 6, 1.2, -k * 6, '#8a9a4a', 0.5); c.restore(); }
   box(c, 4, -36, 14, 12, 2, '#b9c3cb'); circ(c, 11, -30, 3.5, '#8f9aa3', INK, 0.7);
-  c.save(); c.translate(11, -30); c.rotate(t * 3); line(c, -3, 0, 3, 0, '#5a4a48', 1); c.restore();
-  text(c, tr(p.label) || T('SUGARCANE', 'NƯỚC MÍA'), 0, -14, 5, '#fff', 900, 'center', INK, 1.6);
+  c.save(); c.translate(11, -30); c.rotate(CART_CLOSED.sugarcane ? 0.4 : t * 3); line(c, -3, 0, 3, 0, '#5a4a48', 1); c.restore();
+  // cups of fresh green juice with ice (a cloth over them at night)
+  if (CART_CLOSED.sugarcane) { box(c, -18, -30, 20, 6, 2, '#c9b8a8', INK, 0.7); }
+  else for (let i = 0; i < 3; i++) { const x = -13 + i * 6; poly(c, [x - 2.4, -31, x + 2.4, -31, x + 2, -24.6, x - 2, -24.6], 'rgba(255,255,255,.85)', INK, 0.5); poly(c, [x - 2.1, -29.6, x + 2.1, -29.6, x + 1.8, -25, x - 1.8, -25], '#cfe39a', null); box(c, x - 1.3, -29.4, 1.2, 1.2, 0.2, '#fff', null); line(c, x + 1, -31, x + 2, -34, '#e8584e', 0.7); }
+  stext(c, tr(p.label) || T('SUGARCANE', 'NƯỚC MÍA'), 0, -14, 5, '#fff', 900, 'center', INK, 1.6);
 }
 export function rattanSet(c, t, p) {
   shadow(c, 0, 1, 22, 5, 0.16);
@@ -649,7 +690,7 @@ export function bicycle(c, t, p) {
   c.strokeStyle = p.col || '#f28f7c'; c.lineWidth = 1.8; c.lineCap = 'round';
   c.beginPath(); c.moveTo(-11, -7); c.lineTo(-3, -16); c.lineTo(7, -16); c.lineTo(11, -7); c.moveTo(-3, -16); c.lineTo(0, -7); c.lineTo(-11, -7); c.moveTo(7, -16); c.lineTo(8, -21); c.stroke();
   line(c, 5, -21, 11, -21, INK, 1.4); box(c, -6, -19, 6, 2, 1, '#5a4a48', null);
-  box(c, 10, -24, 9, 6, 1.5, '#e9c46f', INK, 0.7); for (let i = 0; i < 3; i++) circ(c, 12 + i * 2.6, -25, 1.6, ['#ff8fb0', '#fff', '#ffd35a'][i], INK, 0.4);
+  box(c, 10, -24, 9, 6, 1.5, '#e9c46f', INK, 0.7); for (let i = 0; i < 3; i++) flower(c, 12 + i * 2.6, -25.5, 1.6, ['#ff8fb0', '#fff', '#ffd35a'][i], i === 1 ? 1 : 0);
   c.restore();
 }
 export function veggieGarden(c, t, p) {
@@ -696,7 +737,7 @@ export function seaBridge(c, t, p) {
     // dangling planks and a sagging rope over the gap
     for (let i = 0; i < 4; i++) { const x = 84 + i * 30, sw = Math.sin(t * 1.4 + i) * 0.12; c.save(); c.translate(x, 6 + (i % 2) * 20); c.rotate(0.4 + sw + i * 0.3); box(c, -3, -2, 6, 16, 1, '#b98a5a', INK, 0.7); c.restore(); }
     c.strokeStyle = '#c9a26a'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(70, 0); c.quadraticCurveTo(w / 2, 26 + Math.sin(t) * 2, w - 70, 0); c.stroke();
-    text(c, p.label ? T(p.label[0], p.label[1]) : T('BROKEN', 'HƯ'), w / 2, h / 2 + 2, 7, '#fff', 900, 'center', INK, 2);
+    stext(c, p.label ? T(p.label[0], p.label[1]) : T('BROKEN', 'HƯ'), w / 2, h / 2 + 2, 7, '#fff', 900, 'center', INK, 2);
   }
   for (let x = 0; x <= w; x += fixed ? 44 : 70) if (fixed || x <= 70 || x >= w - 70) posts(Math.min(w - 2, Math.max(2, x)));
   c.strokeStyle = '#c9a26a'; c.lineWidth = 1.4;
@@ -757,7 +798,7 @@ export function flowerBed(c, t, p) {
   const w = p.w || 40;
   box(c, -w / 2, -6, w, 6, 2, '#b9855a', INK, 0.8); box(c, -w / 2 + 2, -8, w - 4, 3, 1, '#7a5638', null);
   const R = rng((p.x + p.y * 3) | 0), cols = p.cols || ['#ff8fb0', '#ffd35a', '#fff', '#c9a8ff', '#ff6f6f'];
-  for (let i = 0; i < w / 4; i++) { const x = -w / 2 + 3 + i * 4 + (R() - 0.5), sw = wind(p.x + x, t, p.y) * 1.6; limb(c, [x, -7, x + sw, -12 - R() * 3], 0.8, '#5f9f45', null); circ(c, x + sw, -13 - R() * 2, 1.9, cols[i % cols.length], INK, 0.4); circ(c, x + sw, -13, 0.6, '#ffd35a', null); }
+  for (let i = 0; i < w / 4; i++) { const x = -w / 2 + 3 + i * 4 + (R() - 0.5), sw = wind(p.x + x, t, p.y) * 1.6; const hy = -13 - R() * 2; limb(c, [x, -7, x + sw, hy + 1], 0.8, '#5f9f45', null); if (i % 3 === 1) ell(c, x + sw * 0.5 + 1.2, -10, 1.4, 0.6, '#6fb356', null, 0, -0.5); flower(c, x + sw, hy, 2.1, cols[i % cols.length], i % 4 === 2 ? 2 : i % 4 === 3 ? 1 : 0); }
 }
 
 // ---------------------------------------------------------------- river bridges

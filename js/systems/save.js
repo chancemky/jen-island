@@ -7,8 +7,8 @@ import * as cloud from './cloud.js';
 import { bus } from '../core/util.js';
 import { leaderboardRow, shouldPushLeaderboard } from './progress.js';
 
-// v4 (the 20-chapter island): older saves are not loaded — everyone starts fresh
-const localKey = uid => 'jenisland.save4.' + uid;
+// v5: older saves are not loaded — everyone starts fresh
+const localKey = uid => 'jenisland.save5.' + uid;
 let lastLocal = 0, lastCloud = 0, cloudDirty = false, cloudBusy = false;
 export const saveStatus = { cloudAt: 0, localAt: 0, offline: false, error: '' };
 
@@ -57,11 +57,19 @@ export async function loadGame(user) {
     try { remote = await cloud.loadCloud(); saveStatus.offline = false; }
     catch (e) { saveStatus.offline = true; saveStatus.error = e.message; console.warn('cloud load failed', e); }
   }
-  // everyone restarts on the new 20-chapter island: saves from before version 4 are ignored
-  if (remote && (remote.v || 1) < 4) remote = null;
-  if (local && (local.v || 1) < 4) local = null;
+  // everyone restarts (v4.2 reset): saves from before version 5 are ignored
+  if (remote && (remote.v || 1) < 5) remote = null;
+  if (local && (local.v || 1) < 5) local = null;
   const pick = !remote ? local : !local ? remote : ((remote.savedAt || 0) >= (local.savedAt || 0) ? remote : local);
   return pick ? migrate(pick) : defaultState();
+}
+// Settings → Reset game: a brand-new island (back on the boat), keeping only your settings
+export async function resetGame() {
+  const keep = { ...G.state.settings };
+  G.state = defaultState(); G.state.settings = { ...G.state.settings, ...keep };
+  G.state.savedAt = Date.now();
+  if (G.user) { try { localStorage.setItem(localKey(G.user.id), JSON.stringify(G.state)); } catch {} }
+  if (G.user && !G.user.local && cloud.hasSession()) { try { await cloud.saveCloud(G.state, { keepalive: true }); } catch (e) { console.warn('reset cloud save failed', e); } }
 }
 export function wipeLocal(user) { try { localStorage.removeItem(localKey(user.id)); } catch {} }
 export { defaultState };

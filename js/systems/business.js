@@ -246,7 +246,7 @@ export function orderText(order, cust) {
     const v = R.vessel === 'cup' || R.vessel === 'glass' ? 'ly' : R.vessel === 'bowl' ? 'tô' : R.vessel === 'bread' ? 'ổ' : 'phần';
     const k = pickLine(cust, 3);
     if (reg) return P([`Chào ${pn}! Như mọi khi nha: 1 ${v} ${name}${tail}!`, `Lại là {me} nè ${pn}! Cho {me} 1 ${v} ${name}${tail} nhé!`, `${pn} ơi, món quen: 1 ${v} ${name}${tail}!`][k]);
-    if (cust.personality === 'tourist') return [`Xin chào! Cho tôi 1 ${v} ${name}${tail}, cảm ơn!`, `Chào bạn! Mình muốn 1 ${v} ${name}${tail} nhé!`, `Cho mình thử 1 ${v} ${name}${tail} nha!`][k];
+    if (cust.personality === 'tourist') return P([`Xin chào {you}! Cho {me} 1 ${v} ${name}${tail}, cảm ơn nha!`, `Chào {you}! {Me} muốn 1 ${v} ${name}${tail} nhé!`, `Cho {me} thử 1 ${v} ${name}${tail} nha {you}!`][k]);
     if (cust.personality === 'rushed') return P(`{You} ơi, nhanh giúp {me} nha! 1 ${v} ${name}${tail}!`);
     if (cust.personality === 'picky') return P(`Làm kỹ giúp {me} nhé {you}: 1 ${v} ${name}${tail}. Đúng y vậy nha.`);
     if (cust.personality === 'excited') return P([`Oa, thơm quá! {You} cho {me} 1 ${v} ${name}${tail} đi!`, `{Me} nghe đồn quán ngon lắm! 1 ${v} ${name}${tail} nha {you}!`, `Hôm nay {me} thèm 1 ${v} ${name}${tail} ghê!`][k]);

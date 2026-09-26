@@ -1,6 +1,7 @@
 // Side quests: neighbours lose things (a kite, a net, a sandal…). Ask them if
 // they need help, find the sparkle on the island, bring it back for a reward.
 
+import { applyPlayerPronouns, profileOf } from './pronouns.js';
 import { G, T, tr, markDirty, addMoney, addMat, addPantry } from './state.js';
 import { say } from '../ui/dialogue.js';
 import { showReward } from '../ui/sheets.js';
@@ -20,7 +21,7 @@ export const SIDE_QUESTS = [
   { id: 'sandal', giver: 'ba_tu', ch: 1, x: 610, y: 1790, item: ['sandal', 'chiếc dép'], ask: ['A dog ran off with my good sandal! Somewhere south of West Village…', 'Có con chó tha mất chiếc dép đẹp của bà! Ở đâu đó phía nam Xóm Tây…'], thanks: ['Ah, my sandal! Only a little chewed. Take this, dear.', 'A, chiếc dép của bà! Chỉ bị gặm chút xíu. Cầm lấy nè con.'], reward: { money: 50, ing: ['kumquat', 8] } },
   { id: 'kite', giver: 'be_na', ch: 3, x: 1600, y: 1250, item: ['kite', 'con diều'], ask: ['My kite flew away towards the rice paddies! It\'s the one shaped like a fish.', 'Con diều của em bay về phía ruộng lúa rồi! Con diều hình con cá đó.'], thanks: ['MY KITE! You\'re the best! I\'ll name it after you.', 'CON DIỀU CỦA EM! {You} giỏi nhất! Em sẽ đặt tên nó theo tên {you}.'], reward: { money: 40 } },
   { id: 'lens', giver: 'minh', ch: 3, x: 760, y: 560, item: ['camera lens', 'ống kính'], ask: ['I dropped a lens near the lotus spring while chasing a heron. Help?', 'Mình làm rơi ống kính gần hồ sen lúc đuổi theo con cò. Giúp mình với?'], thanks: ['You found it! This lens has seen things. Mostly herons.', 'Bạn tìm được rồi! Ống kính này từng thấy nhiều thứ lắm. Chủ yếu là cò.'], reward: { money: 90 } },
-  { id: 'letter', giver: 'chi_mai', ch: 5, x: 1420, y: 1180, item: ['lost letter', 'lá thư thất lạc'], ask: ['A letter blew out of my bag near the paddies. It\'s addressed to Mèo Mây — very important cat business.', 'Một lá thư bay khỏi túi chị gần ruộng lúa. Gửi cho Mèo Mây — chuyện mèo rất quan trọng.'], thanks: ['Thank you! It\'s from a fish seller. Mèo Mây has been waiting.', 'Cảm ơn em! Thư của cô bán cá. Mèo Mây chờ mãi.'], reward: { money: 70, mat: ['paint', 2] } },
+  { id: 'letter', giver: 'chi_mai', ch: 5, x: 1420, y: 1180, item: ['lost letter', 'lá thư thất lạc'], ask: ['A letter blew out of my bag near the paddies. It\'s addressed to Mèo Mây — very important cat business.', 'Một lá thư bay khỏi túi anh gần ruộng lúa. Gửi cho Mèo Mây — chuyện mèo rất quan trọng.'], thanks: ['Thank you! It\'s from a fish seller. Mèo Mây has been waiting.', 'Cảm ơn em! Thư của cô bán cá. Mèo Mây chờ mãi.'], reward: { money: 70, mat: ['paint', 2] } },
   { id: 'hat', giver: 'co_lan', ch: 3, x: 1020, y: 700, item: ['flower hat', 'nón hoa'], ask: ['The wind took my flower hat up the restaurant hill!', 'Gió thổi bay cái nón hoa của cô lên đồi nhà hàng rồi!'], thanks: ['My hat! The flowers are only a little squished. Here — for you.', 'Nón của cô! Hoa chỉ bẹp chút xíu. Nè — cho con.'], reward: { money: 60, ing: ['herbs', 8] } },
   { id: 'toolbox', giver: 'anh_tuan', ch: 5, x: 1560, y: 1640, item: ['toolbox', 'hộp đồ nghề'], ask: ['I left my scooter toolbox somewhere in East Village. My brain was on lunch.', 'Anh để quên hộp đồ nghề sửa xe đâu đó ở Xóm Đông. Lúc đó đầu óc anh đi ăn trưa rồi.'], thanks: ['There it is! Now I can fix the squeaky brake. Beep beep!', 'Nó đây rồi! Giờ anh sửa được cái thắng kêu kẽo kẹt. Bíp bíp!'], reward: { money: 50, mat: ['metal', 3] } },
   { id: 'notebook', giver: 'linh', ch: 3, x: 300, y: 1880, item: ['study notebook', 'cuốn vở'], ask: ['My exam notes! I studied on the west beach and forgot them. Please!', 'Vở ôn thi của mình! Mình học ở bãi biển phía tây rồi bỏ quên. Làm ơn!'], thanks: ['You saved my grades! And maybe my life.', 'Bạn cứu điểm của mình! Và chắc cứu cả cuộc đời mình.'], reward: { money: 55 } },
@@ -44,7 +45,7 @@ export async function questTalk(a, rid) {
     toast({ text: T(`Side quest: find the ${q.item[0]}`, `Nhiệm vụ phụ: tìm ${q.item[1]}`), sub: T('Look for the sparkle — it\'s on your map too.', 'Tìm chỗ lấp lánh — có trên bản đồ nữa.'), icon: 'star' });
     return true;
   }
-  if (st === 'active') { await say(a, T(`Any luck with my ${q.item[0]}?`, `Có thấy ${q.item[1]} của mình chưa?`), { emo: 'think' }); return true; }
+  if (st === 'active') { await say(a, T(`Any luck with my ${q.item[0]}?`, `{You} có thấy ${q.item[1]} của {me} chưa?`), { emo: 'think' }); return true; }
   if (st === 'found') {
     await say(a, tr(q.thanks), { emo: 'happy' });
     Q()[q.id] = 'done'; refreshGuide();
@@ -57,7 +58,7 @@ export async function questTalk(a, rid) {
   }
   return false;
 }
-export const questOption = rid => { const q = questFor(rid); if (!q) return null; const st = Q()[q.id]; return st === 'found' ? T(`Here's your ${q.item[0]}!`, `${q.item[1]} của bạn nè!`) : st === 'active' ? null : T('Need any help?', 'Có cần giúp gì không?'); };
+export const questOption = rid => { const q = questFor(rid); if (!q) return null; const st = Q()[q.id], P = x => applyPlayerPronouns(x, profileOf(rid)); return st === 'found' ? T(`Here's your ${q.item[0]}!`, P(`${q.item[1][0].toUpperCase() + q.item[1].slice(1)} của {them} nè!`)) : st === 'active' ? null : T('Need any help?', P('{Them} có cần {i} giúp gì không?')); };
 
 // ---------------------------------------------------------------- finding things
 // Every lost item sits in a little scene: a dog chewing the sandal, a crab

@@ -140,11 +140,8 @@ export function buildInteriors() {
     r.wallItem('window', 160, { w: 46, h: 28, hgt: 54, curtain: '#f4a9b8' });
     r.wallItem('calendar', 200, { day: () => G.state.day });
     r.wallItem('clock', 28, {});
-    r.furn('rug', 150, 214, { w: 96, h: 40, col: '#f7d6a0' });
-    // the bed, wardrobe and kitchen are placed from your saved layout (see decorate.js)
+    // the bed, wardrobe, kitchen, mat, floor lamp and plant are placed from your saved layout (see decorate.js)
     r.wallItem('wallShelf', 240); r.wallItem('familyPhoto', 58);
-    r.furn('floorLamp', 22, 150, {}, [-4, -3, 8, 3]);
-    r.furn('plant', 250, 284, { s: 1 }, [-6, -6, 12, 6]);
     r.bedPos = { x: 46, y: 88 };
     r.decorArea = { x: 16, y: 104, w: 238, h: 178 };
     S.house = r;
@@ -354,12 +351,17 @@ function buildHomes() {
     r.furn('cushion', 150, 190, { col: '#9fd8c8' }); r.furn('lamp', 216, 180, {}, [-5, -4, 10, 4]);
     r.furn('rug', 150, 214, { w: 90, h: 32, col: '#9fd8c8' });
   }, [[190, 104, 'Exam notes covered in doodles of kumquats. Very focused studying.', 'Vở ôn thi vẽ đầy hình trái tắc. Học rất tập trung.'], [110, 96, 'Novels, a biology textbook, and a book called "How to Befriend a Cat".', 'Tiểu thuyết, sách sinh học, và một cuốn tên “Làm Thân Với Mèo”.'], [150, 66, 'A photo of Linh\'s graduation... from kindergarten.', 'Ảnh tốt nghiệp của Linh… mẫu giáo.']]);
-  home('co_lan', { wall: '#fbe6ef', wall2: '#f6d4e2', floor: '#e8d2b8', bed: '#f4a9b8', wallStyle: 'dots' }, r => {
-    r.wallItem('window', 150, { w: 40, h: 24, hgt: 50, curtain: '#9fd8c8' }); r.wallItem('wallShelf', 206);
-    for (const [x, y] of [[100, 96], [196, 104], [216, 176], [24, 236], [150, 236], [100, 176]]) r.furn('plant', x, y, { s: 0.9, pot: ['#8fb7e0', '#d9784f', '#f4a9b8'][(x + y) % 3] }, [-6, -6, 12, 6]);
-    r.furn('table', 160, 150, { w: 34, col: '#e3b77f', cloth: '#fff5f7' }, [-17, -10, 34, 10]);
-    r.furn('rug', 150, 214, { w: 70, h: 30, col: '#f7a6b4' });
-  }, [[160, 150, 'A half-made flower crown. The note says "for the festival!"', 'Một vòng hoa đang kết dở. Tờ giấy ghi “cho lễ hội!”'], [196, 110, 'A pot labelled "DO NOT WATER — it\'s plastic". It has been watered.', 'Chậu hoa dán nhãn “ĐỪNG TƯỚI — hoa nhựa”. Nó đã bị tưới.']]);
+  home('co_lan', { wall: '#fbe6ef', wall2: '#f6d4e2', floor: '#e8d2b8', bed: '#f4a9b8', wallStyle: 'dots', host: { x: 170, y: 130 } }, r => {
+    // Cô Lan's flower shop (she lives in the back corner): a cooler of bouquets, dried
+    // flowers on the wall, a wrapping counter and buckets of fresh stems
+    r.wallItem('hangingBouquets', 128, { w: 64 });
+    r.furn('flowerCooler', 208, 84, {}, [-19, -8, 38, 8]);
+    r.furn('flowerCounter', 170, 150, { w: 60 }, [-30, -8, 60, 8]);
+    r.furn('flowerBuckets', 44, 210, { w: 56 }, [-28, -8, 56, 8]);
+    r.furn('flowerBuckets', 206, 204, { w: 44 }, [-22, -8, 44, 8]);
+    r.furn('priceBoard', 112, 150, {}, [-7, -4, 14, 4]);
+    r.furn('rug', 128, 214, { w: 70, h: 30, col: '#f7a6b4' });
+  }, [[160, 150, 'A half-made flower crown on the counter. The note says "for the festival!"', 'Một vòng hoa đang kết dở trên quầy. Tờ giấy ghi “cho lễ hội!”'], [208, 110, 'The cooler hums. A sticky note: "Roses in the morning, lilies after lunch."', 'Tủ mát kêu rù rù. Tờ giấy dán: “Hồng buổi sáng, ly buổi chiều.”']]);
   home('anh_tuan', { wall: '#dbe8f5', wall2: '#cadcee', floor: '#b9a58a', bed: '#8fb7e0', wallStyle: 'metal' }, r => {
     r.wallItem('photoWall', 160); r.wallItem('clock', 210);
     r.furn('sofa', 150, 150, { col: '#6f9fc8' }, [-30, -24, 60, 22]); r.furn('tv', 150, 96, {}, [-20, -8, 40, 8]);

@@ -321,6 +321,22 @@ function updateScooter(sc, dt) {
     if (along > 0 && side < 18) { sc.wait = (sc.wait || 0) + dt; target = sc.wait > 1.6 ? 36 : 0; if (sc.beep <= 0) { sc.beep = 3; sfx('beep'); } }
     else sc.wait = 0;
   } else sc.wait = 0;
+  // animals on the road: brake, and once stopped the animal trots off and the scooter rolls on
+  if (target > 0 && G.animals && G.scene === G.scenes.island) {
+    const vx = sc.vx || 1, vy = sc.vy || 0, l = Math.hypot(vx, vy) || 1;
+    for (const an of G.animals) {
+      if (an.state === 'fly' || an.kind === 'crab') continue;
+      const along = ((an.x - sc.x) * vx + (an.y - sc.y) * vy) / l, sideS = ((an.x - sc.x) * vy - (an.y - sc.y) * vx) / l;
+      if (along < 0 || along > 42 || Math.abs(sideS) > 14) continue;
+      target = 0;
+      if (sc.speed < 6 && an.state !== 'shoo') {
+        // step off the road, away from the scooter's line
+        const sgn = sideS === 0 ? (Math.random() < 0.5 ? -1 : 1) : Math.sign(sideS), px = vy / l * sgn, py = -vx / l * sgn, sp = (an.kind === 'goat' ? 30 : 55);
+        an.state = 'shoo'; an.vx = px * sp; an.vy = py * sp * 0.8; an.until = 0.9; an.face = an.vx < 0 ? -1 : 1;
+      }
+      break;
+    }
+  }
   // after a short wait, swerve around whoever is in the way
   sc.swerve = (sc.swerve || 0) + (((sc.wait || 0) > 1.6 ? 1 : 0) - (sc.swerve || 0)) * Math.min(1, dt * 3);
   sc.beep -= dt;

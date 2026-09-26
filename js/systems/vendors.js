@@ -9,6 +9,8 @@ import { sfx } from '../core/audio.js';
 import { sleep, choice, money } from '../core/util.js';
 import { addXP } from './progress.js';
 import { fx } from '../world/render.js';
+import { CART_CLOSED } from '../gfx/props.js';
+import { BUILDINGS } from '../world/island.js';
 
 const GRANNY = (top, apron, hair = '#d8d2d6', hat = null) => ({ skin: '#f1c6a4', eyeCol: '#8a5a40', hair, hairStyle: 'granny', top, topStyle: 'shirt', apron, bottom: '#3f4a5e', bottomLen: 5, shoe: '#7a5040', scale: 0.93, glasses: '#8a6a5a', hat, hatColor: '#efd69a' });
 
@@ -41,9 +43,39 @@ export function spawnVendors(island) {
     island.add(a); v.actor = a;
   }
 }
+// The carts close at 11 pm: each grandma covers her cart and walks home to the
+// nearest house, then comes back to open up in the morning.
+const OPEN_H = 6.5, CLOSE_H = 23;
+function homeDoor(v) {
+  if (v.home) return v.home;
+  let best = null, bd = Infinity;
+  for (const b of BUILDINGS) if (b.type === 'house' && !b.region && b.id !== 'house') { const d = Math.hypot(b.x - v.x, b.y - v.y); if (d < bd) { bd = d; best = b; } }
+  return (v.home = best ? { x: best.x, y: best.y + 12 } : { x: v.x, y: v.y + 200 });
+}
+function vendorHours(v, a) {
+  const h = G.state.time / 60, open = h >= OPEN_H && h < CLOSE_H, island = G.scenes?.island, d = a.data;
+  if (!island) return false;
+  if (!open && !d.away && !d.walking) {
+    CART_CLOSED[a.data.cart] = true;
+    if (a.sit) { a.sit = false; a.seatH = undefined; }
+    a.setAct(null); a.talkable = false; d.walking = true;
+    const door = homeDoor(v);
+    a.walkTo(island.nav.path(a.x, a.y, door.x, door.y)).then(() => { a.visible = false; d.away = true; d.walking = false; });
+    return true;
+  }
+  if (open && d.away && !d.walking) {
+    const door = homeDoor(v);
+    a.x = door.x; a.y = door.y; a.visible = true; a.alpha = 0; a.fadeIn = true; d.walking = true;
+    a.walkTo(island.nav.path(a.x, a.y, v.x, v.y)).then(() => { a.x = v.x; a.y = v.y; a.face('down'); d.away = false; d.walking = false; a.talkable = true; CART_CLOSED[a.data.cart] = false; });
+    return true;
+  }
+  return d.away || d.walking;
+}
 export function updateVendors(dt) {
   for (const v of Object.values(VENDORS)) {
-    const a = v.actor; if (!a || a.data.busy) continue;
+    const a = v.actor; if (!a) continue;
+    if (a.data.busy) continue;
+    if (vendorHours(v, a)) continue;
     a.data.t = (a.data.t || 1 + Math.random() * 3) - dt;
     if (a.data.t > 0) continue;
     a.data.t = 3 + Math.random() * 5;

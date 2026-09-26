@@ -6,7 +6,7 @@ import { bus, clamp } from '../core/util.js';
 import { BUSINESSES, RECIPES, ACHIEVEMENTS } from '../data/game.js';
 import { APP_VERSION, CHANGELOG } from '../data/changelog.js';
 
-export const SAVE_VERSION = 4;   // 4 = the 20-chapter reset; older saves start over
+export const SAVE_VERSION = 5;   // 5 = the v4.2 reset (everyone starts over); older saves are ignored
 
 export function defaultState() {
   const biz = {};

@@ -4,7 +4,7 @@
 
 import { G, T, markDirty, unlockAchievement } from '../systems/state.js';
 import { FURNITURE, furnName } from '../data/game.js';
-import { FURN_DRAW, F, drawFurniturePreview } from '../gfx/furniture.js';
+import { FURN_DRAW, F, drawFurniturePreview, SIDE, drawSide } from '../gfx/furniture.js';
 import { drawHuman } from '../gfx/character.js';
 import { h } from './sheets.js';
 import { sfx } from '../core/audio.js';
@@ -24,6 +24,9 @@ export const BUILTINS = {
          trig: { id: 'wardrobe', dx: -26, dy: 0, w: 52, h: 22, label: 'Thay đồ', en: 'Wardrobe', icon: 'shirt', action: 'wardrobe' } },
   kitchen: { kind: 'kitchen', en: 'Kitchen', vi: 'Bếp', x: 226, y: 98, w: 70, h: 32, opts: () => ({}),
          trig: { id: 'kitchen', dx: -36, dy: 0, w: 70, h: 18, label: 'Nấu', en: 'Snack', icon: 'tea', action: 'homeSnack' } },
+  lamp: { kind: 'floorLamp', en: 'Floor lamp', vi: 'Đèn đứng', x: 22, y: 150, w: 10, h: 4, round: true, opts: () => ({}) },
+  plant: { kind: 'plant', en: 'Potted plant', vi: 'Chậu cây', x: 24, y: 284, w: 14, h: 8, round: true, opts: () => ({ s: 1 }) },
+  mat: { kind: 'rug', en: 'Mat', vi: 'Thảm', x: 150, y: 214, w: 96, h: 40, floor: true, opts: () => ({ w: 96, h: 40, col: '#f7d6a0' }) },   // last: it lies under everything
 };
 function builtinState() {
   const h = G.state.home;
@@ -31,22 +34,23 @@ function builtinState() {
   for (const [k, b] of Object.entries(BUILTINS)) h.builtins[k] ||= { x: b.x, y: b.y, rot: 0 };
   return h.builtins;
 }
-// Turning a piece: 0 front, 1 turned right, 2 back, 3 turned left. Turned pieces
-// are drawn at a three-quarter angle (narrower, one side raised).
-export function rotXform(c, rot) {
-  if (!rot) return;
-  if (rot === 2) { c.scale(-1, 1); return; }
-  const dir = rot === 1 ? 1 : -1;
-  c.transform(0.72 * dir, 0.2 * dir, 0, 1, 0, 0);
+// Turning a piece: 0 front, 1 turned right, 2 back, 3 turned left. Turned left and
+// right show the piece's real side (a box model, see SIDE in furniture.js); round
+// pieces look the same from every side. The footprint turns with it.
+export function rotXform(c, rot) { if (rot === 2 || rot === 3) c.scale(-1, 1); }
+export function drawTurned(c, t, key, rot, front) {
+  c.save();
+  if (rot % 2 && SIDE[key]) { if (rot === 3) c.scale(-1, 1); drawSide(c, key, t); }
+  else { if (rot === 2) c.scale(-1, 1); front(); }
+  c.restore();
 }
-export function footprint(w, h, rot) { return rot % 2 ? { w: Math.max(12, Math.round(w * 0.72)), h: Math.round(h + w * 0.14) } : { w, h }; }
+export function footprint(w, h, rot, key) { return rot % 2 && SIDE[key] ? { w: h, h: w } : { w, h }; }
 const defOf = sel => sel?.startsWith('builtin:') ? BUILTINS[sel.slice(8)] : FURNITURE[sel];
-const drawSel = (c, t, sel, x, y, rot) => {
-  c.save(); rotXform(c, rot);
+const keyOf = sel => sel.startsWith('builtin:') ? BUILTINS[sel.slice(8)].kind : sel;
+const drawSel = (c, t, sel, x, y, rot) => drawTurned(c, t, keyOf(sel), rot, () => {
   if (sel.startsWith('builtin:')) { const b = BUILTINS[sel.slice(8)]; F[b.kind](c, t, { x, y, ...b.opts() }); }
   else FURN_DRAW[sel](c, t, { ...FURNITURE[sel], x, y });
-  c.restore();
-};
+});
 
 // Build props for placed furniture and the built-ins (called on load and after edits).
 export function rebuildHouseFurniture() {
@@ -57,22 +61,24 @@ export function rebuildHouseFurniture() {
   const bs = builtinState();
   for (const [k, b] of Object.entries(BUILTINS)) {
     if (D?.moving === k) continue;                       // being carried right now
-    const st = bs[k], fp = footprint(b.w, b.h, st.rot || 0);
+    const st = bs[k], rot = st.rot || 0, fp = footprint(b.w, b.h, rot, b.kind);
     const p = { kind: b.kind, builtin: k, x: st.x, y: st.y, ...b.opts() };
-    p.draw = (c, t) => { c.save(); rotXform(c, st.rot || 0); F[b.kind](c, t, p); c.restore(); };
-    p.cull = { x: st.x - 80, y: st.y - 90, w: 160, h: 110 };
+    p.draw = (c, t) => drawTurned(c, t, b.kind, rot, () => F[b.kind](c, t, p));
+    p.cull = { x: st.x - 90, y: st.y - 110, w: 180, h: 130 };
+    if (b.floor) p.flat = true;
     sc.prop(p);
-    sc.solid(st.x - fp.w / 2, st.y - fp.h, fp.w, fp.h, { builtin: k });
+    if (!b.floor) sc.solid(st.x - fp.w / 2, st.y - fp.h, fp.w, fp.h, { builtin: k });
     const tr = b.trig;
-    sc.trigger({ ...tr, kind: 'act', x: st.x + tr.dx, y: st.y + tr.dy, builtin: k });
+    // the action spot follows the piece: in front of it, or beside it when it's turned
+    if (tr) sc.trigger({ ...tr, kind: 'act', x: rot % 2 ? st.x + (rot === 1 ? fp.w / 2 : -fp.w / 2 - 22) : st.x + tr.dx, y: rot % 2 ? st.y - fp.h / 2 : st.y + tr.dy, w: rot % 2 ? 22 : tr.w, h: rot % 2 ? Math.min(40, fp.h) : tr.h, builtin: k });
     if (k === 'bed') sc.bedPos = { x: st.x - 2, y: st.y - 30 };
   }
   for (const f of G.state.home.furniture) addFurnProp(sc, f);
 }
 function addFurnProp(sc, f) {
   const def = FURNITURE[f.id]; if (!def) return;
-  const rot = f.rot || 0, fp = footprint(def.w, def.h, rot);
-  const p = { homeFurn: f, x: f.x, y: f.y, draw: (c, t) => { c.save(); rotXform(c, rot); FURN_DRAW[f.id](c, t, { ...def, x: f.x, y: f.y }); c.restore(); }, cull: { x: f.x - 60, y: f.y - 80, w: 120, h: 100 } };
+  const rot = f.rot || 0, fp = footprint(def.w, def.h, rot, f.id);
+  const p = { homeFurn: f, x: f.x, y: f.y, draw: (c, t) => drawTurned(c, t, f.id, rot, () => FURN_DRAW[f.id](c, t, { ...def, x: f.x, y: f.y })), cull: { x: f.x - 70, y: f.y - 100, w: 140, h: 120 } };
   if (def.floor) p.flat = true; // rugs sit under everything
   if (def.wall) p.sortY = -1;
   sc.prop(p);
@@ -81,10 +87,11 @@ function addFurnProp(sc, f) {
 function fits(sel, x, y, rot = 0) {
   const def = defOf(sel), sc = house(), a = sc.decorArea;
   if (def.wall) return x - def.w / 2 > 14 && x + def.w / 2 < sc.w - 14;
-  const fp = footprint(def.w, def.h, rot);
-  const builtin = sel.startsWith('builtin:');
-  if (x - fp.w / 2 < a.x || x + fp.w / 2 > a.x + a.w || y > a.y + a.h) return false;
-  if (y - fp.h < (builtin ? sc.WH + 2 : a.y - 50)) return false;
+  const fp = footprint(def.w, def.h, rot, keyOf(sel));
+  // anywhere on the floor, right up against the walls
+  if (x - fp.w / 2 < 4 || x + fp.w / 2 > sc.w - 4 || y > sc.h - 6) return false;
+  if (y - fp.h < sc.WH - 4) return false;
+  void a;
   if (def.floor) return true;
   // don't block the doorway
   if (Math.abs(x - sc.door.x) < fp.w / 2 + 18 && y > sc.h - 30) return false;
@@ -126,9 +133,9 @@ export function startDecorate() {
 function pickUpAt(wx, wy) {
   const list = G.state.home.furniture;
   for (let i = list.length - 1; i >= 0; i--) {
-    const f = list[i], def = FURNITURE[f.id];
-    const top = def.wall ? f.y - 64 : f.y - Math.max(def.h, 30) - 16;
-    if (wx > f.x - def.w / 2 - 4 && wx < f.x + def.w / 2 + 4 && wy > top && wy < f.y + 6) {
+    const f = list[i], def = FURNITURE[f.id], fp = footprint(def.w, def.h, f.rot || 0, f.id), hw = Math.max(fp.w / 2, 12) + 4;
+    const top = def.wall ? f.y - 64 : f.y - Math.max(fp.h, 30) - 16;
+    if (wx > f.x - hw && wx < f.x + hw && wy > top && wy < f.y + 6) {
       list.splice(i, 1); G.state.home.owned.push(f.id);
       rebuildHouseFurniture(); markDirty(true);
       D.sel = f.id; D.rot = f.rot || 0; D.ghost = { x: f.x, y: f.y }; D.valid = fits(f.id, f.x, f.y, D.rot);
@@ -138,8 +145,8 @@ function pickUpAt(wx, wy) {
   // the bed, wardrobe and kitchen can be picked up too (they must be put back down)
   const bs = builtinState();
   for (const [k, b] of Object.entries(BUILTINS)) {
-    const st = bs[k], fp = footprint(b.w, b.h, st.rot || 0), top = st.y - Math.max(fp.h, 40) - 20;
-    if (wx > st.x - fp.w / 2 - 4 && wx < st.x + fp.w / 2 + 4 && wy > top && wy < st.y + 6) {
+    const st = bs[k], fp = footprint(b.w, b.h, st.rot || 0, b.kind), hw = Math.max(fp.w / 2, 12) + 4, top = st.y - Math.max(fp.h, b.floor ? 0 : 40) - (b.floor ? 4 : 20);
+    if (wx > st.x - hw && wx < st.x + hw && wy > top && wy < st.y + 6) {
       D.moving = k; D.from = { ...st }; rebuildHouseFurniture();
       D.sel = 'builtin:' + k; D.rot = st.rot || 0; D.ghost = { x: st.x, y: st.y }; D.valid = fits(D.sel, st.x, st.y, D.rot);
       sfx('pop'); renderBar(); return;
@@ -195,7 +202,7 @@ function renderBar() {
 function putBack() { if (D?.moving) { builtinState()[D.moving] = D.from; D.moving = null; rebuildHouseFurniture(); } }
 function drawGhost(c, t) {
   if (!D?.sel || !D.ghost) return;
-  const def = defOf(D.sel), fp = footprint(def.w, def.h, D.rot);
+  const def = defOf(D.sel), fp = footprint(def.w, def.h, D.rot, keyOf(D.sel));
   c.save();
   c.globalAlpha = 0.55 + Math.sin(t * 6) * 0.15;
   c.translate(D.ghost.x, D.ghost.y);

@@ -3,9 +3,44 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '4.1.2';
+export const APP_VERSION = '4.2.0';
 
 export const CHANGELOG = [
+  {
+    v: '4.2.0', date: '2026-09-26T17:46:57Z',
+    title: ['A Fresh Start', 'Khởi Đầu Mới'],
+    items: [
+      ['Everyone starts fresh: all accounts were reset, so sign up again and begin on the boat', 'Mọi người bắt đầu lại: tất cả tài khoản đã được xóa, hãy đăng ký lại và bắt đầu từ chuyến tàu'],
+      ['New: Settings → Reset game (with a confirmation) takes you back to the boat with a brand-new island', 'Mới: Cài đặt → Chơi lại từ đầu (có hỏi xác nhận) đưa bạn về chuyến tàu với hòn đảo mới tinh'],
+      ['New: climb the old lighthouse and look out over the whole island from its gallery', 'Mới: leo lên ngọn hải đăng cũ và ngắm toàn cảnh hòn đảo từ ban công'],
+      ['Pigeons fly off quietly — no more bang', 'Chim bồ câu bay đi nhẹ nhàng — hết tiếng nổ'],
+      ['The map marks every property with its circle only (no little house drawings)', 'Bản đồ chỉ đánh dấu mỗi nơi bằng vòng tròn (bỏ hình vẽ nhà nhỏ)'],
+      ['Cabbages and corn look like real crops, and every flower on the island is a real flower, not a dot', 'Bắp cải và bắp trông như cây thật, và mọi bông hoa trên đảo đều là hoa thật, không còn là chấm tròn'],
+      ['Each grandma cart shows what it sells: tubs of ice cream and a cone sign, rice paper, mango and quail eggs, cups of sugarcane juice', 'Mỗi xe của bà bày đúng món: hộp kem và bảng cây kem, bánh tráng, xoài và trứng cút, ly nước mía'],
+      ['Grandma carts close at 11 pm: the bà cover their carts, walk home, and come back in the morning', 'Xe của các bà đóng lúc 23 giờ: các bà phủ khăn lên xe, đi bộ về nhà và sáng hôm sau quay lại'],
+      ['Vietnamese forms of address follow age and gender: kids call you anh/chị, peers bạn, adults em, older folks con — and you answer them properly too', 'Cách xưng hô tiếng Việt theo tuổi và giới tính: trẻ em gọi bạn là anh/chị, bạn bè gọi bạn, người lớn gọi em, cô chú ông bà gọi con — và bạn cũng trả lời cho đúng'],
+      ['Visitors now have ages (some grey-haired grandparents too)', 'Khách giờ có độ tuổi riêng (có cả ông bà tóc bạc)'],
+      ["Fixed the stripe running across the clinic's door", 'Sửa vạch kẻ chạy ngang cửa phòng khám'],
+      ['Turning furniture 90° shows its real side (left and right), and its footprint turns with it', 'Xoay nội thất 90° hiện đúng mặt bên (trái và phải), và chỗ chiếm sàn cũng xoay theo'],
+      ['Furniture can go anywhere on the floor, right up against the walls (the kitchen fits back where it was)', 'Nội thất đặt được khắp sàn, sát tường (bếp đặt lại chỗ cũ được rồi)'],
+      ['The mat, floor lamp and potted plant in your home can be moved too, and HUD buttons hide while decorating', 'Tấm thảm, đèn đứng và chậu cây trong nhà cũng dời được, và các nút trên màn hình ẩn đi khi trang trí'],
+      ['Drink options (ice, sugar, chili, toppings, size) are pictures with a stock counter', 'Tùy chọn đồ uống (đá, đường, ớt, topping, size) là hình ảnh có bộ đếm số lượng'],
+      ['Baseball caps look right from the front, sides and back (with the strap)', 'Nón lưỡi trai trông đúng từ phía trước, hai bên và phía sau (có quai điều chỉnh)'],
+      ["Mèo Mây's tail stays in view when it walks away, and its ears show while it naps", 'Đuôi Mèo Mây vẫn hiện khi đi ra xa, và tai vẫn hiện khi ngủ'],
+      ['Hiring says staff (nhân viên), not shop owner, in both languages', 'Tuyển người giờ ghi là nhân viên, không phải chủ quán, ở cả hai ngôn ngữ'],
+      ['Animals never get stuck on decorations like the parked bike', 'Con vật không còn bị kẹt vào đồ trang trí như chiếc xe đạp'],
+      ["Doctor An wears a white coat and stethoscope; every shop owner dresses for the job (hard hat, tool belt, tailor's tape, aprons and name tags)", 'Bác sĩ An mặc áo blouse trắng và đeo ống nghe; chủ quán nào cũng mặc đúng nghề (nón bảo hộ, thắt lưng đồ nghề, thước dây thợ may, tạp dề và bảng tên)'],
+      ['Scooters stop for animals too — the animal trots off the road and the scooter rolls on', 'Xe máy cũng dừng cho con vật — con vật tránh sang bên và xe chạy tiếp'],
+      ['Goals say money clearly: “money earned”, “cash on hand”, and money you have vs. money you need', 'Mục tiêu ghi rõ tiền: “tiền kiếm được”, “tiền mặt đang có”, và số tiền bạn có so với số cần'],
+      ['Shoppers walk around shelves and counters instead of through them', 'Khách mua hàng đi vòng quanh kệ và quầy thay vì xuyên qua'],
+      ["The supermarket keeps the aisle you picked in view (and shows there's more to scroll)", 'Siêu thị giữ nguyên dãy hàng bạn chọn (và cho thấy còn nữa để cuộn)'],
+      ['Menu tabs wrap onto two rows so every tab is visible', 'Các tab trong menu xuống hai hàng để thấy hết'],
+      ['A realistic two-tone scooter horn', 'Còi xe máy hai tông nghe như thật'],
+      ["Cô Lan's flower shop inside: a cooler of bouquets, dried flowers on the wall, a wrapping counter and buckets of fresh stems", 'Bên trong Tiệm Hoa cô Lan: tủ mát bó hoa, hoa khô treo tường, quầy gói hoa và xô hoa tươi'],
+      ['Flower-shop buckets: two tidy rows, no floating pots', 'Xô hoa trước tiệm: hai hàng gọn gàng, không còn chậu lơ lửng'],
+      ['Signs stay perfectly still while you walk (no more shimmering text)', 'Chữ trên bảng hiệu đứng yên khi bạn đi (hết rung chữ)'],
+    ],
+  },
   {
     v: '4.1.2', date: '2026-09-26T14:48:32Z',
     title: ['Smooth Sailing', 'Thuận Buồm Xuôi Gió'],

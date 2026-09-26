@@ -36,10 +36,11 @@ function headPath(c) {
 
 function tail(c, a, t, view) {
   const sway = Math.sin(t * 2.1 + (a.seed || 0)) * 0.35 + (a.emo === 'happy' ? Math.sin(t * 9) * 0.4 : 0) + (a.moving ? Math.sin(a.walkPh * 0.5) * 0.25 : 0);
-  const bx = view === 'side' ? -5.5 : view === 'back' ? 0 : 6, by = -4;
-  const dir = view === 'side' ? -0.7 : 1;
-  const x1 = bx + dir * (6 + Math.sin(sway) * 3), y1 = by - 5;
-  const x2 = bx + dir * (9 + Math.sin(sway * 1.4) * 5), y2 = by - 15 - Math.cos(sway) * 2;
+  const bx = view === 'side' ? -5.5 : view === 'back' ? 1.5 : 6, by = -4;
+  const dir = view === 'side' ? -0.7 : 1, back = view === 'back';
+  const x1 = bx + dir * ((back ? 9 : 6) + Math.sin(sway) * 3), y1 = by - (back ? 1 : 5);
+  // seen from behind the tail swings out past the head instead of up behind it
+  const x2 = bx + dir * ((back ? 14.5 : 9) + Math.sin(sway * 1.4) * (back ? 2.5 : 5)), y2 = by - (back ? 12 : 15) - Math.cos(sway) * 2;
   const x3 = x2 + dir * (3 + Math.sin(sway * 2 + 1) * 3), y3 = y2 - 5;
   c.lineCap = 'round';
   c.beginPath(); c.moveTo(bx, by); c.bezierCurveTo(x1, y1, x2, y2 + 4, x2, y2); c.quadraticCurveTo(x2 + dir * 1, y3 + 1, x3, y3);
@@ -50,13 +51,13 @@ function tail(c, a, t, view) {
   c.strokeStyle = PATCH; c.lineWidth = 3.8; c.stroke();
 }
 
-function ears(c, a, t, view) {
+function ears(c, a, t, view, big = 1) {
   // occasional twitch: a quick flick of one ear
   const tw = a.earTwitch || 0;
   const alert = a.emo === 'surprised' ? -1.5 : a.emo === 'sad' ? 3 : 0;
   const ear = (s, flick) => {
     c.save();
-    c.translate(s * 7.6, HY - HRY + 2.6);
+    c.translate(s * 7.6 * (big > 1 ? 1.05 : 1), HY - HRY + 2.6 - (big - 1) * 6); c.scale(big, big);
     c.rotate(s * (0.18 + flick * 0.35) + (a.emo === 'sad' ? s * 0.5 : 0));
     c.beginPath(); c.moveTo(-4.4, 2.4); c.quadraticCurveTo(-2.4, -8 + alert, 0.8, -9.4 + alert); c.quadraticCurveTo(3.4, -5, 4.4, 2.4); c.closePath();
     c.fillStyle = s < 0 ? PATCH : FUR; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.05; c.stroke();
@@ -137,7 +138,7 @@ function drawCatSleeping(c, a, t) {
   c.save(); c.beginPath(); c.ellipse(1, -5.5 - br * 0.5, 11, 6 + br * 0.5, 0, 0, TAU); c.clip(); cloud(c, 5, -9, 4, PATCH); c.restore();
   // head resting on the left, eyes closed
   c.save(); c.translate(-6, -3); c.scale(0.62, 0.62); c.translate(0, -HY - 4); c.rotate(-0.25);
-  ears(c, { ...a, emo: 'sleepy' }, t, 'front');
+  ears(c, { ...a, emo: 'sleepy' }, t, 'front', 1.35);   // bigger so they still read at this small size
   headPath(c); c.fillStyle = FUR; c.fill();
   c.save(); c.clip(); cloud(c, -6.8, HY - 5.8, 4.4, PATCH); c.restore();
   headPath(c); c.strokeStyle = INK; c.lineWidth = 1.4; c.stroke();
@@ -210,7 +211,6 @@ export function drawCat(c, a, t) {
   } else {
     c.beginPath(); c.ellipse(0, -11.2, 6.6, 2.2, 0, 0, TAU); c.fillStyle = SCARF; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
   }
-  if (view === 'back') tail(c, a, t, view);
 
   // head
   c.save();
@@ -238,6 +238,7 @@ export function drawCat(c, a, t) {
     c.restore();
   }
   c.restore();
+  if (view === 'back') tail(c, a, t, view);        // nearest the camera when facing away
   paw(pR, false);
   if (act === 'hold' && a.held) { void 0; }
   c.restore();

@@ -25,9 +25,10 @@ function whoProfile(who) {
   if (!who || who === 'player' || who === 'meo') return null;
   if (typeof who === 'string') return profileOf(who);
   const id = who.data?.rid || who.data?.mid || { icecream: 'ba_nam', sugarcane: 'ba_hai', banhmi: 'ba_ut' }[who.data?.cart];
-  if (who.data?.emp) return { me: 'em', you: playerGender() === 'm' ? 'anh' : 'chị' };
+  if (who.data?.emp) return customerProfile({ look: who.look });
   if (id) return profileOf(id);
   if (who.data?.tourist || who.data?.cust) return customerProfile(who.data.cust || { look: who.look, personality: who.data.tourist ? 'tourist' : 'regular' });
+  if (who.look && !who.look.cat) return customerProfile({ look: who.look });   // any other islander: by age and gender
   return null;
 }
 function speakerInfo(who) {

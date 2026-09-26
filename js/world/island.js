@@ -3,7 +3,7 @@
 
 import { smoothLoop, smoothLine, inPoly, distToLine, rng, clamp, TAU, shade, dist } from '../core/util.js';
 import { Scene } from './scene.js';
-import { INK, ell, circ, box, poly, line, text, star } from '../gfx/draw.js';
+import { INK, ell, circ, box, poly, line, text, star, flower } from '../gfx/draw.js';
 import { drawHuman } from '../gfx/character.js';
 import * as P from '../gfx/props.js';
 import * as B from '../gfx/buildings.js';
@@ -228,6 +228,39 @@ function chunkPts(flat) { const o = []; for (let i = 0; i < flat.length; i += 2)
 let GB = null;
 const inb = (x, y, r = 8) => !GB || (x > GB.x0 - r && x < GB.x1 + r && y > GB.y0 - r && y < GB.y1 + r);
 const SPK = [], SHL = [];                               // remembered "is this point on the beach?" answers
+// field crops (painted once into the ground tiles)
+function leaf(c, x, y, ang, len, wid, fill, vein) {
+  c.save(); c.translate(x, y); c.rotate(ang);
+  c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(wid, -len * 0.45, 0, -len); c.quadraticCurveTo(-wid, -len * 0.45, 0, 0);
+  c.fillStyle = fill; c.fill(); c.strokeStyle = 'rgba(50,90,40,.55)'; c.lineWidth = 0.5; c.stroke();
+  if (vein) { c.beginPath(); c.moveTo(0, -0.5); c.lineTo(0, -len * 0.8); c.strokeStyle = vein; c.lineWidth = 0.45; c.stroke(); }
+  c.restore();
+}
+function cabbage(c, x, y, v) {
+  // outer leaves splay out, inner ones cup around a pale heart
+  ell(c, x, y + 1.2, 4.6, 1.8, 'rgba(60,40,20,.22)', null);
+  for (let i = 0; i < 6; i++) leaf(c, x, y, -Math.PI / 2 + (i - 2.5) * 0.62 + v * 0.1, 4.6, 4.2, i % 2 ? '#5ea24a' : '#6cb356', 'rgba(210,240,180,.7)');
+  for (let i = 0; i < 3; i++) leaf(c, x, y - 0.4, -Math.PI / 2 + (i - 1) * 0.7, 3.4, 3.4, '#8fcd66', 'rgba(240,255,220,.8)');
+  c.beginPath(); c.ellipse(x, y - 2, 2.3, 1.9, 0, 0, TAU); c.fillStyle = '#d3eeaa'; c.fill(); c.strokeStyle = 'rgba(80,130,60,.6)'; c.lineWidth = 0.45; c.stroke();
+}
+function cornPlant(c, x, y, v) {
+  const lean = (v - 2) * 0.35, top = y - 13 - v * 0.4;
+  c.strokeStyle = '#5f9f45'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + lean, (y + top) / 2, x + lean * 1.6, top); c.stroke();
+  // long arching leaves
+  for (const [f, s, l] of [[0.25, -1, 7], [0.45, 1, 7.5], [0.65, -1, 6], [0.8, 1, 5]]) {
+    const yy = y + (top - y) * f, xx = x + lean * f * 1.6;
+    c.beginPath(); c.moveTo(xx, yy); c.quadraticCurveTo(xx + s * l * 0.6, yy - 3, xx + s * l, yy + 1.5); c.quadraticCurveTo(xx + s * l * 0.5, yy - 1, xx, yy + 0.8); c.fillStyle = f > 0.5 ? '#7cc05a' : '#62a94c'; c.fill();
+  }
+  // a cob in its green husk, silk on top, and the tassel
+  const cy = y + (top - y) * 0.5, cx = x + lean * 0.8 + 1.6;
+  c.save(); c.translate(cx, cy); c.rotate(0.35);
+  c.beginPath(); c.ellipse(0, 0, 1.3, 3, 0, 0, TAU); c.fillStyle = '#f2cf57'; c.fill();
+  c.beginPath(); c.moveTo(-1.6, 3); c.quadraticCurveTo(-2, -1, -0.4, -3.2); c.lineTo(0, 3); c.fillStyle = '#8cc46a'; c.fill();
+  c.beginPath(); c.moveTo(1.6, 3); c.quadraticCurveTo(2, -0.5, 0.6, -2.6); c.lineTo(0, 3); c.fill();
+  c.strokeStyle = '#c98f5a'; c.lineWidth = 0.4; c.beginPath(); c.moveTo(0, -3); c.lineTo(-0.6, -4.6); c.moveTo(0.2, -3); c.lineTo(0.8, -4.4); c.stroke();
+  c.restore();
+  c.strokeStyle = '#d9b45a'; c.lineWidth = 0.6; const tx = x + lean * 1.6; c.beginPath(); for (const d of [-2, 0, 2]) { c.moveTo(tx, top); c.lineTo(tx + d, top - 2.6); } c.stroke();
+}
 function paintGround(c, bounds = null) {
   GB = bounds;
   // shallow water rings
@@ -264,7 +297,7 @@ function paintGround(c, bounds = null) {
     if (inb(x, y)) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + 1, y - 3); c.stroke(); }
   }
   // tiny flowers in the grass
-  for (let i = 0; i < 700; i++) { const x = R() * W, y = R() * H; if (!inb(x, y)) continue; c.fillStyle = ['#fff', '#ffd35a', '#ff9ab5', '#c9a8ff'][i % 4]; c.beginPath(); c.arc(x, y, 1.3, 0, TAU); c.fill(); }
+  for (let i = 0; i < 700; i++) { const x = R() * W, y = R() * H; if (!inb(x, y)) continue; flower(c, x, y, 1.9, ['#fff', '#ffd35a', '#ff9ab5', '#c9a8ff'][i % 4], i % 3 === 0 ? 1 : 0, false); }
   c.restore();
   for (const l of LANDS) { tracePoly(c, l.grass); c.strokeStyle = '#8cc472'; c.lineWidth = 4; c.stroke(); c.strokeStyle = 'rgba(120,170,90,.5)'; c.lineWidth = 1.5; c.stroke(); }
   // rice paddies
@@ -277,8 +310,8 @@ function paintGround(c, bounds = null) {
       for (let yy = p.y + 7; yy < p.y + p.h - 3; yy += 10) {
         c.fillStyle = '#7d5634'; c.fillRect(p.x + 3, yy + 3, p.w - 6, 2.2);
         for (let xx = p.x + 8; xx < p.x + p.w - 4; xx += 10) {
-          if (p.crop === 'corn') { c.strokeStyle = '#5f9f45'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(xx, yy + 3); c.lineTo(xx, yy - 6); c.moveTo(xx, yy - 1); c.lineTo(xx - 3, yy - 4); c.moveTo(xx, yy - 3); c.lineTo(xx + 3, yy - 6); c.stroke(); c.fillStyle = '#f2cf57'; c.fillRect(xx + 0.6, yy - 4, 1.8, 3); }
-          else { c.fillStyle = '#6fb356'; c.beginPath(); c.arc(xx, yy, 3.4, 0, TAU); c.fill(); c.fillStyle = '#9ad46f'; c.beginPath(); c.arc(xx - 0.8, yy - 0.8, 1.8, 0, TAU); c.fill(); }
+          if (p.crop === 'corn') cornPlant(c, xx, yy + 3, (xx * 7 + yy * 3) % 5);
+          else cabbage(c, xx, yy + 1, (xx * 5 + yy) % 3);
         }
       }
     } else {
@@ -314,7 +347,7 @@ function paintGround(c, bounds = null) {
   // clover patches and dappled meadow flowers
   c.save(); c.beginPath(); for (const l of LANDS) { c.moveTo(l.grass[0], l.grass[1]); for (let i = 2; i < l.grass.length; i += 2) c.lineTo(l.grass[i], l.grass[i + 1]); c.closePath(); } c.clip();
   for (let i = 0; i < 90; i++) { const x = R() * W, y = R() * H; for (let k = 0; k < 14; k++) { const px = x + (R() - 0.5) * 50, py = y + (R() - 0.5) * 24; c.fillStyle = R() < 0.5 ? '#8fcf72' : '#7fbf64'; for (const [dx, dy] of [[-1.2, 0], [1.2, 0], [0, -1.2]]) { c.beginPath(); c.arc(px + dx, py + dy, 1.3, 0, TAU); c.fill(); } } }
-  for (let i = 0; i < 40; i++) { const x = R() * W, y = R() * H, col = ['#fff', '#ffd35a', '#ff9ab5', '#c9a8ff', '#9fd8ff'][i % 5]; for (let k = 0; k < 26; k++) { c.fillStyle = col; c.beginPath(); c.arc(x + (R() - 0.5) * 70, y + (R() - 0.5) * 34, 1.3, 0, TAU); c.fill(); } }
+  for (let i = 0; i < 40; i++) { const x = R() * W, y = R() * H, col = ['#fff', '#ffd35a', '#ff9ab5', '#c9a8ff', '#9fd8ff'][i % 5]; for (let k = 0; k < 26; k++) { const fx = x + (R() - 0.5) * 70, fy = y + (R() - 0.5) * 34; if (inb(fx, fy)) flower(c, fx, fy, 1.9, col, i % 2, false); } }
   c.restore();
   // plaza with a tiled rosette
   { const p = PLAZA; circ(c, p.x, p.y, p.r + 6, '#d7b77e', null); circ(c, p.x, p.y, p.r, '#ecdcc0', 'rgba(150,120,90,.6)', 2);
@@ -442,6 +475,7 @@ export class Island extends Scene {
     this.add2('welcomeGate', 900, 2396, { w: 104, cullR: 90, cullH: 110, label: () => (G.state.island.name || 'JEN Island').toUpperCase() });
     this.circle(848, 2394, 7); this.circle(952, 2394, 7);
     this.add2('lighthouse', 900, 300, { cullR: 40, cullH: 160, solidR: 16 });
+    this.trigger({ id: 'lighthouse', kind: 'act', x: 886, y: 302, w: 28, h: 26, label: 'Lên hải đăng', en: 'Climb up', icon: 'star', action: 'lighthouse' });   // the gallery view (ui/lookout.js)
     const fountain = this.add2('fountain', PLAZA.x, PLAZA.y + 16, { cullR: 60, cullH: 130, solidR: 40 });
     const baseDraw = fountain.draw;
     fountain.draw = (c, t) => { baseDraw(c, t); if (G.state.statue) drawFounderStatue(c, t); };
@@ -451,8 +485,8 @@ export class Island extends Scene {
     // lantern strings over the market street
     for (let i = 0; i < 4; i++) this.add2('lanternString', 560 + i * 200, 1214, { x2: 560 + i * 200 + 150, h: 50, cullR: 160, cullH: 80, cull: { x: 560 + i * 200 - 10, y: 1150, w: 180, h: 80 } });
     // grandma carts line the road from the Wind Plaza down to the dock
-    this.add2('foodCart', 962, 1812, { label: ['ICE CREAM', 'KEM'], solidRect: [-20, -8, 40, 8] }); this.circle(962, 1806, 20);
-    this.add2('foodCart', 838, 1930, { label: ['RICE PAPER', 'BÁNH TRÁNG'], solidRect: [-20, -8, 40, 8], goods: ['#f0d9a8', '#e3703a'] }); this.circle(838, 1924, 20);
+    this.add2('foodCart', 962, 1812, { type: 'icecream', label: ['ICE CREAM', 'KEM'], solidRect: [-20, -8, 40, 8], cullR: 48, cullH: 80 }); this.circle(962, 1806, 20);
+    this.add2('foodCart', 838, 1930, { type: 'banhtrang', label: ['RICE PAPER SALAD', 'BÁNH TRÁNG TRỘN'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 60 }); this.circle(838, 1924, 20);
     this.add2('sugarcaneCart', 964, 2098, { label: ['SUGARCANE', 'NƯỚC MÍA'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 70 }); this.circle(964, 2092, 20);
     // stools sit on the far side of each cart from its grandma, so talking to her isn't mistaken for sitting down
     for (const [x, y, col] of [[926, 1830, '#e8584e'], [942, 1842, '#6f9fc8'], [796, 1946, '#e8584e'], [818, 1956, '#6fbf73'], [932, 2116, '#f2c14e']]) this.add2('stool', x, y, { col });
@@ -746,11 +780,13 @@ export class Island extends Scene {
     }
   }
   drawGround(c, view, t, scale) {
+    // the far view (lighthouse) uses its own small, low-res tiles so the close-up ones stay cached
+    const cache = scale < 1 ? (this.farCache ||= new GroundCache()) : this.cache;
     const ix0 = Math.max(0, Math.floor(view.x / CHUNK)), iy0 = Math.max(0, Math.floor(view.y / CHUNK));
     const ix1 = Math.min(Math.ceil(W / CHUNK) - 1, Math.floor((view.x + view.w) / CHUNK)), iy1 = Math.min(Math.ceil(H / CHUNK) - 1, Math.floor((view.y + view.h) / CHUNK));
-    this.cache.newFrame(this.cache.map.size ? 2 : 6);    // a few extra on the very first frame
+    cache.newFrame(cache.map.size ? (scale < 1 ? 5 : 2) : 6);    // a few extra on the very first frame
     for (let iy = iy0; iy <= iy1; iy++) for (let ix = ix0; ix <= ix1; ix++) {
-      const cv = this.cache.get(ix, iy, scale);
+      const cv = cache.get(ix, iy, scale);
       if (cv && cv.width) c.drawImage(cv, ix * CHUNK, iy * CHUNK, CHUNK + 0.5, CHUNK + 0.5);
     }
   }

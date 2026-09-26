@@ -4,7 +4,7 @@ import { G, T, setLang, markDirty } from '../systems/state.js';
 import { openSheet, tabs, h, btn } from './sheets.js';
 import { SAND, GRASS, RIVER, POND, PATHS, BUILDINGS, PLAZA, NM_PLAZA, PIER, W, H, LANDS, ISLET_SAND, PADDIES } from '../world/island.js';
 import { activeQuests } from '../systems/sidequests.js';
-import { saveStatus, saveLocal, saveCloudNow } from '../systems/save.js';
+import { saveStatus, saveLocal, saveCloudNow, resetGame } from '../systems/save.js';
 import { setAudio, sfx } from '../core/audio.js';
 import { escapeHtml, clock, TAU } from '../core/util.js';
 import { openJournal } from './shops.js';
@@ -89,6 +89,8 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
         toggle(T('Sound effects', 'Âm thanh'), 'sfx', () => setAudio({ sfx: s.settings.sfx }));
         toggle(T('Quest arrow', 'Mũi tên chỉ đường'), 'arrow');
         toggle(T('Smooth 60 FPS (uses more battery)', 'Mượt 60 FPS (tốn pin hơn)'), 'smooth', () => G.renderer?.resize());
+        // start over: a brand-new island, back on the boat (with a confirmation)
+        const rs = btn(T('Reset game…', 'Chơi lại từ đầu…'), () => confirmReset(api), 'btn ghost danger'); rs.style.marginTop = '10px'; pane.appendChild(rs);
         pane.appendChild(h('div', 'section-title', T("What's new (last 20 updates)", 'Có gì mới (20 bản cập nhật gần nhất)')));
         renderChangelog(pane);
       } else {
@@ -105,3 +107,20 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
 }
 
 export { BUSINESSES };
+
+// "Are you sure?" before wiping everything
+function confirmReset(api) {
+  sfx('ui');
+  const el = h('div', 'modal');
+  el.innerHTML = `<div class="card"><h2>${T('Start over?', 'Chơi lại từ đầu?')}</h2>
+    <p style="font-weight:800;line-height:1.4">${T('Your island, money, shops, furniture, pets and every chapter will be erased. You will be back on the boat heading to the island with nothing. This cannot be undone.', 'Hòn đảo, tiền, các quán, nội thất, thú cưng và mọi chương sẽ bị xóa hết. Bạn sẽ quay lại trên chiếc thuyền đang tới đảo với hai bàn tay trắng. Không thể hoàn tác.')}</p>
+    <div style="display:flex;gap:8px;margin-top:12px"><button type="button" class="btn ghost" data-a="no" style="flex:1">${T('Keep playing', 'Chơi tiếp')}</button><button type="button" class="btn pink" data-a="yes" style="flex:1">${T('Yes, reset', 'Đồng ý, chơi lại')}</button></div></div>`;
+  document.getElementById('app').appendChild(el);
+  el.querySelector('[data-a="no"]').onclick = () => { sfx('back'); el.remove(); };
+  el.querySelector('[data-a="yes"]').onclick = async (e) => {
+    e.target.disabled = true; e.target.textContent = T('Resetting…', 'Đang xóa…');
+    await resetGame();
+    api.close(true);
+    location.reload();
+  };
+}

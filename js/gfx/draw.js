@@ -77,9 +77,52 @@ export function star(c, x, y, r, fill, stroke = INK, lw = 1, points = 5, inner =
   if (fill) { c.fillStyle = fill; c.fill(); }
   if (stroke) { c.strokeStyle = stroke; c.lineWidth = lw; c.stroke(); }
 }
+// Stable text for world signs: tiny canvas text snaps to font hinting as the
+// camera moves (it shimmers), so signs draw a cached 4× bitmap instead.
+const TXT = new Map();
+export function stext(c, str, x, y, size, color = INK, weight = 900, align = 'center', outline = null, ow = 3) {
+  str = String(str);
+  const font = s => `${weight} ${s}px Nunito, ui-rounded, system-ui, sans-serif`;
+  if (!document.fonts?.check?.(font(12))) { text(c, str, x, y, size, color, weight, align, outline, ow); return; }
+  const k = str + '|' + size + '|' + color + '|' + weight + '|' + outline + '|' + ow;
+  let e = TXT.get(k);
+  if (!e) {
+    const S = 4, cv = document.createElement('canvas'), g = cv.getContext('2d');
+    g.font = font(size * S);
+    const tw = g.measureText(str).width, pad = (outline ? ow : 0) * S + 2 * S;
+    cv.width = Math.max(1, Math.ceil(tw + pad * 2)); cv.height = Math.ceil(size * S * 1.5 + pad);
+    g.font = font(size * S); g.textAlign = 'center'; g.textBaseline = 'middle';
+    if (outline) { g.lineJoin = 'round'; g.strokeStyle = outline; g.lineWidth = ow * S; g.strokeText(str, cv.width / 2, cv.height / 2); }
+    g.fillStyle = color; g.fillText(str, cv.width / 2, cv.height / 2);
+    e = { cv, w: cv.width / S, h: cv.height / S, pad: pad / S };
+    if (TXT.size > 500) TXT.clear();
+    TXT.set(k, e);
+  }
+  const ox = align === 'center' ? -e.w / 2 : align === 'right' ? -e.w + e.pad : -e.pad;
+  c.drawImage(e.cv, x + ox, y - e.h / 2, e.w, e.h);
+}
 export function text(c, str, x, y, size, color = INK, weight = 900, align = 'center', outline = null, ow = 3) {
   c.font = `${weight} ${size}px Nunito, ui-rounded, system-ui, sans-serif`;
   c.textAlign = align; c.textBaseline = 'middle';
   if (outline) { c.lineJoin = 'round'; c.strokeStyle = outline; c.lineWidth = ow; c.strokeText(str, x, y); }
   c.fillStyle = color; c.fillText(str, x, y);
+}
+
+// A real little flower (never just a dot): kind 0 = five rounded petals,
+// 1 = daisy (thin petals, gold heart), 2 = tulip cup seen from the side.
+export function flower(c, x, y, r, col, kind = 0, outline = true) {
+  const lw = Math.max(0.3, r * 0.18);
+  if (kind === 2) {
+    c.beginPath(); c.moveTo(x - r * 0.9, y - r * 0.9); c.lineTo(x - r * 0.45, y - r * 0.2); c.lineTo(x, y - r * 1.0); c.lineTo(x + r * 0.45, y - r * 0.2); c.lineTo(x + r * 0.9, y - r * 0.9);
+    c.quadraticCurveTo(x + r * 0.95, y + r * 0.8, x, y + r * 0.85); c.quadraticCurveTo(x - r * 0.95, y + r * 0.8, x - r * 0.9, y - r * 0.9); c.closePath();
+    c.fillStyle = col; c.fill(); if (outline) { c.strokeStyle = 'rgba(91,63,54,.8)'; c.lineWidth = lw; c.stroke(); }
+    return;
+  }
+  const n = kind === 1 ? 8 : 5, pl = kind === 1 ? r * 1.05 : r * 0.95, pw = kind === 1 ? r * 0.28 : r * 0.5;
+  c.fillStyle = col; if (outline) { c.strokeStyle = 'rgba(91,63,54,.75)'; c.lineWidth = lw; }
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2 - Math.PI / 2, cx = x + Math.cos(a) * pl * 0.5, cy = y + Math.sin(a) * pl * 0.5;
+    c.beginPath(); c.ellipse(cx, cy, pl * 0.52, pw, a, 0, Math.PI * 2); c.fill(); if (outline) c.stroke();
+  }
+  c.beginPath(); c.arc(x, y, r * (kind === 1 ? 0.36 : 0.3), 0, Math.PI * 2); c.fillStyle = kind === 1 ? '#f2b33a' : '#ffd35a'; c.fill();
 }

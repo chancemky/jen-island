@@ -51,9 +51,9 @@ const LINES = {
     [['The ferry is so full now I had to buy a second helmet.', 'Giờ tàu đông khách tới mức anh phải mua thêm cái nón bảo hiểm.'], ['Your restaurant is the talk of the mainland. My cousin wants a job!', 'Nhà hàng của em nổi tiếng tận đất liền. Em họ anh xin vào làm đó!']],
   ],
   chi_mai: [
-    [['Letters for everyone! …None for you yet. Soon!', 'Thư đây! Thư cho mọi người! …Chưa có thư cho em. Sắp có thôi!'], ['I walk the whole island twice a day. Your shop is my favourite stop.', 'Chị đi hết hòn đảo hai lần một ngày. Quán em là trạm chị thích nhất.']],
-    [['People are sending letters to the island again. That hasn\'t happened in years.', 'Người ta lại gửi thư ra đảo rồi. Mấy năm nay đâu có vậy.'], ['A package for Mèo Mây. It\'s… a lot of fish-shaped cushions.', 'Có bưu kiện cho Mèo Mây. Toàn là… gối hình con cá.']],
-    [['I got a letter addressed to “the tea person, the island”. It found you!', 'Chị nhận được lá thư ghi “người bán trà, trên đảo”. Vậy mà tới được tay em!'], ['Busy, busy! No time to chat! …Okay, a little time.', 'Bận quá bận! Không rảnh nói chuyện! …Thôi, rảnh chút xíu.']],
+    [['Welcome to the island! If you ever cut yourself slicing kumquats, come see me.', 'Chào mừng em ra đảo! Lỡ có đứt tay lúc cắt tắc thì ghé anh nha.'], ['Drink water, sleep in your bed, eat real meals. Doctor\'s orders.', 'Uống nước, ngủ trên giường, ăn cơm đàng hoàng. Lời bác sĩ dặn đó.']],
+    [['Half my patients now say they feel better after your kumquat tea. I\'m not complaining.', 'Nửa số bệnh nhân của anh nói uống trà tắc quán em là khỏe hẳn. Anh không có ý kiến gì đâu.'], ['Mèo Mây came in for a check-up. Diagnosis: too many naps. Treatment: more naps.', 'Mèo Mây tới khám. Chẩn đoán: ngủ nhiều quá. Điều trị: ngủ thêm.']],
+    [['You work too hard. Even the busiest shop owner needs a day off. Take one!', 'Em làm việc nhiều quá. Chủ quán bận cỡ nào cũng cần một ngày nghỉ. Nghỉ đi!'], ['Busy clinic today! Tourists and sunburns. …Okay, I have a minute.', 'Hôm nay phòng khám đông ghê! Du khách với cháy nắng. …Thôi được, anh rảnh chút xíu.']],
   ],
 };
 const MERCH = {
@@ -66,13 +66,13 @@ const MERCH = {
   ba_sau: [['The lanterns remember everyone who ever walked under them.', 'Lồng đèn nhớ hết những ai từng đi dưới nó.'], ['Grilled rice paper — my mother\'s recipe. Crispy edges, soft middle.', 'Bánh tráng nướng — công thức của mẹ bà. Rìa giòn, giữa mềm.'], ['The market lives again. I can finally rest my old eyes.', 'Chợ sống lại rồi. Giờ bà mới yên tâm nghỉ ngơi.']],
 };
 const STAFF = {
-  dreamy: [['Sorry, I was thinking about clouds. What was the order?', 'Xin lỗi, em đang nghĩ về mây. Order gì vậy ạ?'], ['Do you think the fish in the tank have names?', '{You} nghĩ mấy con cá trong bể có tên không?']],
-  speedy: [['Table three! Table five! Coming through!', 'Bàn ba! Bàn năm! Nhường đường nào!'], ['I can carry four bowls at once. Want to see? …Maybe not.', 'Em bưng được bốn tô một lần. Muốn xem không? …Thôi khỏi.']],
-  cheerful: [['I love this job! Everyone here is so nice!', 'Em mê công việc này lắm! Ai ở đây cũng dễ thương!'], ['A guest said my smile was better than the phở. The phở is very good, so that\'s a lot.', 'Có khách khen em cười còn ngon hơn phở. Mà phở ngon lắm, nên vậy là khen dữ lắm.']],
-  careful: [['I double-check every order. Triple, sometimes.', 'Order nào em cũng kiểm tra hai lần. Có khi ba lần.'], ['The stove is clean, the knives are sharp, the herbs are fresh.', 'Bếp sạch, dao bén, rau tươi.']],
-  steady: [['Just doing my job, boss!', 'Em làm việc thôi, sếp!'], ['The kitchen is running smoothly today.', 'Hôm nay bếp chạy êm ru.']],
+  dreamy: [['Sorry, I was thinking about clouds. What was the order?', 'Xin lỗi, {me} đang nghĩ về mây. Order gì vậy {you}?'], ['Do you think the fish in the tank have names?', '{You} nghĩ mấy con cá trong bể có tên không?']],
+  speedy: [['Table three! Table five! Coming through!', 'Bàn ba! Bàn năm! Nhường đường nào!'], ['I can carry four bowls at once. Want to see? …Maybe not.', '{Me} bưng được bốn tô một lần. {You} muốn xem không? …Thôi khỏi.']],
+  cheerful: [['I love this job! Everyone here is so nice!', '{Me} mê công việc này lắm! Ai ở đây cũng dễ thương!'], ['A guest said my smile was better than the phở. The phở is very good, so that\'s a lot.', 'Có khách khen {me} cười còn ngon hơn phở. Mà phở ngon lắm, nên vậy là khen dữ lắm.']],
+  careful: [['I double-check every order. Triple, sometimes.', 'Order nào {me} cũng kiểm tra hai lần. Có khi ba lần.'], ['The stove is clean, the knives are sharp, the herbs are fresh.', 'Bếp sạch, dao bén, rau tươi.']],
+  steady: [['Just doing my job, boss!', '{Me} làm việc thôi, sếp!'], ['The kitchen is running smoothly today.', 'Hôm nay bếp chạy êm ru.']],
 };
-const VISITOR = [['What a pretty island! We came on the morning ferry.', 'Đảo đẹp quá! Tụi mình đi chuyến tàu sáng.'], ['Do you know where the tea stand is? Everyone says it\'s the best!', 'Quán trà ở đâu vậy? Ai cũng khen ngon nhất!'], ['I want to live here forever. Or at least until the last ferry.', 'Muốn ở đây mãi luôn. Hoặc ít nhất tới chuyến tàu cuối.'], ['Have you seen the lanterns at the Night Market? Magical!', 'Bạn thấy lồng đèn ở Chợ Đêm chưa? Đẹp như mơ!'], ['This island smells like grilled pork and sea breeze. Perfect.', 'Hòn đảo này thơm mùi thịt nướng và gió biển. Tuyệt vời.']];
+const VISITOR = [['What a pretty island! We came on the morning ferry.', 'Đảo đẹp quá! {Me} đi chuyến tàu sáng tới đó.'], ['Do you know where the tea stand is? Everyone says it\'s the best!', '{You} ơi, quán trà ở đâu vậy? Ai cũng khen ngon nhất!'], ['I want to live here forever. Or at least until the last ferry.', '{Me} muốn ở đây mãi luôn. Hoặc ít nhất tới chuyến tàu cuối.'], ['Have you seen the lanterns at the Night Market? Magical!', '{You} thấy lồng đèn ở Chợ Đêm chưa? Đẹp như mơ!'], ['This island smells like grilled pork and sea breeze. Perfect.', 'Hòn đảo này thơm mùi thịt nướng và gió biển. Tuyệt vời.']];
 const pickT = pair => T(pair[0], pair[1]);
 
 export async function talkToResident(a) {

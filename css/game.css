@@ -150,8 +150,8 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 .sheet-head h2 small { display: block; font-size: 12px; font-weight: 800; opacity: .65; margin-top: 2px; }
 .sheet-head .x { margin-left: auto; width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 3px solid var(--ink); font-weight: 900; font-size: 18px; box-shadow: 0 3px 0 rgba(91,63,54,.25); flex: none; }
 .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; }
-.tabs { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; touch-action: pan-x; }
-.tabs button { padding: 8px 14px; border-radius: 999px; background: #f3e6cf; font-weight: 900; font-size: 13px; border: 2.5px solid transparent; white-space: nowrap; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; flex: none; }           /* every tab visible: long lists wrap onto a second row */
+.tabs button { flex: 1 1 auto; padding: 8px 12px; border-radius: 999px; background: #f3e6cf; font-weight: 900; font-size: 13px; border: 2.5px solid transparent; white-space: nowrap; }
 .tabs button.on { background: #fff; border-color: var(--ink); box-shadow: 0 2px 0 rgba(91,63,54,.25); }
 .list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px; }
 .row { display: flex; align-items: center; gap: 10px; padding: 10px; background: #fff; border: 2.5px solid #e9d8bf; border-radius: 18px; transition: transform .15s; }
@@ -462,6 +462,9 @@ body.sheet-open #toasts { top: calc(6px + var(--sat)); }
 /* supermarket aisles */
 .aisles { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; flex: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .aisles::-webkit-scrollbar { display: none; }
+.aisles.more-r { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+.aisles.more-l { -webkit-mask-image: linear-gradient(90deg, transparent, #000 15%); mask-image: linear-gradient(90deg, transparent, #000 15%); }
+.aisles.more-l.more-r { -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
 .aisle { flex: none; display: flex; align-items: center; gap: 5px; padding: 6px 10px 6px 7px; border-radius: 14px; background: #fff7ea; border: 2.5px solid #e6cfa9; font-weight: 900; font-size: 12.5px; color: var(--ink); }
 .aisle img { width: 22px; height: 22px; }
 .aisle i { font-style: normal; font-size: 10.5px; background: rgba(91,63,54,.12); border-radius: 8px; padding: 1px 6px; }
@@ -594,3 +597,30 @@ body.hide-controls .pause-btn, body.cutscene .pause-btn { display: none; }
 .svc-outside.night .svc-sky::after { filter: brightness(.45) saturate(.6); }
 .svc-outside.dusk .svc-sky::after { filter: brightness(.85) sepia(.2); }
 .cs-continue { position: absolute; left: 50%; bottom: calc(40px + var(--sab)); transform: translateX(-50%); z-index: 60; pointer-events: auto; min-width: 180px; }
+
+/* decorating: nothing on the HUD may catch a tap meant for the furniture */
+body.decorating #mapBtn, body.decorating #bagBtn, body.decorating #menuBtn, body.decorating #pauseBtn, body.decorating .hud-top, body.decorating #questPill, body.decorating #actBtn { visibility: hidden; pointer-events: none; }
+
+/* option buttons with pictures and stock counters (ice, sugar, chili, toppings, size) */
+.seg button.icon-opt { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 3px 2px 4px; min-height: 46px; }
+.icon-opt .oi { position: relative; height: 24px; display: flex; align-items: flex-end; justify-content: center; }
+.icon-opt .oi img { width: 22px; height: 22px; }
+.icon-opt .oi img.b { margin-left: -9px; margin-bottom: 4px; }
+.icon-opt .oi img.no { opacity: .45; }
+.icon-opt .oi:has(img.no)::after { content: ''; position: absolute; left: 50%; top: 50%; width: 26px; height: 3px; background: #e8584e; border-radius: 2px; transform: translate(-50%, -50%) rotate(-40deg); box-shadow: 0 0 0 1px #fff; }
+.icon-opt .oi img.sz-S { width: 15px; height: 15px; } .icon-opt .oi img.sz-M { width: 19px; height: 19px; } .icon-opt .oi img.sz-L { width: 24px; height: 24px; }
+.icon-opt .gauge { position: relative; width: 5px; height: 20px; margin-left: 2px; border: 1.5px solid var(--ink); border-radius: 3px; background: #fff; overflow: hidden; display: block; }
+.icon-opt .gauge b { position: absolute; left: 0; right: 0; bottom: 0; background: #f2c14e; display: block; }
+.icon-opt .ol { font-size: 10.5px; line-height: 1.1; }
+.icon-opt .cnt { position: absolute; top: 1px; right: 2px; font-style: normal; font-size: 9px; font-weight: 900; background: rgba(91,63,54,.12); border-radius: 6px; padding: 0 3px; }
+.icon-opt .cnt.low { background: #e8584e; color: #fff; }
+
+.btn.danger { color: #c9433a; border-color: #e8a4a0; }
+
+/* the lighthouse gallery view */
+body.lookout #hud, body.lookout .hud-top, body.lookout #questPill, body.lookout #actions, body.lookout #pointer, body.lookout #mapBtn, body.lookout #bagBtn, body.lookout #actBtn, body.lookout .toast { visibility: hidden !important; }
+.lookout-ui { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
+.lookout-ui canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lookout-ui .lk-title { position: absolute; top: calc(14px + var(--sat)); left: 50%; transform: translateX(-50%); text-align: center; background: rgba(255,248,234,.92); border: 3px solid var(--ink); border-radius: 16px; padding: 6px 16px; box-shadow: 0 3px 0 rgba(91,63,54,.25); }
+.lookout-ui .lk-title b { display: block; font-size: 16px; } .lookout-ui .lk-title small { font-weight: 800; opacity: .7; font-size: 11.5px; }
+.lookout-ui .lk-leave { position: absolute; left: 50%; bottom: calc(18px + var(--sab)); transform: translateX(-50%); pointer-events: auto; width: auto; min-width: 220px; padding-left: 26px; padding-right: 26px; }

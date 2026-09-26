@@ -1,8 +1,8 @@
 // Interior furniture and fixtures. Base point = front-centre of the footprint.
 
 import { TAU, shade, rng } from '../core/util.js';
-import { tr } from '../systems/state.js';
-import { INK, ell, circ, box, poly, line, limb, shadow, text, heart } from './draw.js';
+import { tr, T } from '../systems/state.js';
+import { INK, ell, circ, box, poly, line, limb, shadow, text, heart, flower, stext } from './draw.js';
 import { LIGHT, glows, lanternShape } from './props.js';
 import { ICONS, drawIcon } from './food.js';
 import { drawHuman } from './character.js';
@@ -340,7 +340,7 @@ Object.assign(F, {
     for (const x of [-w / 2 + 4, w / 2 - 4]) { c.beginPath(); c.moveTo(x - 1.6, -12); c.lineTo(x + 1.6, -12); c.lineTo(x + 0.9, 0); c.lineTo(x - 0.9, 0); c.closePath(); c.fillStyle = shade(col, -20); c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); }
     wood(c, -w / 2, -18, w, 7, 3, col);
     if (p.cloth) { box(c, -w / 2 + 2, -18.5, w - 4, 6, 2, p.cloth, INK, 0.6); c.strokeStyle = shade(p.cloth, -20); c.lineWidth = 0.5; for (let x = -w / 2 + 4; x < w / 2 - 2; x += 2.2) { c.beginPath(); c.moveTo(x, -12.5); c.lineTo(x, -11.5); c.stroke(); } }
-    if (!p.bare) { box(c, -2.5, -25, 5, 7, 2, '#9fd8c8', INK, 0.6); for (let i = 0; i < 3; i++) circ(c, -2 + i * 2, -26.5 - (i % 2) * 1.5, 1.4, ['#ff8fb0', '#ffd35a', '#fff'][i], INK, 0.3); }
+    if (!p.bare) { box(c, -2.5, -25, 5, 7, 2, '#9fd8c8', INK, 0.6); for (let i = 0; i < 3; i++) flower(c, -2 + i * 2, -26.5 - (i % 2) * 1.5, 1.5, ['#ff8fb0', '#ffd35a', '#fff'][i], i === 2 ? 1 : 0); }
   },
   chair(c, t, p) {
     const col = p.col || '#c88a52';
@@ -708,4 +708,136 @@ Object.assign(FURN_DRAW, {
   wall_mirror: (c, t, p) => { c.save(); c.translate(0, p.preview ? 46 : 0); F.wall_mirror(c, t, p); c.restore(); },
   lamp_table: (c, t, p) => F.lamp_table(c, t, p),
   bamboo_screen: (c, t, p) => F.bamboo_screen(c, t, p),
+});
+
+// ---------------------------------------------------------------- side views
+// Furniture turned 90°: each piece is described as a few boxes and drawn from
+// the side (its front facing right; turned left is the mirror image). Axes:
+// x = the piece's depth (back −, front +), h = height, z = along its width,
+// running away from you (up the screen). Round pieces (plants, lamps, vases,
+// bean bags, cat beds) look the same from every side and have no model.
+const WOODC = '#b77a4f';
+const B = (x0, x1, h0, h1, z0, z1, col, o = {}) => ({ x0, x1, h0, h1, z0, z1, col, ...o });
+const legs = (d, L, hgt, col, inset = 2) => [B(-d / 2 + inset, -d / 2 + inset + 2.4, 0, hgt, inset, inset + 2.4, col), B(d / 2 - inset - 2.4, d / 2 - inset, 0, hgt, inset, inset + 2.4, col), B(-d / 2 + inset, -d / 2 + inset + 2.4, 0, hgt, L - inset - 2.4, L - inset, col), B(d / 2 - inset - 2.4, d / 2 - inset, 0, hgt, L - inset - 2.4, L - inset, col)];
+export const SIDE = {
+  table_low: () => [...legs(20, 34, 11, shade(WOODC, -20)), B(-10, 10, 11, 17, 0, 34, WOODC, { grain: 1 })],
+  chair_wood: () => [...legs(12, 14, 8, shade('#c88a52', -22), 1), B(-6, 6, 8, 11.5, 0, 14, '#c88a52'), B(-6, -3.6, 11.5, 26, 0, 14, shade('#c88a52', -10))],
+  sofa: () => [B(-11, 11, 0, 9, 0, 54, '#c9955e', { weave: 1 }), B(-11, -5, 9, 25, 0, 54, '#c9955e', { weave: 1 }), B(-5, 11, 9, 13, 4, 50, '#f7d6c0', { cushion: 3 }), B(-11, 11, 9, 18, 0, 4, '#b98450'), B(-11, 11, 9, 18, 50, 54, '#b98450')],
+  armchair: () => [B(-7, 7, 0, 9, 0, 30, '#e8a88f'), B(-7, -3, 9, 23, 0, 30, '#d98f76'), B(-3, 7, 9, 12, 5, 25, '#f7d6c0', { cushion: 1 }), B(-7, 7, 9, 16, 0, 5, '#d98f76'), B(-7, 7, 9, 16, 25, 30, '#d98f76')],
+  rocking_chair: () => [B(-8, 8, 0, 2, 2, 4, '#8a5f3e', { rocker: 1 }), B(-8, 8, 0, 2, 22, 24, '#8a5f3e', { rocker: 1 }), B(-6, 6, 9, 12, 2, 24, '#c98f5a'), B(-6, -3.6, 12, 30, 2, 24, shade('#c98f5a', -8)), ...legs(12, 26, 9, '#a8763f', 2).map(b => ({ ...b, h0: 2 }))],
+  bookshelf: () => [B(-7, 7, 0, 42, 0, 36, '#b77a4f', { grain: 1 }), B(-7, 7, 42, 44, -1, 37, '#a26a42')],
+  dresser: () => [B(-7, 7, 0, 26, 0, 38, '#d9a066', { grain: 1 }), B(-7.5, 7.5, 26, 28, -1, 39, '#c98f5a'), B(-3, 3, 28, 36, 26, 32, '#9fd8c8')],
+  fishtank: () => [B(-8, 8, 0, 12, 0, 34, '#8a5f3e'), B(-8, 8, 12, 30, 1, 33, 'rgba(160,220,240,.7)', { water: 1 })],
+  aquarium_big: () => [B(-13, 13, 0, 10, 0, 46, '#b9b2a6', { stone: 1 }), B(-10, 10, 10, 10.4, 3, 43, '#6fbfd0', { water: 1 })],
+  tv: () => [B(-8, 8, 0, 10, 0, 30, '#8a5f3e'), B(-8, 4, 10, 26, 5, 25, '#6b5a50'), B(4, 6, 12, 24, 7, 23, '#3d3a42')],
+  radio: () => [B(-6, 6, 0, 10, 0, 18, '#e8584e'), B(-1, 1, 10, 13, 2, 16, '#5a4a48')],
+  record_player: () => [...legs(12, 24, 12, '#8a5f3e', 1), B(-6, 6, 12, 16, 0, 24, '#c98f5a'), B(-4, 4, 16, 17, 4, 16, '#2f2a30'), B(-1, 1, 17, 30, 14, 18, '#f2c14e')],
+  lamp_table: () => [...legs(12, 20, 12, '#8a5f3e', 1), B(-6, 6, 12, 15, 0, 20, '#c98f5a'), B(-1, 1, 15, 24, 9, 11, '#5a4a48'), B(-5, 5, 24, 32, 6, 14, '#f7de8c', { glow: 1 })],
+  piano: () => [B(-9, 9, 0, 28, 0, 46, '#3d3440'), B(9, 14, 14, 17, 2, 44, '#f5f0e6'), B(-9.5, 9.5, 28, 30, -1, 47, '#2f2a30')],
+  hammock: () => [B(-2, 2, 0, 34, 0, 3, '#8a5f3e'), B(-2, 2, 0, 34, 57, 60, '#8a5f3e'), B(-6, 6, 12, 15, 6, 54, '#f28f7c', { sag: 1 })],
+  bamboo_screen: () => [B(-2, 2, 0, 40, 0, 48, '#d9b27a', { slats: 1 })],
+  fan: () => [B(-5, 5, 0, 2, 3, 11, '#6b737c'), B(-1, 1, 2, 22, 6, 8, '#8f9aa3'), B(-3, 1, 20, 32, 1, 13, '#cfe8f2', { cage: 1 })],
+  // the built-ins
+  bed: () => [B(-25, 25, 0, 8, 0, 60, '#b77a4f', { grain: 1 }), B(-24, 24, 8, 14, 1, 59, '#fffaf0'), B(-8, 24, 14, 16, 2, 58, '#f4a9b8', { cushion: 2 }), B(-22, -10, 14, 18, 8, 52, '#fff'), B(-28, -24, 0, 30, -1, 61, '#a26a42', { grain: 1 })],
+  wardrobe: () => [B(-5, 5, 0, 62, 0, 48, '#c98f5a', { grain: 1 }), B(-6, 6, 62, 66, -1, 49, '#b77a4f')],
+  wardrobeBig: () => SIDE.wardrobe(),
+  kitchen: () => [B(-16, 16, 0, 30, 0, 70, '#9fd8c8'), B(-17, 17, 30, 33, -1, 71, '#fff8ea'), B(-10, 2, 33, 34, 6, 30, '#b9c3cb'), B(-8, -2, 34, 40, 10, 18, '#f28f7c')],
+};
+// draw a box model: far boxes first, then lower before higher
+export function drawSide(c, key, t) {
+  const m = SIDE[key]?.(); if (!m) return false;
+  const K = 0.62;                                     // depth foreshortening (z runs up the screen)
+  const L = Math.max(...m.map(b => b.z1));
+  shadow(c, 0, 1 - L * K * 0.5, Math.max(...m.map(b => b.x1)) + 4, L * K * 0.5 + 3, 0.16);
+  m.sort((a, b) => (b.z0 + b.z1) / 2 - (a.z0 + a.z1) / 2 || a.h1 - b.h1);
+  for (const b of m) {
+    const w = b.x1 - b.x0, ys = -b.h1 - b.z0 * K, yt = -b.h1 - b.z1 * K, top = shade(b.col, 12), side = b.col;
+    // top face
+    box(c, b.x0, yt, w, b.z1 * K - b.z0 * K, Math.min(2, w / 3), top, INK, 0.8);
+    // south face (the end nearest you)
+    box(c, b.x0, ys, w, b.h1 - b.h0, Math.min(2, w / 3), side, INK, 0.9);
+    if (b.grain) { c.strokeStyle = shade(side, -18); c.lineWidth = 0.5; for (let y = ys + 3; y < ys + b.h1 - b.h0 - 1; y += 4) { c.beginPath(); c.moveTo(b.x0 + 1.5, y); c.lineTo(b.x1 - 1.5, y + 0.4); c.stroke(); } }
+    if (b.weave) { c.strokeStyle = shade(side, -22); c.lineWidth = 0.5; for (let x = b.x0 + 2; x < b.x1 - 1; x += 3) { c.beginPath(); c.moveTo(x, ys + 1); c.lineTo(x, ys + b.h1 - b.h0 - 1); c.stroke(); } }
+    if (b.cushion) { c.strokeStyle = shade(top, -18); c.lineWidth = 0.7; const n = b.cushion + 1; for (let k = 1; k < n; k++) { const y = yt + (b.z1 - b.z0) * K * k / n; c.beginPath(); c.moveTo(b.x0 + 1, y); c.lineTo(b.x1 - 1, y); c.stroke(); } }
+    if (b.water) { c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(b.x0 + 1, yt + 1.5, w - 2, 1.2); ell(c, b.x0 + w * 0.6, (yt + ys) / 2 + 2, 2, 1, '#f28f7c', null); }
+    if (b.slats) { c.strokeStyle = shade(top, -20); c.lineWidth = 0.6; for (let k = 1; k < 8; k++) { const y = yt + (b.z1 - b.z0) * K * k / 8; c.beginPath(); c.moveTo(b.x0, y); c.lineTo(b.x1, y); c.stroke(); } }
+    if (b.cage) { c.strokeStyle = 'rgba(91,63,54,.5)'; c.lineWidth = 0.5; for (let k = 1; k < 4; k++) { const y = yt + (b.z1 - b.z0) * K * k / 4; c.beginPath(); c.moveTo(b.x0, y); c.lineTo(b.x1, y); c.stroke(); } }
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------- the florist (Cô Lan)
+const PETALS = ['#ff8fb0', '#ffd35a', '#fff', '#e97ad0', '#f36d86', '#c9b6e8', '#ffa53a', '#ff5a5a'];
+function bunch(c, x, y, n, r, seed, t = 0, spread = 7) {
+  // a bunch of cut flowers with stems and a few leaves
+  for (let i = 0; i < n; i++) {
+    const a = (i / Math.max(1, n - 1) - 0.5) * 1.2, fx = x + Math.sin(a) * spread, fy = y - 8 - Math.cos(a) * 4 - (i % 2) * 2.4 + Math.sin(t * 1.4 + i + seed) * 0.3;
+    line(c, x + Math.sin(a) * 1.5, y, fx, fy, '#5f9f45', 0.8);
+    if (i % 2) ell(c, (x + fx) / 2 + 1.5, (y + fy) / 2, 2, 0.9, '#6fb356', null, 0, a);
+    flower(c, fx, fy, r, PETALS[(i * 3 + seed) % PETALS.length], (i + seed) % 5 === 0 ? 2 : (i + seed) % 4 === 0 ? 1 : 0);
+  }
+}
+Object.assign(F, {
+  // tiered stand of metal buckets full of cut flowers
+  flowerBuckets(c, t, p) {
+    const w = p.w || 52;
+    shadow(c, 0, 1, w / 2 + 2, 4, 0.18);
+    for (const x of [-w / 2 + 2, w / 2 - 4]) box(c, x, -26, 2.5, 26, 0.6, '#8a5f3e', INK, 0.5);
+    box(c, -w / 2 + 4, -26, w - 8, 3, 1, '#a8763f', INK, 0.7);          // top shelf (set back)
+    box(c, -w / 2, -12, w, 3, 1, '#a8763f', INK, 0.7);                  // bottom shelf
+    const cols = ['#b9c3cb', '#8fb7e0', '#f4a9b8', '#b9c3cb'];
+    const n1 = Math.max(2, Math.floor((w - 8) / 13));
+    for (let i = 0; i < n1; i++) { const x = -w / 2 + 10 + i * ((w - 20) / Math.max(1, n1 - 1)); poly(c, [x - 4.5, -26, x + 4.5, -26, x + 3.6, -33, x - 3.6, -33], cols[i % 4], INK, 0.6); bunch(c, x, -32, 5, 2.1, i * 2 + 1, t, 5); }
+    const n2 = Math.max(2, Math.floor(w / 12));
+    for (let i = 0; i < n2; i++) { const x = -w / 2 + 6 + i * ((w - 12) / Math.max(1, n2 - 1)); poly(c, [x - 5, -12, x + 5, -12, x + 4, -20, x - 4, -20], cols[(i + 1) % 4], INK, 0.6); bunch(c, x, -19, 5, 2.3, i * 3, t, 5.5); }
+    // price tags
+    for (let i = 0; i < n2; i++) { const x = -w / 2 + 6 + i * ((w - 12) / Math.max(1, n2 - 1)); box(c, x - 2.5, -10.5, 5, 2.6, 0.5, '#fff', INK, 0.3); }
+  },
+  // a tall glass flower cooler (tủ mát hoa) with bouquets on three shelves
+  flowerCooler(c, t, p) {
+    shadow(c, 0, 1, 20, 4, 0.18);
+    box(c, -19, -64, 38, 64, 3, '#e9eef2', INK, 1.1);
+    box(c, -16, -60, 32, 52, 2, 'rgba(190,230,245,.55)', INK, 0.8);
+    for (const y of [-44, -28]) line(c, -16, y, 16, y, '#b9c3cb', 1);
+    for (const [y, s] of [[-45, 1], [-29, 2], [-9, 3]]) for (let i = 0; i < 3; i++) { const x = -10 + i * 10; box(c, x - 3, y - 4, 6, 4, 1, '#fff', INK, 0.4); bunch(c, x, y - 4, 4, 1.9, s * 3 + i, t, 3.5); }
+    c.fillStyle = 'rgba(255,255,255,.4)'; c.beginPath(); c.moveTo(-14, -58); c.lineTo(-8, -58); c.lineTo(-14, -40); c.closePath(); c.fill();
+    box(c, 12, -40, 2, 10, 1, '#8f9aa3', INK, 0.5);
+    box(c, -12, -69, 24, 6, 2, '#f28fb0', INK, 0.8); stext(c, T('FRESH', 'HOA TƯƠI'), 0, -66, 3.6, '#fff', 900);
+  },
+  // the shop counter: wrapping paper roll, ribbons, a bouquet being tied and a till
+  flowerCounter(c, t, p) {
+    const w = p.w || 60;
+    shadow(c, 0, 1, w / 2 + 2, 5, 0.18);
+    box(c, -w / 2, -24, w, 24, 3, '#f7e3ec', INK, 1);
+    for (let x = -w / 2 + 6; x < w / 2 - 4; x += 8) line(c, x, -20, x, -3, 'rgba(200,140,160,.35)', 1);
+    box(c, -w / 2 - 2, -28, w + 4, 5, 2, '#e3b77f', INK, 0.9);
+    // roll of kraft paper and its stand
+    box(c, -w / 2 + 2, -34, 14, 6, 3, '#d9b27a', INK, 0.7); line(c, -w / 2 + 3, -31, -w / 2 + 15, -31, '#b9905a', 0.5);
+    // ribbon spools
+    for (let i = 0; i < 3; i++) { circ(c, -w / 2 + 22 + i * 5, -31, 2.4, ['#f36d86', '#ffd35a', '#9fd8c8'][i], INK, 0.5); circ(c, -w / 2 + 22 + i * 5, -31, 0.8, '#fff', null); }
+    // a bouquet wrapped in paper, lying on the counter
+    c.save(); c.translate(6, -29); c.rotate(-0.25); poly(c, [-2, 0, 2, 0, 9, -9, -9, -9], '#fff5df', INK, 0.6); bunch(c, 0, -7, 6, 2.2, 5, t, 6); c.restore();
+    // till with a little screen
+    box(c, w / 2 - 14, -38, 11, 10, 2, '#fff', INK, 0.8); box(c, w / 2 - 12.5, -36.6, 8, 3.4, 0.6, '#9fd8c8', INK, 0.4);
+    stext(c, T('Thank you!', 'Cảm ơn!'), 0, -13, 3.4, '#e56b8b', 900);
+  },
+  // dried bouquets hanging upside down from a wooden rail on the wall
+  hangingBouquets(c, t, p) {
+    const w = p.w || 70;
+    box(c, -w / 2, -58, w, 3, 1.5, '#a8763f', INK, 0.7);
+    for (let i = 0; i < 6; i++) {
+      const x = -w / 2 + 6 + i * (w - 12) / 5, sw = Math.sin(t * 1.2 + i) * 0.04;
+      c.save(); c.translate(x, -55); c.rotate(sw);
+      line(c, 0, 0, 0, 5, '#8a5f3e', 0.6); box(c, -1.4, 4, 2.8, 2, 0.5, ['#f36d86', '#9fd8c8', '#ffd35a'][i % 3], null);
+      c.scale(1, -1); bunch(c, 0, -6, 4, 1.8, i * 2, 0, 3.5); c.restore();
+    }
+  },
+  // a price board on an easel
+  priceBoard(c, t, p) {
+    shadow(c, 0, 1, 8, 2, 0.14);
+    line(c, -6, 0, -3, -26, '#8a5f3e', 1.4); line(c, 6, 0, 3, -26, '#8a5f3e', 1.4);
+    box(c, -9, -30, 18, 20, 2, '#3e4a45', INK, 1);
+    stext(c, T('BOUQUETS', 'BÓ HOA'), 0, -26, 3.2, '#fff', 900);
+    stext(c, '50k', 0, -21, 3.4, '#ffd35a', 900); flower(c, -4.5, -15, 1.6, '#ff8fb0'); flower(c, 0, -15, 1.6, '#fff', 1); flower(c, 4.5, -15, 1.6, '#ffd35a');
+  },
 });

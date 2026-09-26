@@ -12,6 +12,8 @@ import { G, T, setLang, defaultState, bizOf, markDirty, flag, setFlag, hasMats, 
 import { showReward } from './ui/sheets.js';
 import { scenes, setScene, enterBuilding, exitBuilding, updateDoors, isTransitioning, fadeOut, fadeIn } from './systems/scenes.js';
 import { cs, updateFollow, say, ask, wait, camTo } from './systems/cutscene.js';
+import { Grid } from './world/scene.js';
+import { enterLighthouse } from './ui/lookout.js';
 import { updateDialogue, dialogue, closeDialog } from './ui/dialogue.js';
 import { initHud, updateHud, showHud, setAction, setBizButton, triggerAction, toast, updatePointer, showArea, resetArea, renderStars } from './ui/hud.js';
 import { isUiOpen, openSheet, h, btn } from './ui/sheets.js';
@@ -163,7 +165,10 @@ function updateInteriorLife(dt) {
     if (m.data.t <= 0) { m.data.t = 2 + Math.random() * 4; const d = dist(m.x, m.y, G.player.x, G.player.y); if (d < 90) m.face('down'); else m.face(choice(['down', 'left', 'right'])); if (Math.random() < 0.2) { m.setAct('write'); setTimeout(() => m.setAct(null), 1500); } }
   }
   const sh = sc.shopper;
-  if (sh && !sh.path) { sh.data.t = (sh.data.t || 0) - dt; if (sh.data.t <= 0) { sh.data.t = 3 + Math.random() * 4; const spots = [[64, 196], [236, 196], [240, 110], [60, 110], [150, 150]]; const p = choice(spots); sh.walkTo([[p[0], p[1]]]).then(() => sh.face('up')); } }
+  if (sh && !sh.path) { sh.data.t = (sh.data.t || 0) - dt; if (sh.data.t <= 0) { sh.data.t = 3 + Math.random() * 4; const spots = [[64, 196], [236, 196], [240, 110], [60, 110], [150, 150]], p = choice(spots);
+    // walk around the shelves and the counter (grid A*), and only ever stop on free floor
+    const gr = (sc._grid ||= new Grid(sc, 10, 6)), gi = gr.nearestFree(gr.idx(p[0], p[1])), tx = (gi % gr.cols) * gr.cell + gr.cell / 2, ty = Math.floor(gi / gr.cols) * gr.cell + gr.cell / 2;
+    sh.walkTo(gr.path(sh.x, sh.y, tx, ty)).then(() => sh.face('up')); } }
 }
 bus.on('enter', id => {
   const sc = scenes[id];
@@ -429,7 +434,7 @@ async function buyKiosk(id) {
   for (const [rid, r] of Object.entries(RECIPES)) if (r.biz === def.biz && r.starter && !G.state.recipes.includes(rid)) learnRecipe(rid);
   markDirty(true); sfx('fanfare'); addXP(150, 'buy');
   fx.burst('confetti', G.player.x, G.player.y - 30, 30, { up: 80, speed: 70, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 60, life: 1.6 });
-  await showReward({ icon: KIOSK_ICON[def.biz] || 'key', kicker: T('New shop!', 'Quán mới!'), title: bizName(id), text: T('Open it from the counter. You can hire a shopkeeper for it in the Business tab.', 'Mở cửa ở quầy. Có thể thuê chủ quán trong mục Kinh doanh.') });
+  await showReward({ icon: KIOSK_ICON[def.biz] || 'key', kicker: T('New shop!', 'Quán mới!'), title: bizName(id), text: T('Open it from the counter. You can hire staff for it in the Business tab.', 'Mở cửa ở quầy. Có thể thuê nhân viên trông quán trong mục Kinh doanh.') });
   bus.emit('bought', 'shop', id);
   checkStory();
 }
@@ -453,6 +458,7 @@ function actAction(tr) {
     menu: () => openBizMenu(bizId, { onUpgrade: lv => upgradeScene(bizId, lv) }),
     recipeBook: () => openRecipeBook({ onDiscover: id => discoverRecipe(id) }),
     journal: () => openJournal(),
+    lighthouse: () => enterLighthouse(),
     collectRegister: () => { const k = collectRegister(); if (k) { toast({ text: T(`Collected ${k}k`, `Thu được ${k}k`), sub: T('The restaurant\'s takings', 'Tiền bán hàng của nhà hàng'), icon: 'coin' }); fx.float(G.player.x, G.player.y - 50, '+' + k + 'k', '#ffe07a'); } },
     staff: () => openStaffBoard(),
     cookTicket: () => cookTicket(),
@@ -618,7 +624,7 @@ bus.on('scene', () => { const pl = G.player; if (pl?.seat) { pl.seat = null; pl.
 
 // ---------------------------------------------------------------- visiting neighbours
 // The owner is sometimes home to greet you; at night they're asleep in bed.
-const HOST_HI = [['Oh! Come in, come in! Mind the shoes.', 'Ơ! Vào đi, vào đi! Coi chừng mấy đôi dép.'], ['A visitor! Let me hide the mess… too late.', 'Có khách! Để tui dọn… trễ rồi.'], ['Welcome! Sit anywhere. Except on the cat. There is no cat. Sit anywhere.', 'Chào mừng! Ngồi đâu cũng được. Trừ chỗ con mèo. Không có mèo. Ngồi đâu cũng được.'], ['You came to visit me? That makes my day!', 'Bạn tới thăm mình hả? Vui quá trời!']];
+const HOST_HI = [['Oh! Come in, come in! Mind the shoes.', 'Ơ! Vào đi, vào đi! Coi chừng mấy đôi dép.'], ['A visitor! Let me hide the mess… too late.', 'Có khách! Để {me} dọn… trễ rồi.'], ['Welcome! Sit anywhere. Except on the cat. There is no cat. Sit anywhere.', 'Chào mừng! Ngồi đâu cũng được. Trừ chỗ con mèo. Không có mèo. Ngồi đâu cũng được.'], ['You came to visit me? That makes my day!', '{You} tới thăm {me} hả? Vui quá trời!']];
 bus.on('enter', id => {
   if (!id.startsWith('home_')) return;
   const sc = scenes[id], rid = sc.owner, a = npcs.residents.find(r => r.data.rid === rid);
@@ -682,7 +688,7 @@ async function logout() {
 document.addEventListener('visibilitychange', () => suspendAudio(document.hidden));
 
 // Test hooks on localhost only.
-if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__jen = { G, scenes, cam, cs, setStep, checkStory, openBiz, bizRT, npcs, restRT, sleepFlow, doSleep, toggleBiz, discoverRecipe, triggerAction };
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__jen = { G, scenes, cam, cs, setStep, checkStory, openBiz, bizRT, npcs, restRT, sleepFlow, doSleep, toggleBiz, discoverRecipe, triggerAction, setScene };
 
 boot().catch(e => { console.error(e); $('bootMsg').textContent = bootText('err'); });
 

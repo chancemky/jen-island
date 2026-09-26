@@ -105,6 +105,7 @@ function refreshCounts() {
     b.classList.toggle('out', n <= 0);
     b.classList.toggle('low', n > 0 && n <= 2);
   }
+  if (S.el.querySelector('.seg[data-k]')) markOptions();
 }
 function buildOptions() {
   const box = S.el.querySelector('.svc-opts');
@@ -118,8 +119,9 @@ function buildOptions() {
     row.innerHTML = `<small>${escapeHtml(T(o.en || o.label, o.label))}</small>`;
     const seg = h('div', 'seg'); seg.dataset.k = k;
     for (const v of o.values) {
-      const b = h('button', '', escapeHtml(k === 'sugar' ? v + '%' : o.btn ? T(o.btn[v][0], o.btn[v][1]) : v));
-      b.type = 'button';
+      const lab = escapeHtml(k === 'sugar' ? v + '%' : o.btn ? T(o.btn[v][0], o.btn[v][1]) : v);
+      const b = h('button', 'icon-opt', `<span class="oi">${optionPicture(k, v)}</span><span class="ol">${lab}</span><i class="cnt"></i>`);
+      b.type = 'button'; b.dataset.v = v;
       b.onclick = () => setOption(k, v, seg, b);
       seg.appendChild(b);
     }
@@ -127,10 +129,26 @@ function buildOptions() {
   }
   markOptions();
 }
+// a picture for every option: ice cubes (none / a few / lots), a sugar spoon that
+// fills up, chili yes/no, the topping itself, and cups that grow with the size
+function optionPicture(k, v) {
+  const im = (id, cls = '') => `<img class="${cls}" src="${iconURL(id, 32)}" alt="">`;
+  if (k === 'ice') return v === 'không đá' ? im('ice', 'no') : v === 'ít đá' ? im('ice') : im('ice') + im('ice', 'b');
+  if (k === 'chili') return v === 'không ớt' ? im('chili', 'no') : im('chili');
+  if (k === 'topping') return v === 'none' ? im('tra_sua', 'no') : im(v);
+  if (k === 'size') return im('tra_tac', 'sz-' + v);
+  if (k === 'sugar') return `${im('sugar')}<b class="gauge"><b style="height:${v}%"></b></b>`;
+  return '';
+}
 function markOptions() {
   for (const seg of S.el.querySelectorAll('.seg[data-k]')) {
-    const k = seg.dataset.k, vals = OPTIONS[k].values;
-    [...seg.children].forEach((b, i) => b.classList.toggle('on', S.asm[k] === vals[i]));
+    const k = seg.dataset.k, o = OPTIONS[k], vals = o.values;
+    [...seg.children].forEach((b, i) => {
+      b.classList.toggle('on', S.asm[k] === vals[i]);
+      // how much of what this choice uses is left (ice, sugar, chili, each topping)
+      const v = vals[i], use = k === 'topping' ? (v !== 'none' ? v : null) : (o.uses && v !== 'không đá' && v !== 'không ớt' ? o.uses : null), cnt = b.querySelector('.cnt');
+      if (cnt) { if (use) { const n = stockOf(S.bizId, use); cnt.textContent = '×' + n; cnt.classList.toggle('low', n <= 3); cnt.hidden = false; } else cnt.hidden = true; }
+    });
   }
 }
 function setOption(k, v, seg, b) {

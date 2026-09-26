@@ -54,6 +54,11 @@ export function openIngredientShop() {
       bar.appendChild(b);
     }
     body.appendChild(bar);
+    // keep the aisle row where it was (rebuilds used to snap it back to the first aisle)
+    bar.scrollLeft = api.aisleScroll || 0;
+    bar.addEventListener('scroll', () => { api.aisleScroll = bar.scrollLeft; edge(); }, { passive: true });
+    const edge = () => { bar.classList.toggle('more-r', bar.scrollLeft + bar.clientWidth < bar.scrollWidth - 4); bar.classList.toggle('more-l', bar.scrollLeft > 4); };
+    requestAnimationFrame(() => { const on = bar.querySelector('.aisle.on'); if (on) { const l = on.offsetLeft - bar.offsetLeft, r = l + on.offsetWidth; if (l < bar.scrollLeft) bar.scrollLeft = l - 12; else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = r - bar.clientWidth + 12; api.aisleScroll = bar.scrollLeft; } edge(); });
     const list = h('div', 'list scroll'); list.style.flex = '1';
     body.appendChild(list);
     const needs = api.aisle === 'all' ? shoppingNeeds() : [];

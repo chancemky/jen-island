@@ -261,7 +261,7 @@ export const ROLES = {
   server:  { vi: 'Phục vụ', en: 'Server',  desc: 'Takes orders and carries dishes.', descVi: 'Nhận order và bưng món.' },
   prep:    { vi: 'Sơ chế',  en: 'Prep',    desc: 'Keeps prepared ingredients stocked.', descVi: 'Luôn chuẩn bị sẵn nguyên liệu.' },
   cleaner: { vi: 'Dọn dẹp', en: 'Cleaner', desc: 'Clears and wipes tables.', descVi: 'Dọn và lau bàn.' },
-  keeper:  { vi: 'Chủ quán', en: 'Shopkeeper', desc: 'Runs a small shop for you.', descVi: 'Trông quán nhỏ giúp bạn.' },
+  keeper:  { vi: 'Nhân viên trông quán', en: 'Shop staff', desc: 'Runs a small shop for you.', descVi: 'Trông quán nhỏ giúp bạn.' },
   cashier: { vi: 'Thu ngân',en: 'Cashier', desc: 'Takes payments and deposits earnings to you.', descVi: 'Thu tiền và nộp lại cho bạn.' },
 };
 export const TRAITS = [

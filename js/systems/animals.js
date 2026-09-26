@@ -45,7 +45,7 @@ export function updateAnimals(dt) {
     const pd = here && pl ? dist(pl.x, pl.y, a.x, a.y) : 999;
     const running = pl?.moving > 0.8;
     // reactions
-    if (a.kind === 'pigeon' && pd < 46 && running && a.state !== 'fly') { a.state = 'fly'; a.until = rand(2, 3.5); const an = Math.atan2(a.y - pl.y, a.x - pl.x) + rand(-0.6, 0.6); a.vx = Math.cos(an) * 70; a.vy = Math.sin(an) * 40; if (Math.random() < 0.4) sfx('whoosh'); }
+    if (a.kind === 'pigeon' && pd < 46 && running && a.state !== 'fly') { a.state = 'fly'; a.until = rand(2, 3.5); const an = Math.atan2(a.y - pl.y, a.x - pl.x) + rand(-0.6, 0.6); a.vx = Math.cos(an) * 70; a.vy = Math.sin(an) * 40; }   // silent take-off (the whoosh read as a bang)
     if (a.kind === 'crab' && pd < 40 && a.state !== 'flee') { a.state = 'flee'; a.until = 1.6; a.vx = Math.sign(a.x - pl.x || 1) * 60; a.vy = 0; }
     if (a.kind === 'chicken' && pd < 30 && a.state !== 'flee') { a.state = 'flee'; a.until = 1.1; const an = Math.atan2(a.y - pl.y, a.x - pl.x); a.vx = Math.cos(an) * 70; a.vy = Math.sin(an) * 50; if (Math.random() < 0.3) sfx('pop'); }
     if (a.kind === 'dog' && pd < 60 && a.state !== 'greet' && a.state !== 'flee' && Math.random() < dt * 0.8) { a.state = 'greet'; a.until = rand(3, 5); }
@@ -68,7 +68,16 @@ export function updateAnimals(dt) {
     }
     if (a.state === 'idle' || a.state === 'land') { a.vx *= 0.8; a.vy *= 0.8; }
     const nx = a.x + a.vx * dt, ny = a.y + a.vy * dt;
-    if (a.state === 'fly' || island.canStand(nx, ny, 3)) { a.x = nx; a.y = ny; } else { a.vx = -a.vx; a.vy = -a.vy; a.until = Math.min(a.until, 0.4); }
+    const stuckIn = !island.canStand(a.x, a.y, 3);                 // wandered into a prop (a parked bike…): let it walk out
+    if (stuckIn && Math.hypot(a.vx, a.vy) < 5) { const an = Math.random() * Math.PI * 2, sp = SPEED[a.kind]; a.state = 'walk'; a.vx = Math.cos(an) * sp; a.vy = Math.sin(an) * sp; a.until = 1; }
+    if (a.state === 'fly' || stuckIn || island.canStand(nx, ny, 3)) { a.x = nx; a.y = ny; a.blocked = 0; }
+    else {
+      // blocked: turn to a fresh direction instead of bouncing back and forth on the spot
+      a.blocked = (a.blocked || 0) + 1;
+      const an = Math.atan2(a.vy, a.vx) + Math.PI * (0.5 + Math.random()), sp = Math.max(SPEED[a.kind] * 0.7, Math.hypot(a.vx, a.vy));
+      a.vx = Math.cos(an) * sp; a.vy = Math.sin(an) * sp; a.until = Math.min(a.until, 0.8);
+      if (a.blocked > 30) { a.hx = a.x + (a.hx - a.x) * 0.5; a.hy = a.y + (a.hy - a.y) * 0.5; a.blocked = 0; }
+    }
     if (Math.abs(a.vx) > 3) a.face = a.vx < 0 ? -1 : 1;
   }
   for (const f of fish) { f.t += dt; if (f.t > f.next) { f.t = 0; f.next = rand(4, 11); f.x = rand(200, 1600); f.y = rand(2470, 2590); if (!island.terrain(f.x, f.y)) f.jump = 0.001; } if (f.jump) { f.jump += dt / 0.9; if (f.jump >= 1) f.jump = 0; } }

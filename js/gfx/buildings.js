@@ -4,7 +4,7 @@
 // piece by piece, level up, open for business and swing its door.
 
 import { TAU, shade, mix, clamp, rng } from '../core/util.js';
-import { INK, ell, circ, box, poly, line, limb, shadow, text, rrect } from './draw.js';
+import { INK, ell, circ, box, poly, line, limb, shadow, text, stext, rrect, flower } from './draw.js';
 import { LIGHT, glows, lanternShape } from './props.js';
 import { G, T, tr } from '../systems/state.js';
 
@@ -108,7 +108,7 @@ function windowBox(c, x, y, w, h, opt = {}) {
   if (!lit && !opt.broken) { c.save(); rrect(c, x - w / 2, y, w, h, 2); c.clip(); c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.moveTo(x - w / 2, y + h * 0.6); c.lineTo(x - w / 2 + w * 0.5, y); c.lineTo(x - w / 2 + w * 0.75, y); c.lineTo(x - w / 2, y + h); c.fill(); c.restore(); }
   line(c, x, y, x, y + h, INK, 0.8); line(c, x - w / 2, y + h / 2, x + w / 2, y + h / 2, INK, 0.8);
   if (opt.shutter) { for (const s of [-1, 1]) { const sx = x + s * (w / 2 + 4); box(c, sx - 4, y - 1, 8, h + 2, 1.5, opt.shutter); for (let k = 1; k < 5; k++) line(c, sx - 3, y + (h + 2) * k / 5, sx + 3, y + (h + 2) * k / 5, shade(opt.shutter, -30), 0.6); } }
-  if (opt.box) { box(c, x - w / 2 - 3, y + h, w + 6, 5, 1.5, '#b9905a'); for (let i = 0; i < 4; i++) circ(c, x - w / 2 + 2 + i * (w - 4) / 3, y + h - 1, 2.2, ['#ff8fb0', '#ffd35a', '#fff', '#ff8fb0'][i], INK, 0.5); }
+  if (opt.box) { box(c, x - w / 2 - 3, y + h, w + 6, 5, 1.5, '#b9905a'); for (let i = 0; i < 4; i++) flower(c, x - w / 2 + 2 + i * (w - 4) / 3, y + h - 1.4, 2.4, ['#ff8fb0', '#ffd35a', '#fff', '#f36d86'][i], i === 2 ? 1 : 0); }
   if (opt.broken) { line(c, x - w / 2 - 2, y - 1, x + w / 2 + 2, y + h + 1, '#a07a50', 3.4); line(c, x + w / 2 + 2, y - 1, x - w / 2 - 2, y + h + 1, '#a07a50', 3.4); }
   if (lit) glow(opt.b, x, y + h / 2, 26 + w * 0.4, 'rgba(255,210,130,.5)');
 }
@@ -117,7 +117,7 @@ function signBoard(c, x, y, w, h, label, bg, fg = '#fff', opt = {}) {
   box(c, -w / 2, -h / 2, w, h, 3, bg);
   box(c, -w / 2 + 2, -h / 2 + 2, w - 4, h - 4, 2, null, shade(bg, 30), 0.8);
   const fs = Math.min(h * 0.55, (w - 8) / Math.max(4, label.length) * 1.7);
-  text(c, label, 0, 0.6, fs, fg, 900, 'center', opt.outline || null, 2);
+  stext(c, label, 0, 0.6, fs, fg, 900, 'center', opt.outline || null, 2);
   c.restore();
 }
 function awning(c, x, y, w, cols, depth = 12, opt = {}) {
@@ -186,10 +186,10 @@ export function drawShed(c, t, b) {
     // OPEN sign flips on the door
     const f = s.signFlip ?? 1;
     c.save(); c.translate(32, -h + 12); c.scale(1, Math.abs(Math.cos((1 - f) * Math.PI / 2)) * 0.9 + 0.1);
-    box(c, -9, -4, 18, 8, 2, f > 0.5 ? '#6fbf73' : '#e8584e'); text(c, f > 0.5 ? T('OPEN', 'MỞ CỬA') : T('CLOSED', 'ĐÓNG'), 0, 0.3, 4.2, '#fff', 900); c.restore();
+    box(c, -9, -4, 18, 8, 2, f > 0.5 ? '#6fbf73' : '#e8584e'); stext(c, f > 0.5 ? T('OPEN', 'MỞ CỬA') : T('CLOSED', 'ĐÓNG'), 0, 0.3, 4.2, '#fff', 900); c.restore();
     // steam from the hatch
     for (let i = 0; i < 3; i++) { const kk = (t * 0.6 + i / 3) % 1; c.globalAlpha = 0.5 * (1 - kk); c.strokeStyle = '#fff'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(hx - 10 + i * 10, hy - 2 - kk * 14); c.quadraticCurveTo(hx - 7 + i * 10, hy - 6 - kk * 14, hx - 10 + i * 10, hy - 10 - kk * 14); c.stroke(); } c.globalAlpha = 1;
-  } else if (!broken && k >= 1) { c.save(); c.translate(32, -h + 12); box(c, -9, -4, 18, 8, 2, '#b8a898'); text(c, T('CLOSED', 'ĐÓNG'), 0, 0.3, 4.4, '#fff', 900); c.restore(); }
+  } else if (!broken && k >= 1) { c.save(); c.translate(32, -h + 12); box(c, -9, -4, 18, 8, 2, '#b8a898'); stext(c, T('CLOSED', 'ĐÓNG'), 0, 0.3, 4.4, '#fff', 900); c.restore(); }
   if (!broken && (s.level || 1) >= 2) lanternShape(c, -w / 2 + 4, -h + 2, 0.7, '#ea5a4f', t, b.x);
   if (!broken && (s.level || 1) >= 2 && nightA() > 0.05) glow(b, -w / 2 + 4, -h + 10, 26, 'rgba(255,190,110,.5)');
 }
@@ -198,7 +198,7 @@ export function drawShed(c, t, b) {
 function houseExtras(c, t, b, w, h) {
   switch (b.style) {
     case 'player': { // flower boxes, a dormer and a name plate with your name
-      for (const x of [-Math.min(32, w * 0.5 - 20), Math.min(32, w * 0.5 - 20)]) { box(c, x - 13, -h + 31, 26, 5, 2, '#b77a4f', INK, 0.8); for (let i = 0; i < 4; i++) circ(c, x - 9 + i * 6, -h + 30, 2.2, ['#ff8fb0', '#ffd35a', '#fff', '#f36d86'][i], INK, 0.4); }
+      for (const x of [-Math.min(32, w * 0.5 - 20), Math.min(32, w * 0.5 - 20)]) { box(c, x - 13, -h + 31, 26, 5, 2, '#b77a4f', INK, 0.8); for (let i = 0; i < 4; i++) flower(c, x - 9 + i * 6, -h + 29.6, 2.4, ['#ff8fb0', '#ffd35a', '#fff', '#f36d86'][i], i === 2 ? 1 : 0); }
       box(c, -12, -h - 34, 24, 18, 3, b.wall || '#f7dd8a', INK, 1); box(c, -7, -h - 30, 14, 11, 2, '#bfe6ef', INK, 0.8); poly(c, [-15, -h - 34, 0, -h - 44, 15, -h - 34], b.roof || '#d9784f', INK, 1);
       const nm = (G.state?.player?.name || '').slice(0, 10);
       if (nm) signBoard(c, -w / 2 + 14, -18, 26, 7, nm, '#fff5df', INK);
@@ -216,12 +216,12 @@ function houseExtras(c, t, b, w, h) {
     }
     case 'flowers': { // Cô Lan: flower buckets out front and a striped awning
       awning(c, 0, -h + 8, w - 20, ['#fff5df', '#f4a9b8'], 9);
-      for (let i = 0; i < 5; i++) { const x = -w / 2 + 8 + i * 12; if (Math.abs(x) < 20) continue; box(c, x - 5, -8, 10, 8, 2, '#8fb7e0', INK, 0.7); for (let k = 0; k < 4; k++) circ(c, x - 3 + k * 2, -11 - (k % 2) * 2 + Math.sin(t * 2 + i + k) * 0.4, 2, ['#ff8fb0', '#ffd35a', '#fff', '#e97ad0'][(i + k) % 4], INK, 0.3); }
+      for (let i = 0; i < 5; i++) { const x = -w / 2 + 8 + i * 12; if (Math.abs(x) < 20) continue; box(c, x - 5, -8, 10, 8, 2, '#8fb7e0', INK, 0.7); for (let k = 0; k < 4; k++) flower(c, x - 3 + k * 2, -11 - (k % 2) * 2 + Math.sin(t * 2 + i + k) * 0.4, 2.1, ['#ff8fb0', '#ffd35a', '#fff', '#e97ad0'][(i + k) % 4], k % 3 === 1 ? 2 : 0); }
       break;
     }
     case 'florist': { // Cô Lan's flower shop: unmistakable from the path
       const PET = ['#ff8fb0', '#ffd35a', '#fff', '#e97ad0', '#f36d86', '#c9b6e8', '#ffa53a'];
-      const bloom = (x, y, r, col, ph = 0) => { const sw = Math.sin(t * 1.8 + ph + x) * 0.5; for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; circ(c, x + sw + Math.cos(a) * r * 0.8, y + Math.sin(a) * r * 0.8, r * 0.62, col, INK, 0.35); } circ(c, x + sw, y, r * 0.45, '#ffd35a', INK, 0.3); };
+      const bloom = (x, y, r, col, ph = 0) => { const sw = Math.sin(t * 1.8 + ph + x) * 0.5; flower(c, x + sw, y, r * 1.25, col, ((ph * 3 + x) | 0) % 4 === 0 ? 1 : ((ph + x * 2) | 0) % 5 === 0 ? 2 : 0); };
       // bouquets filling both display windows
       const wx = Math.min(32, w * 0.5 - 20);
       for (const x of [-wx, wx]) { box(c, x - 9, -h + 24, 18, 5, 1.5, '#8fb7e0', INK, 0.6); for (let k = 0; k < 5; k++) { line(c, x - 6 + k * 3, -h + 24, x - 6 + k * 3.2, -h + 19 - (k % 2) * 2, '#5f9f45', 0.8); bloom(x - 6 + k * 3.2, -h + 18 - (k % 2) * 2, 2, PET[(k + (x > 0 ? 2 : 0)) % PET.length], k); } }
@@ -235,20 +235,19 @@ function houseExtras(c, t, b, w, h) {
       // tiered flower-bucket stands on both sides of the door
       for (const side of [-1, 1]) {
         const cx = side * (w / 2 + 8);
-        box(c, cx - 16, -14, 32, 3, 1, '#a8763f', INK, 0.7); box(c, cx - 12, -26, 24, 3, 1, '#a8763f', INK, 0.7);
-        for (const lx of [cx - 15, cx + 13]) box(c, lx, -26, 2.5, 26, 0.6, '#8a5f3e', INK, 0.5);
+        for (const lx of [cx - 15, cx + 13]) box(c, lx, -14, 2.5, 14, 0.6, '#8a5f3e', INK, 0.5);
+        box(c, cx - 16, -14, 32, 3, 1, '#a8763f', INK, 0.7);
         for (let i = 0; i < 3; i++) { const x = cx - 10 + i * 10; poly(c, [x - 4.5, -14, x + 4.5, -14, x + 3.5, -22, x - 3.5, -22], ['#8fb7e0', '#b9c3cb', '#f4a9b8'][i], INK, 0.6); for (let k = 0; k < 4; k++) bloom(x - 3 + k * 2, -24 - (k % 2) * 2.5, 1.9, PET[(i * 2 + k + (side > 0 ? 3 : 0)) % PET.length], i + k); }
-        for (let i = 0; i < 2; i++) { const x = cx - 5 + i * 10; poly(c, [x - 4, -26, x + 4, -26, x + 3, -33, x - 3, -33], ['#f4a9b8', '#8fb7e0'][i], INK, 0.6); for (let k = 0; k < 3; k++) bloom(x - 2 + k * 2, -35 - (k % 2) * 2, 1.9, PET[(i + k + 1 + (side > 0 ? 2 : 0)) % PET.length], k); }
         for (let i = 0; i < 4; i++) { const x = cx - 12 + i * 8; box(c, x - 3.5, -6, 7, 6, 1.4, ['#d9784f', '#c9975f'][i % 2], INK, 0.6); bloom(x, -8, 2.1, PET[(i + (side > 0 ? 4 : 1)) % PET.length], i); }
       }
       // sunflowers leaning on the wall + a chalkboard easel on the path
       for (const x of [-w / 2 - 28, w / 2 + 28]) { line(c, x, 0, x + Math.sin(t + x) * 0.8, -34, '#5f9f45', 1.6); ell(c, x + 3, -18, 4, 2, '#6fb356', INK, 0.4); for (let k = 0; k < 10; k++) { const a = k / 10 * TAU; ell(c, x + Math.cos(a) * 4.2, -36 + Math.sin(a) * 4.2, 2.2, 1.3, '#ffcf3a', INK, 0.3); } circ(c, x, -36, 3, '#7a4a2a', INK, 0.5); }
       c.save(); c.translate(24, -1); poly(c, [-8, 0, 8, 0, 6, -18, -6, -18], '#3e4a45', INK, 1); line(c, -8, 0, -9, 3, '#8a5f3e', 1.2); line(c, 8, 0, 9, 3, '#8a5f3e', 1.2);
-      text(c, T('FRESH', 'HOA'), 0, -13, 3.6, '#fff', 900); text(c, T('FLOWERS', 'TƯƠI'), 0, -8.6, 3.2, '#fff', 900); bloom(-3, -3.5, 1.4, '#ff8fb0'); bloom(3, -3.5, 1.4, '#ffd35a'); c.restore();
+      stext(c, T('FRESH', 'HOA'), 0, -13, 3.6, '#fff', 900); stext(c, T('FLOWERS', 'TƯƠI'), 0, -8.6, 3.2, '#fff', 900); bloom(-3, -3.5, 1.4, '#ff8fb0'); bloom(3, -3.5, 1.4, '#ffd35a'); c.restore();
       // big roof sign with a flower emblem
       box(c, -34, -h - 40, 68, 20, 6, '#f28fb0', INK, 1.4); box(c, -32, -h - 38, 64, 16, 5, null, '#fff5df', 1);
-      text(c, T('FLOWER SHOP', 'TIỆM HOA'), 5, -h - 30, T(6.2, 7.4), '#fff', 900);
-      bloom(-25, -h - 30, 3.2, '#fff', 0); bloom(29, -h - 43, 2.6, '#ffd35a', 1); bloom(-31, -h - 20, 2.4, '#e97ad0', 2);
+      stext(c, T('FLOWER SHOP', 'TIỆM HOA'), 5, -h - 30, T(6.2, 7.4), '#fff', 900);
+      flower(c, -25, -h - 30, 4.4, '#fff', 0); flower(c, 29, -h - 43, 3.2, '#ffd35a', 1); flower(c, -31, -h - 20, 3, '#e97ad0', 0);
       line(c, -20, -h - 20, -20, -h - 13, '#8a5f3e', 1); line(c, 20, -h - 20, 20, -h - 13, '#8a5f3e', 1);
       if (nightA() > 0.05) glow(b, 0, -h - 30, 40, 'rgba(255,170,200,.45)');
       break;
@@ -263,7 +262,7 @@ function houseExtras(c, t, b, w, h) {
       break;
     }
     case 'clinic': { // Doctor An's clinic: white and mint, a glowing green cross, a ramp, a bench and opening hours
-      box(c, -w / 2 + 1, -14, w - 2, 5, 1, '#6fbfb0', null);                                   // mint stripe
+      box(c, -w / 2 + 1, -14, w / 2 - 13, 5, 1, '#6fbfb0', null); box(c, 12, -14, w / 2 - 13, 5, 1, '#6fbfb0', null);   // mint stripe, broken around the door
       // green cross light box on the roof edge
       box(c, -11, -h - 30, 22, 22, 4, '#fff', INK, 1); box(c, -3, -h - 27, 6, 16, 1, '#3fae5c', null); box(c, -8, -h - 22, 16, 6, 1, '#3fae5c', null);
       if (nightA() > 0.05) glow(b, 0, -h - 19, 30, 'rgba(120,230,150,.45)');
@@ -271,7 +270,7 @@ function houseExtras(c, t, b, w, h) {
       // blinds in the windows
       for (const x of [-Math.min(32, w * 0.5 - 20), Math.min(32, w * 0.5 - 20)]) for (let i = 0; i < 4; i++) line(c, x - 10, -h + 15 + i * 4, x + 10, -h + 15 + i * 4, 'rgba(255,255,255,.75)', 0.9);
       // ramp with a rail, opening hours plate, a bench and a first-aid box by the door
-      poly(c, [12, 0, 30, 0, 30, -3, 12, -1], '#d8d2c8', INK, 0.7); line(c, 12, -9, 30, -12, '#9aa3ad', 1.2); line(c, 30, -12, 30, -3, '#9aa3ad', 1.2);
+      poly(c, [15, 0, 33, 0, 33, -3, 15, -1], '#d8d2c8', INK, 0.7); line(c, 18, -8, 33, -11, '#9aa3ad', 1.2); line(c, 18, -8, 18, -1, '#9aa3ad', 1.2); line(c, 33, -11, 33, -3, '#9aa3ad', 1.2);
       box(c, -22, -26, 10, 12, 1.5, '#fffaf0', INK, 0.6); for (let i = 0; i < 3; i++) line(c, -20, -23 + i * 3, -14, -23 + i * 3, '#8a96a0', 0.6);
       box(c, -w / 2 - 14, -9, 20, 4, 1.5, '#8fb7e0', INK, 0.7); for (const x of [-w / 2 - 12, -w / 2 + 4]) line(c, x, -5, x, 0, INK, 1.2);
       limb(c, [w / 2 + 8, 0, w / 2 + 8, -16], 2, '#8a5f3e'); box(c, w / 2 + 2, -24, 12, 9, 3, '#e8584e'); box(c, w / 2 + 6.5, -22.5, 3, 6, 0.4, '#fff', null); box(c, w / 2 + 5, -21, 6, 3, 0.4, '#fff', null);
@@ -353,7 +352,7 @@ export function drawShop(c, t, b) {
     door(c, w / 2 - 24, 26, 38, '#bfe6ef', b.doorOpen || 0, { double: true, inside: '#f7f0dc', matCol: '#6fbf73' });
     awning(c, -14, -h + 12, w - 32, ['#fff5df', '#6fbf73'], 12);
     box(c, -w / 2 - 4, -h - 22, w + 8, 24, 4, '#6fbf73');
-    text(c, T('BINH MINH MARKET', 'SIÊU THỊ BÌNH MINH'), 0, -h - 10, 11, '#fff', 900, 'center', INK, 2.4);
+    stext(c, T('BINH MINH MARKET', 'SIÊU THỊ BÌNH MINH'), 0, -h - 10, 11, '#fff', 900, 'center', INK, 2.4);
     circ(c, -w / 2 + 10, -h - 10, 7, '#fff5df');
     poly(c, [-w / 2 + 6, -h - 12, -w / 2 + 14, -h - 12, -w / 2 + 13, -h - 7, -w / 2 + 7, -h - 7], '#f28f7c', INK, 0.7);
   } else if (kind === 'materials') {
@@ -366,7 +365,7 @@ export function drawShop(c, t, b) {
     door(c, w / 2 - 22, 22, 36, '#8f9aa3', b.doorOpen || 0, { matCol: '#e9c46f' });
     tinRoof(c, w, 26, h, '#5f8fb8');
     box(c, -w / 2 + 6, -h - 34, w - 12, 20, 3, '#f7de8c');
-    text(c, T('BEN VUNG MATERIALS', 'VLXD BỀN VỮNG'), 0, -h - 23.5, 10, '#6e4430', 900);
+    stext(c, T('BEN VUNG MATERIALS', 'VLXD BỀN VỮNG'), 0, -h - 23.5, 10, '#6e4430', 900);
   } else if (kind === 'furniture') {
     box(c, -w / 2 + 10, -h + 14, 52, h - 20, 3, nightA() > 0.05 ? winLit() : '#d9f1f6');
     // display: a chair and a lamp
@@ -389,7 +388,7 @@ export function drawShop(c, t, b) {
     awning(c, -14, -h + 12, w - 32, ['#fff5f7', '#f28fa3'], 12);
     box(c, -w / 2 - 2, -h - 22, w + 4, 22, 10, '#f28fa3');
     for (let i = 0; i < 9; i++) circ(c, -w / 2 + 6 + i * (w - 8) / 8, -h, 3.2, '#f28fa3', null);
-    { const lab = T('CÔ BA\'S BOUTIQUE', 'TIỆM THỜI TRANG CÔ BA'); text(c, lab, -5, -h - 11, Math.min(10.5, (w - 34) / lab.length * 1.75), '#fff', 900, 'center', INK, 2.4); }   // long names shrink to fit
+    { const lab = T('CÔ BA\'S BOUTIQUE', 'TIỆM THỜI TRANG CÔ BA'); stext(c, lab, -5, -h - 11, Math.min(10.5, (w - 34) / lab.length * 1.75), '#fff', 900, 'center', INK, 2.4); }   // long names shrink to fit
     // a little hanger icon
     { const hx = w / 2 - 6, hy = -h - 11; c.strokeStyle = '#fff'; c.lineWidth = 1.4; c.lineCap = 'round';
       c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx, hy - 2.5); c.arc(hx + 2, hy - 2.5, 2, Math.PI, Math.PI * 2.1); c.stroke();          // the hook
@@ -416,7 +415,7 @@ export function drawShop(c, t, b) {
     circ(c, px, py - 1, 3.4, '#f2c14e', INK, 0.8); circ(c, px, py + 31, 3, '#f2c14e', INK, 0.8);
     awning(c, -14, -h + 12, w - 32, ['#effaf6', '#6fbfb0'], 12);
     box(c, -w / 2 - 2, -h - 22, w + 4, 22, 10, '#6fbfb0');
-    text(c, T('SALON TÓC XINH', 'SALON TÓC XINH'), -6, -h - 11, 10.5, '#fff', 900, 'center', INK, 2.4);
+    stext(c, T('SALON TÓC XINH', 'SALON TÓC XINH'), -6, -h - 11, 10.5, '#fff', 900, 'center', INK, 2.4);
     // scissors icon
     c.strokeStyle = '#fff'; c.lineWidth = 1.3; circ(c, w / 2 - 12, -h - 7, 2, null, '#fff', 1.3); circ(c, w / 2 - 6, -h - 7, 2, null, '#fff', 1.3);
     c.beginPath(); c.moveTo(w / 2 - 11, -h - 9); c.lineTo(w / 2 - 4, -h - 16); c.moveTo(w / 2 - 7, -h - 9); c.lineTo(w / 2 - 14, -h - 16); c.stroke();
@@ -427,12 +426,12 @@ export function drawShop(c, t, b) {
     const wx = -w / 2 + 30;
     box(c, wx - 12, -26, 24, 16, 2, '#bfe6ef', INK, 0.8); ell(c, wx - 4 + Math.sin(t * 1.5) * 4, -18, 3, 1.8, '#f2a14e', null); ell(c, wx + 5 - Math.sin(t * 1.3) * 3, -21, 2.4, 1.4, '#e8584e', null);
     ell(c, wx + 30, -16, 10, 5, '#e3b07a', INK, 0.8); circ(c, wx + 38, -20, 5, '#e3b07a', INK, 0.8); ell(c, wx + 41, -24, 2, 3.2, '#b98049', INK, 0.5);
-    for (let i = 0; i < 3; i++) { const k = (t * 0.5 + i / 3) % 1; c.globalAlpha = 1 - k; text(c, 'z', wx + 44 + k * 6, -30 - k * 10, 5, '#5b3f36', 900); } c.globalAlpha = 1;
+    for (let i = 0; i < 3; i++) { const k = (t * 0.5 + i / 3) % 1; c.globalAlpha = 1 - k; stext(c, 'z', wx + 44 + k * 6, -30 - k * 10, 5, '#5b3f36', 900); } c.globalAlpha = 1;
     if (nightA() > 0.05) glow(b, -w / 2 + 40, -h + 30, 46, 'rgba(255,230,160,.5)');
     door(c, w / 2 - 24, 24, 36, '#f2c14e', b.doorOpen || 0, { matCol: '#f08ca0', inside: '#fff8e8' });
     awning(c, -14, -h + 12, w - 32, ['#fff8e8', '#f2a14e'], 12);
     box(c, -w / 2 - 2, -h - 22, w + 4, 22, 10, '#f2a14e');
-    text(c, T('BÉ BÔNG\'S PETS', 'THÚ CƯNG BÉ BÔNG'), -4, -h - 11, 10, '#fff', 900, 'center', INK, 2.4);
+    stext(c, T('BÉ BÔNG\'S PETS', 'THÚ CƯNG BÉ BÔNG'), -4, -h - 11, 10, '#fff', 900, 'center', INK, 2.4);
     // paw print badge
     const px = w / 2 - 10, py = -h - 11; circ(c, px, py + 1.5, 3, '#fff', null); for (const [dx, dy] of [[-3, -3], [0, -4.4], [3, -3]]) circ(c, px + dx, py + dy, 1.3, '#fff', null);
   }
@@ -453,7 +452,7 @@ export function drawRestaurant(c, t, b) {
     windowBox(c, x, -h + 8, 22, 26, { shutter: broken ? '#8a8a7a' : '#5f9f7a', broken: broken && i % 2 === 0, b });
   }
   // balcony rail with flower pots once restored
-  if (!broken) { for (let x = -w / 2 + 6; x < w / 2 - 4; x += 8) line(c, x, -h / 2 - 3, x, -h / 2 - 12, INK, 1); line(c, -w / 2 + 4, -h / 2 - 12, w / 2 - 4, -h / 2 - 12, INK, 1.6); if ((s.level || 1) >= 2) for (let i = 0; i < 6; i++) { circ(c, -w / 2 + 20 + i * 38, -h / 2 - 14, 4, ['#ff8fb0', '#ffd35a', '#fff'][i % 3], INK, 0.6); } }
+  if (!broken) { for (let x = -w / 2 + 6; x < w / 2 - 4; x += 8) line(c, x, -h / 2 - 3, x, -h / 2 - 12, INK, 1); line(c, -w / 2 + 4, -h / 2 - 12, w / 2 - 4, -h / 2 - 12, INK, 1.6); if ((s.level || 1) >= 2) for (let i = 0; i < 6; i++) { flower(c, -w / 2 + 20 + i * 38, -h / 2 - 14.5, 4.2, ['#ff8fb0', '#ffd35a', '#fff'][i % 3], i % 3 === 2 ? 1 : 0); } }
   // ground floor: arched windows + double doors
   for (const x of [-78, -38, 38, 78]) {
     const lit = !broken && (s.open || nightA() > 0.05);
@@ -569,7 +568,7 @@ export function drawKiosk(c, t, b) {
     for (const x of [-w / 2 - 12, w / 2 + 12]) { limb(c, [x, 0, x, -30], 2, '#8a5f3e'); const k = Math.sin(t * 8 + x) * 1.2; c.beginPath(); c.moveTo(x - 3, -30); c.quadraticCurveTo(x + k, -42, x + 3, -30); c.fillStyle = '#ff9a3a'; c.fill(); if (nightA() > 0.05) glow(b, x, -34, 26, 'rgba(255,170,90,.5)'); }
   }
   if (!own) { // for sale board
-    c.save(); c.translate(w / 2 - 12, -h + 26); c.rotate(0.12); box(c, -16, -7, 32, 14, 2, '#fffaf0', INK, 0.9); text(c, T('FOR SALE', 'CẦN BÁN'), 0, 0.5, 5.6, '#e8584e', 900); c.restore();
+    c.save(); c.translate(w / 2 - 12, -h + 26); c.rotate(0.12); box(c, -16, -7, 32, 14, 2, '#fffaf0', INK, 0.9); stext(c, T('FOR SALE', 'CẦN BÁN'), 0, 0.5, 5.6, '#e8584e', 900); c.restore();
   }
 }
 function steamPuffs(c, t, x, y) { for (let i = 0; i < 3; i++) { const k = (t * 0.8 + i / 3) % 1; c.globalAlpha = 0.6 * (1 - k); circ(c, x - 8 + i * 8 + Math.sin(k * 5) * 2, y - k * 14, 2 + k * 3, '#fff', null); } c.globalAlpha = 1; }

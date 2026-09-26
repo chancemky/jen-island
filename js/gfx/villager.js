@@ -11,7 +11,7 @@
 // down slightly: screenX = x, screenY = -y*CY + z*SZ.
 
 import { TAU, shade, clamp } from '../core/util.js';
-import { INK, ell, circ, limb, poly, shadow, heart, line } from './draw.js';
+import { INK, ell, circ, limb, poly, shadow, heart, line, box } from './draw.js';
 import { drawHeld } from './food.js';
 import { HAIRCUTS } from '../data/hair.js';
 
@@ -366,7 +366,26 @@ function drawHat(c, L, S, yawFace, t) {
     const e1 = [], N = 40; for (let i = 0; i <= N; i++) { const lon = -Math.PI + i / N * TAU, q = onHead(S, yawFace, lon, latF(lon), HR * 1.07); if (q.dz >= 0) e1.push(proj(q.p)); }
     if (e1.length > 1) { c.beginPath(); c.moveTo(e1[0][0], e1[0][1]); for (const p of e1) c.lineTo(p[0], p[1]); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke(); }
     c.save(); c.beginPath(); c.ellipse(hc[0], hc[1], HR * 1.07, HR * 1.06, 0, Math.PI * 1.05, Math.PI * 1.95); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); c.restore();
-    if (h === 'cap') { const f = onHead(S, yawFace, 0, lat + 0.02, HR * 1.1), fp = proj(add(f.p, rotY([0, 0, 5.5], yawFace))); const b = proj(f.p); c.beginPath(); c.ellipse((b[0] + fp[0]) / 2, (b[1] + fp[1]) / 2 + 0.5, 3 + Math.abs(fp[0] - b[0]) * 0.5 + 2, 2 + Math.abs(fp[1] - b[1]) * 0.5, 0, 0, TAU); c.fillStyle = shade(col, -16); c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); circ(c, top[0], top[1] + 1, 1, shade(col, -30), null); }
+    if (h === 'cap') {
+      // the bill: a curved peak sticking out from the front of the crown (real 3D, so it
+      // reads as a wide peak from the front, a blade in profile, and hides behind the head)
+      const r = HR * 1.07, cl = Math.cos(lat), sl = Math.sin(lat), BL = HR * 0.95;
+      const at = (lon, out) => { const ext = out ? BL * Math.pow(Math.max(0, Math.cos(lon * 0.95)), 0.7) : 0, drop = out ? HR * 0.14 * Math.cos(lon) : 0;
+        const v = [Math.sin(lon) * cl * r * (out ? 1.04 : 1), sl * r * 0.97 - drop, Math.cos(lon) * cl * r + ext]; return proj(add(S.head, rotY(v, yawFace))); };
+      const pts = []; for (let k = 0; k <= 16; k++) pts.push(at(-1.25 + k / 16 * 2.5, false)); for (let k = 16; k >= 0; k--) pts.push(at(-1.25 + k / 16 * 2.5, true));
+      const tipZ = Math.cos(yawFace);
+      c.save();
+      if (tipZ < 0) { c.beginPath(); c.rect(hc[0] - 60, hc[1] - 60, 120, 120); c.ellipse(hc[0], hc[1], HR * 1.07, HR * 1.06, 0, 0, TAU); c.clip('evenodd'); }   // behind the head: only the tips peek out
+      else if (tipZ > 0.3) { c.beginPath(); for (let k = 0; k <= 16; k++) { const q = at(-1.1 + k / 16 * 2.2, false); k ? c.lineTo(q[0], q[1] + 1.3) : c.moveTo(q[0], q[1] + 1.3); } c.strokeStyle = 'rgba(60,30,20,.16)'; c.lineWidth = 2.2; c.stroke(); }   // soft shadow on the forehead
+      c.beginPath(); pts.forEach((q, k) => k ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.closePath();
+      c.fillStyle = shade(col, -12); c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+      if (tipZ > 0.2) { c.beginPath(); for (let k = 0; k <= 12; k++) { const lon = -1 + k / 12 * 2, a = at(lon, false), b = at(lon, true), q = [a[0] + (b[0] - a[0]) * 0.72, a[1] + (b[1] - a[1]) * 0.72]; k ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); } c.strokeStyle = shade(col, -32); c.lineWidth = 0.5; c.stroke(); }   // stitching
+      c.restore();
+      // the adjustable strap and the little opening above it at the back
+      const bq = onHead(S, yawFace, Math.PI, 0.16, HR * 1.07);
+      if (bq.dz > 0.15) { const bp = proj(bq.p), kx = Math.max(0.3, bq.dz); c.beginPath(); c.ellipse(bp[0], bp[1] + 0.6, 2.6 * kx, 2, 0, Math.PI, 0); c.closePath(); c.fillStyle = L.hair || '#4a322b'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.6; c.stroke(); box(c, bp[0] - 3 * kx, bp[1] + 0.2, 6 * kx, 1.2, 0.4, shade(col, -20), INK, 0.5); }
+      circ(c, top[0], top[1] + 1, 1, shade(col, -30), null);
+    }
     if (h === 'beanie') { circ(c, top[0], top[1] - 1.5, 2.8, L.hatRibbon || '#fffaf0', INK, 0.8); }
     if (h === 'helmet') { c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.ellipse(hc[0] - 3, hc[1] - HR * 0.6, 4, 1.6, -0.3, 0, TAU); c.fill(); }
     if (h === 'bandana') { const k = onHead(S, yawFace, Math.PI, 0.2, HR * 1.08); if (k.dz < 0.2) { const kp = proj(k.p); poly(c, [kp[0], kp[1], kp[0] - 4, kp[1] + 3, kp[0] - 3, kp[1] - 1], col, INK, 0.7); } for (let i = -2; i <= 2; i++) { const q = onHead(S, yawFace, i * 0.35, 0.5, HR * 1.07); if (q.dz > 0.1) { const pp = proj(q.p); circ(c, pp[0], pp[1], 0.5, 'rgba(255,255,255,.9)', null); } } }
@@ -455,6 +474,37 @@ function drawTorso(c, L, S, a, t) {
   }
   if (L.cape) { c.beginPath(); c.moveTo(neck[0] - 3, top[1] - 2); c.lineTo(neck[0] + 3, top[1] - 2); c.lineTo(bot[0] + wB + 3.5, hemY + 2.5); c.quadraticCurveTo(bot[0], hemY + 4.5, bot[0] - wB - 3.5, hemY + 2.5); c.closePath(); c.fillStyle = L.cape; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke(); c.strokeStyle = 'rgba(111,191,176,.6)'; c.lineWidth = 0.6; for (let i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(neck[0] + i * 0.8, top[1]); c.lineTo(bot[0] + i * 2.4, hemY + 3); c.stroke(); } }
   if (L.scarf) { ell(c, neck[0], neck[1] + 1.4, w(4.8, 3.6), 1.9, L.scarf, INK, 0.8); }
+  // work gear that says who someone is
+  if (L.coat) {                                         // a doctor's long white coat, open at the front
+    const cw = wT + 0.6, cb = wB + 1.2, ch = Math.max(hemY, bot[1]) + 5.2;
+    c.beginPath(); c.moveTo(top[0] - cw, top[1] + 1.2); c.quadraticCurveTo(top[0] - cw, top[1] - 1.8, top[0] - cw + 2.2, top[1] - 2); c.lineTo(top[0] + cw - 2.2, top[1] - 2); c.quadraticCurveTo(top[0] + cw, top[1] - 1.8, top[0] + cw, top[1] + 1.2);
+    c.lineTo(bot[0] + cb, ch); c.quadraticCurveTo(bot[0], ch + 1.2, bot[0] - cb, ch); c.closePath();
+    c.fillStyle = L.coat; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    if (facing > 0.15) {
+      poly(c, [fx - 2.2 * k, top[1] - 1.8, fx + 2.2 * k, top[1] - 1.8, fx + 1.2 * k, ch, fx - 1.2 * k, ch], L.top, INK, 0.7);            // the shirt shows down the middle
+      poly(c, [fx - 2.2 * k, top[1] - 1.8, fx - 3.8 * k, top[1] + 0.4, fx - 1.4 * k, top[1] + 4], shade(L.coat, -6), INK, 0.6);            // lapels
+      poly(c, [fx + 2.2 * k, top[1] - 1.8, fx + 3.8 * k, top[1] + 0.4, fx + 1.4 * k, top[1] + 4], shade(L.coat, -6), INK, 0.6);
+      box(c, fx + 2.2 * k, top[1] + 3, 2.4 * k, 2, 0.4, shade(L.coat, -8), INK, 0.5);                                                          // breast pocket with a pen
+      line(c, fx + 2.8 * k, top[1] + 2.4, fx + 2.8 * k, top[1] + 3.6, '#5f8fd0', 0.7);
+    } else line(c, bot[0], top[1] + 2, bot[0], ch, shade(L.coat, -14), 0.7);                                                              // back seam
+  }
+  if (L.steth && facing > 0.15) {                       // stethoscope round the neck
+    c.strokeStyle = '#6b737c'; c.lineWidth = 0.8; c.beginPath(); c.moveTo(fx - 3.2 * k, top[1] - 1.4); c.quadraticCurveTo(fx - 3.6 * k, top[1] + 4, fx - 1.4 * k, top[1] + 5.4); c.moveTo(fx + 3.2 * k, top[1] - 1.4); c.quadraticCurveTo(fx + 3 * k, top[1] + 2.6, fx + 2.2 * k, top[1] + 4); c.stroke();
+    circ(c, fx - 1.2 * k, top[1] + 5.8, 1, '#b9c3cb', INK, 0.5);
+  }
+  if (L.tape && facing > 0.1) {                         // a tailor's measuring tape over the shoulders
+    for (const sd of [-1, 1]) poly(c, [fx + sd * 3.4 * k, top[1] - 1.6, fx + sd * 2.4 * k, top[1] - 1.6, fx + sd * 2.6 * k, top[1] + 7, fx + sd * 3.6 * k, top[1] + 7], '#f5d06a', INK, 0.5);
+    for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) line(c, fx + sd * 2.5 * k, top[1] + 0.4 + i * 1.6, fx + sd * 3 * k, top[1] + 0.4 + i * 1.6, INK, 0.3);
+  }
+  if (L.badge && facing > 0.2) { box(c, fx - 4 * k, top[1] + 2.2, 2.6 * k, 1.8, 0.4, '#fff', INK, 0.5); line(c, fx - 3.8 * k, top[1] + 2.5, fx - 1.6 * k, top[1] + 2.5, L.badge, 0.6); }
+  if (L.comb && facing > 0.2) { box(c, fx + 1.6 * k, hemY - 4.4, 2.2 * k, 2.6, 0.4, shade(L.apron || L.top, -10), INK, 0.5); line(c, fx + 2.2 * k, hemY - 5.6, fx + 2.2 * k, hemY - 4, '#2f2a30', 0.6); line(c, fx + 3 * k, hemY - 5.8, fx + 3 * k, hemY - 4, '#b9c3cb', 0.6); }
+  if (L.toolbelt) {                                     // a leather tool belt with a hammer at the hip
+    const bw = w(5.9, 4.1);
+    c.beginPath(); c.moveTo(bot[0] - bw, bot[1] - 2); c.lineTo(bot[0] + bw, bot[1] - 2); c.lineTo(bot[0] + bw, bot[1] + 0.4); c.lineTo(bot[0] - bw, bot[1] + 0.4); c.closePath(); c.fillStyle = '#8a5f3e'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke();
+    const sd = Math.sin(yaw) >= 0 ? -1 : 1, px = bot[0] + sd * bw * 0.7;
+    box(c, px - 1.8, bot[1] - 1, 3.6, 3.6, 0.6, '#a8763f', INK, 0.6);
+    line(c, px + 0.6, bot[1] - 1, px + 0.9, bot[1] + 4.4, '#c9955e', 1); box(c, px - 0.8, bot[1] + 3.8, 3.4, 1.4, 0.3, '#8f9aa3', INK, 0.4);
+  }
   // neck
   void neck;
 }
@@ -540,13 +590,13 @@ function drawFoot(c, L, lg) {
 function drawArm(c, L, arm) {
   const C = cols(L);
   capsule(c, [arm.sho, arm.elbow, arm.hand], 3.0, L.armSkin || L.skin);
-  const sleeve = L.sleeve ?? 0.55;
+  const sleeve = L.coat ? 0.92 : L.sleeve ?? 0.55;
   if (sleeve > 0) {
     const tot = UPPER + FORE, cut = sleeve * tot;
     const pts = [arm.sho];
     if (cut <= UPPER) pts.push(add(arm.sho, mul(sub(arm.elbow, arm.sho), cut / UPPER)));
     else { pts.push(arm.elbow, add(arm.elbow, mul(sub(arm.hand, arm.elbow), (cut - UPPER) / FORE))); }
-    capsule(c, pts, 3.7, L.top);
+    capsule(c, pts, 3.7, L.coat || L.top);
   }
   const h = proj(arm.hand);
   circ(c, h[0], h[1], 1.85, L.skin, INK, 0.9);

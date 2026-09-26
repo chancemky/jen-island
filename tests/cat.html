@@ -1,0 +1,8 @@
+<!doctype html><script type=importmap>{"imports":{"/js/systems/fun.js":"/tests/stubs/fun.js"}}</script><body style="margin:0;background:#a3d68a"><canvas id=c></canvas><div hidden><div id=dialog></div><div id=dlgName></div><div id=dlgText></div><div id=dlgNext></div><div id=dlgChoices></div><canvas id=portrait></canvas></div><script type=module>
+import '../js/systems/state.js';
+import { drawCat } from '../js/gfx/cat.js';
+const Z=6, cv=document.getElementById('c'), list=[{dir:'down'},{dir:'up'},{dir:'right'},{dir:'up',moving:1,walkPh:1},{act:'sleep'},{act:'sleep',emo:'happy'}];
+cv.width=list.length*40*Z; cv.height=50*Z; const c=cv.getContext('2d'); c.lineJoin='round'; c.lineCap='round';
+list.forEach((o,i)=>{ c.save(); c.setTransform(Z,0,0,Z,(i*40+20)*Z,44*Z); drawCat(c,{look:{cat:true},seed:1,moving:0,...o},1.3); c.restore(); });
+window.done=1;
+</script>

@@ -40,20 +40,20 @@ export const RESIDENTS = {
   co_lan: { name: 'Cô Lan', role: 'Florist', look: { skin: '#f8d6bd', eyeCol: '#4f9f7a', hair: '#2f2a30', hairStyle: 'sidepart', top: '#f8c0a0', topStyle: 'aodai', bottom: '#fff', bottomLen: 5, shoe: '#f0e6da', lashes: true, flower: '#ff8fb0' }, personality: 'picky' },
   be_na: { name: 'Bé Na', role: 'Kid who loves chè', look: { skin: '#fde5d2', eyeCol: '#c9803a', hair: '#6e4430', hairStyle: 'buns', top: '#f7de8c', topStyle: 'dress', bottom: '#f7de8c', shoe: '#e9848f', scale: 0.8, lashes: true }, personality: 'excited' },
   anh_tuan: { name: 'Anh Tuấn', role: 'Scooter taxi driver', look: { skin: '#e3b08b', eyeCol: '#8a6ad0', hair: '#2f2a30', hairStyle: 'crop', top: '#9fd8c8', topStyle: 'shirt', bottom: '#3f4a5e', bottomLen: 5, shoe: '#7a5040', hat: 'bucket', hatColor: '#7aa38a' }, personality: 'regular' },
-  chi_mai: { get name() { return T('Doctor An', 'Bác sĩ An'); }, role: 'Island doctor', look: { skin: '#f1c6a4', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'highpony', top: '#a9cf9a', topStyle: 'shirt', bottom: '#6d7fa8', bottomLen: 5, shoe: '#f0e6da', lashes: true, lanyard: '#f28f7c', accent: '#f7de8c' }, personality: 'rushed' },
+  chi_mai: { get name() { return T('Doctor An', 'Bác sĩ An'); }, role: 'Island doctor', look: { skin: '#f1c6a4', eyeCol: '#8a5a40', hair: '#2f2a30', hairStyle: 'gentpart', top: '#a9d4f0', topStyle: 'shirt', coat: '#fdfdfb', steth: true, bottom: '#3f4a5e', bottomLen: 5, shoe: '#5f4a40', glasses: '#5b3f36', badge: '#3fae5c' }, personality: 'rushed' },
 };
 // Lives on Firefly Islet; appears once the Long Bridge is fixed.
 RESIDENTS.vy = { name: 'Vy', role: 'Painter', islet: true, look: { skin: '#fde5d2', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'frenchbob', top: '#9fd8c8', topStyle: 'tee', bottom: '#556b8a', bottomLen: 3, shoe: '#fff', lashes: true, hat: 'bucket', hatColor: '#3f4a5e' }, personality: 'excited' };
 // Shopkeepers.
 export const MERCHANTS = {
-  co_hoa: { name: 'Cô Hoa', role: 'Supermarket owner', look: { skin: '#f8d6bd', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'messybun', top: '#f28f7c', topStyle: 'tee', apron: '#fff1dc', bottom: '#556b8a', bottomLen: 5, shoe: '#f0e6da', lashes: true } },
-  chu_bay: { name: 'Chú Bảy', role: 'Material shop', look: { skin: '#cf9772', eyeCol: '#4f9f7a', hair: '#6e4430', hairStyle: 'crew', top: '#f7de8c', topStyle: 'shirt', apron: '#8b6b5a', bottom: '#3f4a5e', bottomLen: 5, shoe: '#7a5040', hat: 'cap', hatColor: '#e9848f' } },
-  anh_khoa: { name: 'Anh Khoa', role: 'Furniture maker', look: { skin: '#f1c6a4', eyeCol: '#8a5a40', hair: '#9a6443', hairStyle: 'manbun', top: '#9fd8c8', topStyle: 'tee', apron: '#c98f6b', bottom: '#8b6b5a', bottomLen: 5, shoe: '#5f6b86', glasses: '#5b3f36' } },
+  co_hoa: { name: 'Cô Hoa', role: 'Supermarket owner', look: { skin: '#f8d6bd', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'messybun', top: '#f28f7c', topStyle: 'tee', apron: '#6fbf73', badge: '#e8584e', bottom: '#556b8a', bottomLen: 5, shoe: '#f0e6da', lashes: true } },
+  chu_bay: { name: 'Chú Bảy', role: 'Material shop', look: { skin: '#cf9772', eyeCol: '#4f9f7a', hair: '#6e4430', hairStyle: 'crew', top: '#f7de8c', topStyle: 'shirt', apron: '#8b6b5a', toolbelt: true, bottom: '#3f4a5e', bottomLen: 5, shoe: '#7a5040', hat: 'helmet', hatColor: '#f5c542' } },
+  anh_khoa: { name: 'Anh Khoa', role: 'Furniture maker', look: { skin: '#f1c6a4', eyeCol: '#8a5a40', hair: '#9a6443', hairStyle: 'manbun', top: '#9fd8c8', topStyle: 'tee', apron: '#c98f6b', toolbelt: true, bottom: '#8b6b5a', bottomLen: 5, shoe: '#5f6b86', glasses: '#5b3f36' } },
   ba_sau: { name: 'Bà Sáu', role: 'Night market elder', look: { skin: '#e3b08b', eyeCol: '#5f8fd0', hair: '#c9c2c6', hairStyle: 'granny', top: '#f28f7c', topStyle: 'aodai', bottom: '#2f2a30', bottomLen: 5, shoe: '#7a5040', scale: 0.93 } },
-  co_ba: { name: 'Cô Ba', role: 'Tailor & boutique owner', look: { skin: '#f8d6bd', eyeCol: '#8a5a40', hair: '#6e4430', hairStyle: 'curtain', top: '#fff', topStyle: 'dress', bottom: '#fff', bottomLen: 5, shoe: '#f0e6da', lashes: true, hat: 'sunhat', hatColor: '#f3dcae' } },
-  chi_tien: { name: 'Chị Tiên', role: 'Hair stylist', look: { skin: '#f8d6bd', eyeCol: '#8a6ad0', hair: '#e59aac', hairStyle: 'shag', top: '#2f2a30', topStyle: 'tee', apron: '#9fd8c8', bottom: '#3f4a5e', bottomLen: 5, shoe: '#fff', lashes: true, glasses: '#5b3f36' } },
-  co_bong: { name: 'Cô Bông', role: 'Pet shop owner', look: { skin: '#f1c6a4', eyeCol: '#4f9f7a', hair: '#9a6443', hairStyle: 'messybun', top: '#f7de8c', topStyle: 'tee', apron: '#f2a14e', bottom: '#556b8a', bottomLen: 5, shoe: '#e9848f', lashes: true, glasses: '#8a6a5a' } },
-  captain: { name: 'Thuyền trưởng Vũ', role: 'Ferry captain', look: { skin: '#cf9772', eyeCol: '#3f6f5a', hair: '#2f2a30', hairStyle: 'gentpart', top: '#fff1dc', topStyle: 'shirt', bottom: '#3f4a5e', bottomLen: 5, shoe: '#2f2a30', hat: 'cap', hatColor: '#3f4a5e' } },
+  co_ba: { name: 'Cô Ba', role: 'Tailor & boutique owner', look: { skin: '#f8d6bd', eyeCol: '#8a5a40', hair: '#6e4430', hairStyle: 'curtain', top: '#fff', topStyle: 'dress', bottom: '#fff', bottomLen: 5, shoe: '#f0e6da', lashes: true, tape: true, necklace: '#fff' } },
+  chi_tien: { name: 'Chị Tiên', role: 'Hair stylist', look: { skin: '#f8d6bd', eyeCol: '#8a6ad0', hair: '#e59aac', hairStyle: 'shag', top: '#2f2a30', topStyle: 'tee', apron: '#2f2a30', comb: true, bottom: '#3f4a5e', bottomLen: 5, shoe: '#fff', lashes: true, glasses: '#5b3f36' } },
+  co_bong: { name: 'Cô Bông', role: 'Pet shop owner', look: { skin: '#f1c6a4', eyeCol: '#4f9f7a', hair: '#9a6443', hairStyle: 'messybun', top: '#f7de8c', topStyle: 'tee', apron: '#f2a14e', badge: '#f08ca0', bottom: '#556b8a', bottomLen: 5, shoe: '#e9848f', lashes: true, glasses: '#8a6a5a' } },
+  captain: { name: 'Thuyền trưởng Vũ', role: 'Ferry captain', look: { skin: '#cf9772', eyeCol: '#3f6f5a', hair: '#2f2a30', hairStyle: 'gentpart', top: '#fff1dc', topStyle: 'shirt', bottom: '#3f4a5e', bottomLen: 5, shoe: '#2f2a30', hat: 'cap', hatColor: '#fffdf6', badge: '#f2c14e', top2: '#3f4a5e' } },
 };
 
 export const MEO_LOOK = { cat: true, scale: 1 };
@@ -87,6 +87,11 @@ export function visitorLook(seed, personality = 'patient') {
   if (personality === 'rushed' && r() < 0.5) L.lanyard = '#6d7fa8';
   if (r() < 0.12 && fem && !L.hat) L.flower = pick(r, ['#ff8fb0', '#fff', '#ffd35a']);
   if (r() < 0.15) L.scale = 0.82; // a kid
+  // age group (you are 20): decides how they address you in Vietnamese
+  const ag = r();
+  L.age = L.scale < 0.9 ? 'kid' : ag < 0.12 ? 'teen' : ag < 0.5 ? 'peer' : ag < 0.8 ? 'adult' : ag < 0.95 ? 'middle' : 'elder';
+  if (L.age === 'middle' && r() < 0.35) L.hair = '#8f8494';                    // a little grey
+  if (L.age === 'elder') { L.hair = pick(r, ['#c9c2c6', '#b9b3ba', '#dcd6da']); if (fem && r() < 0.6) L.hairStyle = 'granny'; }
   return L;
 }
 
@@ -94,6 +99,7 @@ export const STAFF_OUTFIT = { apron: '#fff6e6', top: '#f28f7c', topStyle: 'tee' 
 export function employeeLook(seed, role) {
   const L = visitorLook(seed, 'regular');
   delete L.backpack; delete L.camera; delete L.lanyard; delete L.flower; delete L.tote; delete L.surf; delete L.guitar; delete L.suitcase; L.scale = 1;
+  if (L.age === 'kid' || L.age === 'teen') L.age = 'peer'; else if (L.age === 'elder') L.age = 'middle';   // staff are grown-ups of working age
   L.top = role === 'cook' ? '#fff6e6' : '#f28f7c'; L.topStyle = 'tee'; L.apron = role === 'cook' ? '#f7d6c0' : '#fff6e6';
   if (role === 'cook') { L.hat = 'chef'; } else if (role === 'cleaner') { L.hat = 'bandana'; L.hatColor = '#8fb7e0'; } else { L.hat = null; }
   return L;

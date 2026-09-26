@@ -14,7 +14,7 @@ export function renderOffice(pane, api) {
   const s = G.state, places = usedPlaces();
   const wages = Object.keys(s.keepers || {}).reduce((a, id) => a + keeperWage(id), 0);
   const st = staffedCount();
-  pane.appendChild(h('div', 'office-head', `<div><small>${T('Rent per day', 'Tiền thuê mỗi ngày')}</small><b>${money(rentToday())}</b></div><div><small>${T('Shopkeeper wages', 'Lương chủ quán')}</small><b>${money(wages)}</b></div><div><small>${T('Shops running themselves', 'Quán tự vận hành')}</small><b>${st.staffed}/${st.total}</b></div>`));
+  pane.appendChild(h('div', 'office-head', `<div><small>${T('Rent per day', 'Tiền thuê mỗi ngày')}</small><b>${money(rentToday())}</b></div><div><small>${T('Staff wages', 'Lương nhân viên')}</small><b>${money(wages)}</b></div><div><small>${T('Shops running themselves', 'Quán tự vận hành')}</small><b>${st.staffed}/${st.total}</b></div>`));
   if (s.day < 3) pane.appendChild(h('div', 'empty-note', T('Rent starts on day 3 — Mèo Mây talked the landlords into a welcome discount.', 'Tiền thuê bắt đầu từ ngày 3 — Mèo Mây đã xin chủ nhà giảm giá chào mừng.')));
   const list = h('div', 'list'); pane.appendChild(list);
   for (const id of places) {
@@ -37,12 +37,12 @@ export function renderOffice(pane, api) {
       } else if (keeperUnlocked()) {
         const c = candidate(id), tr = keeperTrait(c);
         card.appendChild(h('div', 'oc-line', `${T('Applicant', 'Ứng viên')}: <b>${escapeHtml(c.name)}</b> · ${escapeHtml(T(tr.en, tr.vi))} · ${T(`${money(keeperWage(id))}/day`, `${money(keeperWage(id))}/ngày`)}`));
-        row.appendChild(btn(T(`Hire · ${money(keeperWage(id) * 2)}`, `Thuê · ${money(keeperWage(id) * 2)}`), () => {
+        row.appendChild(btn(T(`Hire staff · ${money(keeperWage(id) * 2)}`, `Thuê nhân viên · ${money(keeperWage(id) * 2)}`), () => {
           if (!hireKeeper(id)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
           sfx('success'); toast({ text: T(`${c.name} will run ${bizName(id)}!`, `${c.name} sẽ trông ${bizName(id)}!`), sub: T('They open, prep and serve during opening hours. Keep the pantry stocked!', 'Họ sẽ mở cửa, sơ chế và bán trong giờ mở cửa. Nhớ giữ kho đủ hàng nha!'), icon: 'person' });
           api.rebuild();
         }, 'buy'));
-      } else card.appendChild(h('div', 'oc-line dim', T('Shopkeepers can be hired from Chapter 5.', 'Có thể thuê chủ quán từ Chương 5.')));
+      } else card.appendChild(h('div', 'oc-line dim', T('Staff can be hired from Chapter 5.', 'Có thể thuê nhân viên từ Chương 5.')));
       if (supplyUnlocked()) {
         if (hasSupply(id)) {
           const on = G.state.supply[id].on;
