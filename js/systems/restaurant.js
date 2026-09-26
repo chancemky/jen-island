@@ -176,7 +176,7 @@ function seatGuest(g) {
   const [table, seat] = fs;
   seat.cust = g; g.table = table; g.seat = seat; g.state = 'to-seat';
   g.actor.walkTo(sc.grid.path(g.actor.x, g.actor.y, seat.x, seat.y + 6)).then(() => {
-    g.actor.x = seat.x; g.actor.y = seat.y; g.actor.face(seat.dir); g.actor.sit = true;
+    g.actor.x = seat.x; g.actor.y = seat.y; g.actor.face(seat.dir); g.actor.sit = true; g.actor.seatH = 9;
     g.state = 'thinking'; g.t = rand(2.5, 4.5); g.actor.showEmote('think', 2.4);
   });
 }
@@ -273,7 +273,7 @@ function assign(a) {
   d.breakT -= 1;
   if (d.breakT <= 0) {
     d.breakT = (e.trait === 'steady' ? 400 : 120) + e.stats.reliability * 60 + rand(0, 80);
-    if (chance(e.trait === 'dreamy' ? 0.7 : 0.5 - e.stats.reliability * 0.07)) return task(a, 'break', BREAK, async () => { a.face('down'); a.sit = true; if (chance(0.5)) { a.setAct('drink', 'cup'); a.showEmote('note', 3); } else { a.setAct('sleep'); a.showEmote('zzz', 20); } await wait(rand(14, 26)); a.sit = false; a.setAct(null); a.emote = null; });
+    if (chance(e.trait === 'dreamy' ? 0.7 : 0.5 - e.stats.reliability * 0.07)) return task(a, 'break', BREAK, async () => { a.face('down'); a.sit = true; a.seatH = 9; if (chance(0.5)) { a.setAct('drink', 'cup'); a.showEmote('note', 3); } else { a.setAct('sleep'); a.showEmote('zzz', 20); } await wait(rand(14, 26)); a.sit = false; a.setAct(null); a.emote = null; });
   }
   const role = e.role, speedK = 1.4 - e.stats.speed * 0.12;
   if (role === 'server') {

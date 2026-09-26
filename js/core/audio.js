@@ -67,6 +67,7 @@ export function sfx(name, opt = {}) {
     case 'splash': tone(300, 0.18, { type: 'sine', vol: 0.06, slide: -200 }); tone(900, 0.08, { type: 'triangle', vol: 0.04, slide: -500, when: 0.02 }); break;
     case 'meow': tone(740, 0.22, { type: 'triangle', vol: 0.13, slide: 260, attack: 0.02 }); tone(980, 0.18, { type: 'sine', vol: 0.07, slide: -300, when: 0.12 }); break;
     case 'tap': tone(520, 0.06, { type: 'sine', vol: 0.18, slide: 180 }); break;
+    case 'hop': tone(300, 0.12, { type: 'sine', vol: 0.12, slide: 360 }); break;
     case 'pop': tone(420, 0.09, { type: 'sine', vol: 0.22, slide: 520 }); break;
     case 'ui': tone(700, 0.05, { type: 'triangle', vol: 0.12 }); break;
     case 'back': tone(520, 0.08, { type: 'triangle', vol: 0.12, slide: -200 }); break;

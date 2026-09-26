@@ -19,6 +19,7 @@ export const cs = {
     if (running) { await new Promise(r => queue.push(r)); }
     running = name;
     const pl = G.player;
+    if (pl.seat && !keepHud) { pl.seat = null; pl.sit = false; pl.seatH = undefined; } // story scenes stand you up
     pl.control = false; releaseJoystick();
     document.body.classList.add('cutscene');
     if (bars) cinema.classList.remove('hidden'), requestAnimationFrame(() => cinema.classList.add('on'));

@@ -1,0 +1,26 @@
+<!doctype html><body style="margin:0;background:#a3d68a"><canvas id=c></canvas><script type=module>
+import '../js/systems/state.js';
+import { drawHuman } from '../js/gfx/character.js';
+import { scooter } from '../js/gfx/props.js';
+import { playerLook, visitorLook, RESIDENTS } from '../js/data/looks.js';
+const Q=new URLSearchParams(location.search), T=+(Q.get('t')||0.3);
+const cv=document.getElementById("c"), Z=+(Q.get("z")||2.4); cv.width=1600*Z/2.4; cv.height=1000*Z/2.4; const c=cv.getContext('2d'); c.lineJoin='round'; c.lineCap='round';
+const looks=[playerLook({hairStyle:'bob'}), RESIDENTS.chu_hai.look, RESIDENTS.linh.look, visitorLook(7,'tourist')];
+const at=(x,y,fn)=>{c.save();c.setTransform(Z,0,0,Z,x*Z/2.4,y*Z/2.4);fn();c.restore();};
+// row 1: walk frames side / front / back
+[0,0.8,1.6,2.4].forEach((ph,i)=>at(70+i*120,160,()=>drawHuman(c,{look:looks[0],dir:'right',moving:1,walkPh:ph,seed:1},T)));
+[0,1.6].forEach((ph,i)=>at(570+i*120,160,()=>drawHuman(c,{look:looks[1],dir:'down',moving:1,walkPh:ph,seed:1},T)));
+[0.8].forEach((ph,i)=>at(830,160,()=>drawHuman(c,{look:looks[2],dir:'up',moving:1,walkPh:ph,seed:1},T)));
+// row 2: sitting front / side, chair heights; wave, hammer, phone
+at(70,400,()=>drawHuman(c,{look:looks[0],dir:'down',sit:true,seatH:10,seed:1},T));
+at(222,400,()=>drawHuman(c,{look:looks[1],dir:'right',sit:true,seatH:10,seed:1},T));
+at(374,400,()=>drawHuman(c,{look:looks[2],dir:'down',sit:true,seatH:3,seed:1},T));
+at(526,400,()=>drawHuman(c,{look:looks[3],dir:'down',act:'wave',seed:1},T));
+at(678,400,()=>drawHuman(c,{look:looks[0],dir:'right',act:'hammer',actT:0.15,seed:1},T));
+at(830,400,()=>drawHuman(c,{look:looks[1],dir:'down',act:'phone',seed:1},T));
+at(982,400,()=>drawHuman(c,{look:looks[2],dir:'down',act:'cheer',seed:1},T));
+at(1134,400,()=>drawHuman(c,{look:looks[3],dir:'down',hop:7,seed:1},T));
+// row 3: scooters
+for (const [i,view] of ['side','front','back'].entries()) at(160+i*260,680,()=>{ const r={look:{...looks[3],hat:'helmet',hatColor:'#6f9fc8'},seed:1,emo:'happy'}; scooter(c,T,{col:'#9fd8c8',view,speed:40,basket:view==='side',rider:(cc,tt,spec)=>{const S=spec.S||1;cc.save();cc.translate(spec.seat[0],spec.seat[1]);cc.scale(1/S,1/S); const g=q=>[(q[0]-spec.seat[0])*S,(q[1]-spec.seat[1])*S]; Object.assign(r,{dir:view==='side'?'right':view==='front'?'down':'up',sit:true,act:'ride',seatH:0,handAt:[g(spec.grips[0]),g(spec.grips[1])],footAt:g(spec.foot)}); drawHuman(cc,r,tt); cc.restore();}}); });
+window.done=1;
+</script>

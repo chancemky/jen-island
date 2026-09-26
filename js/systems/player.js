@@ -16,6 +16,7 @@ export class Player extends Actor {
   }
   // Called every frame before Actor.update.
   drive(dt, scene, sfx) {
+    if (this.seat) { this.vx = this.vy = 0; this.moving = 0; return; }   // seated: the joystick stands you up (systems/seats.js)
     if (!this.control || this.path) { this.vx = damp(this.vx, 0, 16, dt); this.vy = damp(this.vy, 0, 16, dt); if (this.path) { this.vx = 0; this.vy = 0; } return; }
     const [ix, iy, m] = moveVector();
     // ease-in to feel responsive but not twitchy

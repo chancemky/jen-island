@@ -3,9 +3,21 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '3.1.0';
+export const APP_VERSION = '3.2.0';
 
 export const CHANGELOG = [
+  {
+    v: '3.2.0', date: '2026-09-26T03:03:31Z',
+    title: ['Take a Seat', 'Mời Ngồi'],
+    items: [
+      ['The islanders are back to the original island style — and much more polished', 'Cư dân trở lại phong cách đảo ban đầu — và đẹp hơn nhiều'],
+      ['Real elbows and knees: arms and legs bend naturally when walking, waving, hammering, sitting and riding', 'Có khuỷu tay và đầu gối thật: tay chân co duỗi tự nhiên khi đi, vẫy tay, đóng búa, ngồi và chạy xe'],
+      ['Smoother walk cycle with lifted steps, arm swing and a little body lean', 'Dáng đi mượt hơn: bước chân nhấc lên, tay đánh nhịp và người hơi nghiêng'],
+      ['Brand-new scooters seen properly from the side, front and back, with riders gripping the handlebars', 'Xe máy mới nhìn đúng từ bên hông, phía trước và phía sau, người lái nắm tay lái'],
+      ['Sit on every bench, chair, stool, sofa and cushion — with a cute little hop, butt first', 'Ngồi được trên mọi ghế băng, ghế, ghế đẩu, sofa và nệm — nhảy lên một cái thật dễ thương'],
+      ['Neighbours hop onto benches too when they take a break', 'Hàng xóm cũng nhảy lên ghế ngồi nghỉ'],
+    ],
+  },
   {
     v: '3.1.0', date: '2026-09-26T02:40:34Z',
     title: ['Visiting Day', 'Ngày Đi Thăm'],

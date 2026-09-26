@@ -137,7 +137,7 @@ export function drawBarks(c, t) {
   c.save(); c.font = '800 7px Nunito, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
   for (const b of barks) {
     const a = b.actor, k = b.t / b.dur, pop = Math.min(1, b.t * 6), fade = k > 0.85 ? (1 - k) / 0.15 : 1;
-    const top = a.kind === 'cat' ? 40 : (a.look?.sprite ? 54 : 50);
+    const top = a.kind === 'cat' ? 40 : 50;
     const w = Math.min(120, c.measureText(b.text).width + 12);
     c.save(); c.globalAlpha = fade; c.translate(a.x, a.y - top - 6 - b.t * 2); c.scale(pop, pop);
     c.beginPath(); c.roundRect ? c.roundRect(-w / 2, -8, w, 15, 7) : c.rect(-w / 2, -8, w, 15);

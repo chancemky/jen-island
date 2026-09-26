@@ -34,6 +34,7 @@ import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, MATERIALS, bizN
 import { applyStaticText, bootText } from './ui/statictext.js';
 import { MERCHANTS, RESIDENTS, playerLook } from './data/looks.js';
 import { tapAnimals, react as reactAnimal } from './systems/animals.js';
+import { nearestSeat, sitDown, standUp, updateSeat } from './systems/seats.js';
 import { feedDucks, nearPond } from './systems/npc.js';
 import { meoAntic } from './systems/fun.js';
 import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones } from './systems/progress.js';
@@ -41,7 +42,6 @@ import { BRIDGE_REPAIR } from './data/game.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { showWhatsNew } from './ui/whatsnew.js';
 import { openBoutique, openWardrobe, currentLook, refreshPlayerLook } from './ui/clothes.js';
-import { loadSprites } from './gfx/sprites.js';
 import { bus, dist, clamp, sleep, choice, money } from './core/util.js';
 import { LIGHT } from './gfx/props.js';
 
@@ -58,7 +58,6 @@ async function boot() {
   if (await ensureLatest()) return; // an update is live: reload once onto it
   progress(0.1, bootText('fonts'));
   try { await Promise.race([document.fonts.load('900 16px Nunito'), document.fonts.load('800 16px Nunito'), sleep(2500)]); } catch {}
-  await Promise.race([loadSprites(), sleep(6000)]);
   progress(0.3, bootText('build'));
   const renderer = new Renderer($('game'));
   G.renderer = renderer;
@@ -143,7 +142,7 @@ function spawnMerchants() {
     sc.merchant = a;
   }
   // a shopper browsing the supermarket
-  const shopper = new Actor({ kind: 'human', look: { sprite: 'single_mom', skin: '#f1c6a4', hair: '#6e4430', hairStyle: 'pony', top: '#c9b6e8', topStyle: 'tee', bottom: '#556b8a', bottomLen: 5, shoe: '#fff', lashes: true }, x: 150, y: 210, speed: 30, data: { shopper: true } });
+  const shopper = new Actor({ kind: 'human', look: { skin: '#f1c6a4', hair: '#6e4430', hairStyle: 'pony', top: '#c9b6e8', topStyle: 'tee', bottom: '#556b8a', bottomLen: 5, shoe: '#fff', lashes: true }, x: 150, y: 210, speed: 30, data: { shopper: true } });
   scenes.supermarket.add(shopper);
   scenes.supermarket.shopper = shopper;
 }
@@ -194,6 +193,7 @@ function loop(now) {
   const pl = G.player, sc = G.scene;
   const busyUi = isUiOpen() || isServiceOpen() || isPrepOpen() || dialogue.active || isDecorating();
   if (!busyUi && !isTransitioning()) pl.drive(dt, sc, sfx); else if (!pl.path) pl.moving = Math.max(0, pl.moving - dt * 6);
+  if (!busyUi && !cs.active) updateSeat(moveVector()[2]);
   updateFollow(dt);
   if (G.runtime.sleepy && !pl.act) { if (pl.emo !== 'sleepy') pl.setEmo('sleepy', 0); G.runtime.yawnT = (G.runtime.yawnT ?? 4) - dt; if (G.runtime.yawnT <= 0) { G.runtime.yawnT = 7 + Math.random() * 5; pl.showEmote('zzz', 2); } }
   else if (!G.runtime.sleepy && pl.emo === 'sleepy' && !G.runtime.sleeping) pl.setEmo('neutral', 0);
@@ -235,6 +235,7 @@ function bizIdOfScene(sc) { return { shed1: 'shed1', shed2: 'shed2', truck: 'tru
 let doorPeek = null;
 function updateInteraction(dt) {
   const pl = G.player, sc = G.scene;
+  if (pl.seat) { setAction(T('Stand', 'Đứng dậy'), () => standUp(), 'sofa'); return; }
   if (!pl.control) { setAction('', null); return; }
   const [mx, my, mm] = moveVector();
   const tr = sc.triggerAt(pl.x, pl.y, 8);
@@ -264,6 +265,9 @@ function updateInteraction(dt) {
     if (tr.kind === 'front') return frontAction(tr);
     if (tr.kind === 'act') return actAction(tr);
   }
+  // benches, chairs, stools, sofas, cushions
+  const seat = nearestSeat(sc, pl.x, pl.y, 18);
+  if (seat) { setAction(T('Sit', 'Ngồi'), () => sitDown(seat), 'sofa'); return; }
   // the lotus pond: feed the ducks
   if (sc === scenes.island && nearPond(pl.x, pl.y)) { setAction(T('Feed ducks', 'Cho vịt ăn'), () => feedDucks(), 'bread_split'); return; }
   // the Long Bridge repair spot
@@ -531,6 +535,7 @@ function onWorldTap(cx, cy) {
   if (m && scenes.island.actors.includes(m) && !m.data.busy && dist(m.x, m.y - 16, wx, wy) < 22) { if (m.act === 'sleep') { m.setAct(null); m.data.napping = false; } sfx('meow'); m.doHop(90); m.showEmote('heart', 1.4); if (!m.act) meoAntic(m); }
 }
 bus.on('xp:add', n => addXP(n));
+bus.on('scene', () => { const pl = G.player; if (pl?.seat) { pl.seat = null; pl.sit = false; pl.seatH = undefined; pl.control = true; } });
 
 // ---------------------------------------------------------------- visiting neighbours
 // The owner is sometimes home to greet you; at night they're asleep in bed.

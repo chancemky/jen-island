@@ -5,11 +5,11 @@
 import { G, T } from './state.js';
 import { Actor } from '../world/actor.js';
 import { RESIDENTS, MERCHANTS, visitorLook } from '../data/looks.js';
-import { drawSprite, spriteReady, spriteMeta } from '../gfx/sprites.js';
 import { initAnimals, updateAnimals, animalDrawables, reactHop, drawReact, tickReact, react } from './animals.js';
 import { POND as POND_C } from '../world/island.js';
 import { ell } from '../gfx/draw.js';
 import { updateBarks, drawBarks } from './fun.js';
+import { nearestSeat, hopOnto } from './seats.js';
 import { updateSideQuests, drawSideQuests } from './sidequests.js';
 import { PATHS, BUILDINGS } from '../world/island.js';
 import { rand, randi, choice, chance, dist, bus, clamp, TAU, smoothLine } from '../core/util.js';
@@ -124,9 +124,16 @@ function pickSpot(island, a) {
   return nodes.length ? choice(nodes) : choice(island.nav.nodes);
 }
 
+// Sit on the nearest free bench/stool with the same little hop the player does.
+function sitNPC(island, a) {
+  const st = nearestSeat(island, a.x, a.y, 45);
+  if (st) { a.face('down'); hopOnto(a, st); } else { a.sit = true; a.seatH = 3; a.face('down'); } // no seat: sit on the grass
+}
 function goTo(island, a, x, y, then) {
   a.data.state = 'walking';
-  a.setAct(null); a.sit = false;
+  a.setAct(null);
+  if (a.sit) { a.sit = false; a.seatH = undefined; a.doHop(60); a.y += 10; }  // hop off the seat first
+
   a.walkTo(island.nav.path(a.x, a.y, x, y)).then(ok => { if (ok) then?.(); });
 }
 
@@ -151,7 +158,7 @@ function updateResident(island, a, dt) {
     d.spot = sp;
     goTo(island, a, sp.x + rand(-12, 12), sp.y + rand(-6, 6), () => {
       d.state = 'idle'; d.until = s.time + rand(18, 60);
-      if (sp.tags.has('sit')) { a.sit = true; a.face('down'); }
+      if (sp.tags.has('sit')) sitNPC(island, a);
       else if (sp.tags.has('beach') || sp.tags.has('view')) a.face('down');
       else if (sp.tags.has('dock')) a.face('down');
     });
@@ -188,7 +195,7 @@ const IDLE = [
 ];
 function act(a, name, secs, held = null) { a.setAct(name, held); setTimeout(() => a.act === name && a.setAct(null), secs * 1000); }
 function idleAct(a) {
-  const d = a.data, role = a.look?.sprite ? spriteMeta(a.look.sprite)?.role : null;
+  const d = a.data, L = a.look || {}, role = L.camera ? 'photo' : L.guitar ? 'music' : L.hat === 'bandana' ? 'sweep' : null;
   if (role === 'photo' && chance(0.35)) return act(a, 'photo', 2.2);
   if (role === 'music' && chance(0.4)) { a.showEmote('note', 2.4); return act(a, 'dance', 2.4); }
   if (role === 'sweep' && chance(0.35)) return act(a, 'sweep', 3);
@@ -227,7 +234,7 @@ function updateTourist(island, a, dt) {
     const sp = nodes.length ? choice(nodes) : choice(island.nav.nodes);
     goTo(island, a, sp.x + rand(-14, 14), sp.y + rand(-8, 8), () => {
       d.state = 'idle'; d.until = s.time + rand(15, 45);
-      if (sp.tags.has('sit')) a.sit = true;
+      if (sp.tags.has('sit')) sitNPC(island, a);
       if (chance(0.45)) { a.setAct(a.look.camera || chance(0.5) ? 'photo' : 'phone'); setTimeout(() => a.setAct(null), 2600); }
     });
   }
@@ -270,7 +277,7 @@ function makeScooter(path, col, phase) {
   let len = 0; const segs = [];
   for (let i = 0; i < pts.length - 1; i++) { const d = dist(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]); segs.push(d); len += d; }
   const seed = randi(1, 999);
-  const look = { ...visitorLook(seed, 'regular'), hat: 'helmet', hatColor: choice(['#f28f7c', '#6f9fc8', '#f7de8c', '#9fd8c8', '#fff5df']), backpack: undefined, camera: undefined, scale: 1, sprite: undefined };
+  const look = { ...visitorLook(seed, 'regular'), hat: 'helmet', hatColor: choice(['#f28f7c', '#6f9fc8', '#f7de8c', '#9fd8c8', '#fff5df']), backpack: undefined, camera: undefined, scale: 1 };
   return { pts, segs, len, pos: len * phase, dir: 1, speed: 72, col, rider: { look, dir: 'right', moving: 0, seed, blinkAmt: 0, emo: 'happy', sit: true, act: 'ride', actT: 0 }, x: 0, y: 0, flip: false, beep: 0 };
 }
 function updateScooter(sc, dt) {
@@ -302,12 +309,30 @@ function updateScooter(sc, dt) {
   sc.x = nx + (-(b[1] - a[1]) / len) * off; sc.y = ny + ((b[0] - a[0]) / len) * off;
 }
 function scooterDrawable(sc) {
-  if (sc.shipper && spriteReady('shipper')) {
-    const a = sc.shipperActor || (sc.shipperActor = { look: { sprite: 'shipper' }, seed: 5, blinkAmt: 0, emo: 'happy' });
-    a.dir = sc.flip ? 'left' : 'right'; a.moving = sc.speed > 5 ? 1 : 0;
-    return { x: sc.x, y: sc.y, draw: (c, t) => drawSprite(c, a, t) };
-  }
-  return { x: sc.x, y: sc.y, draw: (c, t) => { c.save(); c.translate(0, Math.sin(t * 20) * 0.3 * (sc.speed > 5 ? 1 : 0)); drawScooter(c, t, { col: sc.col, flip: sc.flip, basket: true, rider: (cc, tt) => { cc.save(); cc.scale(0.95, 0.95); drawHuman(cc, { ...sc.rider, dir: 'right' }, tt); cc.restore(); } }); c.restore(); } };
+  // pick the view from the direction of travel (with a little hysteresis)
+  const vx = sc.vx || 1, vy = sc.vy || 0, ax = Math.abs(vx), ay = Math.abs(vy);
+  if (sc.view === 'side' ? ay > ax * 1.5 : ax > ay * 1.2) sc.view = ax > ay ? 'side' : (vy > 0 ? 'front' : 'back');
+  else if (sc.view !== 'side') sc.view = vy > 0 ? 'front' : 'back';
+  const view = sc.view || 'side';
+  const r = sc.rider;
+  r.dir = view === 'side' ? 'right' : view === 'front' ? 'down' : 'up';
+  r.sit = true; r.act = 'ride'; r.moving = 0; r.seatH = 0;
+  // wave at the player now and then
+  const near = G.player && G.scene === G.scenes.island && dist(G.player.x, G.player.y, sc.x, sc.y) < 70;
+  return { x: sc.x, y: sc.y, draw: (c, t) => {
+    const lit = G.state.time > 18.3 * 60 || G.state.time < 6 * 60;
+    drawScooter(c, t, { col: sc.col, flip: sc.flip, view, speed: sc.speed, seed: sc.seed || 0, basket: view === 'side', lit, x: sc.x, y: sc.y, rider: (cc, tt, spec) => {
+      const S = spec.S || 1;
+      cc.save(); cc.translate(spec.seat[0], spec.seat[1]); cc.scale(1 / S, 1 / S);
+      const gx = g => [(g[0] - spec.seat[0]) * S, (g[1] - spec.seat[1]) * S];
+      r.handAt = [gx(spec.grips[0]), gx(spec.grips[1])];
+      r.footAt = gx(spec.foot);
+      r.tilt = view === 'side' ? 0.08 : 0;
+      if (near && view === 'side' && Math.sin(tt * 0.9 + (sc.seed || 0)) > 0.93) { r.act = 'wave'; r.sit = true; }
+      drawHuman(cc, r, tt);
+      cc.restore();
+    } });
+  } };
 }
 
 // ---------------------------------------------------------------- ducks + feeding

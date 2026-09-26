@@ -12,7 +12,7 @@ import { toast } from './hud.js';
 import { level, addXP } from '../systems/progress.js';
 import { fx } from '../world/render.js';
 
-export const BA = { name: 'Cô Ba', look: { sprite: 'fashion_guest', skin: '#f8d6bd', hair: '#6e4430', hairStyle: 'wavy', top: '#fff', topStyle: 'dress', bottom: '#fff', shoe: '#f0e6da', lashes: true, hat: 'sunhat', hatColor: '#f3dcae' } };
+export const BA = { name: 'Cô Ba', look: { skin: '#f8d6bd', hair: '#6e4430', hairStyle: 'wavy', top: '#fff', topStyle: 'dress', bottom: '#fff', shoe: '#f0e6da', lashes: true, hat: 'sunhat', hatColor: '#f3dcae' } };
 
 function wardrobe() {
   const s = G.state;

@@ -267,23 +267,77 @@ export function lowTable(c, t, p) {
   for (const x of [-10, 10]) limb(c, [x, -9, x, 0], 2, '#8f96a0');
   box(c, -14, -13, 28, 5, 2, p.col || '#e9eef2');
 }
+// A Vietnamese step-through scooter seen from the side, the front (riding
+// towards you) or the back (riding away). The rider callback draws the person
+// sitting on the seat; `spec` tells it where the seat, grips and footboard are.
 export function scooter(c, t, p) {
-  const col = p.col || '#f28f7c', f = p.flip ? -1 : 1;
-  c.save(); c.scale(f, 1);
-  shadow(c, 0, 1, 22, 5, 0.2);
-  // wheels
-  for (const x of [-14, 14]) { circ(c, x, -6, 6, '#3d3a42'); circ(c, x, -6, 2.4, '#b9c3cb', INK, 0.6); }
-  // body
-  c.beginPath(); c.moveTo(-18, -8); c.quadraticCurveTo(-20, -20, -8, -20); c.lineTo(4, -20); c.lineTo(10, -8); c.closePath();
-  c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
-  box(c, -16, -25, 18, 5, 2.5, '#5a4a48');
-  // rider sits on the seat; drawn before the handlebar so the hands wrap the grips
-  if (p.rider) { c.save(); c.translate(-6, -19); p.rider(c, t); c.restore(); }
-  limb(c, [9, -9, 12, -31], 2.4, shade(col, -20));
-  limb(c, [7, -31, 14, -31.5], 2.2, '#3d3a42');
-  circ(c, 6.2, -31, 1.4, '#3d3a42', null);
-  circ(c, 15, -25, 2.4, '#fff5c8');
-  if (p.basket) box(c, 13, -27, 8, 5, 1.5, '#e9c46f');
+  const col = p.col || '#f28f7c', dark = shade(col, -24), lite = shade(col, 28);
+  const view = p.view || 'side', spd = p.speed ?? 1, bump = Math.sin(t * 22 + (p.seed || 0)) * 0.35 * Math.min(1, spd / 30);
+  const S = p.scale || 1.2; // the scooter is drawn a bit bigger than the chibi rider
+  c.save(); c.scale(S, S);
+  if (view === 'side') {
+    c.scale(p.flip ? -1 : 1, 1);
+    shadow(c, 0, 1, 22, 4.5, 0.22);
+    const wheel = x => {
+      circ(c, x, -5.6, 5.8, '#34313a', INK, 1); circ(c, x, -5.6, 3.2, '#6e6a74', null); circ(c, x, -5.6, 1.4, '#d9dde2', INK, 0.5);
+      const r = t * spd * 0.35; c.strokeStyle = '#b9c3cb'; c.lineWidth = 0.6;
+      for (let i = 0; i < 3; i++) { const an = r + i * TAU / 3; c.beginPath(); c.moveTo(x + Math.cos(an) * 1.4, -5.6 + Math.sin(an) * 1.4); c.lineTo(x + Math.cos(an) * 3, -5.6 + Math.sin(an) * 3); c.stroke(); }
+    };
+    wheel(-12); wheel(12);
+    c.translate(0, bump);
+    // rear body + fender
+    c.beginPath(); c.moveTo(-19, -9); c.quadraticCurveTo(-21, -17, -14, -18); c.lineTo(-3, -18); c.quadraticCurveTo(-1, -13, -4, -9); c.closePath();
+    c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    c.fillStyle = lite; c.beginPath(); c.ellipse(-12, -15.5, 5, 1.4, -0.1, 0, TAU); c.fill();
+    box(c, -21, -15, 3, 3, 1, '#e8584e', INK, 0.6);                               // tail light
+    // floorboard + front shield + raked column
+    box(c, -5, -10.5, 10, 2.4, 1, dark, INK, 0.8);
+    c.beginPath(); c.moveTo(4, -9); c.quadraticCurveTo(5, -18, 2.2, -23); c.lineTo(5, -23.5); c.quadraticCurveTo(10, -16, 9.5, -9); c.closePath(); c.fillStyle = col; c.fill(); c.stroke();
+    limb(c, [11.5, -6, 5.5, -19], 1.6, '#8f96a0');                                 // fork
+    c.beginPath(); c.moveTo(6.5, -11); c.quadraticCurveTo(12, -13, 16.5, -8); c.strokeStyle = INK; c.lineWidth = 2.6; c.stroke(); c.strokeStyle = dark; c.lineWidth = 1.6; c.stroke(); // front fender
+    // seat
+    c.beginPath(); c.moveTo(-15, -18); c.quadraticCurveTo(-15, -21, -11, -21); c.lineTo(-3.5, -21); c.quadraticCurveTo(-1.5, -21, -2, -18); c.closePath(); c.fillStyle = '#4a3f44'; c.fill(); c.stroke();
+    if (p.basket) { box(c, -19, -26, 8, 6, 1.5, '#e9c46f', INK, 0.7); line(c, -18, -23, -12, -23, '#c9a24a', 0.6); }
+    if (p.rider) p.rider(c, t, { S, view, seat: [-8, -21], grips: [[0.6, -26.5], [1.6, -26]], foot: [2.8, -10.5] });
+    // handlebar + headlight in front of the rider's hands
+    limb(c, [3.2, -23.5, 1.2, -26.8], 1.8, '#8f96a0');
+    limb(c, [-0.8, -26.8, 3.8, -26.2], 2, '#3d3a42');
+    ell(c, 5.2, -24.6, 2, 1.8, '#fff5c8', INK, 0.8);
+    if (p.lit) glows.push([p.x + (p.flip ? -5 : 5), p.y - 24, 26, 'rgba(255,240,180,.45)']);
+    limb(c, [2, -26.6, 0.6, -30], 0.7, INK); ell(c, 0.4, -30.6, 1.4, 1, '#cfe6f0', INK, 0.5);  // mirror
+  } else {
+    // front / back: the scooter is narrow and tall
+    const front = view === 'front';
+    shadow(c, 0, 1, 10, 4, 0.22);
+    c.translate(0, bump);
+    // tyre (only the near wheel is visible)
+    box(c, -2.4, -11, 4.8, 11, 2.4, '#34313a', INK, 1);
+    c.strokeStyle = '#6e6a74'; c.lineWidth = 0.6; for (let i = 0; i < 3; i++) { const y = -9 + ((t * spd * 0.12 + i * 3) % 9); c.beginPath(); c.moveTo(-2, y); c.lineTo(2, y); c.stroke(); }
+    if (!front) { // rear: body, tail light, number plate, seat
+      c.beginPath(); c.moveTo(-8, -9); c.quadraticCurveTo(-9, -18, -6, -20); c.lineTo(6, -20); c.quadraticCurveTo(9, -18, 8, -9); c.quadraticCurveTo(0, -7, -8, -9); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+      box(c, -3.4, -13, 6.8, 3.6, 1, '#fff8ea', INK, 0.6); c.fillStyle = INK; c.font = '900 2.6px Nunito, sans-serif'; c.textAlign = 'center'; c.fillText('JEN-68', 0, -10.4);
+      box(c, -2.6, -17.6, 5.2, 2.2, 1, '#e8584e', INK, 0.6);
+      box(c, -6, -22.5, 12, 3, 1.4, '#4a3f44', INK, 0.8);
+      if (p.rider) p.rider(c, t, { S, view, seat: [0, -21], grips: [[-8.8, -24.4], [8.8, -24.4]], foot: [0, -10] });
+      limb(c, [-9.6, -24.6, 9.6, -24.6], 1.6, '#3d3a42');
+      for (const x of [-9, 9]) { limb(c, [x, -24.8, x * 1.12, -27.4], 0.7, INK); ell(c, x * 1.14, -27.9, 1.3, 0.9, '#cfe6f0', INK, 0.5); }
+    } else { // front: rider behind the leg shield, headlight and grips on top
+      box(c, -6, -22.5, 12, 3, 1.4, '#4a3f44', INK, 0.8);
+      if (p.rider) p.rider(c, t, { S, view, seat: [0, -21], grips: [[-8.8, -24.4], [8.8, -24.4]], foot: [0, -10] });
+      c.beginPath(); c.moveTo(-7.5, -8); c.quadraticCurveTo(-8.5, -17, -4.2, -22); c.lineTo(4.2, -22); c.quadraticCurveTo(8.5, -17, 7.5, -8); c.quadraticCurveTo(0, -5.5, -7.5, -8);
+      c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+      c.fillStyle = lite; c.beginPath(); c.ellipse(-3.5, -15.5, 1.3, 4.2, 0.1, 0, TAU); c.fill();
+      c.beginPath(); c.moveTo(-5, -8.4); c.quadraticCurveTo(0, -12, 5, -8.4); c.strokeStyle = INK; c.lineWidth = 2.4; c.stroke(); c.strokeStyle = dark; c.lineWidth = 1.4; c.stroke(); // fender
+      ell(c, 0, -18.5, 2.6, 2.2, '#fff5c8', INK, 0.8);
+      if (p.lit) glows.push([p.x, p.y - 20, 30, 'rgba(255,240,180,.5)']);
+      box(c, -3.6, -24.6, 7.2, 2.4, 1.2, dark, INK, 0.7);
+      limb(c, [-9.6, -24.6, 9.6, -24.6], 1.6, '#3d3a42');
+      for (const x of [-9, 9]) { limb(c, [x, -24.8, x * 1.12, -27.4], 0.7, INK); ell(c, x * 1.14, -27.9, 1.3, 0.9, '#cfe6f0', INK, 0.5); }
+    }
+  }
+  // exhaust puffs when moving
+  if (spd > 8) for (let i = 0; i < 3; i++) { const k = (t * 1.6 + i / 3) % 1; c.globalAlpha = 0.3 * (1 - k); circ(c, view === 'side' ? -21 - k * 8 : (view === 'back' ? 6 : 0) + k * 3, (view === 'front' ? -4 : -6) - k * 5, 1.4 + k * 3, '#ebe6de', null); }
+  c.globalAlpha = 1;
   c.restore();
 }
 // Thuyền thúng — the round basket boat.
