@@ -16,9 +16,10 @@ import { drawHeld } from './food.js';
 
 const CY = 0.96, SZ = 0.3;
 // skeleton dimensions (model units ≈ world units)
-const HIP_Y = 9.4, HIP_X = 2.6, THIGH = 4.8, SHIN = 4.6, FOOT_L = 2.8;
-const WAIST_Y = 9.8, CHEST_Y = 17.6, SHO_X = 4.5, SHO_Y = 17, UPPER = 4.2, FORE = 4.0;
-const NECK_Y = 19.3, HEAD_Y = 28.2, HR = 9.9;
+const HIP_Y = 8.6, HIP_X = 2.45, THIGH = 4.1, SHIN = 3.9, FOOT_L = 2.8;
+const WAIST_Y = 9.0, CHEST_Y = 17.2, SHO_X = 5.0, SHO_Y = 16.3, UPPER = 3.9, FORE = 3.7;
+// the big head sits right on the shoulders (overlapping the top of the body) — no neck
+const NECK_Y = 17.4, HEAD_Y = 26.6, HR = 10.6;
 export const HEAD_CENTER_Y = HEAD_Y;
 
 // ---------------------------------------------------------------- math
@@ -90,7 +91,7 @@ function pose(a, t, yaw) {
     const phase = side < 0 ? ph + Math.PI : ph, sp = Math.sin(phase);
     const swing = sp * (2.6 + run * 2.2) * m;
     const bend = (0.8 + Math.max(0, sp) * 1.4 * m) + run * 2.4 * m;
-    P.hands[side < 0 ? 0 : 1] = { x: side * (SHO_X + 1.0 + run * 0.4), y: SHO_Y - UPPER - FORE + 0.9 + bend + run * 1.2 * m, z: swing + 0.4 };
+    P.hands[side < 0 ? 0 : 1] = { x: side * (SHO_X + 1.9 + run * 0.4), y: SHO_Y - UPPER - FORE + 1.2 + bend * 0.5 + run * 1.2 * m, z: swing * 0.9 };
   }
   // airborne: knees tuck, arms up a little
   const air = Math.min(1, (a.hop || 0) / 8);
@@ -98,7 +99,7 @@ function pose(a, t, yaw) {
   if (a.turnT > 0) { const k = a.turnT / 0.14; P.squashX = 1 - 0.06 * k; P.squashY = 1 + 0.04 * k; }
   if (a.squash) { P.squashY *= 1 - a.squash * 0.16; P.squashX *= 1 + a.squash * 0.12; }
 
-  const aim = (i, x, y, z) => { P.hands[i] = { x, y, z }; };
+  const aim = (i, x, y, z) => { P.hands[i] = { x, y, z, aim: true }; };
   switch (act) {
     case 'wave': aim(1, SHO_X + 3.2 + Math.sin(t * 12) * 1.8, SHO_Y + 6.4, 2); break;
     case 'cheer': { const k = Math.abs(Math.sin(t * 9)); aim(0, -SHO_X - 2.4, SHO_Y + 6.6 + k * 1.4, 1); aim(1, SHO_X + 2.4, SHO_Y + 6.6 + k * 1.4, 1); break; }
@@ -154,6 +155,7 @@ function skeleton(a, P, yaw) {
     const ankleM = [f.x + P.sway * 0.4, f.y, f.z];
     const ankle = Rb(ankleM);
     const r = ik(hip, ankle, THIGH, SHIN, Rb([0, 0.2, 1]));
+    if (P.seat === undefined) r.j = mul(add(hip, r.end), 0.5);   // straight, stubby legs when standing/walking
     const toe = add(r.end, Rb([0, -0.2 + Math.sin(f.toe || 0) * 0 - (f.toe || 0) * 1.2, FOOT_L]));
     return { side, hip, knee: r.j, ankle: r.end, toe };
   });
@@ -168,7 +170,8 @@ function skeleton(a, P, yaw) {
     const side = i ? 1 : -1, h = P.hands[i];
     const sho = upper([P.sway + side * SHO_X, hipY + (SHO_Y - HIP_Y), 0], P.chestYaw);
     const handW = upper([P.sway + h.x, hipY + (h.y - HIP_Y), h.z], P.chestYaw * 0.5);
-    const r = ik(sho, handW, UPPER, FORE, Rb([side * 0.35, -0.3, -1]));   // elbows point back and a little out
+    const r = ik(sho, handW, UPPER, FORE, Rb([side * 1, -0.6, 0]));   // elbows (when bent) point down and out
+    if (!h.aim) { const d = sub(r.end, sho), l = len(d); r.end = add(sho, mul(d, Math.min(l, UPPER + FORE) / (l || 1))); r.j = mul(add(sho, r.end), 0.5); }
     return { side, sho, elbow: r.j, hand: r.end };
   });
   S.yaw = yaw;
@@ -243,20 +246,20 @@ function drawFace(c, a, L, S, yawFace, t, P) {
   const C = cols(L), emo = a.act === 'sleep' ? 'sleepy' : (a.emo || 'neutral'), blink = a.blinkAmt || 0;
   const lx = (a.lookX || 0) * 0.08;
   // cheeks
-  for (const s of [-1, 1]) { const q = onHead(S, yawFace, s * 0.62, -0.3); if (q.dz > 0.1) { const pp = proj(q.p); ell(c, pp[0], pp[1], 2.4 * Math.max(0.4, q.dz), 1.5, emo === 'angry' ? 'rgba(240,110,110,.6)' : 'rgba(250,140,150,.5)', null); } }
+  for (const s of [-1, 1]) { const q = onHead(S, yawFace, s * 0.62, -0.3); if (q.dz > 0.1) { const pp = proj(q.p); ell(c, pp[0], pp[1], 2.9 * Math.max(0.4, q.dz), 1.8, emo === 'angry' ? 'rgba(240,110,110,.6)' : 'rgba(250,140,150,.5)', null); } }
   // eyes: simple dark ovals with a white shine
   for (const s of [-1, 1]) {
-    const q = onHead(S, yawFace, s * 0.4 + lx, -0.06); if (q.dz < 0.05) continue;
+    const q = onHead(S, yawFace, s * 0.42 + lx, -0.1); if (q.dz < 0.05) continue;
     const pp = proj(q.p), fx = Math.max(0.35, Math.sqrt(q.dz));
     c.lineCap = 'round';
     if (emo === 'happy' || (emo === 'love' && blink > 0.5)) { c.beginPath(); c.moveTo(pp[0] - 1.9 * fx, pp[1] + 0.7); c.quadraticCurveTo(pp[0], pp[1] - 2.2, pp[0] + 1.9 * fx, pp[1] + 0.7); c.strokeStyle = '#2b2020'; c.lineWidth = 1.2; c.stroke(); continue; }
     if (emo === 'love') { heart(c, pp[0], pp[1] + 0.3, 2.2, '#f0607a', shade('#f0607a', -40), 0.5); continue; }
     if (blink > 0.55 || emo === 'sleepy') { c.beginPath(); c.moveTo(pp[0] - 1.8 * fx, pp[1] + 0.4); c.quadraticCurveTo(pp[0], pp[1] + 1.4, pp[0] + 1.8 * fx, pp[1] + 0.4); c.strokeStyle = '#2b2020'; c.lineWidth = 1.1; c.stroke(); continue; }
     const big = emo === 'surprised' ? 1.18 : 1;
-    const rx = 1.75 * fx * big, ry = 2.45 * big * (1 - blink * 0.8);
+    const rx = 2.15 * fx * big, ry = 2.9 * big * (1 - blink * 0.8);
     ell(c, pp[0], pp[1], rx, ry, '#2b2020', null);
     if (L.eyeCol) ell(c, pp[0], pp[1] + ry * 0.35, rx * 0.72, ry * 0.42, shade(L.eyeCol, -10), null);
-    circ(c, pp[0] - rx * 0.3, pp[1] - ry * 0.4, 0.75 * big, '#fff', null);
+    circ(c, pp[0] - rx * 0.28, pp[1] - ry * 0.38, 0.95 * big, '#fff', null);
     circ(c, pp[0] + rx * 0.35, pp[1] + ry * 0.3, 0.35, 'rgba(255,255,255,.8)', null);
     if (L.lashes) { c.strokeStyle = '#2b2020'; c.lineWidth = 0.7; c.beginPath(); const o = s * (Math.cos(yawFace) >= 0 ? 1 : -1); c.moveTo(pp[0] + o * rx * 0.8, pp[1] - ry * 0.7); c.lineTo(pp[0] + o * (rx + 1), pp[1] - ry * 1.05); c.stroke(); }
   }
@@ -342,7 +345,7 @@ function drawTorso(c, L, S, a, t) {
   const w = (rx, rz) => Math.sqrt(Math.pow(rx * cy, 2) + Math.pow(rz * sy, 2));
   const top = proj(S.chest), bot = proj(S.waist), neck = proj(S.neck);
   const dress = st === 'dress' || st === 'aodai';
-  const wT = w(4.9, 3.4), wB = w(dress ? 7.4 : 5.4, dress ? 5 : 3.8);
+  const wT = w(5.1, 3.6), wB = w(dress ? 7.6 : 5.8, dress ? 5.2 : 4.1);
   const hemY = dress ? bot[1] + (st === 'aodai' ? 6.5 : 4.2) : bot[1] + 1.2;
   // bottoms under the top (shorts/skirt waistband)
   if (!dress) {
@@ -451,8 +454,12 @@ export function drawVillager(c, a, t) {
   const parts = [];
   const depth = p => p[2];
   const L2 = { ...L };
-  for (const lg of S.legs) parts.push({ z: (depth(lg.knee) + depth(lg.ankle)) / 2 - 0.6, draw: () => drawLeg(c, L, lg, P) });
-  for (const arm of S.arms) parts.push({ z: (depth(arm.elbow) + depth(arm.hand)) / 2 + 0.3, draw: () => { const h = drawArm(c, L, arm); if (arm.side > 0) P.hR = h; else P.hL = h; } });
+  // legs come out from under the shorts: always behind the body, unless seated (thighs on the lap)
+  for (const lg of S.legs) parts.push({ z: P.seat !== undefined ? (depth(lg.knee) + depth(lg.ankle)) / 2 + 2 : -100 + depth(lg.ankle), draw: () => drawLeg(c, L, lg, P) });
+  for (const arm of S.arms) {
+    const d = (depth(arm.elbow) + depth(arm.hand)) / 2;
+    parts.push({ z: facing < -0.25 ? -50 + d : d + 0.3, draw: () => { const h = drawArm(c, L, arm); if (arm.side > 0) P.hR = h; else P.hL = h; } });
+  }
   parts.push({ z: 0, torso: true, draw: () => drawTorso(c, L, S, a, t) });
   if (L.backpack || L.surf || L.guitar) parts.push({ z: -3.8 * facing, draw: () => drawBackGear(c, L, S) });
   // long hair curtain hangs behind the head (in front of the back when seen from behind)
@@ -470,8 +477,6 @@ export function drawVillager(c, a, t) {
   if (H.pony) { const base = add(S.head, rotY([0, 3, -HR], yaw)); parts.push({ z: depth(base), draw: () => capsule(c, [base, add(base, rotY([0, -5, -2.4], yaw)), add(base, rotY([0, -11, -1.8], yaw))], 4.6, L.hair) }); }
   // neck then head (+ hair + face + hat)
   parts.push({ z: 0.5, head: true, draw: () => {
-    const nk = proj(S.neck);
-    ell(c, nk[0], nk[1] + 0.6, 2.7, 2.6, cols(L).skinS, INK, 0.8);
     drawHead(c, a, L, S, yaw, t, P, H);
   } });
   parts.sort((p, q) => (p.head ? 1 : 0) - (q.head ? 1 : 0) || p.z - q.z);

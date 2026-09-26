@@ -85,8 +85,9 @@ export function openIngredientShop() {
         api.rebuild();
       });
       right.append(q.el, b);
-      const prep = g.prep ? T(` · needs ${PREP_VERB[g.prep.method][0].toLowerCase()}ing`, ` · cần ${PREP_VERB[g.prep.method][1].toLowerCase()}`) : '';
-      list.appendChild(rowEl({ icon: id, title: escapeHtml(ingName(id)), sub: T(`${g.pack} portions per pack${prep}`, `${g.pack} phần / gói${prep}`), have: T(`Have: ${pantry(id)}`, `Có: ${pantry(id)}`), right }));
+      // portions you own: raw in the bag plus anything already sliced/cooked in your shops (1 raw = 1 portion)
+      const prepped = g.prep ? Object.values(G.state.biz).reduce((n, b) => n + (b.prepped?.[g.prep.to] || 0), 0) : 0, have = pantry(id) + prepped;
+      list.appendChild(rowEl({ icon: id, title: escapeHtml(ingName(id)), sub: T(`${g.pack} portions per pack`, `${g.pack} phần / gói`), have: T(`Have: ${have}`, `Có: ${have}`), right }));
     }
   } });
 }

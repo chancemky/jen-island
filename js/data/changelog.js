@@ -3,9 +3,20 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '3.5.0';
+export const APP_VERSION = '3.6.0';
 
 export const CHANGELOG = [
+  {
+    v: '3.6.0', date: '2026-09-26T04:03:21Z',
+    title: ['Cozy Villagers', 'Cư Dân Ấm Áp'],
+    items: [
+      ['Characters restyled after classic island life-sims: big head resting right on the shoulders, rounder body, bigger eyes and cheeks', 'Nhân vật được vẽ lại theo phong cách game sống trên đảo: đầu to đặt ngay trên vai, thân tròn hơn, mắt và má to hơn'],
+      ['Legs come out from under the shorts and arms stay at the sides — no more legs over the tummy or arms behind the back', 'Chân mọc ra từ dưới quần và tay để hai bên — không còn chân đè bụng hay tay ra sau lưng'],
+      ['Dogs and cats sit properly now, with their heads resting on their chests', 'Chó và mèo giờ ngồi đúng dáng, đầu tựa trên ngực'],
+      ['Supermarket: pack sizes are shown in portions, and "Have" counts your sliced and cooked portions too', 'Siêu thị: số lượng tính theo phần, và mục "Có" tính cả phần đã cắt và nấu'],
+      ['Removed the haystack from the beach', 'Bỏ đống rơm trên bãi biển'],
+    ],
+  },
   {
     v: '3.5.0', date: '2026-09-26T03:54:26Z',
     title: ['New Villagers', 'Cư Dân Mới'],

@@ -393,7 +393,6 @@ export class Island extends Scene {
     this.add2('crate', 1612, 1900, { fruit: '#a6c7d8' });
     // paddy life
     this.add2('buffalo', 1380, 1150, { solidR: 16 });
-    this.add2('haystack', 1668, 1130, { solidR: 14 });
     this.add2('shrine', 1180, 1030, { solidR: 8 });
     // pond lotus
     for (let i = 0; i < 9; i++) { const a = R() * TAU, rr = R() * 0.7; this.add2('lotus', POND.x + Math.cos(a) * POND.rx * rr, POND.y + Math.sin(a) * POND.ry * rr, { flower: i % 3 === 0, cullR: 12, cullH: 16 }); }

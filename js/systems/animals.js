@@ -131,7 +131,6 @@ function chicken(c, t, a) {
   for (const k of [-1, 1]) { const st = walk ? Math.sin(a.t * 14 + k) * 1.6 : 0; c.strokeStyle = '#e39a3a'; c.lineWidth = 1; c.beginPath(); c.moveTo(k * 1.6, -3); c.lineTo(k * 1.6 + st, 0); c.stroke(); }
   ell(c, 0, -7, 6.5, 5, a.col, INK, 0.9);
   poly(c, [-6, -8, -10, -12, -9, -6], a.col, INK, 0.8); // tail
-  neck(c, 3, -8.5, 4, peck ? -5 : -11, 3.4, a.col);
   c.save(); c.translate(4, peck ? -5 : -11); c.rotate(peck ? 0.8 : 0);
   circ(c, 0, 0, 3.6, a.col, INK, 0.8);
   if (!a.chick) { circ(c, -0.6, -3.6, 1.3, '#e8584e', null); circ(c, 0.8, -3.4, 1.1, '#e8584e', null); }
@@ -141,31 +140,38 @@ function chicken(c, t, a) {
 }
 function dog(c, t, a) {
   const walk = Math.hypot(a.vx, a.vy) > 5, sit = a.state === 'idle' && (a.idle === 'sit' || a.idle === 'wag');
-  const wag = Math.sin(a.t * (a.state === 'greet' || a.idle === 'wag' ? 22 : 6)) * (a.state === 'greet' || a.idle === 'wag' ? 0.7 : 0.25);
+  const wagFast = a.state === 'greet' || a.idle === 'wag';
+  const wag = Math.sin(a.t * (wagFast ? 22 : 6)) * (wagFast ? 0.7 : 0.25);
   const bob = walk ? Math.abs(Math.sin(a.t * 12)) * 1.4 : 0, scr = a.idle === 'scratch' && a.state === 'idle';
-  shadow(c, 0, 0.5, 11, 3, 0.18);
-  c.save(); c.scale(a.face, 1); c.translate(0, -bob);
   const dk = a.col === '#8a6a52' ? '#5e4636' : '#b98a5a';
-  // legs
-  for (const [x, k] of [[-6, 0], [-3, 1], [4, 2], [7, 3]]) { const st = walk ? Math.sin(a.t * 12 + k * 1.6) * 2 : 0; if (sit && x < 0) continue; c.strokeStyle = INK; c.lineWidth = 3; c.beginPath(); c.moveTo(x, -5); c.lineTo(x + st, 0); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.8; c.stroke(); }
-  // tail
-  c.save(); c.translate(-9, sit ? -4 : -9); c.rotate(-0.9 + wag); c.strokeStyle = INK; c.lineWidth = 3.2; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-3, -4, -1, -8); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.8; c.stroke(); c.restore();
-  // body
-  const bodyAng = sit ? -0.45 : 0;
-  c.save(); if (sit) { c.translate(-2, 0); c.rotate(bodyAng); c.translate(2, 0); }
-  ell(c, 0, -8, 10, 5.4, a.col, INK, 0.9);
-  c.restore();
-  const hx = 9, hy = sit ? -17 : -14, [nx, ny] = rot(6, -10.5, -2, 0, bodyAng);
-  neck(c, nx, ny, hx - 1, hy + 1.5, 5, a.col);
-  if (scr) { c.save(); c.translate(-4, -6); c.rotate(Math.sin(a.t * 30) * 0.5); c.strokeStyle = a.col; c.lineWidth = 2; c.beginPath(); c.moveTo(0, 0); c.lineTo(3, -5); c.stroke(); c.restore(); }
-  // head
-  c.save(); c.translate(hx, hy); c.rotate(a.idle === 'sniff' && a.state === 'idle' ? 0.5 : Math.sin(a.t * 2) * 0.08);
+  const leg = (x0, y0, x1, y1) => { c.strokeStyle = INK; c.lineWidth = 3.2; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 2; c.stroke(); };
+  shadow(c, 0, 0.5, sit ? 8 : 11, 3, 0.18);
+  c.save(); c.scale(a.face, 1); c.translate(0, -bob);
+  let hx, hy;
+  if (sit) {
+    // sitting up: haunches on the ground, chest upright, front legs straight, head resting on the chest
+    c.save(); c.translate(-6, -3); c.rotate(-1.1 + wag); c.strokeStyle = INK; c.lineWidth = 3.2; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-3, -4, -1, -8); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.8; c.stroke(); c.restore();
+    ell(c, -2.6, -4.6, 6.2, 4.6, a.col, INK, 0.9);                 // haunch
+    ell(c, -3.4, -1.2, 3, 1.4, shadeLight(a.col), INK, 0.7);       // back paw
+    leg(2.6, -6, 2.8, 0); leg(5, -6, 5.4, 0);                      // front legs
+    ell(c, 3.6, -10.4, 4.8, 6.4, a.col, INK, 0.9);                 // upright chest
+    ell(c, 4.6, -9, 2.4, 3.6, shadeLight(a.col), null);            // lighter chest fur
+    hx = 5; hy = -16.4;
+  } else {
+    for (const [x, k] of [[-6, 0], [-3, 1], [4, 2], [7, 3]]) { const st = walk ? Math.sin(a.t * 12 + k * 1.6) * 2 : 0; leg(x, -5, x + st, 0); }
+    c.save(); c.translate(-9, -9); c.rotate(-0.9 + wag); c.strokeStyle = INK; c.lineWidth = 3.2; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-3, -4, -1, -8); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.8; c.stroke(); c.restore();
+    ell(c, 0, -8, 10, 5.4, a.col, INK, 0.9);
+    if (scr) { c.save(); c.translate(-4, -6); c.rotate(Math.sin(a.t * 30) * 0.5); c.strokeStyle = a.col; c.lineWidth = 2; c.beginPath(); c.moveTo(0, 0); c.lineTo(3, -5); c.stroke(); c.restore(); }
+    hx = 8.4; hy = -13.2;
+  }
+  // head (overlaps the body, so it never floats)
+  c.save(); c.translate(hx, hy); c.rotate(a.idle === 'sniff' && a.state === 'idle' && !sit ? 0.5 : Math.sin(a.t * 2) * 0.08);
   ell(c, 0, 0, 6.2, 5.4, a.col, INK, 0.9);
   ell(c, 5, 1.6, 3.2, 2.4, a.col === '#fff4e0' ? '#f7e6cc' : shadeLight(a.col), INK, 0.7);
   circ(c, 7.6, 0.8, 1.1, INK, null);
   circ(c, 1.8, -1.4, 0.9, INK, null);
   c.save(); c.translate(-3, -3); c.rotate(-0.5 + Math.sin(a.t * 3) * 0.1); ell(c, 0, 3, 2.2, 4.4, dk, INK, 0.7); c.restore();
-  if (a.state === 'greet') { c.fillStyle = '#f07c8c'; c.beginPath(); c.ellipse(6.4, 4.4, 1.1, 1.8 + Math.sin(a.t * 14) * 0.3, 0, 0, TAU); c.fill(); }
+  if (a.state === 'greet' || sit && wagFast) { c.fillStyle = '#f07c8c'; c.beginPath(); c.ellipse(6.4, 4.4, 1.1, 1.8 + Math.sin(a.t * 14) * 0.3, 0, 0, TAU); c.fill(); }
   c.restore();
   c.restore();
 }
@@ -184,15 +190,23 @@ function vcat(c, t, a) {
     c.restore(); return;
   }
   const sit = id === 'sit' || id === 'groom', str = id === 'stretch' ? Math.max(0, Math.sin(a.t * 1.4)) : 0;
-  for (const [x, k] of [[-4, 0], [-2, 1], [3, 2], [5, 3]]) { const st = walk ? Math.sin(a.t * 12 + k * 1.6) * 1.6 : 0; if (sit && x < 0) continue; c.strokeStyle = INK; c.lineWidth = 2.4; c.beginPath(); c.moveTo(x - (x > 0 ? str * 3 : 0), -4); c.lineTo(x + st - (x > 0 ? str * 4 : 0), 0); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.3; c.stroke(); }
-  c.save(); c.translate(-7, sit ? -3 : -7); c.rotate(-1.2 + Math.sin(a.t * 2.4) * 0.3); c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-2, -5, 1, -9); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.4; c.stroke(); c.restore();
-  const cAng = (sit ? -0.55 : 0) + (str ? str * 0.18 : 0);
-  c.save(); if (sit) { c.translate(-1, 0); c.rotate(-0.55); c.translate(1, 0); } if (str) c.rotate(str * 0.18);
-  ell(c, 0, -6.4, 7.4, 4, a.col, INK, 0.9);
-  if (stripe) for (let i = -1; i <= 1; i++) { c.strokeStyle = stripe; c.lineWidth = 1; c.beginPath(); c.moveTo(i * 2.6, -10); c.lineTo(i * 2.6 + 0.6, -7.4); c.stroke(); }
-  c.restore();
-  { const [nx, ny] = rot(4.6, -8, -1, 0, cAng); neck(c, nx, ny, 5.6 + str * 2, (sit ? -12 : -9.5) + str * 3, 4, a.col); }
-  c.save(); c.translate(6 + str * 2, (sit ? -13 : -10) + str * 3); if (id === 'groom') c.rotate(Math.sin(a.t * 6) * 0.25 + 0.4);
+  const leg = (x0, y0, x1, y1) => { c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.4; c.stroke(); };
+  if (sit) {
+    // sitting up like a loaf-with-legs: haunch, upright chest, tidy front paws, tail wrapped round
+    ell(c, -2, -3.6, 5, 3.8, a.col, INK, 0.9);
+    leg(2, -5, 2.2, 0); leg(4, -5, 4.4, 0);
+    ell(c, 2.6, -7.8, 3.9, 5, a.col, INK, 0.9);
+    if (stripe) for (let i = -1; i <= 1; i++) { c.strokeStyle = stripe; c.lineWidth = 0.9; c.beginPath(); c.moveTo(-2 + i * 2.2, -6.6); c.lineTo(-1.4 + i * 2.2, -4.4); c.stroke(); }
+    c.beginPath(); c.moveTo(-6, -1.2); c.quadraticCurveTo(-2, 1.6 + Math.sin(a.t * 2) * 0.3, 5.5, 0.4); c.strokeStyle = INK; c.lineWidth = 2.6; c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.4; c.stroke();
+  } else {
+    for (const [x, k] of [[-4, 0], [-2, 1], [3, 2], [5, 3]]) { const st = walk ? Math.sin(a.t * 12 + k * 1.6) * 1.6 : 0; leg(x - (x > 0 ? str * 3 : 0), -4, x + st - (x > 0 ? str * 4 : 0), 0); }
+    c.save(); c.translate(-7, -7); c.rotate(-1.2 + Math.sin(a.t * 2.4) * 0.3); c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-2, -5, 1, -9); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.4; c.stroke(); c.restore();
+    c.save(); if (str) c.rotate(str * 0.18);
+    ell(c, 0, -6.4, 7.4, 4, a.col, INK, 0.9);
+    if (stripe) for (let i = -1; i <= 1; i++) { c.strokeStyle = stripe; c.lineWidth = 1; c.beginPath(); c.moveTo(i * 2.6, -10); c.lineTo(i * 2.6 + 0.6, -7.4); c.stroke(); }
+    c.restore();
+  }
+  c.save(); c.translate(sit ? 3.4 : 6 + str * 2, sit ? -13.2 : -9.6 + str * 3); if (id === 'groom') c.rotate(Math.sin(a.t * 6) * 0.25 + 0.4);
   circ(c, 0, 0, 4.4, a.col, INK, 0.9);
   poly(c, [-3.6, -2, -3, -6.4, -0.6, -3.6], a.col, INK, 0.8); poly(c, [3.6, -2, 3, -6.4, 0.6, -3.6], a.col, INK, 0.8);
   const bl = (Math.sin(a.t * 0.8 + a.seed) > 0.96);
@@ -222,7 +236,6 @@ function pigeon(c, t, a) {
   ell(c, 0, -4, 4.8, 3.2, '#9aa3b4', INK, 0.8);
   if (fly) { const f = Math.sin(a.t * 26); for (const k of [-1, 1]) { c.save(); c.translate(-0.5, -5); c.rotate(k * (0.5 + f * 0.6)); ell(c, 0, -3, 2, 4, '#b7bfcc', INK, 0.6); c.restore(); } }
   else { ell(c, -1, -4.4, 3, 1.8, '#b7bfcc', null); }
-  neck(c, 2.4, -5.4, 3.4 + bob * 0.4, peck ? -3 : -7, 2.6, '#8e97aa');
   c.save(); c.translate(3.4 + bob * 0.4, peck ? -3 : -7);
   circ(c, 0, 0, 2.3, '#7f889c', INK, 0.7); circ(c, 0.8, -0.4, 0.5, INK, null); poly(c, [2, -0.2, 3.6, 0.3, 2, 0.8], '#e6a55a', null);
   c.fillStyle = 'rgba(120,200,160,.8)'; c.fillRect(-1.6, 1.6, 2.4, 1);
@@ -234,8 +247,7 @@ function goat(c, t, a) {
   c.save(); c.scale(a.face, 1);
   for (const [x, k] of [[-6, 0], [-3, 1], [4, 2], [7, 3]]) { const st = walk ? Math.sin(a.t * 10 + k * 1.6) * 1.6 : 0; c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(x, -6); c.lineTo(x + st, 0); c.stroke(); c.strokeStyle = '#f4efe6'; c.lineWidth = 1.4; c.stroke(); }
   ell(c, 0, -10, 10, 5.6, '#f4efe6', INK, 0.9);
-  neck(c, 6, -12.5, 9.4, -15, 4.2, '#f4efe6');
-  c.save(); c.translate(10, -16); c.rotate(chew ? Math.sin(a.t * 5) * 0.06 : 0);
+  c.save(); c.translate(9, -14.2); c.rotate(chew ? Math.sin(a.t * 5) * 0.06 : 0);
   ell(c, 0, 0, 4.4, 3.8, '#f4efe6', INK, 0.9);
   poly(c, [-2, -3, -5, -8, -1, -4], '#c9b79a', INK, 0.6); poly(c, [1, -3, 0, -8, 3, -3.6], '#c9b79a', INK, 0.6);
   circ(c, 1.8, -0.8, 0.8, INK, null);
@@ -273,3 +285,5 @@ export function animalDrawables() {
   return out;
 }
 export { box };
+
+export { DRAW as ANIMAL_DRAW };
