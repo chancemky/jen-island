@@ -9,6 +9,7 @@ import { drawCat } from '../gfx/cat.js';
 import { escapeHtml } from '../core/util.js';
 import { RESIDENTS, MERCHANTS } from '../data/looks.js';
 import { releaseJoystick } from '../core/input.js';
+import { applyPronouns, profileOf, customerProfile, playerGender } from '../systems/pronouns.js';
 
 const el = id => document.getElementById(id);
 const box = el('dialog'), nameEl = el('dlgName'), textEl = el('dlgText'), nextEl = el('dlgNext'), choicesEl = el('dlgChoices');
@@ -20,6 +21,15 @@ const D = {
 };
 export const dialogue = D;
 
+function whoProfile(who) {
+  if (!who || who === 'player' || who === 'meo') return null;
+  if (typeof who === 'string') return profileOf(who);
+  const id = who.data?.rid || who.data?.mid || { icecream: 'ba_nam', sugarcane: 'ba_hai', banhmi: 'ba_ut' }[who.data?.cart];
+  if (who.data?.emp) return { me: 'em', you: playerGender() === 'm' ? 'anh' : 'chị' };
+  if (id) return profileOf(id);
+  if (who.data?.tourist || who.data?.cust) return customerProfile(who.data.cust || { look: who.look, personality: who.data.tourist ? 'tourist' : 'regular' });
+  return null;
+}
 function speakerInfo(who) {
   if (!who) return { name: '', portrait: null };
   if (who === 'meo') return { name: 'Mèo Mây', cat: true, actor: G.meo, look: { cat: true }, pitch: 880 };
@@ -30,8 +40,9 @@ function speakerInfo(who) {
   return { name: String(who), look: null, pitch: 600 };
 }
 
-function markup(s) {
+function markup(s, who) {
   const st = G.state;
+  s = applyPronouns(s, whoProfile(who));
   s = s.replaceAll('{player}', st.player.name || T('friend', 'bạn')).replaceAll('{island}', st.island.name || T('the island', 'đảo'));
   return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
 }
@@ -54,7 +65,7 @@ export function say(who, text, opt = {}) {
     releaseJoystick();
     const info = speakerInfo(who);
     D.active = true; D.resolve = resolve; D.choices = opt.choices || null;
-    D.speaker = info; D.html = markup(text); D.len = plainLen(D.html); D.shown = 0; D.typing = true; D.pause = opt.delay || 0.05;
+    D.speaker = info; D.html = markup(text, who); D.len = plainLen(D.html); D.shown = 0; D.typing = true; D.pause = opt.delay || 0.05;
     D.emo = opt.emo || null; D.speed = opt.speed || (info.cat ? 56 : 50);
     if (info.actor) { info.actor.talking = false; if (opt.emo) info.actor.setEmo?.(opt.emo, 0); }
     D.portraitActor = { look: info.look, kind: info.cat ? 'cat' : 'human', dir: 'down', moving: 0, walkPh: 0, seed: 3, blinkAmt: 0, emo: opt.emo || 'neutral', talking: false, headTilt: opt.tilt || 0, act: opt.act || null, actT: 0, portrait: true };

@@ -9,7 +9,7 @@ import * as P from '../gfx/props.js';
 import * as B from '../gfx/buildings.js';
 import { G, T } from '../systems/state.js';
 
-export const W = 2640, H = 2600;
+export const W = 3500, H = 2640;
 const MAIN_W = 1800; // the main island's width (the islet lies beyond)
 
 // ---------------------------------------------------------------- geometry
@@ -34,16 +34,34 @@ const ISLET_CP = [[2240, 1080], [2420, 1130], [2540, 1280], [2570, 1480], [2530,
 export const ISLET_SAND = smoothLoop(ISLET_CP, 10);
 export const ISLET_GRASS = insetPoly(ISLET_SAND, (x, y) => 44 + 30 * clamp((y - 1700) / 200, 0, 1), ICX, ICY);
 const ISLET_FOAM = insetPoly(ISLET_SAND, () => -16, ICX, ICY), ISLET_SHALLOW = insetPoly(ISLET_SAND, () => -44, ICX, ICY);
-export const SEA_BRIDGE = { x: 1690, y: 1500, w: 262, h: 38 };
+// Harbour Town, the big island in the north-east (opens in Chapter 12)
+const HCX = 2640, HCY = 560;
+const HARBOUR_CP = [[2060, 230], [2300, 130], [2620, 105], [2940, 150], [3200, 250], [3380, 430], [3400, 660], [3290, 840], [3040, 950], [2720, 985], [2400, 960], [2140, 880], [1995, 720], [1990, 470]];
+export const HARBOUR_SAND = smoothLoop(HARBOUR_CP, 10);
+const HARBOUR_GRASS = insetPoly(HARBOUR_SAND, (x, y) => 46 + 40 * clamp((y - 820) / 140, 0, 1), HCX, HCY);
+// Coconut Cove, a beachy little island in the south-east (opens in Chapter 17)
+const KCX = 2300, KCY = 2270;
+const COVE_CP = [[1960, 2050], [2150, 1990], [2400, 2000], [2600, 2060], [2720, 2210], [2690, 2400], [2530, 2530], [2270, 2575], [2040, 2520], [1930, 2370], [1920, 2190]];
+export const COVE_SAND = smoothLoop(COVE_CP, 10);
+const COVE_GRASS = insetPoly(COVE_SAND, (x, y) => 70 + 50 * clamp((y - 2350) / 150, 0, 1), KCX, KCY);
+// sea bridges: the Long Bridge to Firefly Islet, the Harbour Bridge and the Cove Bridge
+export const SEA_BRIDGES = [
+  { id: 'long', x: 1690, y: 1500, w: 262, h: 38, fixed: () => bridgeFixed() },
+  { id: 'harbour', x: 1612, y: 681, w: 400, h: 38, fixed: () => !!G.state?.story?.flags?.harbourBridge, label: ['NOT BUILT YET', 'CHƯA XÂY'] },
+  { id: 'cove', x: 1626, y: 2061, w: 320, h: 38, fixed: () => !!G.state?.story?.flags?.coveBridge, label: ['NOT BUILT YET', 'CHƯA XÂY'] },
+];
+export const SEA_BRIDGE = SEA_BRIDGES[0];
 export const LANDS = [
   { sand: SAND, grass: GRASS, foam: FOAM2, shallow: SHALLOW, cx: CX, cy: CY },
   { sand: ISLET_SAND, grass: ISLET_GRASS, foam: ISLET_FOAM, shallow: ISLET_SHALLOW, cx: ICX, cy: ICY },
+  { sand: HARBOUR_SAND, grass: HARBOUR_GRASS, foam: insetPoly(HARBOUR_SAND, () => -16, HCX, HCY), shallow: insetPoly(HARBOUR_SAND, () => -44, HCX, HCY), cx: HCX, cy: HCY, id: 'harbour' },
+  { sand: COVE_SAND, grass: COVE_GRASS, foam: insetPoly(COVE_SAND, () => -16, KCX, KCY), shallow: insetPoly(COVE_SAND, () => -44, KCX, KCY), cx: KCX, cy: KCY, id: 'cove' },
 ];
 const onSand = (x, y) => LANDS.some(l => inPoly(l.sand, x, y));
 const onGrass = (x, y) => LANDS.some(l => inPoly(l.grass, x, y));
 export const bridgeFixed = () => !!G.state?.story?.flags?.bridgeFixed;
 
-export const RIVER = smoothLine([[706, 528], [650, 640], [580, 760], [490, 862], [380, 950], [250, 1030], [150, 1075], [60, 1100]], 8);
+export const RIVER = smoothLine([[706, 528], [694, 640], [680, 760], [652, 858], [572, 912], [454, 944], [360, 972], [250, 1030], [150, 1075], [60, 1100]], 8);
 // where the river leaves the grass and crosses the beach to the sea
 const RIVER_OUT = (() => { const n = RIVER.length, x = RIVER[n - 2], y = RIVER[n - 1], dx = x - RIVER[n - 4], dy = y - RIVER[n - 3], d = Math.hypot(dx, dy) || 1; return [[x + dx / d * 60, y + dy / d * 60], [x + dx / d * 120, y + dy / d * 120]]; })();
 const RIVER_MOUTH = (() => {
@@ -64,21 +82,30 @@ export const RIVER_W = 42;
 export const POND = { x: 770, y: 478, rx: 82, ry: 52 };
 export const PIER = { x: 872, y: 2400, w: 56, h: 205 };
 export const PIER_END = { x: 820, y: 2560, w: 150, h: 46 };
-export const BRIDGES = [{ x: 422, y: 846, w: 64, h: 86, deck: 'v' }, { x: 116, y: 1050, w: 56, h: 80, deck: 'v' }];
+export const BRIDGES = [{ x: 424, y: 900, w: 64, h: 86, deck: 'v' }, { x: 116, y: 1050, w: 56, h: 80, deck: 'v' }];
 export const PLAZA = { x: 900, y: 1540, r: 104 };
 export const NM_PLAZA = { x: 250, y: 470, w: 360, h: 330 };
 // fields sit back from the farm road with walkable earth bunds between them
 export const PADDIES = [
-  { x: 1420, y: 846, w: 96, h: 66 }, { x: 1534, y: 846, w: 96, h: 66 },
-  { x: 1420, y: 930, w: 96, h: 66 }, { x: 1534, y: 930, w: 96, h: 66 },
-  { x: 1432, y: 1086, w: 84, h: 52, kind: 'veg' }, { x: 1534, y: 1086, w: 84, h: 52, kind: 'veg', crop: 'corn' },
+  { x: 1360, y: 846, w: 92, h: 66 }, { x: 1466, y: 846, w: 92, h: 66 },
+  { x: 1360, y: 930, w: 92, h: 66 }, { x: 1466, y: 930, w: 92, h: 66 },
+  { x: 1400, y: 1076, w: 78, h: 50, kind: 'veg' }, { x: 1490, y: 1076, w: 78, h: 50, kind: 'veg', crop: 'corn' },
 ];
 
+// The south beach roads trace the edge of the grass (a steady 26px in from the sand)
+function coastRoad(xFrom, xTo, dir) {
+  const edge = insetPoly(GRASS, () => 26), pts = [];
+  for (let i = 0; i < edge.length; i += 2) { const x = edge[i], y = edge[i + 1]; if (y > 1900 && (dir < 0 ? x <= xFrom && x >= xTo : x >= xFrom && x <= xTo)) pts.push([x, y]); }
+  pts.sort((a, b) => dir < 0 ? b[0] - a[0] : a[0] - b[0]);
+  const out = [[xFrom, pts.length ? pts[0][1] : 2250]];
+  for (const q of pts) { const l = out[out.length - 1]; if (Math.hypot(q[0] - l[0], q[1] - l[1]) > 40) out.push([Math.round(q[0]), Math.round(q[1])]); }
+  return out;
+}
 // Paths: [points, width]
 export const PATHS = {
   main: [[900, 2410], [900, 2250], [902, 2000], [904, 1760], [900, 1644]],
-  beachW: [[900, 2252], [760, 2250], [600, 2236], [450, 2176], [330, 2066], [250, 1960]],
-  beachE: [[900, 2252], [1060, 2250], [1230, 2236], [1380, 2196], [1500, 2100], [1580, 1990]],
+  beachW: coastRoad(900, 250, -1),
+  beachE: coastRoad(900, 1580, 1),
   east: [[1000, 1580], [1120, 1690], [1260, 1766], [1420, 1766], [1560, 1720], [1610, 1640]],
   salon: [[1492, 1346], [1500, 1450], [1500, 1570]],
   lane: [[1120, 1690], [1232, 1660], [1340, 1634], [1440, 1604], [1500, 1572]],
@@ -93,14 +120,23 @@ export const PATHS = {
   north2: [[1188, 900], [1040, 760], [940, 620], [900, 330]],
   bridgeW: [[1500, 1570], [1600, 1540], [1696, 1519]],
   bridge: [[1696, 1519], [1946, 1519]],
+  harbourRoad: [[1200, 870], [1330, 810], [1470, 770], [1560, 720], [1600, 700]],
+  hbridge: [[1600, 700], [2012, 700]],
+  harbour: [[2012, 700], [2160, 690], [2330, 646], [2520, 636], [2700, 664], [2860, 760], [2990, 880]],
+  hnorth: [[2520, 636], [2560, 480], [2620, 330]],
+  heast: [[2700, 664], [2900, 604], [3130, 560]],
+  coveRoad: [[1580, 1990], [1606, 2080]],
+  cbridge: [[1606, 2080], [1946, 2080]],
+  cove: [[1946, 2080], [2100, 2150], [2250, 2236], [2400, 2256], [2540, 2310]],
   islet: [[1946, 1519], [2050, 1506], [2150, 1470], [2260, 1440], [2380, 1420], [2470, 1440]],
   isletS: [[2150, 1470], [2200, 1600], [2290, 1700], [2230, 1820]],
   isletN: [[2260, 1440], [2250, 1330], [2230, 1210]],
-  paddy: [[1195, 1040], [1420, 1042], [1520, 1044], [1628, 1044]],
+  paddy: [[1195, 1040], [1380, 1042], [1470, 1044], [1560, 1044]],
   dinh: [[940, 620], [800, 590], [650, 440], [620, 392]],
   westCoast: [[230, 1330], [180, 1200], [150, 1090], [140, 1000], [196, 880], [262, 810]],
 };
 const PATH_W = 30;
+const TALL = new Set(['tree', 'flameTree', 'palm', 'banana', 'bamboo', 'banyan']);
 
 // ---------------------------------------------------------------- building placements
 // x,y = door threshold / front-centre base. fp = collision footprint depth.
@@ -124,15 +160,23 @@ export const BUILDINGS = [
   { id: 'h_mai', type: 'house', interior: 'home_chi_mai', door: [0, 0], x: 1360, y: 1602, w: 96, fp: 50, wall: '#f4f8fb', roof: '#6fbf73', shutter: '#6f9fc8', home: 'chi_mai', style: 'clinic' },
   { id: 'h_hai', type: 'house', interior: 'home_chu_hai', door: [0, 0], x: 1560, y: 1952, w: 96, fp: 50, wall: '#e8f1e6', roof: '#6f9fc8', shutter: '#e8584e', home: 'chu_hai', style: 'tin', fisher: true },
   { id: 'dinh', type: 'dinh', x: 620, y: 386, w: 170, fp: 60 },
+  // Harbour Town
+  { id: 'petshop', type: 'shop', kind: 'petshop', x: 2380, y: 606, w: 140, fp: 56, door: [46, 0], interior: 'petshop', wall: '#fff6e0', region: 'harbour' },
+  { id: 'cafe', type: 'kiosk', style: 'cafe', x: 2800, y: 690, w: 112, fp: 40, biz: 'cafe', region: 'harbour' },
+  { id: 'h_hb1', type: 'house', door: [0, 0], x: 2230, y: 620, w: 96, fp: 50, wall: '#e6f0fa', roof: '#6f9fc8', shutter: '#f2c14e', style: 'wood', region: 'harbour' },
+  { id: 'h_hb2', type: 'house', door: [0, 0], x: 2660, y: 560, w: 96, fp: 50, wall: '#fbe7d6', roof: '#c9674a', shutter: '#6fbfb0', style: 'flowers', label: ['HARBOUR', 'BẾN CẢNG'], region: 'harbour' },
+  { id: 'h_hb3', type: 'house', door: [0, 0], x: 3010, y: 560, w: 96, fp: 50, wall: '#eef6e8', roof: '#5f8fb8', shutter: '#e8584e', style: 'tin', fisher: true, region: 'harbour' },
+  // Coconut Cove
+  { id: 'grill', type: 'kiosk', style: 'grill', x: 2250, y: 2204, w: 112, fp: 40, biz: 'grill', region: 'cove' },
   { id: 'h_vy', type: 'house', interior: 'home_vy', door: [0, 0], x: 2350, y: 1668, w: 96, fp: 50, wall: '#fdf0d8', roof: '#8fb7e0', shutter: '#f28f7c', home: 'vy', style: 'painter' },
 ];
 export const STALLS = [
-  { id: 'nm1', x: 340, y: 580, label: ['GRANDMA SÁU', 'BÀ SÁU'], goods: ['#f2c46b', '#e3703a'], cloth: ['#e8584e', '#fff5df'] },
-  { id: 'nm2', x: 530, y: 580, label: ['SWEET SOUP', 'CHÈ'], goods: ['#a8423a', '#9fd67a'], cloth: ['#6fbfb0', '#fff5df'] },
-  { id: 'nm3', x: 340, y: 670, label: ['SNAILS', 'ỐC'], goods: ['#e0a052', '#fff5df'], cloth: ['#f2c14e', '#fff5df'] },
+  { id: 'nm1', biz: 'nm1', x: 340, y: 580, label: ['GRANDMA SÁU', 'BÀ SÁU'], goods: ['#f2c46b', '#e3703a'], cloth: ['#e8584e', '#fff5df'] },
+  { id: 'nm2', biz: 'nm2', x: 530, y: 580, label: ['SWEET SOUP', 'CHÈ'], goods: ['#a8423a', '#9fd67a'], cloth: ['#6fbfb0', '#fff5df'] },
+  { id: 'nm3', biz: 'nm3', x: 340, y: 670, label: ['SNAILS', 'ỐC'], goods: ['#e0a052', '#fff5df'], cloth: ['#f2c14e', '#fff5df'] },
   { id: 'night', x: 530, y: 670, label: ['YOUR STALL', 'SẠP CỦA BẠN'], goods: ['#f2c46b', '#a8423a'], cloth: ['#f08ca0', '#fff5df'], biz: 'night' },
-  { id: 'nm5', x: 340, y: 760, label: ['SUGARCANE', 'NƯỚC MÍA'], goods: ['#b9e08a', '#f7de8c'], cloth: ['#8fb7e0', '#fff5df'] },
-  { id: 'nm6', x: 530, y: 760, label: ['SKEWERS', 'XIÊN QUE'], goods: ['#c96b45', '#e3703a'], cloth: ['#c9b6e8', '#fff5df'] },
+  { id: 'nm5', biz: 'nm5', x: 340, y: 760, label: ['SUGARCANE', 'NƯỚC MÍA'], goods: ['#b9e08a', '#f7de8c'], cloth: ['#8fb7e0', '#fff5df'] },
+  { id: 'nm6', biz: 'nm6', x: 530, y: 760, label: ['SKEWERS', 'XIÊN QUE'], goods: ['#c96b45', '#e3703a'], cloth: ['#c9b6e8', '#fff5df'] },
 ];
 
 // Where customers queue for each business (front of the service window).
@@ -141,6 +185,13 @@ export const QUEUES = {
   shed2: [[546, 1600], [520, 1606], [494, 1606], [468, 1600], [442, 1592]],
   truck: [[1410, 2182], [1386, 2194], [1360, 2206], [1334, 2216], [1308, 2224], [1282, 2230]],
   night: [[505, 700], [482, 712], [458, 724], [440, 740], [438, 766]],
+  cafe: [[2790, 728], [2766, 740], [2742, 752], [2718, 762], [2694, 770]],
+  grill: [[2240, 2242], [2214, 2252], [2188, 2260], [2162, 2266], [2136, 2270]],
+  nm1: [[330, 608], [352, 618], [374, 628], [396, 634]],
+  nm2: [[520, 608], [498, 618], [476, 628], [454, 634]],
+  nm3: [[330, 698], [352, 708], [374, 716], [396, 722]],
+  nm5: [[330, 788], [352, 792], [374, 796], [396, 798]],
+  nm6: [[520, 788], [498, 792], [476, 796], [454, 798]],
 };
 
 // ---------------------------------------------------------------- terrain tests
@@ -148,7 +199,7 @@ const inRect = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y +
 export function onBridge(x, y) { return BRIDGES.some(b => inRect(b, x, y)); }
 export function isWater(x, y) {
   if (inRect(PIER, x, y) || inRect(PIER_END, x, y)) return false;
-  if (inRect(SEA_BRIDGE, x, y)) return !bridgeFixed() && x > SEA_BRIDGE.x + 70 && x < SEA_BRIDGE.x + SEA_BRIDGE.w - 70; // the broken middle
+  for (const sb of SEA_BRIDGES) if (inRect(sb, x, y)) return !sb.fixed() && x > sb.x + 70 && x < sb.x + sb.w - 70; // unbuilt: only the stubs at each end
   if (!onSand(x, y)) return true;
   if (onBridge(x, y)) return false;
   if (distToLine(RIVER, x, y) < RIVER_W / 2) return true;
@@ -156,6 +207,8 @@ export function isWater(x, y) {
   if (px * px + py * py < 1) return true;
   return false;
 }
+// open sea (not the river or pond, not under the pier)
+export function isOcean(x, y) { return !onSand(x, y) && !inRect(PIER, x, y) && !inRect(PIER_END, x, y) && !SEA_BRIDGES.some(b => inRect(b, x, y)); }
 function isPaddy(x, y) { return PADDIES.some(p => inRect(p, x, y)); }
 
 // ---------------------------------------------------------------- ground painter
@@ -164,7 +217,7 @@ const mixCol = (a, b, k) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice
 function tracePoly(c, pts) { c.beginPath(); c.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]); c.closePath(); }
 function traceLine(c, pts) { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); }
 // walk-only routes: inside the Night Market plaza and across the bridge deck
-const NAV_ONLY = new Set(['nm', 'bridge']);
+const NAV_ONLY = new Set(['nm', 'bridge', 'hbridge', 'cbridge']);
 const SMOOTH_PATHS = Object.fromEntries(Object.entries(PATHS).filter(([k]) => !NAV_ONLY.has(k)).map(([k, p]) => [k, p.length > 2 ? chunkPts(smoothLine(p, 6)) : p]));
 function chunkPts(flat) { const o = []; for (let i = 0; i < flat.length; i += 2) o.push([flat[i], flat[i + 1]]); return o; }
 
@@ -317,7 +370,7 @@ export class GroundCache {
       paintGround(c);
       e = { cv, used: 0 };
       this.map.set(key, e);
-      if (this.map.size > 20) { // evict least recently used
+      if (this.map.size > 36) { // evict least recently used
         let old = null, ou = Infinity; for (const [k, v] of this.map) if (v.used < ou && k !== key) { ou = v.used; old = k; }
         if (old) { const v = this.map.get(old); v.cv.width = v.cv.height = 0; this.map.delete(old); }
       }
@@ -341,6 +394,8 @@ export class Island extends Scene {
   add2(kind, x, y, o = {}) {
     const fn = P[kind];
     const p = { kind, x, y, ...o, draw: (c, t) => fn(c, t, p) };
+    if (kind === 'signpost' && this.keepOut) this.keepOut.push({ x, y, w: 64 });
+    if ((kind === 'scooter' || kind === 'bicycle') && !o.solidR) this.circles.push({ x, y: y - 2, r: 16, soft: true });   // keep trees off parked bikes
     const r = o.cullR || 70;
     p.cull = o.cull || { x: x - r, y: y - (o.cullH || 140), w: r * 2, h: (o.cullH || 140) + 20 };
     this.prop(p);
@@ -351,6 +406,7 @@ export class Island extends Scene {
 
   build() {
     const R = rng(7);
+    this.keepOut = [];
     // ---- buildings
     for (const b of BUILDINGS) this.addBuilding(b);
     for (const s of STALLS) this.addStall(s);
@@ -375,17 +431,19 @@ export class Island extends Scene {
     for (const [x, y] of [[830, 1640], [970, 1640], [830, 1450], [970, 1450]]) this.add2('bench', x, y, { solidRect: [-18, -8, 36, 8] });
     // lantern strings over the market street
     for (let i = 0; i < 4; i++) this.add2('lanternString', 560 + i * 200, 1214, { x2: 560 + i * 200 + 150, h: 50, cullR: 160, cullH: 80, cull: { x: 560 + i * 200 - 10, y: 1150, w: 180, h: 80 } });
-    this.add2('foodCart', 810, 1222, { label: ['BÁNH MÌ', 'BÁNH MÌ'], solidRect: [-20, -8, 40, 8] });
-    this.add2('foodCart', 1000, 1224, { label: ['ICE CREAM', 'KEM'], solidRect: [-20, -8, 40, 8] });
-    for (const [x, y, col] of [[780, 1232, '#e8584e'], [830, 1236, '#6f9fc8'], [980, 1236, '#e8584e'], [1025, 1236, '#6fbf73']]) this.add2('stool', x, y, { col });
-    this.add2('lowTable', 805, 1244, {});
+    // grandma carts line the road from the Banyan Plaza down to the dock
+    this.add2('foodCart', 962, 1812, { label: ['ICE CREAM', 'KEM'], solidRect: [-20, -8, 40, 8] }); this.circle(962, 1806, 20);
+    this.add2('foodCart', 838, 1930, { label: ['RICE PAPER', 'BÁNH TRÁNG'], solidRect: [-20, -8, 40, 8], goods: ['#f0d9a8', '#e3703a'] }); this.circle(838, 1924, 20);
+    this.add2('sugarcaneCart', 964, 2098, { label: ['SUGARCANE', 'NƯỚC MÍA'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 70 }); this.circle(964, 2092, 20);
+    for (const [x, y, col] of [[948, 1830, '#e8584e'], [990, 1834, '#6f9fc8'], [812, 1948, '#e8584e'], [858, 1952, '#6fbf73'], [990, 2116, '#f2c14e']]) this.add2('stool', x, y, { col });
+    this.add2('lowTable', 834, 1960, {});
     // signposts
     this.add2('signpost', 940, 2300, { signs: [{ label: ['MARKET', 'CHỢ'], to: [900, 1200] }, { label: ['BEACH', 'BÃI BIỂN'], to: [640, 2300] }, { label: ['HOME', 'NHÀ'], to: [1260, 1736] }], solidR: 3 });
     this.add2('signpost', 942, 1330, { signs: [{ label: ['NIGHT MKT', 'CHỢ ĐÊM'], to: [430, 700] }, { label: ['RESTAURANT', 'NHÀ HÀNG'], to: [1200, 742] }, { label: ['PLAZA', 'QUẢNG TRƯỜNG'], to: [900, 1560] }], solidR: 3 });
     // scooters parked along the street
     this.add2('scooter', 620, 1238, { col: '#f28f7c', basket: true });
     this.add2('scooter', 1180, 1234, { col: '#9fd8c8', flip: true });
-    this.add2('scooter', 1030, 1680, { col: '#f7de8c' });
+    this.add2('scooter', 1208, 1648, { col: '#f7de8c', solidR: 12 });   // Anh Tuấn's taxi, parked in front of his garage
     // beach
     for (const [x, y, c1] of [[700, 2330, '#f28f7c'], [1120, 2350, '#6fbfb0'], [1300, 2300, '#f7de8c'], [480, 2270, '#c9b6e8']]) { this.add2('umbrella', x, y, { col: c1, cullR: 40, cullH: 60 }); this.add2('lounger', x + 26, y + 6, {}); }
     for (const [x, y, w] of [[1610, 2120, false], [1648, 2060, false], [1680, 2200, true], [1520, 2290, true]]) this.add2('basketBoat', x, y, { water: w, oar: true, solidR: w ? 0 : 14 });
@@ -394,7 +452,6 @@ export class Island extends Scene {
     this.add2('clothesline', 1520, 1880, { w: 50 });
     this.add2('crate', 1612, 1900, { fruit: '#a6c7d8' });
     // paddy life
-    this.add2('buffalo', 1380, 1150, { solidR: 16 });
     this.add2('shrine', 1180, 1030, { solidR: 8 });
     // pond lotus
     for (let i = 0; i < 9; i++) { const a = R() * TAU, rr = R() * 0.7; this.add2('lotus', POND.x + Math.cos(a) * POND.rx * rr, POND.y + Math.sin(a) * POND.ry * rr, { flower: i % 3 === 0, cullR: 12, cullH: 16 }); }
@@ -407,12 +464,11 @@ export class Island extends Scene {
     for (const [x, dx] of [[630, -150], [480, -150]]) deco('powerPole', x, 1634, { to: [dx, -8], cull: { x: x - 170, y: 1540, w: 200, h: 110 }, solidR: 3 });
     deco('powerPole', 330, 1626, { cullR: 40, cullH: 100, solidR: 3 });
     deco('flowerArch', 903, 1950, { w: 46, cullR: 50, cullH: 90 }); this.circle(880, 1948, 3); this.circle(926, 1948, 3);
-    deco('flowerArch', 456, 996, { w: 46, cullR: 50, cullH: 90 }); this.circle(433, 994, 3); this.circle(479, 994, 3);
+    deco('flowerArch', 457, 1046, { w: 46, cullR: 50, cullH: 90 }); this.circle(434, 1044, 3); this.circle(480, 1044, 3);
     deco('birdCage', 482, 1560, { solidR: 3, cullR: 30, cullH: 60 });
     deco('birdCage', 1628, 1958, { solidR: 3, cullR: 30, cullH: 60 });
     deco('fruitStand', 1262, 1250, { solidRect: [-26, -8, 52, 8], cullR: 50, cullH: 70 });
     deco('fruitStand', 1044, 2300, { solidRect: [-26, -8, 52, 8], cullR: 50, cullH: 70 });
-    deco('sugarcaneCart', 1034, 1476, { label: ['SUGARCANE', 'NƯỚC MÍA'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 70 });
     deco('rattanSet', 636, 1486, { solidRect: [-22, -8, 44, 8] });
     deco('rattanSet', 668, 2268, { solidRect: [-22, -8, 44, 8] });
     deco('fishingNet', 1552, 2150, { solidRect: [-24, -4, 48, 4], cullR: 40, cullH: 50 });
@@ -436,7 +492,7 @@ export class Island extends Scene {
       for (const side of [-1, 1]) { const rl = { kind: 'bridgeRail', x: b.x + b.w / 2 + side * (b.w / 2 - 3), y: b.y + b.h, b, side }; rl.draw = (c, t) => P.bridgeRail(c, t, rl); rl.cull = { x: rl.x - 10, y: b.y - 30, w: 20, h: b.h + 40 }; this.prop(rl); }
     }
     // ---- Firefly Islet (dressed by hand)
-    this.add2('seaBridge', SEA_BRIDGE.x, SEA_BRIDGE.y + SEA_BRIDGE.h, { flat: true, cull: { x: SEA_BRIDGE.x - 20, y: SEA_BRIDGE.y - 40, w: SEA_BRIDGE.w + 40, h: 90 }, fixed: bridgeFixed });
+    for (const sb of SEA_BRIDGES) this.add2('seaBridge', sb.x, sb.y + sb.h, { flat: true, w: sb.w, h: sb.h, label: sb.label, cull: { x: sb.x - 20, y: sb.y - 40, w: sb.w + 40, h: 90 }, fixed: sb.fixed });
     this.add2('banyan', 2250, 1318, { s: 1.05, cullR: 120, cullH: 170, solidR: 16, fireflies: true });
     this.add2('shrine', 2196, 1330, { solidR: 7 });
     this.add2('lookout', 2470, 1400, { cullR: 40, cullH: 150, solidR: 12 });
@@ -460,6 +516,7 @@ export class Island extends Scene {
       if (x > NM_PLAZA.x - r && x < NM_PLAZA.x + NM_PLAZA.w + r && y > NM_PLAZA.y - r && y < NM_PLAZA.y + NM_PLAZA.h + r) return true;
       for (const b of BUILDINGS) if (x > b.x - b.w / 2 - r - 6 && x < b.x + b.w / 2 + r + 6 && y > b.y - b.fp - 40 - r && y < b.y + 36 + r) return true;
       for (const s of this.circles) if (dist(x, y, s.x, s.y) < s.r + r + 6) return true;
+      for (const k of this.keepOut) if (Math.abs(x - k.x) < k.w + r && y > k.y - 30 - r && y < k.y + 90 + r) return true;   // signposts stay readable
       if (distToLine(RIVER, x, y) < RIVER_W / 2 + r + 6) return true;
       if (Math.hypot((x - POND.x) / (POND.rx + r + 10), (y - POND.y) / (POND.ry + r + 10)) < 1) return true;
       if (PADDIES.some(p => x > p.x - r - 8 && x < p.x + p.w + r + 8 && y > p.y - r - 8 && y < p.y + p.h + r + 16)) return true;
@@ -471,6 +528,8 @@ export class Island extends Scene {
         const x = 140 + R() * (MAIN_W - 280), y = 220 + R() * (H - 400);
         if (filt && !filt(x, y)) continue;
         if (avoid(x, y, r)) continue;
+        // tall trees: keep the canopy (drawn up to ~110px above the trunk) off the roads too
+        if (TALL.has(kind) && Object.values(PATHS).some(pts => { const f = pts.flat(); return distToLine(f, x, y - 55) < PATH_W / 2 + 34 || distToLine(f, x, y - 95) < PATH_W / 2 + 30; })) continue;
         this.add2(kind, x, y, { ...o, s: o.s ? o.s * (0.85 + R() * 0.3) : undefined, solidR: o.trunk ?? 6, cullR: o.cullR || 70, cullH: o.cullH || 130 });
         made++;
       }
@@ -520,11 +579,64 @@ export class Island extends Scene {
       p.draw = (c, t) => P[k](c, t, p); p.cull = { x: x - 14, y: y - 14, w: 28, h: 18 }; p.flat = true;
       this.prop(p);
     }
+    this.dressNewLands(R);
     this.buildNav();
   }
 
+  // Harbour Town and Coconut Cove: landmarks placed by hand, greenery scattered
+  dressNewLands(R) {
+    const H1 = LANDS.find(l => l.id === 'harbour'), C1 = LANDS.find(l => l.id === 'cove');
+    // harbour: docks, boats, a lighthouse, an anchor monument, market crates
+    this.add2('lighthouse', 3230, 400, { cullR: 40, cullH: 160, solidR: 16 });
+    this.add2('anchorStatue', 2560, 716, { cullR: 30, cullH: 60, solidR: 10 });
+    for (const [x, y] of [[2990, 930], [3060, 900]]) this.add2('crateStack', x, y, { cullR: 30, cullH: 40, solidR: 12 });
+    this.add2('fishingNet', 2900, 900, { solidRect: [-24, -4, 48, 4], cullR: 40, cullH: 50 });
+    for (const [x, y, f] of [[3130, 1010, false], [2860, 1040, true], [2400, 1020, false]]) this.add2('fishingBoat', x, y, { cullR: 60, cullH: 60, flip: f });
+    for (const [x, y] of [[2200, 1010], [3300, 900]]) this.add2('buoy', x, y, {});
+    for (const [x, y] of [[2140, 720], [2440, 690], [2760, 640], [2980, 820], [2620, 380]]) this.add2('lampPost', x, y, { solidR: 3, cullR: 40, cullH: 60 });
+    for (const [x, y] of [[2300, 700], [2880, 720]]) this.add2('bench', x, y, { solidRect: [-18, -8, 36, 8] });
+    this.add2('signpost', 2090, 740, { signs: [{ label: ['PET SHOP', 'THÚ CƯNG'], to: [2426, 606] }, { label: ['CAFÉ', 'CÀ PHÊ'], to: [2800, 690] }, { label: ['BRIDGE', 'CẦU'], to: [1700, 700] }], solidR: 3 });
+    this.add2('signpost', 1560, 760, { signs: [{ label: ['HARBOUR', 'BẾN CẢNG'], to: [2400, 640] }, { label: ['RESTAURANT', 'NHÀ HÀNG'], to: [1200, 742] }], solidR: 3 });
+    // cove: beach bar feel
+    for (const [x, y, c1] of [[2380, 2330, '#f28f7c'], [2520, 2380, '#6fbfb0'], [2120, 2400, '#f7de8c']]) { this.add2('umbrella', x, y, { col: c1, cullR: 40, cullH: 60 }); }
+    this.add2('beachHammock', 2440, 2440, { w: 60, solidRect: [-32, -4, 64, 4], cullR: 40, cullH: 50 });
+    this.add2('bonfire', 2330, 2290, { cullR: 30, cullH: 60, solidR: 10 });
+    for (const [x, y] of [[2290, 2300], [2372, 2300]]) this.add2('stool', x, y, { col: '#c98f5a' });
+    this.add2('boatShore', 2600, 2460, { col: '#f7de8c' });
+    this.add2('signpost', 1560, 2040, { signs: [{ label: ['COCONUT COVE', 'VỊNH DỪA'], to: [2250, 2200] }, { label: ['BEACH', 'BÃI BIỂN'], to: [900, 2250] }], solidR: 3 });
+    // greenery
+    for (const [L, n] of [[H1, 1], [C1, 0.5]]) {
+      const bb = L.sand.reduce((a, v, i) => { if (i % 2) { a.y0 = Math.min(a.y0, v); a.y1 = Math.max(a.y1, v); } else { a.x0 = Math.min(a.x0, v); a.x1 = Math.max(a.x1, v); } return a; }, { x0: 1e9, y0: 1e9, x1: -1e9, y1: -1e9 });
+      const inner = insetPoly(L.grass, () => 60, L.cx, L.cy);
+      const ok = (x, y, r) => {
+        if (!inPoly(L.grass, x, y)) return false;
+        for (const pts of Object.values(PATHS)) if (distToLine(pts.flat(), x, y) < PATH_W / 2 + r) return false;
+        for (const b of BUILDINGS) if (x > b.x - b.w / 2 - r - 6 && x < b.x + b.w / 2 + r + 6 && y > b.y - b.fp - 40 - r && y < b.y + 36 + r) return false;
+        for (const q of this.circles) if (dist(x, y, q.x, q.y) < q.r + r + 6) return false;
+        for (const k of this.keepOut) if (Math.abs(x - k.x) < k.w + r && y > k.y - 30 - r && y < k.y + 90 + r) return false;
+        return true;
+      };
+      const put = (kind, cnt, r, o = {}, filt = null) => { let made = 0, tries = 0; while (made < cnt && tries++ < cnt * 80) { const x = bb.x0 + R() * (bb.x1 - bb.x0), y = bb.y0 + R() * (bb.y1 - bb.y0); if (!ok(x, y, r) || (filt && !filt(x, y))) continue; this.add2(kind, x, y, { ...o, solidR: o.trunk ?? 6, cullR: o.cullR || 70, cullH: o.cullH || 130 }); made++; } };
+      put('palm', Math.round(22 * n), 16, { trunk: 5, cullR: 60, cullH: 110 }, (x, y) => !inPoly(inner, x, y));
+      put('tree', Math.round(16 * n), 26, { trunk: 7 });
+      put('tree', Math.round(6 * n), 26, { trunk: 7, fruit: '#ffb74a' });
+      put('bush', Math.round(24 * n), 14, { trunk: 6, cullR: 30, cullH: 40 });
+      put('bush', Math.round(12 * n), 14, { trunk: 6, flowers: '#f36d86', col: '#6fb356', cullR: 30, cullH: 40 });
+      put('frangipani', Math.round(5 * n), 16, { trunk: 5, cullR: 40, cullH: 60 });
+      put('rock', Math.round(8 * n), 12, { trunk: 8, cullR: 20, cullH: 20 });
+      for (let i = 0; i < 420 * n; i++) {
+        const x = bb.x0 + R() * (bb.x1 - bb.x0), y = bb.y0 + R() * (bb.y1 - bb.y0);
+        if (!ok(x, y, 2)) continue;
+        const k = R() < 0.72 ? 'grassTuft' : 'flowerPatch';
+        const p = { kind: k, x, y, col: R() < 0.5 ? '#6fb356' : '#7fc062', n: 3 + (R() * 4 | 0) };
+        p.draw = (c, t) => P[k](c, t, p); p.cull = { x: x - 14, y: y - 14, w: 28, h: 18 }; p.flat = true;
+        this.prop(p);
+      }
+    }
+  }
+
   addBuilding(b) {
-    const draw = { shed: B.drawShed, house: B.drawHouse, meo: B.drawMeoHouse, shop: B.drawShop, restaurant: B.drawRestaurant, truck: B.drawFoodTruck, dinh: B.drawDinh }[b.type];
+    const draw = { shed: B.drawShed, house: B.drawHouse, meo: B.drawMeoHouse, shop: B.drawShop, restaurant: B.drawRestaurant, truck: B.drawFoodTruck, dinh: B.drawDinh, kiosk: B.drawKiosk }[b.type];
     const bld = { ...b, doorOpen: 0, doorTarget: 0, state: () => this.buildingState(b) };
     bld.draw = (c, t) => draw(c, t, bld);
     bld.cull = { x: b.x - b.w / 2 - 30, y: b.y - 190, w: b.w + 60, h: 210 };
@@ -536,7 +648,8 @@ export class Island extends Scene {
       const dx = b.door[0];
       this.trigger({ id: 'door:' + b.id, kind: 'door', x: b.x + dx - 13, y: b.y - 6, w: 26, h: 22, building: b.id, interior: b.interior, doorX: b.x + dx, doorY: b.y });
     }
-    if (b.biz && b.type !== 'restaurant') {
+    if (b.biz && b.type === 'kiosk') this.trigger({ id: 'front:' + b.id, kind: 'front', x: b.x - 42, y: b.y - 4, w: 84, h: 38, building: b.id, biz: b.biz });
+    else if (b.biz && b.type !== 'restaurant') {
       // talk/serve spot in front of the service window
       this.trigger({ id: 'front:' + b.id, kind: 'front', x: b.x - 50, y: b.y - 4, w: 70, h: 40, building: b.id, biz: b.biz });
     }
@@ -564,7 +677,9 @@ export class Island extends Scene {
     const nm = G.state.nightMarket, rt = G.runtime?.nm || {};
     const k = rt.restoreAnim ?? (nm.restored ? 1 : 0);
     const night = (G.state.time >= 17 * 60);
-    if (s.biz) { const bz = G.state.biz[s.biz]; return { repair: k, open: bz.open }; }
+    if (s.biz === 'night') { const bz = G.state.biz[s.biz]; return { repair: k, open: bz.open }; }
+    const bz = s.biz && G.state.biz[s.biz];
+    if (bz?.owned) return { repair: k, open: bz.open, label: ['YOUR STALL', 'SẠP CỦA BẠN'], owned: true };   // bought from its old owner
     return { repair: k, open: k >= 1 && night };
   }
 
@@ -624,7 +739,7 @@ export class Island extends Scene {
     c.lineCap = 'round'; c.lineJoin = 'round';
     // keep the surf off the bridges and piers
     c.beginPath(); c.rect(-2000, -2000, W + 4000, H + 4000);
-    for (const r of [...BRIDGES, PIER, PIER_END, SEA_BRIDGE]) c.rect(r.x - 3, r.y - 3, r.w + 6, r.h + 6);
+    for (const r of [...BRIDGES, PIER, PIER_END, ...SEA_BRIDGES]) c.rect(r.x - 3, r.y - 3, r.w + 6, r.h + 6);
     c.clip('evenodd');
     // rolling waves: each front travels in from the shallows, washes up onto the
     // sand, leaves a wet darker band, then slides back and fades

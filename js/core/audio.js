@@ -53,22 +53,43 @@ function noise(dur, { vol = 0.2, freq = 1200, q = 1, when = 0, type = 'bandpass'
   s.connect(f); f.connect(g); g.connect(sfxGain); s.start(t);
 }
 
+
+// A tiny animal "voice": a buzzy source whose pitch follows a contour, shaped
+// by two moving formant filters (the "mouth"), with optional vibrato and breath.
+// pts: [[time, pitch, F1, F2], ...]
+function voice(pts, { vol = 0.12, type = 'sawtooth', vib = 0, vibRate = 7, when = 0, breath = 0, q = 7 } = {}) {
+  if (!ctx || !sfxGain) return;
+  const t0 = ctx.currentTime + when, end = t0 + pts[pts.length - 1][0];
+  const o = ctx.createOscillator(); o.type = type;
+  const f1 = ctx.createBiquadFilter(), f2 = ctx.createBiquadFilter(); f1.type = f2.type = 'bandpass'; f1.Q.value = q; f2.Q.value = q * 1.3;
+  const g = ctx.createGain(), mix = ctx.createGain(); mix.gain.value = 1.6;
+  o.frequency.setValueAtTime(pts[0][1], t0); f1.frequency.setValueAtTime(pts[0][2], t0); f2.frequency.setValueAtTime(pts[0][3], t0);
+  for (const [dt, f, a, b] of pts.slice(1)) { o.frequency.linearRampToValueAtTime(f, t0 + dt); f1.frequency.linearRampToValueAtTime(a, t0 + dt); f2.frequency.linearRampToValueAtTime(b, t0 + dt); }
+  if (vib) { const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = vibRate; lg.gain.value = vib; l.connect(lg); lg.connect(o.frequency); l.start(t0); l.stop(end + 0.05); }
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02); g.gain.setValueAtTime(vol, Math.max(t0 + 0.03, end - 0.06)); g.gain.exponentialRampToValueAtTime(0.0001, end);
+  o.connect(f1); o.connect(f2); f1.connect(mix); f2.connect(mix); mix.connect(g); g.connect(sfxGain);
+  o.start(t0); o.stop(end + 0.05);
+  if (breath) noise(pts[pts.length - 1][0], { vol: breath, freq: pts[0][3], q: 1.2, when });
+}
+
 export function sfx(name, opt = {}) {
   if (!ctx || !started || !state.sfx) return;
   switch (name) {
     case 'blip': { const now = performance.now(); if (now - state.lastBlip < 45) return; state.lastBlip = now; tone((opt.pitch || 620) * (0.94 + Math.random() * 0.12), 0.05, { type: 'triangle', vol: 0.09 }); break; }
-    case 'quack': tone(420, 0.09, { type: 'sawtooth', vol: 0.07, slide: -120 }); tone(400, 0.11, { type: 'sawtooth', vol: 0.07, slide: -150, when: 0.13 }); break;
-    case 'woof': tone(230, 0.12, { type: 'square', vol: 0.07, slide: -90 }); tone(260, 0.1, { type: 'square', vol: 0.06, slide: -120, when: 0.16 }); break;
-    case 'cluck': for (let i = 0; i < 3; i++) tone(700 + i * 60, 0.05, { type: 'triangle', vol: 0.08, slide: -200, when: i * 0.08 }); break;
-    case 'coo': tone(360, 0.25, { type: 'sine', vol: 0.09, slide: 60 }); tone(330, 0.2, { type: 'sine', vol: 0.07, slide: -40, when: 0.26 }); break;
-    case 'bleat': tone(520, 0.35, { type: 'sawtooth', vol: 0.05, slide: -60, vibrato: 18 }); break;
+    case 'quack': for (const w of [0, 0.2]) voice([[0, 300, 900, 2400], [0.05, 320, 1100, 2600], [0.16, 240, 800, 2200]], { vol: 0.16, q: 9, when: w, breath: 0.03 }); break;
+    case 'woof': for (const w of [0, 0.22]) { voice([[0, 330, 700, 1500], [0.04, 420, 900, 1700], [0.14, 210, 500, 1200]], { vol: 0.2, q: 4, when: w, breath: 0.09 }); } break;
+    case 'cluck': { for (let i = 0; i < 3; i++) voice([[0, 520, 900, 2000], [0.03, 600, 1100, 2300], [0.08, 460, 800, 1800]], { vol: 0.12, q: 6, when: i * 0.13 }); voice([[0, 480, 700, 1700], [0.12, 720, 1100, 2300], [0.34, 620, 900, 2000]], { vol: 0.12, q: 6, when: 0.42 }); break; }
+    case 'coo': voice([[0, 300, 350, 800], [0.12, 340, 380, 850], [0.34, 290, 320, 750]], { type: 'triangle', vol: 0.14, q: 3, vib: 6, vibRate: 11 }); voice([[0, 320, 350, 800], [0.2, 280, 320, 740]], { type: 'triangle', vol: 0.12, q: 3, when: 0.42 }); break;
+    case 'bleat': voice([[0, 460, 600, 1700], [0.08, 520, 750, 1900], [0.55, 430, 650, 1600], [0.7, 380, 550, 1500]], { vol: 0.16, q: 6, vib: 45, vibRate: 13, breath: 0.03 }); break;
     case 'snip': tone(2400, 0.03, { type: 'square', vol: 0.05, slide: -900 }); tone(2000, 0.03, { type: 'square', vol: 0.04, slide: -700, when: 0.07 }); break;
     case 'slurp': tone(500, 0.18, { type: 'sine', vol: 0.06, slide: 300, vibrato: 30 }); break;
     case 'munch': for (let i = 0; i < 2; i++) tone(180 + Math.random() * 60, 0.05, { type: 'square', vol: 0.05, slide: -60, when: i * 0.09 }); break;
+    case 'moo': voice([[0, 140, 400, 900], [0.3, 160, 600, 1000], [0.9, 120, 350, 800]], { vol: 0.2, q: 5, vib: 3 }); break;
+    case 'fishsplash': noise(0.25, { vol: 0.12, freq: 1400, q: 0.8 }); tone(700, 0.08, { type: 'sine', vol: 0.05, slide: -400, when: 0.02 }); break;
     case 'click': for (let i = 0; i < 4; i++) tone(1800, 0.02, { type: 'square', vol: 0.05, when: i * 0.06 }); break;
-    case 'mew': tone(900, 0.16, { type: 'triangle', vol: 0.11, slide: 200, attack: 0.02 }); break;
+    case 'mew': voice([[0, 700, 450, 2200], [0.1, 950, 700, 1900], [0.28, 800, 750, 1300], [0.4, 620, 550, 1000]], { vol: 0.13, q: 7, vib: 8, vibRate: 6 }); break;
     case 'splash': tone(300, 0.18, { type: 'sine', vol: 0.06, slide: -200 }); tone(900, 0.08, { type: 'triangle', vol: 0.04, slide: -500, when: 0.02 }); break;
-    case 'meow': tone(740, 0.22, { type: 'triangle', vol: 0.13, slide: 260, attack: 0.02 }); tone(980, 0.18, { type: 'sine', vol: 0.07, slide: -300, when: 0.12 }); break;
+    case 'meow': voice([[0, 620, 420, 2300], [0.14, 880, 800, 1800], [0.4, 760, 750, 1200], [0.62, 560, 500, 900]], { vol: 0.15, q: 7, vib: 10, vibRate: 6 }); break;
     case 'tap': tone(520, 0.06, { type: 'sine', vol: 0.18, slide: 180 }); break;
     case 'hop': tone(300, 0.12, { type: 'sine', vol: 0.12, slide: 360 }); break;
     case 'pop': tone(420, 0.09, { type: 'sine', vol: 0.22, slide: 520 }); break;

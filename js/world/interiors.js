@@ -141,17 +141,12 @@ export function buildInteriors() {
     r.wallItem('calendar', 200, { day: () => G.state.day });
     r.wallItem('clock', 28, {});
     r.furn('rug', 150, 214, { w: 96, h: 40, col: '#f7d6a0' });
-    r.furn('bed', 48, 118, { col: '#f4a9b8', sleeper: () => G.runtime.sleeper, drawSleeper: (c, a, t) => drawHuman(c, a, t) }, [-30, -52, 60, 50]);
-    r.furn('wardrobeBig', 104, 72, { col: '#e3b77f' }, [-24, -8, 48, 8]);
+    // the bed, wardrobe and kitchen are placed from your saved layout (see decorate.js)
     r.wallItem('wallShelf', 240); r.wallItem('familyPhoto', 58);
     r.furn('floorLamp', 22, 150, {}, [-4, -3, 8, 3]);
-    r.furn('kitchen', 226, 98, {}, [-35, -34, 70, 32]);
     r.furn('plant', 250, 284, { s: 1 }, [-6, -6, 12, 6]);
-    r.trigger({ id: 'bed', kind: 'act', x: 14, y: 116, w: 72, h: 20, label: 'Ngủ', en: 'Sleep', icon: 'zzz', action: 'sleep' });
-    r.trigger({ id: 'kitchen', kind: 'act', x: 190, y: 98, w: 70, h: 18, label: 'Nấu', en: 'Snack', icon: 'tea', action: 'homeSnack' });
-    r.trigger({ id: 'wardrobe', kind: 'act', x: 78, y: 72, w: 52, h: 22, label: 'Thay đồ', en: 'Wardrobe', icon: 'shirt', action: 'wardrobe' });
     r.bedPos = { x: 46, y: 88 };
-    r.decorArea = { x: 16, y: 126, w: 238, h: 156 };
+    r.decorArea = { x: 16, y: 104, w: 238, h: 178 };
     S.house = r;
   }
   // Supermarket
@@ -168,7 +163,7 @@ export function buildInteriors() {
     r.furn('crateStack', 266, 286, {}, [-20, -16, 40, 14]);
     r.furn('produce', 52, 240, { w: 64, cols: ['#ffa53a', '#f7de8c', '#e8584e'] }, [-32, -24, 64, 22]); // by the wall, clear of the door
     r.trigger({ id: 'shop', kind: 'act', x: 106, y: 110, w: 88, h: 34, label: 'Mua', en: 'Shop', icon: 'tea', action: 'shop:ingredients' });
-    r.furn('aisleSign', 64, 150, { label: 'FRESH', col: '#6fbf73' }); r.furn('aisleSign', 236, 150, { label: 'FRUIT', col: '#f28f7c' });
+    r.furn('aisleSign', 64, 150, { label: ['FRESH', 'RAU TƯƠI'], col: '#6fbf73' }, [-7, -3, 14, 3]); r.furn('aisleSign', 236, 150, { label: ['FRUIT', 'TRÁI CÂY'], col: '#f28f7c' }, [-7, -3, 14, 3]);
     r.wallItem('bunting', 150, { w: 150, cols: ['#6fbf73', '#fff', '#f28f7c', '#fff'] });
     r.merchantPos = { x: 150, y: 84, id: 'co_hoa' };
     S.supermarket = r;
@@ -251,6 +246,22 @@ export function buildInteriors() {
     r.merchantPos = { x: 145, y: 80, id: 'chi_tien' };
     S.salon = r;
   }
+  // Cô Bông's pet shop (Harbour Town)
+  {
+    const r = new Interior({ id: 'petshop', name: 'Tiệm Thú Cưng Bé Bông', w: 290, h: 290, WH: 66, wall: '#fff1d6', wall2: '#fbe3b8', wallStyle: 'paw', floor: '#e8c9a0', floorStyle: 'wood', door: { x: 145, w: 32 }, building: 'petshop' });
+    r.wallItem('bunting', 145, { w: 200, cols: ['#f2a14e', '#fff', '#9fd8c8', '#fff', '#f4a9b8'] });
+    r.wallItem('window', 232, { w: 40, h: 24, hgt: 50, curtain: '#9fd8c8' });
+    r.furn('pass', 145, 104, { w: 70, col: '#fbe3b8', top: '#fffdf8' }, [-35, -24, 70, 22]);
+    r.furn('fishtank', 44, 84, {}, [-18, -8, 36, 8]);
+    r.furn('shelfJars', 232, 80, { w: 56, cols: ['#c98f5a', '#f2a14e', '#9fd67a', '#e8584e', '#f4ead2'] }, [-28, -8, 56, 8]);
+    r.furn('cat_tree', 250, 200, {}, [-12, -6, 24, 6]);
+    for (const [x, y, col] of [[50, 170, '#f4a9b8'], [90, 214, '#9fd8c8'], [50, 256, '#f7de8c']]) r.furn('cat_bed', x, y, { col });
+    r.furn('rug', 150, 200, { w: 70, h: 30, col: '#f2a14e' });
+    r.furn('plant', 266, 270, {}, [-6, -6, 12, 6]);
+    r.trigger({ id: 'shop', kind: 'act', x: 104, y: 102, w: 82, h: 34, label: 'Thú cưng', en: 'Pets', icon: 'paw', action: 'shop:pets' });
+    r.merchantPos = { x: 145, y: 80, id: 'co_bong' };
+    S.petshop = r;
+  }
   // Mèo Mây's home
   {
     const r = new Interior({ id: 'meo', name: 'Nhà Mèo Mây', w: 250, h: 280, WH: 62, wall: '#e2eaf7', wallStyle: 'paw', floor: '#e8c9a0', door: { x: 125, w: 30 }, building: 'meo' });
@@ -264,7 +275,7 @@ export function buildInteriors() {
     r.furn('rug', 124, 214, { w: 70, h: 30, col: '#f7a6b4' });
     r.furn('altarShelf', 70, 62, {});
     r.furn('plant', 228, 266, {}, [-6, -6, 12, 6]);
-    r.furn('prepTable', 200, 146, { w: 44 }, [-22, -26, 44, 24]);
+    r.furn('recipeDesk', 200, 146, { w: 48 }, [-24, -26, 48, 24]);
     r.trigger({ id: 'notebook', kind: 'act', x: 176, y: 146, w: 48, h: 20, label: 'Sổ tay', en: 'Recipes', icon: 'notebook', action: 'recipeBook' });
     r.trigger({ id: 'photos', kind: 'act', x: 170, y: 64, w: 56, h: 16, label: 'Kỷ niệm', en: 'Memories', icon: 'photo', action: 'journal' });
     r.meoSpot = { x: 124, y: 170 };

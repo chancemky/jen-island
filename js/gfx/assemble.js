@@ -273,6 +273,9 @@ function drawGrill(c, R, asm, t, done) {
     if (k === 'rice_paper') { ell(c, 0, 0, 18, 7.5, gk ? '#f0d9a8' : 'rgba(250,245,235,.92)', 'rgba(140,110,80,.7)', 0.8); if (gk) { c.strokeStyle = 'rgba(120,70,30,.45)'; c.lineWidth = 1; for (let x = -12; x <= 12; x += 5) { c.beginPath(); c.moveTo(x, -5); c.lineTo(x + 2, 5); c.stroke(); } } }
     if (k === 'egg_fried') { c.save(); c.globalAlpha *= 0.95; ell(c, 0, 0, 14, 5.6, gk ? '#f3b53a' : '#ffd24f', null); circ(c, -4, -1, 1.3, '#fff3c8', null); c.restore(); }
     if (k === 'scallion_oil') for (let n = 0; n < 12; n++) circ(c, Math.cos(n * 1.9) * 11, Math.sin(n * 2.7) * 4, 0.9, '#5fae3f', null);
+    if (k === 'squid_cut') { for (const dx of [-9, 9]) { c.save(); c.translate(dx, 0); ell(c, 0, -1, 8, 3.6, gk ? '#f0b48a' : '#fbe6dc', INK, 0.8); for (let q = -2; q <= 2; q++) { c.strokeStyle = gk ? '#e08a5a' : '#f6c8b8'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(7, q); c.quadraticCurveTo(11, q * 1.5, 13, q * 2); c.stroke(); } if (gk) for (let q = -1; q <= 1; q++) line(c, -5 + q * 3, -3, -3 + q * 3, 1, '#a0522d', 0.8); c.restore(); } }
+    if (k === 'scallop') for (let n = 0; n < 4; n++) { const x = -15 + n * 10; c.beginPath(); c.moveTo(x, 4); c.lineTo(x - 5, -1); c.quadraticCurveTo(x, -7, x + 5, -1); c.closePath(); c.fillStyle = '#f8c49a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke(); ell(c, x, -1, 2, 1.4, gk ? '#f0c070' : '#fff3dc', null); }
+    if (k === 'peanuts') for (let n = 0; n < 14; n++) ell(c, Math.cos(n * 2.3) * 13, Math.sin(n * 1.7) * 4 - 1, 1, 0.7, '#d9a86e', null);
   }));
   if (gk) { steam(c, 0, -6, t, 3); for (let n = 0; n < 4; n++) { const k2 = (t * 1.5 + n / 4) % 1; circ(c, -12 + n * 8, 4 - k2 * 10, 0.7, `rgba(255,170,80,${1 - k2})`, null); } }
 }

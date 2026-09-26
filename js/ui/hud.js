@@ -63,7 +63,19 @@ export function updateHud(dt) {
 
 // ---------------------------------------------------------------- quest pill + pointer
 let questTarget = null;
+// A side-quest guide ("return the sandal to Bà Tư") temporarily takes over the
+// quest pill and the arrow; the story goal comes back once it's returned.
+let guide = null, story = [null, null];
+export function setGuide(g) {
+  const was = guide?.text; guide = g;
+  if (g) showQuest('↩ ' + g.text, g.target); else if (was !== undefined) showQuest(story[0], story[1]);
+}
 export function setQuest(text, target = null) {
+  story = [text, target];
+  if (guide) return;
+  showQuest(text, target);
+}
+function showQuest(text, target) {
   const pill = $('questPill');
   const t = $('questText');
   if (!text) { pill.classList.add('empty'); questTarget = null; return; }

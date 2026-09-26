@@ -6,7 +6,7 @@ import { bus, clamp } from '../core/util.js';
 import { BUSINESSES, RECIPES, ACHIEVEMENTS } from '../data/game.js';
 import { APP_VERSION, CHANGELOG } from '../data/changelog.js';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 4;   // 4 = the 20-chapter reset; older saves start over
 
 export function defaultState() {
   const biz = {};
@@ -23,7 +23,7 @@ export function defaultState() {
     recipes: [],             // discovered recipe ids
     recipeLevels: {},        // id → 1..3
     biz,
-    home: { furniture: [], owned: [] }, // furniture: [{id, x, y}] placed; owned: unplaced ids
+    home: { furniture: [], owned: [], builtins: null }, // furniture: [{id, x, y, rot}] placed; owned: unplaced ids; builtins: moved bed/wardrobe/kitchen
     regulars: {},            // customerKey → {name, visits, likes}
     friends: {},             // resident id → friendship points
     achievements: [],
@@ -33,7 +33,7 @@ export function defaultState() {
     history: [],             // last few daily summaries
     nightMarket: { restored: false },
     statue: false,
-    settings: { music: true, sfx: true, arrow: true, lang: null },
+    settings: { music: true, sfx: true, arrow: true, lang: null, smooth: false },
     pos: null,               // {scene, x, y} last position for resume
     level: 1, xp: 0, xpTotal: 0, // uncapped levels (systems/progress.js)
     milestones: {},          // track id → tiers claimed
@@ -56,7 +56,7 @@ export function migrate(raw) {
   s.stats = { ...d.stats, ...(raw.stats || {}) };
   s.today = { ...freshDay(), ...(raw.today || {}) };
   s.settings = { ...d.settings, ...(raw.settings || {}) };
-  s.home = { furniture: Array.isArray(raw.home?.furniture) ? raw.home.furniture : [], owned: Array.isArray(raw.home?.owned) ? raw.home.owned : [] };
+  s.home = { furniture: Array.isArray(raw.home?.furniture) ? raw.home.furniture : [], owned: Array.isArray(raw.home?.owned) ? raw.home.owned : [], builtins: raw.home?.builtins || null };
   s.nightMarket = { ...d.nightMarket, ...(raw.nightMarket || {}) };
   s.biz = { ...d.biz };
   for (const id of Object.keys(d.biz)) s.biz[id] = { ...d.biz[id], ...(raw.biz?.[id] || {}), open: false };

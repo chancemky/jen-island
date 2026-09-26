@@ -41,8 +41,8 @@ const LINES = {
     [['I brought you a frangipani for your counter. Don\'t let it wilt!', 'Cô mang cho con một cành hoa sứ để trên quầy. Đừng để nó héo nha!'], ['The Night Market smells like my childhood.', 'Chợ Đêm thơm như tuổi thơ của cô.']],
   ],
   be_na: [
-    [['Hey! Do you sell sweet soup? When will you sell sweet soup?', 'Ơi! Có bán chè không? Chừng nào mới bán chè?'], ['I saw Mèo Mây sleeping on your roof yesterday!', 'Hôm qua em thấy Mèo Mây ngủ trên mái nhà anh chị đó!']],
-    [['I\'m saving my coins for your food. I have… four coins.', 'Em đang để dành tiền ăn ở quán. Em có… bốn đồng.'], ['When I grow up I want a shop just like yours!', 'Lớn lên em muốn có quán y như quán anh chị!']],
+    [['Hey! Do you sell sweet soup? When will you sell sweet soup?', 'Ơi! Có bán chè không? Chừng nào mới bán chè?'], ['I saw Mèo Mây sleeping on your roof yesterday!', 'Hôm qua em thấy Mèo Mây ngủ trên mái nhà {you} đó!']],
+    [['I\'m saving my coins for your food. I have… four coins.', 'Em đang để dành tiền ăn ở quán. Em có… bốn đồng.'], ['When I grow up I want a shop just like yours!', 'Lớn lên em muốn có quán y như quán {you}!']],
     [['SWEET SOUP! You have SWEET SOUP! This is the best day of my life!', 'CHÈ! Có CHÈ rồi! Hôm nay là ngày vui nhất đời em!'], ['Mèo Mây let me pet its tail. Only once. It\'s very busy.', 'Mèo Mây cho em vuốt đuôi. Có một lần thôi. Mèo Mây bận lắm.']],
   ],
   anh_tuan: [
@@ -58,6 +58,7 @@ const LINES = {
 };
 const MERCH = {
   chi_tien: [['A new haircut is the cheapest holiday there is. Sit, sit!', 'Cắt tóc mới là chuyến du lịch rẻ nhất đó. Ngồi đi em!'], ['Mèo Mây came in for a trim once. It wanted a mohawk. I said no.', 'Mèo Mây từng vào đòi tỉa lông. Nó muốn kiểu mohican. Chị từ chối.'], ['Curtain bangs are very popular this season. Just saying.', 'Mùa này mái bay đang hot lắm nha. Chị nói vậy thôi.'], ['Pink hair? Blue hair? On this island, anything goes!', 'Tóc hồng? Tóc xanh? Trên đảo này cái gì cũng được hết!']],
+  co_bong: [['Every pet here was chosen by its human. Well, the other way round, really.', 'Con thú nào ở đây cũng được chủ chọn. À, thật ra là ngược lại.'], ['Feed them, pet them, and they\'ll follow you to the end of the pier.', 'Cho ăn, vuốt ve, là tụi nó theo con tới cuối bến tàu.'], ['The ducklings think I\'m their mum. I have given up correcting them.', 'Mấy con vịt con tưởng cô là mẹ. Cô cũng thôi không cãi nữa.']],
   co_ba: [['Every outfit tells a story. Yours says "I run a very good tea stand."', 'Bộ đồ nào cũng kể một câu chuyện. Bộ của con nói "Tôi bán trà rất ngon."'], ['I sewed Mèo Mây a tiny raincoat once. It refused to wear it. Artists suffer.', 'Cô từng may cho Mèo Mây một cái áo mưa nhỏ xíu. Nó không chịu mặc. Nghệ sĩ khổ lắm.'], ['Try the áo dài! Every island girl and boy should have one for Tết.', 'Thử áo dài đi con! Ai trên đảo cũng nên có một bộ cho Tết.'], ['Come back when you level up — I keep my best pieces for famous shopkeepers.', 'Lên cấp rồi quay lại nha — cô để dành đồ đẹp nhất cho chủ quán nổi tiếng.']],
   co_hoa: [['Fresh kumquats today — the sourest, sweetest ones.', 'Hôm nay có tắc tươi — chua nhất, ngọt nhất.'], ['Buy in packs, prep at your shop. Easy!', 'Mua theo gói, về quán sơ chế. Dễ ợt!'], ['The supermarket is busier than ever thanks to you.', 'Nhờ con mà siêu thị đông khách hơn bao giờ hết.']],
   chu_bay: [['Wood, metal, paint! Everything you need to fix anything!', 'Gỗ, tôn, sơn! Đủ thứ để sửa mọi thứ!'], ['That shed of yours — I knew it had good bones.', 'Căn chòi của con đó — chú biết nó còn chắc mà.'], ['Big projects need big piles of wood. I\'ve got piles.', 'Việc lớn cần nhiều gỗ. Chú có cả đống.']],
@@ -65,7 +66,7 @@ const MERCH = {
   ba_sau: [['The lanterns remember everyone who ever walked under them.', 'Lồng đèn nhớ hết những ai từng đi dưới nó.'], ['Grilled rice paper — my mother\'s recipe. Crispy edges, soft middle.', 'Bánh tráng nướng — công thức của mẹ bà. Rìa giòn, giữa mềm.'], ['The market lives again. I can finally rest my old eyes.', 'Chợ sống lại rồi. Giờ bà mới yên tâm nghỉ ngơi.']],
 };
 const STAFF = {
-  dreamy: [['Sorry, I was thinking about clouds. What was the order?', 'Xin lỗi, em đang nghĩ về mây. Order gì vậy ạ?'], ['Do you think the fish in the tank have names?', 'Anh chị nghĩ mấy con cá trong bể có tên không?']],
+  dreamy: [['Sorry, I was thinking about clouds. What was the order?', 'Xin lỗi, em đang nghĩ về mây. Order gì vậy ạ?'], ['Do you think the fish in the tank have names?', '{You} nghĩ mấy con cá trong bể có tên không?']],
   speedy: [['Table three! Table five! Coming through!', 'Bàn ba! Bàn năm! Nhường đường nào!'], ['I can carry four bowls at once. Want to see? …Maybe not.', 'Em bưng được bốn tô một lần. Muốn xem không? …Thôi khỏi.']],
   cheerful: [['I love this job! Everyone here is so nice!', 'Em mê công việc này lắm! Ai ở đây cũng dễ thương!'], ['A guest said my smile was better than the phở. The phở is very good, so that\'s a lot.', 'Có khách khen em cười còn ngon hơn phở. Mà phở ngon lắm, nên vậy là khen dữ lắm.']],
   careful: [['I double-check every order. Triple, sometimes.', 'Order nào em cũng kiểm tra hai lần. Có khi ba lần.'], ['The stove is clean, the knives are sharp, the herbs are fresh.', 'Bếp sạch, dao bén, rau tươi.']],
@@ -77,7 +78,7 @@ const pickT = pair => T(pair[0], pair[1]);
 export async function talkToResident(a) {
   const rid = a.data.rid;
   const s = G.state, f = s.friends[rid] || 0;
-  const tier = s.story.chapter >= 5 ? 2 : s.story.chapter >= 3 ? 1 : 0;
+  const tier = s.story.chapter >= 8 ? 2 : s.story.chapter >= 3 ? 1 : 0;
   a.stop(); a.sit = false; a.face(G.player); G.player.face(a);
   a.setEmo('happy', 2); a.showEmote(f > 10 ? 'heart' : 'happy', 1.2);
   const pool = LINES[rid]?.[tier] || [['Hello!', 'Xin chào!']];

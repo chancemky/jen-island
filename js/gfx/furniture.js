@@ -1,6 +1,7 @@
 // Interior furniture and fixtures. Base point = front-centre of the footprint.
 
 import { TAU, shade, rng } from '../core/util.js';
+import { tr } from '../systems/state.js';
 import { INK, ell, circ, box, poly, line, limb, shadow, text, heart } from './draw.js';
 import { LIGHT, glows, lanternShape } from './props.js';
 import { ICONS, drawIcon } from './food.js';
@@ -204,11 +205,15 @@ export const F = {
     const n = Math.floor(w / 12);
     for (let i = 0; i <= n; i++) { const k = i / n, x = -w / 2 + k * w, y = -54 + Math.sin(k * Math.PI) * 5; poly(c, [x - 4, y, x + 4, y, x, y + 7 + Math.sin(t * 2 + i) * 0.4], cols[i % cols.length], INK, 0.5); }
   },
+  // a standing aisle sign: weighted base, chrome pole, a board on top
   aisleSign(c, t, p) {
-    line(c, -10, -60, -10, -52, INK, 0.8); line(c, 10, -60, 10, -52, INK, 0.8);
-    c.save(); c.translate(0, -46); c.rotate(Math.sin(t * 1.3 + p.x) * 0.03);
-    box(c, -18, -6, 36, 12, 3, p.col || '#6fbf73', INK, 0.8); text(c, p.label || '', 0, 0.5, 5.6, '#fff', 900);
-    c.restore();
+    shadow(c, 0, 1, 9, 2.4, 0.18);
+    ell(c, 0, -1, 8, 2.4, '#8f9aa3', INK, 0.8);
+    limb(c, [0, -2, 0, -38], 1.8, '#b9c3cb');
+    const lab = Array.isArray(p.label) ? tr(p.label) : (p.label || '');
+    box(c, -19, -50, 38, 13, 3, p.col || '#6fbf73', INK, 0.9); box(c, -17, -48, 34, 9, 2, null, 'rgba(255,255,255,.55)', 0.6);
+    text(c, lab, 0, -43.2, 5.4, '#fff', 900);
+    if (p.icon) { circ(c, 15, -52, 4, '#fffaf0', INK, 0.6); }
   },
   wallShelf(c, t, p) {
     box(c, -18, -40, 36, 4, 1, '#b77a4f', INK, 0.8);
@@ -664,6 +669,32 @@ Object.assign(F, {
     c.save(); c.beginPath(); c.rect(-3, -61, 6, 26); c.clip(); const off = (t * 10) % 8;
     for (let y = -70; y < -30; y += 8) { line(c, -4, y + off, 4, y + off - 5, '#e8584e', 2); line(c, -4, y + 4 + off, 4, y + off - 1, '#6f9fc8', 2); }
     c.restore(); circ(c, 0, -63, 3, '#f2c14e', INK, 0.7); circ(c, 0, -33, 2.6, '#f2c14e', INK, 0.7);
+  },
+});
+Object.assign(F, {
+  // Mèo Mây's recipe desk: a big recipe book lying open, a pen, a cup of tea
+  recipeDesk(c, t, p) {
+    const w = p.w || 48;
+    shadow(c, 0, 1, w / 2 + 2, 4, 0.18);
+    for (const x of [-w / 2 + 3, w / 2 - 3]) limb(c, [x, -14, x, 0], 2, '#8a5f3e');
+    wood(c, -w / 2, -18, w, 6, 2, '#c98f5a', 0.9);
+    // the open book (two pages with a spine and a ribbon)
+    const bw = 34, by = -26;
+    c.save(); c.translate(-3, 0);
+    box(c, -bw / 2 - 2, by + 2, bw + 4, 8, 2, '#8a4a3a', INK, 0.8);                 // cover under the pages
+    for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(0, by + 6); c.quadraticCurveTo(sd * bw * 0.25, by + 1, sd * bw / 2, by + 3); c.lineTo(sd * bw / 2, by + 9); c.quadraticCurveTo(sd * bw * 0.25, by + 7, 0, by + 10); c.closePath(); c.fillStyle = '#fffaf0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); }
+    line(c, 0, by + 6, 0, by + 10, 'rgba(91,63,54,.5)', 0.8);
+    // a little dish sketch and lines of writing
+    circ(c, -9, by + 5.6, 2.2, '#f2c46b', 'rgba(91,63,54,.6)', 0.4); line(c, -5, by + 4.8, -2, by + 5, 'rgba(91,63,54,.45)', 0.5); line(c, -5, by + 6.4, -2, by + 6.8, 'rgba(91,63,54,.45)', 0.5);
+    for (let i = 0; i < 3; i++) line(c, 3, by + 4.4 + i * 1.6, 14, by + 4 + i * 1.6, 'rgba(91,63,54,.45)', 0.5);
+    poly(c, [1, by + 9, 3, by + 9, 3, by + 14, 2, by + 12.8, 1, by + 14], '#e8584e', null);       // ribbon bookmark
+    // pages turning gently
+    const k = (Math.sin(t * 0.7) + 1) / 2; if (k > 0.8) { c.globalAlpha = (k - 0.8) * 5; c.beginPath(); c.moveTo(0, by + 6); c.quadraticCurveTo(6, by - 4, 12, by + 2); c.lineTo(12, by + 7); c.quadraticCurveTo(6, by + 1, 0, by + 10); c.fillStyle = '#fffdf8'; c.fill(); c.stroke(); c.globalAlpha = 1; }
+    c.restore();
+    // pen and tea
+    line(c, 16, -21, 22, -25, '#3d3550', 1.4); circ(c, 22, -25, 0.8, '#f2c14e', null);
+    box(c, -w / 2 + 2, -24, 6, 6, 1.5, '#fffaf0', INK, 0.6); ell(c, -w / 2 + 5, -24, 3, 1, '#c9955e', null);
+    for (let i = 0; i < 2; i++) { const kk = (t * 0.6 + i / 2) % 1; c.globalAlpha = 0.5 * (1 - kk); circ(c, -w / 2 + 5 + Math.sin(kk * 6) * 1.5, -28 - kk * 8, 1.2 + kk, '#fff', null); } c.globalAlpha = 1;
   },
 });
 Object.assign(FURN_DRAW, {

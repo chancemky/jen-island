@@ -30,8 +30,10 @@ export function openService(bizId, { onClose, tutorial = false, single = null } 
   const el = h('div', 'svc');
   el.innerHTML = `
     <div class="svc-awning"></div>
+    <div class="svc-outside"><div class="svc-sky"><i class="cl c1"></i><i class="cl c2"></i><i class="sunb"></i></div>
     <div class="svc-top"><div class="svc-queue"></div><div class="svc-clock"><span class="sun"></span><b class="clk"></b></div><div class="svc-money"><span class="coin"></span><b class="m"></b></div><button class="svc-close" type="button" aria-label="Close">✕</button></div>
     <div class="svc-customer"><div class="svc-portrait"><canvas width="216" height="248"></canvas></div><div class="svc-bubble"><div class="svc-order"></div><div class="svc-chips"></div><div class="patience"><span>${T('PATIENCE', 'KIÊN NHẪN')}</span><div class="bar"><i></i></div></div></div><div class="svc-waiting hidden"></div></div>
+    <div class="svc-glass"></div></div>
     <div class="svc-counter">
       <div class="svc-label">${escapeHtml(bizName(bizId).toUpperCase())}</div>
       <div class="svc-work"><div class="svc-board"><canvas width="300" height="210"></canvas><div class="svc-steps"></div></div><div class="svc-opts"></div></div>
@@ -367,6 +369,8 @@ export function updateService(dt, t) {
   S.el.querySelector('.svc-money .m').textContent = money(G.state.money);
   S.el.querySelector('.svc-clock .clk').textContent = clock(G.state.time);
   S.el.querySelector('.svc-clock .sun').classList.toggle('night', G.state.time >= 18.5 * 60);
+  S.el.querySelector('.svc-outside')?.classList.toggle('dusk', G.state.time >= 17.5 * 60 && G.state.time < 19 * 60);
+  S.el.querySelector('.svc-outside')?.classList.toggle('night', G.state.time >= 19 * 60 || G.state.time < 6 * 60);
   // pick up a new front customer
   const f = frontCustomer();
   if (!S.busy && f !== S.cust) nextCustomer();

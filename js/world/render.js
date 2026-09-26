@@ -1,8 +1,9 @@
 // Renderer + camera + world-space effects.
 
+import { G } from '../systems/state.js';
 import { clamp, damp, lerp, TAU, rand, invLerp } from '../core/util.js';
 import { LIGHT, glows } from '../gfx/props.js';
-import { INK, ell, circ, text, heart, star } from '../gfx/draw.js';
+import { INK, ell, circ, text, heart, star, line } from '../gfx/draw.js';
 import { drawSpark } from '../gfx/character.js';
 import { drawIcon } from '../gfx/food.js';
 
@@ -69,6 +70,8 @@ export const fx = {
       c.save(); c.globalAlpha = a; c.translate(p.x, p.y - p.z);
       switch (p.kind) {
         case 'dust': ell(c, 0, 0, p.size * (1 + k * 1.6), p.size * (0.7 + k), 'rgba(235,220,195,.85)', null); break;
+        case 'poof': { const r = p.size * (0.6 + k * 1.1); c.globalAlpha *= 1 - k * k; circ(c, 0, 0, r, '#fffaf2', 'rgba(91,63,54,.5)', 0.8); circ(c, -r * 0.35, -r * 0.3, r * 0.35, '#fff', null); break; }
+        case 'snip': c.rotate(p.rot); line(c, -p.size, 0, p.size, 0, p.col, 1.2); break;
         case 'steam': ell(c, 0, 0, p.size * (1 + k), p.size * (1 + k), 'rgba(255,255,255,.55)', null); break;
         case 'spark': drawSpark(c, 0, 0, p.size * (1 - k * 0.5), p.col); break;
         case 'coin': c.rotate(p.rot * 0.3); ell(c, 0, 0, p.size * Math.abs(Math.cos(p.rot)) + 0.5, p.size, '#ffd35a', INK, 0.7); break;
@@ -114,7 +117,7 @@ export class Renderer {
   }
   resize() {
     const r = this.cv.getBoundingClientRect();
-    this.dpr = Math.min(2, window.devicePixelRatio || 1);
+    this.dpr = Math.min(G.state?.settings?.smooth ? 2 : 1.5, window.devicePixelRatio || 1);   // battery: 1.5x is plenty sharp
     this.w = Math.max(1, r.width); this.h = Math.max(1, r.height);
     this.cv.width = Math.round(this.w * this.dpr); this.cv.height = Math.round(this.h * this.dpr);
     // characters about 48px tall on a typical phone

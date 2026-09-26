@@ -13,6 +13,8 @@ import { CHAPTERS, BUSINESSES } from '../data/game.js';
 import { TRACKS, trackState, claimMilestone, xpNeed } from '../systems/progress.js';
 import { renderChangelog } from './whatsnew.js';
 import { iconURL } from '../gfx/food.js';
+import { mountMap } from './worldmap.js';
+import { renderOffice } from './office.js';
 import { money } from '../core/util.js';
 import * as cloud from '../systems/cloud.js';
 import { showReward } from './sheets.js';
@@ -55,18 +57,19 @@ function renderLeaderboard(pane) {
 import { leaderboardRow } from '../systems/progress.js';
 const leaderboardRowNow = () => leaderboardRow(G.state);
 
-export function openMenu({ onLogout } = {}) {
+export function openMenu({ onLogout, tab = 0 } = {}) {
   const s = G.state;
   openSheet({ title: s.island.name || 'JEN Island', sub: T(`Day ${s.day} · ${clock(s.time)} · Chapter ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.title || ''}`, `Ngày ${s.day} · ${clock(s.time)} · Chương ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.vi || ''}`), full: true, build: (body, api) => {
-    tabs(body, [T('Map', 'Bản đồ'), T('Milestones', 'Cột mốc'), T('Leaderboard', 'Xếp hạng'), T('Settings', 'Cài đặt'), T('Account', 'Tài khoản')], (i, pane) => {
-      if (i === 1) return renderMilestones(pane, api);
-      if (i === 2) return renderLeaderboard(pane);
-      if (i >= 3) i -= 2;
+    tabs(body, [T('Map', 'Bản đồ'), T('Business', 'Kinh doanh'), T('Milestones', 'Cột mốc'), T('Leaderboard', 'Xếp hạng'), T('Settings', 'Cài đặt'), T('Account', 'Tài khoản')], (i, pane) => {
+      if (i === 1) return renderOffice(pane, api);
+      if (i === 2) return renderMilestones(pane, api);
+      if (i === 3) return renderLeaderboard(pane);
+      if (i >= 4) i -= 3;
       if (i === 0) {
         pane.style.display = 'flex'; pane.style.flexDirection = 'column';
-        const wrap = h('div', 'map-wrap'); const cv = document.createElement('canvas'); wrap.appendChild(cv); pane.appendChild(wrap);
-        wrap.style.minHeight = '360px';
-        requestAnimationFrame(() => drawMap(cv)); setTimeout(() => cv.isConnected && drawMap(cv), 400);
+        const wrap = h('div', 'map-wrap'); pane.appendChild(wrap);
+        wrap.style.minHeight = '420px';
+        mountMap(wrap);
         const j = btn(T('Island memories', 'Kỷ niệm của đảo'), () => { api.close(true); openJournal(); }, 'btn ghost');
         j.style.marginTop = '10px'; pane.appendChild(j);
       } else if (i === 1) {
@@ -85,6 +88,7 @@ export function openMenu({ onLogout } = {}) {
         toggle(T('Music', 'Nhạc nền'), 'music', () => setAudio({ music: s.settings.music }));
         toggle(T('Sound effects', 'Âm thanh'), 'sfx', () => setAudio({ sfx: s.settings.sfx }));
         toggle(T('Quest arrow', 'Mũi tên chỉ đường'), 'arrow');
+        toggle(T('Smooth 60 FPS (uses more battery)', 'Mượt 60 FPS (tốn pin hơn)'), 'smooth', () => G.renderer?.resize());
         pane.appendChild(h('div', 'section-title', T("What's new (last 20 updates)", 'Có gì mới (20 bản cập nhật gần nhất)')));
         renderChangelog(pane);
       } else {
@@ -96,70 +100,8 @@ export function openMenu({ onLogout } = {}) {
         pane.appendChild(sv);
         if (onLogout) { const lo = btn(T('Sign out', 'Đăng xuất'), () => { api.close(true); onLogout(); }, 'btn ghost'); lo.style.marginTop = '10px'; pane.appendChild(lo); }
       }
-    }, 0, api);
+    }, tab, api);
   } });
 }
 
-function drawMap(cv) {
-  const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
-  cv.width = r.width * dpr; cv.height = r.height * dpr;
-  const c = cv.getContext('2d');
-  const bridge = !!G.state.story.flags.bridgeFixed;
-  // frame the main island, plus the islet once it's reachable
-  const x0 = 60, x1 = bridge ? 2600 : 1760, y0 = 140, y1 = 2480;
-  const s = Math.min(cv.width / (x1 - x0), cv.height / (y1 - y0));
-  const sea = c.createRadialGradient(cv.width / 2, cv.height / 2, 20, cv.width / 2, cv.height / 2, cv.width);
-  sea.addColorStop(0, '#76d0da'); sea.addColorStop(1, '#4fb2c4'); c.fillStyle = sea; c.fillRect(0, 0, cv.width, cv.height);
-  c.save();
-  c.translate(cv.width / 2 - ((x0 + x1) / 2) * s, cv.height / 2 - ((y0 + y1) / 2) * s);
-  c.scale(s, s);
-  const poly = (p, fill, stroke) => { c.beginPath(); c.moveTo(p[0], p[1]); for (let i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]); c.closePath(); c.fillStyle = fill; c.fill(); if (stroke) { c.strokeStyle = stroke; c.lineWidth = 8; c.stroke(); } };
-  // little wave marks on the sea
-  c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 6; c.lineCap = 'round';
-  for (let i = 0; i < 60; i++) { const x = (i * 397) % 2600, y = (i * 719) % 2600; c.beginPath(); c.moveTo(x - 18, y); c.quadraticCurveTo(x, y - 10, x + 18, y); c.stroke(); }
-  for (const l of LANDS) { if (l.sand === ISLET_SAND && !bridge) { c.globalAlpha = 0.45; } poly(l.sand, '#f5e2b3', '#e8cf95'); poly(l.grass, '#a3d68a'); c.globalAlpha = 1; }
-  // paddies, paths, river, pond
-  for (const p of PADDIES) { c.fillStyle = p.kind === 'veg' ? '#9a6e45' : '#8fcfc8'; c.fillRect(p.x, p.y, p.w, p.h); }
-  c.lineCap = 'round'; c.lineJoin = 'round';
-  for (const [k, p] of Object.entries(PATHS)) { if (!bridge && (k.startsWith('islet') || k === 'bridge')) continue; c.beginPath(); c.moveTo(p[0][0], p[0][1]); for (const q of p.slice(1)) c.lineTo(q[0], q[1]); c.strokeStyle = k === 'bridge' ? '#c9955e' : '#efd8a6'; c.lineWidth = k === 'bridge' ? 34 : 28; c.stroke(); }
-  if (!bridge) { c.setLineDash([30, 26]); c.beginPath(); c.moveTo(1700, 1519); c.lineTo(1950, 1519); c.strokeStyle = '#c9955e'; c.lineWidth = 18; c.stroke(); c.setLineDash([]); }
-  c.beginPath(); c.moveTo(RIVER[0], RIVER[1]); for (let i = 2; i < RIVER.length; i += 2) c.lineTo(RIVER[i], RIVER[i + 1]); c.strokeStyle = '#6cc3cf'; c.lineWidth = 42; c.stroke();
-  c.beginPath(); c.ellipse(POND.x, POND.y, POND.rx, POND.ry, 0, 0, TAU); c.fillStyle = '#6cc3cf'; c.fill();
-  c.fillStyle = '#c9955e'; c.fillRect(PIER.x, PIER.y, PIER.w, PIER.h);
-  c.beginPath(); c.arc(PLAZA.x, PLAZA.y, PLAZA.r, 0, TAU); c.fillStyle = '#ecdcc0'; c.fill();
-  c.fillStyle = G.state.nightMarket.restored ? '#f3d9b8' : '#e3d6bd'; c.beginPath(); c.roundRect ? c.roundRect(NM_PLAZA.x, NM_PLAZA.y, NM_PLAZA.w, NM_PLAZA.h, 30) : c.rect(NM_PLAZA.x, NM_PLAZA.y, NM_PLAZA.w, NM_PLAZA.h); c.fill();
-  // area names in soft italics
-  c.font = 'italic 900 40px Nunito, sans-serif'; c.textAlign = 'center'; c.fillStyle = 'rgba(91,63,54,.35)';
-  for (const [x, y, en, vi] of [[520, 1700, 'West Village', 'Xóm Tây'], [1350, 1860, 'East Village', 'Xóm Đông'], [900, 2330, 'Sunny Beach', 'Bãi Biển'], [1520, 980, 'Rice Paddies', 'Ruộng Lúa'], [900, 1060, 'Market Street', 'Phố Chợ'], ...(bridge ? [[2250, 1580, 'Firefly Islet', 'Cù Lao Đom Đóm']] : [])]) c.fillText(T(en, vi), x, y);
-  // buildings as little rounded houses with an icon
-  const labels = T({ shed1: 'Drinks', shed2: 'Bánh Mì', truck: 'Truck', restaurant: 'Restaurant', house: 'Home', meo: 'Mèo Mây', supermarket: 'Market', materials: 'Materials', furniture: 'Furniture', boutique: 'Boutique', salon: 'Salon', dinh: 'Temple' }, { shed1: 'Quán Nước', shed2: 'Bánh Mì', truck: 'Xe Cuốn', restaurant: 'Nhà Hàng', house: 'Nhà bạn', meo: 'Mèo Mây', supermarket: 'Siêu thị', materials: 'Vật liệu', furniture: 'Nội thất', boutique: 'Tiệm áo', salon: 'Tiệm tóc', dinh: 'Đình' });
-  const icons = { shed1: 'tea', shed2: 'banh_mi_thit', truck: 'goi_cuon', restaurant: 'pho_bo', house: 'heart', meo: 'notebook', supermarket: 'bag', materials: 'wood', furniture: 'sofa', boutique: 'shirt', salon: 'scissors', dinh: 'lantern' };
-  for (const b of BUILDINGS) {
-    if (b.id === 'h_vy' && !bridge) continue;
-    const own = G.state.biz[b.id];
-    const fill = b.home ? '#e9d6bb' : own ? (own.owned && own.repair >= 1 ? '#f08ca0' : '#c9bdb0') : b.id === 'house' ? '#f2c14e' : b.id === 'meo' ? '#9fb4dc' : '#fff8ea';
-    const w = Math.max(90, b.w * 0.9), hh = 70, x = b.x - w / 2, y = b.y - b.fp - 30;
-    c.fillStyle = 'rgba(0,0,0,.15)'; c.beginPath(); c.roundRect ? c.roundRect(x + 6, y + 8, w, hh, 16) : c.rect(x + 6, y + 8, w, hh); c.fill();
-    c.fillStyle = fill; c.strokeStyle = '#5b3f36'; c.lineWidth = 6; c.beginPath(); c.roundRect ? c.roundRect(x, y, w, hh, 16) : c.rect(x, y, w, hh); c.fill(); c.stroke();
-    if (icons[b.id]) { const img = mapIcon(icons[b.id]); if (img.complete) c.drawImage(img, b.x - 28, y + 7, 56, 56); }
-    if (labels[b.id]) { c.font = '900 34px Nunito, sans-serif'; c.lineWidth = 9; c.strokeStyle = '#fff8ea'; c.strokeText(labels[b.id], b.x, y - 12); c.fillStyle = '#5b3f36'; c.fillText(labels[b.id], b.x, y - 12); }
-  }
-  // side quest sparkles
-  for (const q of activeQuests()) if (G.state.sideQuests[q.id] === 'active') { c.fillStyle = '#ffd35a'; c.strokeStyle = '#5b3f36'; c.lineWidth = 5; c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 14 : 32; c.lineTo(q.x + Math.cos(a) * rr, q.y + Math.sin(a) * rr); } c.closePath(); c.fill(); c.stroke(); }
-  // quest target
-  const tg = currentStep()?.target?.();
-  if (tg && tg.scene === 'island') { c.beginPath(); c.arc(tg.x, tg.y, 40, 0, TAU); c.strokeStyle = '#f2c14e'; c.lineWidth = 12; c.stroke(); c.beginPath(); c.arc(tg.x, tg.y, 60, 0, TAU); c.strokeStyle = 'rgba(242,193,78,.4)'; c.lineWidth = 8; c.stroke(); }
-  // you + Mèo Mây
-  const pl = G.player, inIsland = G.scene?.id === 'island';
-  const pos = inIsland ? pl : (() => { const b = BUILDINGS.find(b => b.interior === G.scene?.id); return b ? { x: b.x, y: b.y } : pl; })();
-  if (G.meo && G.scenes.island.actors.includes(G.meo)) { c.beginPath(); c.arc(G.meo.x, G.meo.y, 22, 0, TAU); c.fillStyle = '#9fb4dc'; c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 6; c.stroke(); c.fillStyle = '#5b3f36'; c.font = '900 24px Nunito, sans-serif'; c.fillText('ᵔᴥᵔ', G.meo.x, G.meo.y + 8); }
-  c.beginPath(); c.arc(pos.x, pos.y, 44, 0, TAU); c.fillStyle = 'rgba(240,140,160,.3)'; c.fill();
-  c.beginPath(); c.arc(pos.x, pos.y, 28, 0, TAU); c.fillStyle = '#f08ca0'; c.fill(); c.lineWidth = 8; c.strokeStyle = '#fff'; c.stroke();
-  c.font = '900 36px Nunito, sans-serif'; c.lineWidth = 9; c.strokeStyle = '#fff'; c.strokeText(T('You', 'Bạn'), pos.x, pos.y - 44); c.fillStyle = '#e56b8b'; c.fillText(T('You', 'Bạn'), pos.x, pos.y - 44);
-  c.restore();
-  c.font = `900 ${12 * dpr}px Nunito, sans-serif`; c.fillStyle = '#fff'; c.textAlign = 'left';
-  c.fillText(T('● You  ● Mèo Mây  ○ Goal  ★ Lost item', '● Bạn  ● Mèo Mây  ○ Mục tiêu  ★ Đồ thất lạc'), 12 * dpr, cv.height - 12 * dpr);
-}
-const MAP_ICONS = {};
-function mapIcon(k) { if (!MAP_ICONS[k]) { const img = new Image(); img.src = iconURL(k, 64); MAP_ICONS[k] = img; } return MAP_ICONS[k]; }
 export { BUSINESSES };

@@ -32,10 +32,11 @@ export function askText({ title, sub = '', placeholder = '', max = 16, value = '
 export function chooseLook(start = {}) {
   return new Promise(res => {
     G.runtime.pause++;
-    const opt = { hairStyle: start.hairStyle || 'bob', hair: start.hair || PLAYER_OPTIONS.hair[0], top: start.top || PLAYER_OPTIONS.top[0], skin: start.skin || PLAYER_OPTIONS.skin[1], eyeCol: start.eyeCol || PLAYER_OPTIONS.eyeCol[1] };
+    const opt = { gender: start.gender || 'f', hairStyle: start.hairStyle || 'bob', hair: start.hair || PLAYER_OPTIONS.hair[0], top: start.top || PLAYER_OPTIONS.top[0], skin: start.skin || PLAYER_OPTIONS.skin[1], eyeCol: start.eyeCol || PLAYER_OPTIONS.eyeCol[1] };
     const el = h('div', 'modal');
     const HS = Object.fromEntries(Object.entries(HAIRCUTS).map(([k, v]) => [k, T(v.en, v.vi)]));
     el.innerHTML = `<div class="card"><h2>${T('What do you look like?', 'Trông bạn thế nào?')}</h2><div class="look-preview"><canvas width="300" height="300"></canvas></div>
+      <div class="cycler" data-k="gender"><small>${T('I am', 'Bạn là')}</small><div class="seg g-seg"><button type="button" data-g="f">${T('Girl', 'Nữ')}</button><button type="button" data-g="m">${T('Boy', 'Nam')}</button></div></div>
       <div class="cycler" data-k="hairStyle"><small>${T('Hair', 'Kiểu tóc')}</small><button type="button" data-d="-1">‹</button><div class="val"></div><button type="button" data-d="1">›</button></div>
       <div class="cycler" data-k="hair"><small>${T('Hair colour', 'Màu tóc')}</small><div class="sw"></div></div>
       <div class="cycler" data-k="top"><small>${T('Outfit', 'Áo')}</small><div class="sw"></div></div>
@@ -46,12 +47,15 @@ export function chooseLook(start = {}) {
     const cv = el.querySelector('canvas'), c = cv.getContext('2d');
     const refresh = () => {
       el.querySelector('[data-k="hairStyle"] .val').textContent = HS[opt.hairStyle] || opt.hairStyle;
+      el.querySelectorAll('.g-seg button').forEach(b => b.classList.toggle('on', b.dataset.g === opt.gender));
       for (const k of ['hair', 'top', 'skin', 'eyeCol']) {
         const sw = el.querySelector(`[data-k="${k}"] .sw`);
         sw.innerHTML = PLAYER_OPTIONS[k].map(col => `<i data-c="${col}" class="${opt[k] === col ? 'on' : ''}" style="background:${col}"></i>`).join('');
       }
     };
     el.querySelectorAll('[data-k="hairStyle"] button').forEach(b => b.onclick = () => { const L = PLAYER_OPTIONS.hairStyle, i = (L.indexOf(opt.hairStyle) + (+b.dataset.d) + L.length) % L.length; opt.hairStyle = L[i]; sfx('ui'); refresh(); });
+    // picking Boy / Girl also switches to a fitting haircut (you can change it after)
+    el.querySelectorAll('.g-seg button').forEach(b => b.onclick = () => { opt.gender = b.dataset.g; if ((HAIRCUTS[opt.hairStyle]?.g === 'm') !== (opt.gender === 'm')) opt.hairStyle = opt.gender === 'm' ? 'short' : 'bob'; sfx('ui'); refresh(); });
     el.addEventListener('click', e => { const i = e.target.closest('.sw i'); if (!i) return; opt[i.closest('.cycler').dataset.k] = i.dataset.c; sfx('ui'); refresh(); });
     refresh();
     let alive = true, t0 = performance.now();

@@ -198,7 +198,7 @@ export function drawShed(c, t, b) {
 function houseExtras(c, t, b, w, h) {
   switch (b.style) {
     case 'player': { // flower boxes, a dormer and a name plate with your name
-      for (const x of [-32, 32]) { box(c, x - 13, -h + 31, 26, 5, 2, '#b77a4f', INK, 0.8); for (let i = 0; i < 4; i++) circ(c, x - 9 + i * 6, -h + 30, 2.2, ['#ff8fb0', '#ffd35a', '#fff', '#f36d86'][i], INK, 0.4); }
+      for (const x of [-Math.min(32, w * 0.5 - 20), Math.min(32, w * 0.5 - 20)]) { box(c, x - 13, -h + 31, 26, 5, 2, '#b77a4f', INK, 0.8); for (let i = 0; i < 4; i++) circ(c, x - 9 + i * 6, -h + 30, 2.2, ['#ff8fb0', '#ffd35a', '#fff', '#f36d86'][i], INK, 0.4); }
       box(c, -12, -h - 34, 24, 18, 3, b.wall || '#f7dd8a', INK, 1); box(c, -7, -h - 30, 14, 11, 2, '#bfe6ef', INK, 0.8); poly(c, [-15, -h - 34, 0, -h - 44, 15, -h - 34], b.roof || '#d9784f', INK, 1);
       const nm = (G.state?.player?.name || '').slice(0, 10);
       if (nm) signBoard(c, -w / 2 + 14, -18, 26, 7, nm, '#fff5df', INK);
@@ -212,7 +212,6 @@ function houseExtras(c, t, b, w, h) {
     case 'student': { // Linh: bicycle, a balcony with books drying and a tiny satellite dish
       box(c, -w / 2 + 6, -h - 2, 40, 4, 1, '#8f9aa3', INK, 0.7); for (let i = 0; i < 6; i++) line(c, -w / 2 + 8 + i * 7, -h - 2, -w / 2 + 8 + i * 7, -h + 8, '#8f9aa3', 0.8);
       c.save(); c.translate(w / 2 + 14, 0); for (const x of [-7, 7]) { c.beginPath(); c.arc(x, -5, 5, 0, TAU); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke(); } line(c, -7, -5, 0, -12, '#6fbfb0', 1.6); line(c, 0, -12, 7, -5, '#6fbfb0', 1.6); line(c, 0, -12, 3, -15, INK, 1); box(c, -6, -16, 7, 3, 1, '#6fbfb0', INK, 0.5); c.restore();
-      c.save(); c.translate(w / 2 - 14, -h - 30); circ(c, 0, 0, 5, '#e9eef2', INK, 0.8); line(c, 0, 0, 3, -3, INK, 0.8); c.restore();
       break;
     }
     case 'flowers': { // Cô Lan: flower buckets out front and a striped awning
@@ -221,13 +220,27 @@ function houseExtras(c, t, b, w, h) {
       break;
     }
     case 'garage': { // Anh Tuấn: a roll-up garage door and his taxi scooter sign
-      box(c, w / 2 - 36, -30, 28, 30, 2, '#b9c3cb', INK, 0.8); for (let y = -27; y < -2; y += 4) line(c, w / 2 - 35, y, w / 2 - 9, y, '#8a96a0', 0.6);
+      // one wide garage door on the right (no window there), well clear of the front door
+      const gx0 = 16, gx1 = w / 2 - 4;
+      box(c, gx0 - 2, -h + 10, gx1 - gx0 + 4, h - 10, 2, shade(b.wall || '#d6e6f5', -22), INK, 0.8);
+      box(c, gx0, -h + 13, gx1 - gx0, h - 13, 1.5, '#b9c3cb', INK, 0.8); for (let y = -h + 17; y < -2; y += 4) line(c, gx0 + 1, y, gx1 - 1, y, '#8a96a0', 0.6);
+      box(c, (gx0 + gx1) / 2 - 4, -6, 8, 2.4, 1, '#6b737c', INK, 0.5);
       signBoard(c, -w / 2 + 18, -h - 4, 30, 8, 'TAXI', '#f7de8c', INK);
       break;
     }
-    case 'clinic': { // Chị Mai: a little clinic with a green cross
-      box(c, -8, -h - 18, 16, 16, 3, '#fff', INK, 0.9); box(c, -2, -h - 16, 4, 12, 0.5, '#6fbf73', null); box(c, -6, -h - 12, 12, 4, 0.5, '#6fbf73', null);
-      limb(c, [w / 2 + 8, 0, w / 2 + 8, -16], 2, '#8a5f3e'); box(c, w / 2 + 2, -24, 12, 9, 3, '#6f9fc8'); // post box
+    case 'clinic': { // Dr. Mai's clinic: white and mint, a glowing green cross, a ramp, a bench and opening hours
+      box(c, -w / 2 + 1, -14, w - 2, 5, 1, '#6fbfb0', null);                                   // mint stripe
+      // green cross light box on the roof edge
+      box(c, -11, -h - 30, 22, 22, 4, '#fff', INK, 1); box(c, -3, -h - 27, 6, 16, 1, '#3fae5c', null); box(c, -8, -h - 22, 16, 6, 1, '#3fae5c', null);
+      if (nightA() > 0.05) glow(b, 0, -h - 19, 30, 'rgba(120,230,150,.45)');
+      signBoard(c, 0, -h + 4, 50, 8, T('DR. MAI\'S CLINIC', 'PHÒNG KHÁM BS. MAI'), '#3fae5c', '#fff');
+      // blinds in the windows
+      for (const x of [-Math.min(32, w * 0.5 - 20), Math.min(32, w * 0.5 - 20)]) for (let i = 0; i < 4; i++) line(c, x - 10, -h + 15 + i * 4, x + 10, -h + 15 + i * 4, 'rgba(255,255,255,.75)', 0.9);
+      // ramp with a rail, opening hours plate, a bench and a first-aid box by the door
+      poly(c, [12, 0, 30, 0, 30, -3, 12, -1], '#d8d2c8', INK, 0.7); line(c, 12, -9, 30, -12, '#9aa3ad', 1.2); line(c, 30, -12, 30, -3, '#9aa3ad', 1.2);
+      box(c, -22, -26, 10, 12, 1.5, '#fffaf0', INK, 0.6); for (let i = 0; i < 3; i++) line(c, -20, -23 + i * 3, -14, -23 + i * 3, '#8a96a0', 0.6);
+      box(c, -w / 2 - 14, -9, 20, 4, 1.5, '#8fb7e0', INK, 0.7); for (const x of [-w / 2 - 12, -w / 2 + 4]) line(c, x, -5, x, 0, INK, 1.2);
+      limb(c, [w / 2 + 8, 0, w / 2 + 8, -16], 2, '#8a5f3e'); box(c, w / 2 + 2, -24, 12, 9, 3, '#e8584e'); box(c, w / 2 + 6.5, -22.5, 3, 6, 0.4, '#fff', null); box(c, w / 2 + 5, -21, 6, 3, 0.4, '#fff', null);
       break;
     }
     case 'painter': { // Vy: paint splotches and a sun-bleached canvas awning
@@ -247,9 +260,10 @@ export function drawHouse(c, t, b) {
   const s = b.state?.() || {}, w = b.w || 118, h = 50, col = b.wall || '#f7dd8a';
   shadow(c, 0, 2, w * 0.62, 11, 0.2);
   wallFace(c, w, h, col, { bricks: false });
-  windowBox(c, -32, -h + 12, 22, 18, { shutter: b.shutter || '#6fae7c', box: true, b });
-  windowBox(c, 32, -h + 12, 22, 18, { shutter: b.shutter || '#6fae7c', box: true, b });
-  const st = b.style;
+  // windows sit clear of the door and inside the wall (shutters included)
+  const st = b.style, wx = Math.min(32, w * 0.5 - 20);
+  windowBox(c, -wx, -h + 12, 22, 18, { shutter: b.shutter || '#6fae7c', box: true, b });
+  if (st !== 'garage') windowBox(c, wx, -h + 12, 22, 18, { shutter: b.shutter || '#6fae7c', box: true, b });
   if (st === 'wood') for (let y = -h + 4; y < -2; y += 6) line(c, -w / 2 + 2, y, w / 2 - 2, y, 'rgba(120,80,50,.28)', 1);
   if (st === 'clinic') { box(c, -w / 2 + 2, -12, w - 4, 10, 2, '#dfeef7', null); }
   door(c, 0, 20, 32, b.doorCol || '#b77a4f', b.doorOpen || 0, { matCol: '#e89a8a' });
@@ -325,7 +339,7 @@ export function drawShop(c, t, b) {
     box(c, -w / 2 + 18, -18, 16, 4, 1, '#c88a52', INK, 0.6); limb(c, [-w / 2 + 20, -14, -w / 2 + 20, -8], 1.6, '#8a5f3e'); limb(c, [-w / 2 + 32, -14, -w / 2 + 32, -8], 1.6, '#8a5f3e'); box(c, -w / 2 + 18, -32, 4, 14, 1, '#c88a52', INK, 0.6);
     limb(c, [-w / 2 + 50, -8, -w / 2 + 50, -30], 1.2, '#5a4a48'); poly(c, [-w / 2 + 43, -30, -w / 2 + 57, -30, -w / 2 + 54, -38, -w / 2 + 46, -38], '#f7de8c', INK, 0.7);
     if (nightA() > 0.05) glow(b, -w / 2 + 36, -h + 30, 40, 'rgba(255,210,130,.5)');
-    windowBox(c, 22, -h + 14, 22, 18, { shutter: '#c98f5a', b });
+    windowBox(c, 8, -h + 14, 22, 18, { shutter: '#c98f5a', b });
     door(c, w / 2 - 22, 22, 34, '#c98f5a', b.doorOpen || 0, { matCol: '#9fd8c8' });
     tileRoof(c, w, 40, h, '#c9674a', { overhang: 8 });
     signBoard(c, 0, -h - 8, 96, 16, T('ANH KHOA\'S FURNITURE', 'NỘI THẤT ANH KHOA'), '#fff5df', '#8a5f3e');
@@ -343,7 +357,9 @@ export function drawShop(c, t, b) {
     for (let i = 0; i < 9; i++) circ(c, -w / 2 + 6 + i * (w - 8) / 8, -h, 3.2, '#f28fa3', null);
     text(c, T('CÔ BA\'S BOUTIQUE', 'TIỆM ÁO CÔ BA'), 0, -h - 11, 10.5, '#fff', 900, 'center', INK, 2.4);
     // a little hanger icon
-    c.strokeStyle = '#fff'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(w / 2 - 14, -h - 5); c.lineTo(w / 2 - 6, -h - 11); c.lineTo(w / 2 + 2, -h - 5); c.closePath(); c.stroke();
+    { const hx = w / 2 - 6, hy = -h - 11; c.strokeStyle = '#fff'; c.lineWidth = 1.4; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx, hy - 2.5); c.arc(hx + 2, hy - 2.5, 2, Math.PI, Math.PI * 2.1); c.stroke();          // the hook
+      c.beginPath(); c.moveTo(hx, hy); c.quadraticCurveTo(hx - 6, hy + 3, hx - 8.5, hy + 6); c.lineTo(hx + 8.5, hy + 6); c.quadraticCurveTo(hx + 6, hy + 3, hx, hy); c.stroke(); }
   }
   else if (kind === 'salon') {
     // mint salon: big window with a styling chair and mirror, spinning barber pole, scissors sign
@@ -370,6 +386,21 @@ export function drawShop(c, t, b) {
     // scissors icon
     c.strokeStyle = '#fff'; c.lineWidth = 1.3; circ(c, w / 2 - 12, -h - 7, 2, null, '#fff', 1.3); circ(c, w / 2 - 6, -h - 7, 2, null, '#fff', 1.3);
     c.beginPath(); c.moveTo(w / 2 - 11, -h - 9); c.lineTo(w / 2 - 4, -h - 16); c.moveTo(w / 2 - 7, -h - 9); c.lineTo(w / 2 - 14, -h - 16); c.stroke();
+  }
+  else if (kind === 'petshop') {
+    // warm yellow pet shop: a paw-print awning, a fish tank and a sleepy puppy in the window
+    box(c, -w / 2 + 10, -h + 14, w - 60, h - 18, 4, nightA() > 0.05 ? winLit() : '#e6f5fb');
+    const wx = -w / 2 + 30;
+    box(c, wx - 12, -26, 24, 16, 2, '#bfe6ef', INK, 0.8); ell(c, wx - 4 + Math.sin(t * 1.5) * 4, -18, 3, 1.8, '#f2a14e', null); ell(c, wx + 5 - Math.sin(t * 1.3) * 3, -21, 2.4, 1.4, '#e8584e', null);
+    ell(c, wx + 30, -16, 10, 5, '#e3b07a', INK, 0.8); circ(c, wx + 38, -20, 5, '#e3b07a', INK, 0.8); ell(c, wx + 41, -24, 2, 3.2, '#b98049', INK, 0.5);
+    for (let i = 0; i < 3; i++) { const k = (t * 0.5 + i / 3) % 1; c.globalAlpha = 1 - k; text(c, 'z', wx + 44 + k * 6, -30 - k * 10, 5, '#5b3f36', 900); } c.globalAlpha = 1;
+    if (nightA() > 0.05) glow(b, -w / 2 + 40, -h + 30, 46, 'rgba(255,230,160,.5)');
+    door(c, w / 2 - 24, 24, 36, '#f2c14e', b.doorOpen || 0, { matCol: '#f08ca0', inside: '#fff8e8' });
+    awning(c, -14, -h + 12, w - 32, ['#fff8e8', '#f2a14e'], 12);
+    box(c, -w / 2 - 2, -h - 22, w + 4, 22, 10, '#f2a14e');
+    text(c, T('BÉ BÔNG\'S PETS', 'THÚ CƯNG BÉ BÔNG'), -4, -h - 11, 10, '#fff', 900, 'center', INK, 2.4);
+    // paw print badge
+    const px = w / 2 - 10, py = -h - 11; circ(c, px, py + 1.5, 3, '#fff', null); for (const [dx, dy] of [[-3, -3], [0, -4.4], [3, -3]]) circ(c, px + dx, py + dy, 1.3, '#fff', null);
   }
   if (kind === 'supermarket') { /* flat roof edge */ }
 }
@@ -450,7 +481,7 @@ export function drawNightStall(c, t, b) {
   for (const x of [-w / 2 + 2, w / 2 - 2]) limb(c, [x, -h, x, -h - 34], 2.6, broken ? '#7a6a5e' : '#8a5f3e');
   const cols = broken ? ['#9d8a80', '#b3a79a'] : b.cloth || ['#e8584e', '#fff5df'];
   clothRoof(c, w, 18, h + 34, cols, { torn: broken });
-  if (!broken && b.label) signBoard(c, 0, -h - 30, w - 12, 10, tr(b.label), '#fff5df', '#a8563f');
+  if (!broken && (s.label || b.label)) signBoard(c, 0, -h - 30, w - 12, 10, tr(s.label || b.label), s.owned ? '#f08ca0' : '#fff5df', s.owned ? '#fff' : '#a8563f');
   if (!broken && nightA() > 0.05) { lanternShape(c, 0, -h - 34, 0.8, '#ea5a4f', t, b.x); glow(b, 0, -h - 20, 50, 'rgba(255,190,110,.6)'); }
   if (broken) { poly(c, [-w / 2 + 6, -h - 2, w / 2 - 10, -h - 2, w / 2 - 14, -h + 10, -w / 2 + 10, -h + 12], 'rgba(90,70,60,.35)', null); }
 }
@@ -473,3 +504,38 @@ export function drawDinh(c, t, b) {
   circ(c, 0, top - 8, 5, '#f2c14e');
   signBoard(c, 0, -h - 12, 50, 10, T('VILLAGE HALL', 'ĐÌNH LÀNG'), '#f2c14e', '#8f2f24');
 }
+
+// Little outdoor kiosks you can buy and run from the counter: the Harbour Café
+// and the Coconut Cove grill. Shuttered with a FOR SALE board until you own them.
+export function drawKiosk(c, t, b) {
+  const s = b.state?.() || {}, w = b.w || 112, h = 46, own = s.owned, open = s.open;
+  const cafe = b.style === 'cafe';
+  const wall = cafe ? '#f6ecdc' : '#e9d3ae', trim = cafe ? '#6b4431' : '#c9674a';
+  shadow(c, 0, 2, w * 0.6, 10, 0.2);
+  box(c, -w / 2, -h, w, h, 4, wall, INK, 1.2);
+  if (!cafe) for (let x = -w / 2 + 6; x < w / 2; x += 8) line(c, x, -h + 2, x, -2, 'rgba(120,80,40,.25)', 1);   // bamboo slats
+  // serving hatch
+  const hx = 0, hy = -h + 8, hw = w - 30, hh = 24;
+  box(c, hx - hw / 2, hy, hw, hh, 2, open ? (cafe ? '#fff1d6' : '#ffe2c0') : '#6e5a4e');
+  if (open) {
+    if (cafe) { for (let i = 0; i < 3; i++) box(c, -24 + i * 16, hy + 12, 8, 10, 2, ['#6b4431', '#f3e2c4', '#e9a24a'][i], INK, 0.6); line(c, 18, hy + 4, 18, hy + 20, '#8f9aa3', 1.4); ell(c, 18, hy + 4, 4, 2, '#8f9aa3', INK, 0.5); }
+    else { box(c, -26, hy + 16, 52, 7, 2, '#4a4550', INK, 0.8); for (let i = 0; i < 5; i++) { circ(c, -20 + i * 10, hy + 15, 2.4, i % 2 ? '#f0b04a' : '#e8e2d8', INK, 0.5); } steamPuffs(c, t, 0, hy + 8); }
+    glow(b, 0, hy + 12, 40, 'rgba(255,210,130,.45)');
+  } else { for (let y = hy + 3; y < hy + hh; y += 4) line(c, hx - hw / 2 + 2, y, hx + hw / 2 - 2, y, 'rgba(255,255,255,.18)', 1); }
+  box(c, hx - hw / 2 - 4, hy + hh - 1, hw + 8, 5, 2, shade(wall, -40));
+  // roof: a café awning or a thatched palm roof
+  if (cafe) awning(c, 0, -h - 2, w + 12, ['#fff8ea', trim], 14);
+  else { c.beginPath(); c.moveTo(-w / 2 - 10, -h + 2); c.quadraticCurveTo(0, -h - 36, w / 2 + 10, -h + 2); c.closePath(); c.fillStyle = '#d9b36a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.1; c.stroke(); c.strokeStyle = '#b98a4a'; c.lineWidth = 0.8; for (let i = -5; i <= 5; i++) { c.beginPath(); c.moveTo(i * 9, -h - 14 + Math.abs(i) * 2); c.lineTo(i * 11, -h + 1); c.stroke(); } }
+  // sign
+  const label = cafe ? T('HARBOUR CAFÉ', 'CÀ PHÊ BẾN CẢNG') : T('COVE GRILL', 'QUÁN NƯỚNG VỊNH DỪA');
+  signBoard(c, 0, cafe ? -h - 26 : -h - 30, cafe ? 78 : 88, 13, label, trim, '#fff');
+  if (cafe) { // coffee cup icon and two little bistro tables
+    for (const x of [-w / 2 - 20, w / 2 + 20]) { ell(c, x, -14, 9, 3, '#fff8ea', INK, 0.8); limb(c, [x, -13, x, 0], 1.4, '#6b4431'); }
+  } else { // tiki torches
+    for (const x of [-w / 2 - 12, w / 2 + 12]) { limb(c, [x, 0, x, -30], 2, '#8a5f3e'); const k = Math.sin(t * 8 + x) * 1.2; c.beginPath(); c.moveTo(x - 3, -30); c.quadraticCurveTo(x + k, -42, x + 3, -30); c.fillStyle = '#ff9a3a'; c.fill(); if (nightA() > 0.05) glow(b, x, -34, 26, 'rgba(255,170,90,.5)'); }
+  }
+  if (!own) { // for sale board
+    c.save(); c.translate(w / 2 - 12, -h + 26); c.rotate(0.12); box(c, -16, -7, 32, 14, 2, '#fffaf0', INK, 0.9); text(c, T('FOR SALE', 'CẦN BÁN'), 0, 0.5, 5.6, '#e8584e', 900); c.restore();
+  }
+}
+function steamPuffs(c, t, x, y) { for (let i = 0; i < 3; i++) { const k = (t * 0.8 + i / 3) % 1; c.globalAlpha = 0.6 * (1 - k); circ(c, x - 8 + i * 8 + Math.sin(k * 5) * 2, y - k * 14, 2 + k * 3, '#fff', null); } c.globalAlpha = 1; }

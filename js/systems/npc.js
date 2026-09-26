@@ -6,7 +6,7 @@ import { G, T } from './state.js';
 import { Actor } from '../world/actor.js';
 import { RESIDENTS, MERCHANTS, visitorLook } from '../data/looks.js';
 import { initAnimals, updateAnimals, animalDrawables, reactHop, drawReact, tickReact, react } from './animals.js';
-import { POND as POND_C } from '../world/island.js';
+import { POND as POND_C, isOcean } from '../world/island.js';
 import { ell, circ } from '../gfx/draw.js';
 import { updateBarks, drawBarks } from './fun.js';
 import { nearestSeat, hopOnto } from './seats.js';
@@ -76,8 +76,9 @@ function updateVendors(island) {
     });
   }
   for (const a of npcs.vendors) {
-    if (a.visible !== open) { a.visible = open; if (open) { a.alpha = 0; a.fadeIn = true; } }
-    if (open && Math.random() < 0.004) { a.setAct(Math.random() < 0.5 ? 'wave' : 'stir'); a.showEmote(Math.random() < 0.5 ? 'note' : 'happy', 1.4); setTimeout(() => a.setAct(null), 1600); }
+    const mine = G.state.biz[a.data.vendor]?.owned;           // you bought this stall: its old owner has retired
+    if (a.visible !== (open && !mine)) { a.visible = open && !mine; if (a.visible) { a.alpha = 0; a.fadeIn = true; } }
+    if (open && !mine && Math.random() < 0.004) { a.setAct(Math.random() < 0.5 ? 'wave' : 'stir'); a.showEmote(Math.random() < 0.5 ? 'note' : 'happy', 1.4); setTimeout(() => a.setAct(null), 1600); }
   }
 }
 
@@ -113,7 +114,20 @@ function nextFerryTime() {
   return times.find(x => x > t + 1) ?? 99999;
 }
 
+// is anyone (resident, visitor, the player) already standing near this point?
+function crowded(island, a, x, y, r = 26) { return island.actors.some(o => o !== a && o.visible !== false && (o.data?.rid || o.data?.tourist || o === G.player) && dist(o.x, o.y, x, y) < r) || [...npcs.residents, ...npcs.tourists].some(o => o !== a && o.data.target && dist(o.data.target[0], o.data.target[1], x, y) < r); }
+function freeNear(island, a, x, y) {
+  for (let ring = 0; ring < 4; ring++) for (let k = 0; k < 8; k++) {
+    const an = k / 8 * TAU + ring, rr = ring * 20, px = x + Math.cos(an) * rr, py = y + Math.sin(an) * rr * 0.6;
+    if (island.terrain(px, py) && !crowded(island, a, px, py)) return [px, py];
+  }
+  return [x + rand(-30, 30), y + rand(-16, 16)];
+}
 function pickSpot(island, a) {
+  for (let i = 0; i < 6; i++) { const sp = pickSpot1(island, a); if (!crowded(island, a, sp.x, sp.y, 30)) return sp; }
+  return pickSpot1(island, a);
+}
+function pickSpot1(island, a) {
   const h = G.state.time / 60, nm = G.state.nightMarket.restored;
   const opts = [['beach', 2], ['bench', 2.5], ['market', 3], ['view', 1], ['plaza', 1.5]];
   if (npcs.ferry && (npcs.ferry.state === 'arriving' || npcs.ferry.state === 'docked')) opts.push(['dock', 2]);
@@ -142,6 +156,13 @@ function updateResident(island, a, dt) {
   const d = a.data, s = G.state, h = s.time / 60;
   const bedtime = s.nightMarket.restored ? 22.5 : 21.3;
   if (d.state === 'busy') return;
+  if (d.state === 'indoors') {
+    const hs = G.scenes['home_' + d.rid], door = HOME_OF[d.rid], pl = G.player;
+    const watching = G.scene === hs || (G.scene === island && pl && dist(pl.x, pl.y, door.x, door.y) < 140);
+    if ((h >= bedtime || h < 6.5) && G.scene !== hs) { hs?.remove(a); island.add(a); a.x = door.x; a.y = door.y + 10; a.visible = false; d.state = 'home'; return; }
+    if (s.time >= d.until && !watching) { hs?.remove(a); island.add(a); a.x = door.x + 16; a.y = door.y + 22; a.visible = true; a.alpha = 0; a.fadeIn = true; d.state = 'idle'; d.until = s.time + rand(10, 30); }
+    return;
+  }
   if (d.state === 'home') {
     if (h >= 6.8 + (a.seed % 1) * 1.5 && h < bedtime - 0.5) { a.visible = true; a.alpha = 0; a.fadeIn = true; d.state = 'idle'; d.until = 0; }
     return;
@@ -149,6 +170,8 @@ function updateResident(island, a, dt) {
   if ((h >= bedtime || h < 6.5) && d.state !== 'going-home') {
     const home = HOME_OF[d.rid];
     d.state = 'going-home';
+    if (a.sit) { a.sit = false; a.seatH = undefined; a.doHop(60); a.y += 10; }
+    a.setAct(null);
     a.walkTo(island.nav.path(a.x, a.y, home.x, home.y + 10)).then(ok => { if (d.state === 'going-home') { a.visible = false; d.state = 'home'; } });
     return;
   }
@@ -157,7 +180,8 @@ function updateResident(island, a, dt) {
   if (s.time >= d.until) {
     const sp = pickSpot(island, a);
     d.spot = sp;
-    goTo(island, a, sp.x + rand(-12, 12), sp.y + rand(-6, 6), () => {
+    const [tx, ty] = freeNear(island, a, sp.x + rand(-10, 10), sp.y + rand(-6, 6)); d.target = [tx, ty];
+    goTo(island, a, tx, ty, () => {
       d.state = 'idle'; d.until = s.time + rand(18, 60);
       if (sp.tags.has('sit')) sitNPC(island, a);
       else if (sp.tags.has('beach') || sp.tags.has('view')) a.face('down');
@@ -233,7 +257,8 @@ function updateTourist(island, a, dt) {
     const tags = ['beach', 'beach', 'bench', 'market', 'view', 'plaza', ...(s.nightMarket.restored && s.time > 17 * 60 ? ['nightmarket', 'nightmarket'] : [])];
     const nodes = island.nav.tagged(choice(tags));
     const sp = nodes.length ? choice(nodes) : choice(island.nav.nodes);
-    goTo(island, a, sp.x + rand(-14, 14), sp.y + rand(-8, 8), () => {
+    const [tx, ty] = freeNear(island, a, sp.x + rand(-14, 14), sp.y + rand(-8, 8)); d.target = [tx, ty];
+    goTo(island, a, tx, ty, () => {
       d.state = 'idle'; d.until = s.time + rand(15, 45);
       if (sp.tags.has('sit')) sitNPC(island, a);
       if (chance(0.45)) { a.setAct(a.look.camera || chance(0.5) ? 'photo' : 'phone'); setTimeout(() => a.setAct(null), 2600); }
@@ -291,8 +316,11 @@ function updateScooter(sc, dt) {
     const vx = sc.vx || hx, vy = sc.vy || 0, l = Math.hypot(vx, vy) || 1;
     const along = ((pl.x - sc.x) * vx + (pl.y - sc.y) * vy) / l, side = Math.abs(((pl.x - sc.x) * vy - (pl.y - sc.y) * vx) / l);
     void i; void ahead;
-    if (along > 0 && side < 18) { target = 0; if (sc.beep <= 0) { sc.beep = 3; sfx('beep'); } }
-  }
+    if (along > 0 && side < 18) { sc.wait = (sc.wait || 0) + dt; target = sc.wait > 1.6 ? 36 : 0; if (sc.beep <= 0) { sc.beep = 3; sfx('beep'); } }
+    else sc.wait = 0;
+  } else sc.wait = 0;
+  // after a short wait, swerve around whoever is in the way
+  sc.swerve = (sc.swerve || 0) + (((sc.wait || 0) > 1.6 ? 1 : 0) - (sc.swerve || 0)) * Math.min(1, dt * 3);
   sc.beep -= dt;
   sc.speed += (target - sc.speed) * Math.min(1, dt * 3);
   sc.pos += sc.dir * sc.speed * dt;
@@ -305,7 +333,7 @@ function updateScooter(sc, dt) {
   const dx = (b[0] - a[0]) * sc.dir;
   if (Math.abs(dx) > 0.5) sc.flip = dx < 0;
   // drive on the right-hand side of the road
-  const off = 7 * sc.dir;
+  const off = (7 + (sc.swerve || 0) * 16) * sc.dir;
   const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
   sc.x = nx + (-(b[1] - a[1]) / len) * off; sc.y = ny + ((b[0] - a[0]) / len) * off;
 }
@@ -384,7 +412,7 @@ export function updateNPCs(dt) {
   const island = G.scenes.island;
   updateAnimals(dt);
   updateBarks(dt);
-  updateSideQuests();
+  updateSideQuests(dt);
   for (const a of npcs.residents) updateResident(island, a, dt);
   updateVendors(island);
   for (const a of [...npcs.tourists]) updateTourist(island, a, dt);
@@ -424,9 +452,37 @@ export function npcDrawables() {
 // ---- ambient life: drifting cloud shadows, falling petals, dragonflies, fireflies
 const CLOUDS = Array.from({ length: 7 }, (_, i) => ({ x: i * 420 + rand(0, 200), y: rand(0, 2600), rx: rand(120, 220), ry: rand(60, 110), k: rand(0.7, 1.3) }));
 const PETALS = Array.from({ length: 26 }, () => ({ x: rand(0, 400), y: rand(0, 800), ph: rand(0, 10), col: choice(['#ffc0d8', '#fff', '#ffd9a8', '#ffb3c7']), leaf: Math.random() < 0.35 }));
-const DRAGON = Array.from({ length: 5 }, (_, i) => ({ cx: i < 3 ? 770 : [560, 330][i - 3], cy: i < 3 ? 470 : [780, 990][i - 3], a: rand(0, 6), r: rand(30, 70), sp: rand(0.6, 1.1), col: choice(['#6fbfb0', '#8fb7e0', '#e8584e']) }));
+const DRAGON = Array.from({ length: 5 }, (_, i) => ({ cx: i < 3 ? 770 : [680, 330][i - 3], cy: i < 3 ? 470 : [790, 990][i - 3], a: rand(0, 6), r: rand(30, 70), sp: rand(0.6, 1.1), col: choice(['#6fbfb0', '#8fb7e0', '#e8584e']) }));
+// fish that leap out of the sea now and then (never the river or pond)
+const JUMPS = []; let nextJump = 2;
+function drawFishJumps(c, t, v) {
+  if (t > nextJump) {
+    nextJump = t + rand(1.6, 4);
+    for (let k = 0; k < 12; k++) { const x = v.x + rand(20, v.w - 20), y = v.y + rand(20, v.h - 20); if (isOcean(x, y) && isOcean(x + 30, y) && isOcean(x - 30, y + 20)) { JUMPS.push({ x, y, t0: t, dir: chance(0.5) ? 1 : -1, col: choice(['#9fc3d8', '#f2b36a', '#c9d6e0']), len: rand(0.8, 1.1) }); if (G.player && Math.hypot(x - G.player.x, y - G.player.y) < 260) sfx('fishsplash'); break; } }
+  }
+  for (let i = JUMPS.length - 1; i >= 0; i--) {
+    const j = JUMPS[i], k = (t - j.t0) / j.len;
+    if (k > 1.6) { JUMPS.splice(i, 1); continue; }
+    const ring = (x, y, a) => { if (a <= 0 || a > 1) return; c.strokeStyle = `rgba(255,255,255,${(1 - a) * 0.8})`; c.lineWidth = 1.2; c.beginPath(); c.ellipse(x, y, 3 + a * 10, 1.4 + a * 4, 0, 0, TAU); c.stroke(); };
+    const x0 = j.x, x1 = j.x + j.dir * 28;
+    ring(x0, j.y, k * 1.5);
+    if (k >= 1) ring(x1, j.y, (k - 1) * 1.7);
+    if (k < 1) {
+      const x = x0 + (x1 - x0) * k, h = Math.sin(k * Math.PI) * 20, ang = Math.atan2(-Math.cos(k * Math.PI) * 20 * Math.PI, (x1 - x0));
+      c.save(); c.translate(x, j.y - h); c.rotate(-ang * 0.9 * j.dir * -1); c.scale(j.dir, 1);
+      c.fillStyle = j.col; c.strokeStyle = 'rgba(40,60,80,.8)'; c.lineWidth = 0.8;
+      c.beginPath(); c.ellipse(0, 0, 5.5, 2.2, 0, 0, TAU); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(-5, 0); c.lineTo(-8.5, -2.6); c.lineTo(-8.5, 2.6); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.ellipse(1, -0.8, 2.6, 0.6, 0, 0, TAU); c.fill();
+      circ(c, 3.4, -0.5, 0.55, '#2a2a30', null);
+      c.restore();
+      if (Math.random() < 0.3) { c.fillStyle = 'rgba(230,248,255,.85)'; c.beginPath(); c.arc(x - j.dir * 6, j.y - h + 2, 0.9, 0, TAU); c.fill(); }
+    }
+  }
+}
 function drawAmbient(c, t) {
   const v = cam.view; if (!v) return;
+  drawFishJumps(c, t, v);
   // cloud shadows sliding across the island with the breeze
   c.save(); c.fillStyle = 'rgba(40,60,80,.07)';
   for (const cl of CLOUDS) {

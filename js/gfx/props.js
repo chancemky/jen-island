@@ -415,16 +415,20 @@ export function signpost(c, t, p) {
   shadow(c, 0, 1, 6, 2, 0.16);
   limb(c, [0, 0, 0, -44], 3, '#8a5f3e');
   (p.signs || []).forEach((s, i) => {
-    // each board points at its real destination; a round badge shows the exact heading
-    const dx = s.to ? s.to[0] - p.x : (s.dir || 1), dy = s.to ? s.to[1] - p.y : 0;
-    const y = -40 + i * 11, dir = dx >= 0 ? 1 : -1, ang = Math.atan2(dy, dx);
+    // each board shows a bold arrow aimed at its real destination (up the road,
+    // down to the beach, off to the left…); sideways boards also get a pointed tip
+    const dx = s.to ? s.to[0] - p.x : (s.dir || 1), dy = s.to ? (s.to[1] - p.y) : 0;
+    const ang = Math.atan2(dy, dx), side = Math.abs(Math.cos(ang)) > 0.55, dir = dx >= 0 ? 1 : -1;
+    const y = -40 + i * 11;
     c.save(); c.translate(0, y);
-    poly(c, dir > 0 ? [-2, -4.5, 38, -4.5, 44, 0, 38, 4.5, -2, 4.5] : [2, -4.5, -38, -4.5, -44, 0, -38, 4.5, 2, 4.5], s.col || '#f3dcae', INK, 0.9);
-    text(c, tr(s.label), dir * 17, 0.4, 5.4, INK, 900);
-    c.save(); c.translate(dir * 36, 0);
-    circ(c, 0, 0, 3.6, '#fff8ea', INK, 0.6);
-    c.rotate(ang); c.fillStyle = '#e56b4e';
-    c.beginPath(); c.moveTo(2.6, 0); c.lineTo(-1.2, -2); c.lineTo(-0.4, 0); c.lineTo(-1.2, 2); c.closePath(); c.fill();
+    if (side) poly(c, dir > 0 ? [-2, -4.5, 38, -4.5, 44, 0, 38, 4.5, -2, 4.5] : [2, -4.5, -38, -4.5, -44, 0, -38, 4.5, 2, 4.5], s.col || '#f3dcae', INK, 0.9);
+    else box(c, dir > 0 ? -2 : -40, -4.5, 42, 9, 2, s.col || '#f3dcae', INK, 0.9);
+    text(c, tr(s.label), dir * (side ? 16 : 15), 0.4, 5.2, INK, 900);
+    // arrow badge
+    c.save(); c.translate(dir * (side ? 34 : 33), 0);
+    circ(c, 0, 0, 4.2, '#fff8ea', INK, 0.7);
+    c.rotate(ang); c.fillStyle = '#e56b4e'; c.strokeStyle = '#9c3a2a'; c.lineWidth = 0.4;
+    c.beginPath(); c.moveTo(3.4, 0); c.lineTo(0, -2.9); c.lineTo(0, -1.2); c.lineTo(-2.8, -1.2); c.lineTo(-2.8, 1.2); c.lineTo(0, 1.2); c.lineTo(0, 2.9); c.closePath(); c.fill(); c.stroke();
     c.restore();
     c.restore();
   });
@@ -678,7 +682,7 @@ export function rock(c, t, p) {
 // The long bridge to Firefly Islet: a wooden deck on posts with rope rails.
 // Until it's repaired the middle is missing (a few planks dangle from the rope).
 export function seaBridge(c, t, p) {
-  const w = 262, h = 38, fixed = p.fixed?.();
+  const w = p.w || 262, h = p.h || 38, fixed = p.fixed?.();
   c.save(); c.translate(0, -h);
   const plank = (x0, x1) => {
     c.fillStyle = 'rgba(40,80,90,.25)'; c.fillRect(x0 + 3, 5, x1 - x0, h);
@@ -692,7 +696,7 @@ export function seaBridge(c, t, p) {
     // dangling planks and a sagging rope over the gap
     for (let i = 0; i < 4; i++) { const x = 84 + i * 30, sw = Math.sin(t * 1.4 + i) * 0.12; c.save(); c.translate(x, 6 + (i % 2) * 20); c.rotate(0.4 + sw + i * 0.3); box(c, -3, -2, 6, 16, 1, '#b98a5a', INK, 0.7); c.restore(); }
     c.strokeStyle = '#c9a26a'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(70, 0); c.quadraticCurveTo(w / 2, 26 + Math.sin(t) * 2, w - 70, 0); c.stroke();
-    text(c, T('BROKEN', 'HƯ'), w / 2, h / 2 + 2, 7, '#fff', 900, 'center', INK, 2);
+    text(c, p.label ? T(p.label[0], p.label[1]) : T('BROKEN', 'HƯ'), w / 2, h / 2 + 2, 7, '#fff', 900, 'center', INK, 2);
   }
   for (let x = 0; x <= w; x += fixed ? 44 : 70) if (fixed || x <= 70 || x >= w - 70) posts(Math.min(w - 2, Math.max(2, x)));
   c.strokeStyle = '#c9a26a'; c.lineWidth = 1.4;
@@ -793,4 +797,31 @@ export function bridgeRail(c, t, p) {
   c.strokeStyle = '#c98f5a'; c.lineWidth = 1.8; c.stroke();
   c.strokeStyle = '#e6d2a4'; c.lineWidth = 0.8;
   for (let i = 0; i < posts; i++) { const ya = y0 + 2 + i * (h - 4) / posts - 3.5, yb = y0 + 2 + (i + 1) * (h - 4) / posts - 3.5; c.beginPath(); c.moveTo(p.side * 0.5, ya); c.quadraticCurveTo(p.side * 1.2, (ya + yb) / 2 + 2, p.side * 0.5, yb); c.stroke(); }
+}
+
+// ---------------------------------------------------------------- harbour & cove props
+export function anchorStatue(c, t, p) {
+  shadow(c, 0, 1, 16, 4, 0.18);
+  box(c, -16, -10, 32, 10, 3, '#c9c2b6', INK, 1); box(c, -12, -14, 24, 5, 2, '#dcd6cb', INK, 0.8);
+  const col = '#5f6b86';
+  limb(c, [0, -14, 0, -44], 3.2, col); line(c, -8, -38, 8, -38, INK, 4.4); line(c, -8, -38, 8, -38, col, 2.6);
+  circ(c, 0, -48, 4, null, INK, 3); circ(c, 0, -48, 4, null, col, 1.6);
+  c.beginPath(); c.arc(0, -24, 13, Math.PI * 0.12, Math.PI * 0.88); c.strokeStyle = INK; c.lineWidth = 4.4; c.stroke(); c.strokeStyle = col; c.lineWidth = 2.6; c.stroke();
+  for (const s of [-1, 1]) poly(c, [s * 12, -22, s * 16, -26, s * 15, -19], col, INK, 0.7);
+  // a rope garland of little flags
+  c.strokeStyle = '#c9a26a'; c.lineWidth = 0.8; c.beginPath(); c.moveTo(-16, -12); c.quadraticCurveTo(0, -4, 16, -12); c.stroke();
+}
+export function crateStack(c, t, p) {
+  shadow(c, 0, 1, 20, 4, 0.16);
+  for (const [x, y, col] of [[-10, 0, '#c9955e'], [10, 0, '#b98049'], [0, -16, '#d9a86e']]) { box(c, x - 9, y - 16, 18, 16, 2, col, INK, 0.9); line(c, x - 8, y - 15, x + 8, y - 1, 'rgba(90,60,30,.5)', 0.8); line(c, x - 8, y - 8, x + 8, y - 8, 'rgba(90,60,30,.4)', 0.8); }
+  for (let i = 0; i < 4; i++) circ(c, -4 + i * 3, -34 + (i % 2), 2, ['#a6c7d8', '#f28f7c', '#a6c7d8', '#ffd35a'][i], INK, 0.5);
+}
+export function bonfire(c, t, p) {
+  shadow(c, 0, 1, 14, 4, 0.2);
+  for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; circ(c, Math.cos(a) * 11, Math.sin(a) * 4, 3, '#b9b3ba', INK, 0.6); }
+  line(c, -8, -2, 8, -6, '#8a5f3e', 3); line(c, -8, -6, 8, -2, '#8a5f3e', 3);
+  const night = LIGHT.night > 0.3;
+  for (let i = 0; i < 3; i++) { const k = Math.sin(t * 9 + i * 2) * 1.5, hh = (night ? 16 : 12) + k; c.beginPath(); c.moveTo(-6 + i * 5, -4); c.quadraticCurveTo(-8 + i * 5, -hh * 0.6, -3 + i * 5 + k * 0.3, -hh); c.quadraticCurveTo(i * 5, -hh * 0.5, 0 + i * 5, -4); c.closePath(); c.fillStyle = ['#ff8a3a', '#ffd35a', '#e8584e'][i]; c.fill(); }
+  if (night) glows.push([p.x, p.y - 10, 60, 'rgba(255,170,90,.55)']);
+  for (let i = 0; i < 3; i++) { const k = (t * 0.6 + i / 3) % 1; c.globalAlpha = 0.5 * (1 - k); circ(c, Math.sin(k * 7 + i) * 4, -18 - k * 26, 2 + k * 4, '#d8d2cc', null); } c.globalAlpha = 1;
 }

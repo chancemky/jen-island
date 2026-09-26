@@ -44,7 +44,7 @@ const GIFTS = {
   linh: [{ money: 25, why: ['I won a photo contest with a picture of your shop! Half the prize is yours.', 'Mình thắng cuộc thi ảnh nhờ chụp quán bạn! Chia bạn nửa giải nè.'] }, { ing: 'milk', n: 8, why: ['My dorm fridge is too full of milk. Long story.', 'Tủ lạnh ký túc xá đầy sữa. Chuyện dài lắm.'] }],
   minh: [{ money: 40, why: ['A magazine bought my island photos. Coffee is on me — well, this is coffee money.', 'Tạp chí mua ảnh đảo của mình. Mình bao cà phê — à, đây là tiền cà phê.'] }],
   co_lan: [{ ing: 'herbs', n: 8, why: ['My garden is basically a jungle now. Please take some herbs.', 'Vườn cô thành rừng rồi. Lấy bớt rau thơm giùm cô.'] }, { mat: 'paint', n: 2, why: ['Leftover paint from my flower cart. It\'s a very cheerful pink.', 'Sơn thừa từ xe hoa của cô. Màu hồng vui lắm.'] }],
-  be_na: [{ ing: 'beans', n: 6, why: ['I saved these beans for chè! You make it, I eat it. Deal?', 'Em để dành đậu nấu chè nè! Anh chị nấu, em ăn. Chịu không?'] }, { money: 5, why: ['This is all my money. Five thousand! Buy something nice.', 'Đây là hết tiền của em. Năm nghìn! Mua gì đó đẹp nha.'] }],
+  be_na: [{ ing: 'beans', n: 6, why: ['I saved these beans for chè! You make it, I eat it. Deal?', 'Em để dành đậu nấu chè nè! {You} nấu, em ăn. Chịu không?'] }, { money: 5, why: ['This is all my money. Five thousand! Buy something nice.', 'Đây là hết tiền của em. Năm nghìn! Mua gì đó đẹp nha.'] }],
   anh_tuan: [{ mat: 'metal', n: 3, why: ['Old scooter panels. Better on your roof than in my shed.', 'Tôn xe cũ. Lên mái nhà bạn còn hơn nằm trong kho.'] }],
   vy: [{ mat: 'paint', n: 3, why: ['Extra paint! My easel only has two hands. I mean legs. Three legs.', 'Sơn dư nè! Giá vẽ của mình chỉ có hai tay. À không, ba chân.'] }, { money: 45, why: ['Someone bought a painting of your shop. Half is yours — it was your shop!', 'Có người mua bức tranh quán bạn. Chia bạn nửa — quán của bạn mà!'] }],
   chi_mai: [{ ing: 'lime', n: 8, why: ['Doctor\'s orders: vitamin C. Also I bought too many limes.', 'Lời khuyên của y tá: vitamin C. Mà chị cũng lỡ mua nhiều chanh quá.'] }, { money: 20, why: ['A thank-you from a patient. They said the tea stand made them better!', 'Quà cảm ơn từ bệnh nhân. Họ nói uống trà quán em là khỏe!'] }],
@@ -79,7 +79,7 @@ export async function playRPS(a, who) {
   const played = s.story.flags[key]?.day === s.day ? s.story.flags[key].n : 0;
   if (played >= 3) { await say(a, T('No more today! My hand is tired. Tomorrow — rematch!', 'Hôm nay đủ rồi! Tay mỏi quá. Mai tái đấu nha!'), { emo: 'happy' }); return; }
   for (let round = 0; round < 3; round++) {
-    const pick = await ask(a, round ? T('Tie! Again — oẳn tù tì…', 'Hòa! Lại nào — oẳn tù tì…') : T('Oẳn tù tì! Rock, paper, scissors… pick one!', 'Oẳn tù tì! Ra cái gì ra cái này…'), HANDS.map(k => T(...HAND_LABEL[k])));
+    const pick = await ask(a, round ? T('Tie! Again — rock, paper, scissors…', 'Hòa! Lại nào — oẳn tù tì…') : T('Rock, paper, scissors… shoot! Pick one!', 'Oẳn tù tì! Ra cái gì ra cái này…'), HANDS.map(k => T(...HAND_LABEL[k])));
     const me = HANDS[pick] || 'rock', them = choice(HANDS);
     a.setAct('cheer'); sfx('pop');
     await say(a, T(`…${HAND_LABEL[them][0]}!`, `…${HAND_LABEL[them][1]}!`), { emo: 'happy' });
@@ -102,7 +102,7 @@ export async function playRPS(a, who) {
 
 // ---------------------------------------------------------------- resident conversation menu
 export async function residentMenu(a, rid, chat) {
-  const opts = [T('Chat', 'Trò chuyện'), T('Tell me a joke!', 'Kể chuyện cười đi!'), T('Oẳn tù tì?', 'Oẳn tù tì không?'), T('Bye!', 'Tạm biệt!')];
+  const opts = [T('Chat', 'Trò chuyện'), T('Tell me a joke!', 'Kể chuyện cười đi!'), T('Rock, paper, scissors?', 'Oẳn tù tì không?'), T('Bye!', 'Tạm biệt!')];
   const qo = questOption(rid);
   if (qo) opts.unshift(qo);
   let pick = await ask(a, choice([T('Oh, hi!', 'Ơ, chào!'), T(`Hey ${G.state.player.name}!`, `Ê ${G.state.player.name}!`), T('What\'s up?', 'Có chuyện gì vậy?')]), opts, { emo: 'happy' });

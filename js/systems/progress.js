@@ -85,6 +85,18 @@ export const TRACKS = [
   { id: 'recipes', icon: 'notebook', en: 'Recipes learned', vi: 'Công thức đã học', get: s => s.recipes.length, tier: doubleOn([2, 4, 6, 8, 10, 12, 14]) },
   { id: 'friends', icon: 'heart', en: 'Friendship with neighbours', vi: 'Tình bạn với hàng xóm', get: s => Object.values(s.friends || {}).reduce((a, b) => a + b, 0), tier: doubleOn([5, 15, 30, 60, 100, 200]) },
   { id: 'outfits', icon: 'shirt', en: 'Outfits collected', vi: 'Trang phục sưu tầm', get: s => (s.wardrobe?.owned || []).length, tier: doubleOn([2, 5, 10, 15, 25, 40]) },
+  { id: 'chapters', icon: 'notebook', en: 'Chapters reached', vi: 'Chương đã đạt', get: s => s.story.chapter, tier: doubleOn([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]) },
+  { id: 'shops', icon: 'sign_open', en: 'Shops you own', vi: 'Quán sở hữu', get: s => Object.values(s.biz).filter(b => b.owned).length, tier: doubleOn([2, 3, 5, 7, 9, 11, 13]) },
+  { id: 'keepers', icon: 'person', en: 'Shopkeepers hired', vi: 'Người trông quán', get: s => Object.keys(s.keepers || {}).length, tier: doubleOn([1, 2, 4, 6, 9, 12]) },
+  { id: 'property', icon: 'key', en: 'Properties owned', vi: 'Bất động sản', get: s => Object.keys(s.property || {}).length, tier: doubleOn([1, 3, 5, 8, 11, 14]) },
+  { id: 'stalls', icon: 'lantern', en: 'Night Market stalls', vi: 'Sạp Chợ Đêm', get: s => ['night', 'nm1', 'nm2', 'nm3', 'nm5', 'nm6'].filter(id => s.biz[id]?.owned).length, tier: doubleOn([1, 2, 4, 6]) },
+  { id: 'pets', icon: 'paw', en: 'Pets adopted', vi: 'Thú cưng nhận nuôi', get: s => (s.pets || []).length, tier: doubleOn([1, 2, 4, 6, 9]) },
+  { id: 'petlove', icon: 'heart', en: 'Pet cuddles', vi: 'Âu yếm thú cưng', get: s => (s.pets || []).reduce((a, p) => a + (p.love || 0), 0), tier: doubleOn([5, 20, 50, 120, 300]) },
+  { id: 'furniture', icon: 'sofa', en: 'Furniture placed', vi: 'Nội thất đã đặt', get: s => (s.home?.furniture || []).length, tier: doubleOn([3, 8, 15, 25, 40]) },
+  { id: 'quests', icon: 'star', en: 'Neighbours helped', vi: 'Giúp hàng xóm', get: s => Object.values(s.sideQuests || {}).filter(v => v === 'done').length, tier: doubleOn([1, 3, 6, 9]) },
+  { id: 'haircuts', icon: 'scissors', en: 'Haircuts & colours', vi: 'Lần làm tóc', get: s => s.stats.haircuts || 0, tier: doubleOn([1, 3, 8, 15, 30]) },
+  { id: 'treats', icon: 'icecream', en: 'Street treats eaten', vi: 'Món vặt đã ăn', get: s => s.stats.treats || 0, tier: doubleOn([1, 5, 15, 40, 100]) },
+  { id: 'upgrades', icon: 'hammer', en: 'Shop upgrades', vi: 'Nâng cấp quán', get: s => Object.values(s.biz).reduce((a, b) => a + Math.max(0, (b.level || 1) - 1), 0), tier: doubleOn([1, 3, 6, 10, 16, 24, 32]) },
 ];
 export const milestoneReward = i => ({ money: Math.round(30 + Math.pow(i + 1, 1.7) * 45), xp: 40 + i * 35 });
 export function trackState(tr) {

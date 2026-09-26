@@ -8,7 +8,8 @@ import { Player } from './systems/player.js';
 import { Actor } from './world/actor.js';
 import { initInput, input, moveVector, releaseJoystick } from './core/input.js';
 import { unlockAudio, sfx, musicTick, setAudio, suspendAudio, setMood } from './core/audio.js';
-import { G, T, setLang, defaultState, bizOf, markDirty, flag, setFlag, hasMats, canAfford } from './systems/state.js';
+import { G, T, setLang, defaultState, bizOf, markDirty, flag, setFlag, hasMats, canAfford, addMoney, learnRecipe } from './systems/state.js';
+import { showReward } from './ui/sheets.js';
 import { scenes, setScene, enterBuilding, exitBuilding, updateDoors, isTransitioning, fadeOut, fadeIn } from './systems/scenes.js';
 import { cs, updateFollow, say, ask, wait, camTo } from './systems/cutscene.js';
 import { updateDialogue, dialogue, closeDialog } from './ui/dialogue.js';
@@ -26,11 +27,12 @@ import { updateBusinesses, openBiz, closeBiz, rt as bizRT } from './systems/busi
 import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs } from './systems/npc.js';
 import { updateClock, endDay, specialsInit, timePaused } from './systems/time.js';
 import { repairBridge } from './systems/story.js';
+import { buildSeaBridge } from './systems/story.js';
 import { runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, buyScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
 import { talkToResident, talkToMerchant, talkToStaff, talkToVisitor } from './systems/talk.js';
 import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, saveStatus } from './systems/save.js';
 import * as cloud from './systems/cloud.js';
-import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, MATERIALS, bizName, recipeName } from './data/game.js';
+import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, MATERIALS, bizName, recipeName, HARBOUR_BRIDGE, COVE_BRIDGE } from './data/game.js';
 import { applyStaticText, bootText } from './ui/statictext.js';
 import { MERCHANTS, RESIDENTS, playerLook } from './data/looks.js';
 import { tapAnimals, react as reactAnimal } from './systems/animals.js';
@@ -44,7 +46,10 @@ import { showWhatsNew } from './ui/whatsnew.js';
 import { openBoutique, openWardrobe, currentLook, refreshPlayerLook } from './ui/clothes.js';
 import { openSalon } from './ui/salon.js';
 import { spawnVendors, updateVendors, buyFromVendor } from './systems/vendors.js';
-import { bus, dist, clamp, sleep, choice, money } from './core/util.js';
+import { updateKeepers, spawnKeepers } from './systems/economy.js';
+import { rebuildPets, updatePets, petMenu } from './systems/pets.js';
+import { openPetShop } from './ui/petshop.js';
+import { bus, dist, clamp, sleep, choice, money, rand, clock } from './core/util.js';
 import { LIGHT } from './gfx/props.js';
 
 const $ = id => document.getElementById(id);
@@ -111,6 +116,8 @@ function startGame() {
   spawnVendors(scenes.island);
   spawnMerchants();
   rebuildHouseFurniture();
+  spawnKeepers();
+  rebuildPets();
   scenes.restaurant.applyLevel();
   if (bizOf('restaurant').owned) initRestaurantRuntime();
   specialsInit();
@@ -136,7 +143,7 @@ function startGame() {
 }
 
 function spawnMerchants() {
-  for (const id of ['supermarket', 'materials', 'furniture', 'boutique', 'salon']) {
+  for (const id of ['supermarket', 'materials', 'furniture', 'boutique', 'salon', 'petshop']) {
     const sc = scenes[id], mp = sc.merchantPos;
     const def = MERCHANTS[mp.id];
     const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: mp.x, y: mp.y, data: { mid: mp.id, merchant: true } });
@@ -160,7 +167,7 @@ function updateInteriorLife(dt) {
 }
 bus.on('enter', id => {
   const sc = scenes[id];
-  if (id.startsWith('home_')) { const rid = id.slice(5); const nm = RESIDENTS[rid]?.name || ''; showArea(T(`${nm}'s Home`, `Nhà ${nm}`), ''); } else showArea(T({ house: 'Your Home', supermarket: 'Cô Hoa\'s Supermarket', materials: 'Chú Bảy\'s Materials', furniture: 'Anh Khoa\'s Furniture', boutique: 'Cô Ba\'s Boutique', salon: 'Chị Tiên\'s Hair Salon', meo: 'Mèo Mây\'s Home', shed1: 'Your Drink Stand', shed2: 'Your Bánh Mì Shed', truck: 'Your Food Truck', restaurant: 'Your Restaurant' }[id] || '', { house: 'Nhà của bạn', supermarket: 'Siêu thị Cô Hoa', materials: 'Vật liệu Chú Bảy', furniture: 'Nội thất Anh Khoa', boutique: 'Tiệm Áo Cô Ba', salon: 'Salon Tóc Xinh', meo: 'Nhà Mèo Mây', shed1: 'Quán Nước', shed2: 'Bánh Mì Góc Phố', truck: 'Xe Cuốn', restaurant: 'Nhà hàng' }[id] || ''), '');
+  if (id.startsWith('home_')) { const rid = id.slice(5); const nm = RESIDENTS[rid]?.name || ''; showArea(rid === 'chi_mai' ? T('Dr. Mai\'s Clinic', 'Phòng khám BS. Mai') : T(`${nm}'s Home`, `Nhà ${nm}`), ''); } else showArea(T({ house: 'Your Home', supermarket: 'Cô Hoa\'s Supermarket', materials: 'Chú Bảy\'s Materials', furniture: 'Anh Khoa\'s Furniture', boutique: 'Cô Ba\'s Boutique', salon: 'Chị Tiên\'s Hair Salon', petshop: 'Cô Bông\'s Pet Shop', meo: 'Mèo Mây\'s Home', shed1: 'Your Drink Stand', shed2: 'Your Bánh Mì Shed', truck: 'Your Food Truck', restaurant: 'Your Restaurant' }[id] || '', { house: 'Nhà của bạn', supermarket: 'Siêu thị Cô Hoa', materials: 'Vật liệu Chú Bảy', furniture: 'Nội thất Anh Khoa', boutique: 'Tiệm Áo Cô Ba', salon: 'Salon Tóc Xinh', petshop: 'Tiệm Thú Cưng Bé Bông', meo: 'Nhà Mèo Mây', shed1: 'Quán Nước', shed2: 'Bánh Mì Góc Phố', truck: 'Xe Cuốn', restaurant: 'Nhà hàng' }[id] || ''), '');
   if (sc.merchant) { sc.merchant.face('down'); sc.merchant.setAct('wave'); sc.merchant.showEmote('happy', 1.4); setTimeout(() => sc.merchant.setAct(null), 1300); }
   if (id === 'meo' && !sc.actors.includes(G.meo)) setTimeout(() => toast({ text: T('Mèo Mây is out for a walk', 'Mèo Mây đang đi dạo'), sub: T('It\'s usually home for a nap at noon and at night.', 'Mèo Mây thường về nhà ngủ trưa và ngủ tối.'), icon: 'notebook' }), 400);
 });
@@ -178,8 +185,14 @@ bus.on('biz:close', (id, why) => { if (why === 'hours') toast({ text: T(`${bizNa
 
 // ---------------------------------------------------------------- main loop
 let last = performance.now(), storyT = 0, areaT = 0;
+let lastFrame = 0;
 function loop(now) {
   requestAnimationFrame(loop);
+  // battery saver: 30 fps (24 when you're standing still), unless Smooth 60 FPS is on
+  const idle = G.player && G.player.moving < 0.05 && !cs.active && !G.player.path;
+  const minMs = G.state?.settings?.smooth ? 0 : idle ? 1000 / 24 : 1000 / 30;
+  if (now - lastFrame < minMs - 1.5) return;
+  lastFrame = now;
   let dt = (now - last) / 1000; last = now;
   if (dt > 0.1) dt = 0.1;
   if (document.hidden) return;
@@ -206,6 +219,8 @@ function loop(now) {
   updateNPCs(dt);
   if (G.scene === scenes.island) updateVendors(dt);
   updateBusinesses(dt, gm);
+  updateKeepers(dt);
+  updatePets(dt);
   updateRestaurant(dt, gm);
   updateMeo(dt);
   updateDoors(dt);
@@ -215,7 +230,8 @@ function loop(now) {
   updateBizButton();
   cam.update(dt, sc, G.renderer.w, G.renderer.h);
   const light = lightingFor(G.state.time, sc.kind !== 'island');
-  G.renderer.render(sc, t, {
+  // the shop counter and prep table cover the whole screen: no need to draw the world behind them
+  if (!(isServiceOpen() || isPrepOpen())) G.renderer.render(sc, t, {
     player: pl, light,
     worldExtra: sc === scenes.island ? npcDrawables() : null,
     overlay: (c, tt) => { drawSkyLife(c, tt); G.runtime.decoOverlay?.(c, tt); },
@@ -279,6 +295,14 @@ function updateInteraction(dt) {
     G.runtime.materialNeed = () => ({ label: T('the Long Bridge', 'Cây Cầu Dài'), mats: BRIDGE_REPAIR.mats });
     setAction(T('Repair', 'Sửa cầu'), () => openRequirement({ title: T('Repair the Long Bridge', 'Sửa Cây Cầu Dài'), cost: BRIDGE_REPAIR.cost, mats: BRIDGE_REPAIR.mats, action: () => repairBridge(), actionLabel: T('Fix it!', 'Sửa thôi!'), note: T('Chú Bảy sells wood, metal and paint.', 'Chú Bảy có bán gỗ, tôn và sơn.') }), 'hammer'); return;
   }
+  // the Harbour and Cove bridge building spots (east coast)
+  for (const [step, x, y, R, which, en, vi] of [['harbour', 1612, 700, HARBOUR_BRIDGE, 'harbour', 'the Harbour Bridge', 'Cầu Bến Cảng'], ['cove', 1630, 2080, COVE_BRIDGE, 'cove', 'the Cove Bridge', 'Cầu Vịnh Dừa']]) {
+    if (sc === scenes.island && G.state.story.step === step && dist(pl.x, pl.y, x, y) < 70) {
+      G.runtime.materialNeed = () => ({ label: T(en, vi), mats: R.mats });
+      setAction(T('Build', 'Xây cầu'), () => openRequirement({ title: T(`Build ${en}`, `Xây ${vi}`), cost: R.cost, mats: R.mats, action: () => buildSeaBridge(which), actionLabel: T('Build it!', 'Xây thôi!'), note: T('Chú Bảy sells wood, metal, paint and roof tiles on Market Street.', 'Chú Bảy bán gỗ, tôn, sơn và ngói ở Phố Chợ.') }), 'hammer');
+      return;
+    }
+  }
   // statue pedestal
   if (sc === scenes.island && dist(pl.x, pl.y, 900, 1600) < 50 && G.state.story.step === 'destination') {
     setAction(T('Statue', 'Tượng đài'), () => statueSheet(), 'star'); return;
@@ -300,12 +324,13 @@ function nearestTalkable(sc, pl) {
 async function talkTo(a) {
   releaseJoystick();
   if (a === G.meo) return talkToMeo();
+  if (a.kind === 'pet') return petMenu(a);
   await cs.run('talk', async () => {
     if (a.data?.rid) await talkToResident(a);
     else if (a.data?.mid) await talkToMerchant(a);
     else if (a.data?.emp) await talkToStaff(a);
     else if (a.data?.tourist) await talkToVisitor(a);
-    else if (a.data?.vendor) await buyFromVendor(a);
+    else if (a.data?.cart) await buyFromVendor(a);
     else await say(a, T('Hello!', 'Xin chào!'));
   }, { bars: false, keepHud: true });
 }
@@ -320,11 +345,11 @@ function doorAction(tr) {
   if (b.biz) {
     const z = bizOf(b.biz), def = BUSINESSES[b.biz];
     if (b.biz === 'truck' && !z.owned) {
-      if (G.state.story.chapter < 4) return setAction(T('Look', 'Xem'), () => say(null, T('An old truck with a FOR SALE sign. Maybe later…', 'Một chiếc xe cũ có tấm bảng “BÁN”. Để sau vậy…')), 'talk');
+      if (G.state.story.chapter < 7) return setAction(T('Look', 'Xem'), () => say(null, T('An old truck with a FOR SALE sign. Maybe later…', 'Một chiếc xe cũ có tấm bảng “BÁN”. Để sau vậy…')), 'talk');
       return setAction(T('Look', 'Xem'), () => say(null, T(`Locked. Mèo Mây has the keys (${gateText('truck')}).`, `Đang khóa. Mèo Mây giữ chìa khóa (${gateText('truck')}).`)), 'key');
     }
     if (b.biz === 'restaurant' && !z.owned) {
-      if (G.state.story.chapter < 6) return setAction(T('Look', 'Xem'), () => say(null, T('The old restaurant on the hill. The windows are boarded up and a faded sign says “FOR SALE”.', 'Nhà hàng cũ trên đồi. Cửa sổ bị đóng ván, tấm bảng đã phai màu ghi “BÁN”.')), 'talk');
+      if (G.state.story.chapter < 10) return setAction(T('Look', 'Xem'), () => say(null, T('The old restaurant on the hill. The windows are boarded up and a faded sign says “FOR SALE”.', 'Nhà hàng cũ trên đồi. Cửa sổ bị đóng ván, tấm bảng đã phai màu ghi “BÁN”.')), 'talk');
       return setAction(T('Look', 'Xem'), () => say(null, T(`Boarded up. Mèo Mây has the key (${gateText('restaurant')}).`, `Cửa đóng ván. Mèo Mây giữ chìa khóa (${gateText('restaurant')}).`)), 'key');
     }
     if (z.repair < 1) {
@@ -345,8 +370,9 @@ function frontAction(tr) {
       G.runtime.materialNeed = () => ({ label: T('the Night Market', 'Chợ Đêm'), mats: r.mats });
       return setAction(T('Restore', 'Khôi phục'), () => openRequirement({ title: T('Restore the Night Market', 'Khôi phục Chợ Đêm'), cost: r.cost, mats: r.mats, action: () => restoreNightMarket(), actionLabel: T('Light the lanterns!', 'Thắp đèn thôi!') }), 'lantern');
     }
-    return setAction(T('Your stall', 'Sạp đêm'), () => stallSheet(), 'banh_trang_nuong');
+    return setAction(T('Your stall', 'Sạp đêm'), () => stallSheet('night'), 'banh_trang_nuong');
   }
+  if (BUSINESSES[bizId]?.kind === 'stall') return kioskAction(bizId);
   if (z.repair < 1 && bizId !== 'truck') {
     const trig = scenes.island.triggers.find(t => t.kind === 'door' && t.building === tr.building);
     return doorAction(trig);
@@ -354,17 +380,39 @@ function frontAction(tr) {
   if (bizId === 'truck' && !z.owned) return doorAction(scenes.island.triggers.find(t => t.kind === 'door' && t.building === 'truck'));
   setAction('', null);
 }
-// Night stall is operated from outside.
-function stallSheet() {
-  const z = bizOf('night');
-  openSheet({ title: T('Your Night Stall', 'Sạp Đêm của bạn'), sub: T('Open 17:00–24:00', 'Mở cửa 17:00–24:00'), build: (body, api) => {
+// Stalls and kiosks are run from the counter outside.
+const KIOSK_ICON = { night: 'banh_trang_nuong', cafe: 'coffee', grill: 'squid' };
+function stallSheet(id = 'night') {
+  const z = bizOf(id), def = BUSINESSES[id];
+  const hrs = def.hours ? `${clock(def.hours[0])}–${clock(def.hours[1] % (24 * 60)) === '00:00' ? '24:00' : clock(def.hours[1])}` : '';
+  openSheet({ title: bizName(id), sub: T(`Open ${hrs}`, `Mở cửa ${hrs}`), build: (body, api) => {
     const list = h('div', 'list'); body.appendChild(list);
     const row = (label, fn, cls = 'btn big') => { const b = btn(label, () => { api.close(true); fn(); }, cls); list.appendChild(b); };
-    row(z.open ? T('Close the stall', 'Đóng sạp') : T('Open the stall', 'Mở sạp'), () => toggleBiz('night'), 'btn big ' + (z.open ? 'coral' : 'gold'));
-    row(T('Serve', 'Bán hàng'), () => openService('night'), 'btn big pink');
-    row(T('Prep', 'Sơ chế'), () => openPrep('night'), 'btn big ghost');
-    row(T('Menu', 'Thực đơn'), () => openBizMenu('night'), 'btn big ghost');
+    row(z.open ? T('Close up', 'Đóng cửa') : T('Open up', 'Mở cửa'), () => toggleBiz(id), 'btn big ' + (z.open ? 'coral' : 'gold'));
+    row(T('Serve', 'Bán hàng'), () => openService(id), 'btn big pink');
+    row(T('Prep', 'Sơ chế'), () => openPrep(id), 'btn big ghost');
+    row(T('Menu', 'Thực đơn'), () => openBizMenu(id), 'btn big ghost');
+    row(T('Staff, supplies & rent', 'Nhân viên, hàng & tiền thuê'), () => openMenu({ tab: 1, onLogout: logout }), 'btn big ghost');
   } });
+}
+// a kiosk or market stall you don't own yet: look, or buy it once the story allows
+function kioskAction(id) {
+  const z = bizOf(id), def = BUSINESSES[id];
+  if (z.owned) return setAction(T('Your shop', 'Quán của bạn'), () => stallSheet(id), KIOSK_ICON[def.biz] || 'coin');
+  if (def.stall && !G.state.nightMarket.restored) return setAction(T('Look', 'Xem'), () => say(null, T('An abandoned stall with torn lanterns.', 'Quầy hàng bỏ hoang, lồng đèn rách nát.')), 'talk');
+  if (G.state.story.chapter < def.chapter) return setAction(T('Look', 'Xem'), () => say(null, def.stall ? T(`A family runs this stall. Maybe they'd sell it one day (Chapter ${def.chapter}).`, `Một gia đình đang bán ở sạp này. Biết đâu sau này họ bán lại (Chương ${def.chapter}).`) : T(`A shuttered kiosk with a FOR SALE board. The owner will sell from Chapter ${def.chapter}.`, `Một ki-ốt đóng cửa, treo bảng CẦN BÁN. Chủ sẽ bán từ Chương ${def.chapter}.`)), 'talk');
+  return setAction(T(`Buy · ${money(def.buy)}`, `Mua · ${money(def.buy)}`), () => openRequirement({ title: T(`Buy ${bizName(id)}`, `Mua ${bizName(id)}`), cost: def.buy, note: def.stall ? T('The family is ready to retire and will hand over their stall. It sells your Night Market menu.', 'Gia đình sẵn sàng nghỉ hưu và giao lại sạp. Sạp sẽ bán thực đơn Chợ Đêm của bạn.') : T('Includes the counter, the grill or coffee machine, and a starter menu.', 'Gồm quầy, bếp nướng hoặc máy pha cà phê, và thực đơn khởi đầu.'), action: () => buyKiosk(id), actionLabel: T('Buy it!', 'Mua luôn!') }), 'coin');
+}
+async function buyKiosk(id) {
+  const def = BUSINESSES[id], z = bizOf(id);
+  if (z.owned || !canAfford(def.buy)) { sfx('error'); return; }
+  addMoney(-def.buy, 'buy'); z.owned = true; z.unlocked = true; z.repair = 1; G.state.keys[id] = true;
+  for (const [rid, r] of Object.entries(RECIPES)) if (r.biz === def.biz && r.starter && !G.state.recipes.includes(rid)) learnRecipe(rid);
+  markDirty(true); sfx('fanfare'); addXP(150, 'buy');
+  fx.burst('confetti', G.player.x, G.player.y - 30, 30, { up: 80, speed: 70, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 60, life: 1.6 });
+  await showReward({ icon: KIOSK_ICON[def.biz] || 'key', kicker: T('New shop!', 'Quán mới!'), title: bizName(id), text: T('Open it from the counter. You can hire a shopkeeper for it in the Business tab.', 'Mở cửa ở quầy. Có thể thuê chủ quán trong mục Kinh doanh.') });
+  bus.emit('bought', 'shop', id);
+  checkStory();
 }
 function actAction(tr) {
   const sc = G.scene, bizId = bizIdOfScene(sc);
@@ -379,6 +427,7 @@ function actAction(tr) {
     'shop:furniture': () => openFurnitureShop(),
     'shop:boutique': () => openBoutique(),
     'shop:salon': () => openSalon(),
+    'shop:pets': () => openPetShop(),
     wardrobe: () => openWardrobe(),
     serve: () => serveAtCounter(bizId),
     prep: () => openPrep(bizId),
@@ -556,24 +605,25 @@ bus.on('enter', id => {
   const sc = scenes[id], rid = sc.owner, a = npcs.residents.find(r => r.data.rid === rid);
   sc.bedSleeper = null;
   if (!a) return;
-  const name = a.name;
+  const name = a.name, b = scenes.island.buildings[sc.building];
+  const greet = () => setTimeout(() => { if (G.scene === sc && !cs.active) { a.face('down'); a.setAct('wave'); a.showEmote('happy', 1.4); say(a, T(...choice(HOST_HI))).then(() => a.setAct(null)); } }, 650);
   if (a.data.state === 'home') { sc.bedSleeper = { look: a.look, seed: 1 }; setTimeout(() => toast({ text: T(`Shh… ${name} is asleep.`, `Suỵt… ${name} đang ngủ.`), sub: T('Tiptoe!', 'Đi nhẹ thôi!'), icon: 'zzz' }), 500); return; }
-  if (a.data.state === 'busy' || a.data.state === 'going-home') return;
-  if (Math.random() < 0.7) {
-    scenes.island.remove(a); sc.add(a); a.stop(); a.sit = false; a.setAct(null);
+  // already inside from earlier: they're still here
+  if (a.data.state === 'indoors' && sc.actors.includes(a)) { a.data.state = 'busy'; a.data.hosting = id; greet(); return; }
+  // only home if they were actually close to their house (no teleporting in from across the island)
+  const nearHome = a.visible !== false && dist(a.x, a.y, b.x, b.y) < 170 && a.data.state !== 'busy' && a.data.state !== 'going-home';
+  if (nearHome && Math.random() < 0.8) {
+    scenes.island.remove(a); sc.add(a); a.stop(); a.sit = false; a.seatH = undefined; a.setAct(null);
     a.x = sc.host.x; a.y = sc.host.y; a.visible = true; delete a.alpha; a.fadeIn = false;
     a.data.state = 'busy'; a.data.hosting = id; a.face('down');
-    setTimeout(() => { if (G.scene === sc && !cs.active) { a.setAct('wave'); a.showEmote('happy', 1.4); say(a, T(...choice(HOST_HI))).then(() => a.setAct(null)); } }, 650);
+    greet();
   } else setTimeout(() => toast({ text: T(`${name} is out right now.`, `${name} đang đi vắng.`), sub: T('Doors are always open on this island.', 'Trên đảo này cửa lúc nào cũng mở.'), icon: 'door' }), 500);
 });
 bus.on('leave', id => {
   if (!id.startsWith('home_')) return;
   const sc = scenes[id];
-  for (const a of [...sc.actors]) if (a.data?.hosting === id) {
-    sc.remove(a); scenes.island.add(a);
-    const b = scenes.island.buildings[sc.building];
-    a.x = b.x + 18; a.y = b.y + 22; a.data.state = 'idle'; a.data.until = G.state.time + 5; a.data.hosting = null;
-  }
+  // the host stays home for a while after you go; they'll head out later, not right behind you
+  for (const a of [...sc.actors]) if (a.data?.hosting === id) { a.data.state = 'indoors'; a.data.until = G.state.time + rand(45, 120); a.data.hosting = null; a.setAct(null); }
 });
 
 // progression hooks

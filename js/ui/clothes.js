@@ -25,13 +25,16 @@ export function currentLook() { return applyOutfit(baseLook(), wardrobe()); }
 export function refreshPlayerLook() { if (G.player) G.player.look = currentLook(); }
 
 // little full-body preview of the player trying something on
-function preview(cv, look, focus) {
+function preview(cv, look, focus, id) {
   const c = cv.getContext('2d');
   c.clearRect(0, 0, cv.width, cv.height);
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
   if (focus === 'shoes') { const s = cv.height / 16; c.translate(cv.width / 2, cv.height - 2.2 * s); c.scale(s, s); } // zoom in on the feet
   else { const s = cv.height / 58; c.translate(cv.width / 2, cv.height - 4 * s); c.scale(s, s); }
-  drawHuman(c, { look, dir: 'down', moving: 0, walkPh: 0, seed: 2, blinkAmt: 0, emo: 'happy', act: null }, 1);
+  // accessories worn on the back are shown from a three-quarter back view
+  const back = look.backpack || look.guitar || look.surf;
+  const yawOverride = focus === 'extra' ? (back && id ? 2.4 : 0.45) : undefined;
+  drawHuman(c, { look, dir: 'down', moving: 0, walkPh: 0, seed: 2, blinkAmt: 0, emo: 'happy', act: null, yawOverride }, 1);
   c.restore();
 }
 function itemRow(id, right, { dim = false, note = '' } = {}) {
@@ -41,7 +44,7 @@ function itemRow(id, right, { dim = false, note = '' } = {}) {
   const ico = h('div', 'ico cl-ico'); ico.appendChild(cv); r.appendChild(ico);
   r.appendChild(h('div', 'info', `<b>${escapeHtml(T(it.en, it.vi))}</b><small>${note}</small>`));
   if (right) r.appendChild(right);
-  preview(cv, applyOutfit(baseLook(), { ...w, [it.slot]: id }), it.slot);
+  preview(cv, applyOutfit(baseLook(), { ...w, [it.slot]: id }), it.slot, id);
   return r;
 }
 

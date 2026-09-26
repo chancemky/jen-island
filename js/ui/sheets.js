@@ -52,6 +52,8 @@ export function tabs(body, list, onPick, start = 0, api = null) {
   const pane = document.createElement('div'); pane.className = 'scroll'; pane.style.flex = '1'; pane.style.minHeight = '0';
   list.forEach((t, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.onclick = () => { sfx('ui'); select(i); }; bar.appendChild(b); });
   body.append(bar, pane);
+  // sheets with tabs keep one height, so switching tabs doesn't make the menu jump
+  body.closest('.sheet')?.classList.add('fixedh');
   const select = i => { if (api) api.tab = i; [...bar.children].forEach((b, k) => b.classList.toggle('on', k === i)); pane.innerHTML = ''; pane.scrollTop = 0; onPick(i, pane); };
   select(start);
   return { select, pane };

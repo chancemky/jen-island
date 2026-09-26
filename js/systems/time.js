@@ -1,6 +1,7 @@
 // Island clock: 1 real second = 1 game minute while playing. Time pauses in
 // menus, dialogue and cutscenes. Sleeping ends the day with a summary.
 
+import { dailyCosts, morningDeliveries } from './economy.js';
 import { G, T, freshDay, addMoney, markDirty, unlockAchievement } from './state.js';
 import { bus, choice } from '../core/util.js';
 import { BUSINESSES, RECIPES } from '../data/game.js';
@@ -36,10 +37,11 @@ export function endDay() {
   for (const id of Object.keys(BUSINESSES)) if (s.biz[id].open) closeBiz(id, 'sleep');
   const wages = s.biz.restaurant.owned ? dailyWages() : 0;
   if (wages) addMoney(-wages, 'wages');
+  const costs = dailyCosts();                          // rent + shopkeeper wages
   const t = s.today;
   const sum = {
     day: s.day, island: s.island.name, chapter: s.story.chapter,
-    revenue: Math.round(t.revenue), served: t.served, perfect: t.perfect, tips: Math.round(t.tips), lost: t.lost, wages,
+    revenue: Math.round(t.revenue), served: t.served, perfect: t.perfect, tips: Math.round(t.tips), lost: t.lost, wages, rent: costs.rent, keeperWages: costs.keeperWages,
     repDelta: Math.round(s.reputation - (t.repStart ?? s.reputation)),
     biz: t.biz, milestones: [...t.milestones], achievements: [...t.milestones],
     meoLine: meoNightLine(t),
@@ -53,6 +55,7 @@ export function endDay() {
   s.today.repStart = s.reputation;
   // fresh daily specials
   for (const id of Object.keys(BUSINESSES)) { const recs = bizRecipes(id); s.biz[id].special = recs.length > 1 ? choice(recs) : recs[0] || null; }
+  const del = morningDeliveries(); sum.deliveries = del.total;
   if (s.day >= 7) unlockAchievement('day_7');
   resetWarnings();
   resetRestaurantDay();

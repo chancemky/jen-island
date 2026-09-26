@@ -43,6 +43,11 @@ export function drawHeld(c, what, x, y, t, view, P) {
       line(c, 0.4, -5, 1.8, -9, '#6fbf73', 0.9);
       break;
     }
+    case 'banhtrang': {   // a little bag of rice paper salad; it empties as you eat
+      const b = P?.bites || 0; poly(c, [-3.4, -3, 3.4, -3, 2.8, 4, -2.8, 4], 'rgba(255,255,255,.85)', INK, 0.6);
+      c.save(); c.beginPath(); c.rect(-3.4, -3 + b * 1.6, 7, 8); c.clip(); for (let i = 0; i < 6; i++) line(c, -2.4 + (i * 1.1), -2 + (i % 3), -1 + (i * 1.1), 3, ['#f0d9a8', '#ffb347', '#6fae4f'][i % 3], 0.9); c.restore();
+      line(c, 2, -3, 4, -7, '#e8584e', 0.8); break;
+    }
     case 'banh_mi_bite': c.rotate(-0.4); ell(c, 0, 0, 5.5 - (P?.bites || 0) * 1.2, 2.2, '#e7b160'); line(c, -2.4, -0.6, 2, -0.6, '#8fb466', 1); break;
     default: if (typeof what === 'string' && ICONS[what]) { c.scale(0.28, 0.28); ICONS[what](c, t); }
   }
@@ -61,6 +66,18 @@ const leafy = (c, x, y, s, col, rot = 0) => { c.save(); c.translate(x, y); c.rot
 const jar = (c, body, lid, label, fill) => { box(c, -9, -8, 18, 19, 4, body); if (fill) { c.save(); c.beginPath(); c.roundRect ? c.roundRect(-8.5, -3, 17, 13.5, 3.5) : c.rect(-8.5, -3, 17, 13.5); c.clip(); c.fillStyle = fill; c.fillRect(-9, -3, 18, 15); c.restore(); } box(c, -10, -12, 20, 5, 2, lid); if (label) box(c, -6, -1, 12, 7, 1.5, label, INK, 0.7); };
 
 export const ICONS = {
+  cream: c => { box(c, -7, -12, 14, 22, 3, '#fffaf0', INK, 1); box(c, -7, -12, 14, 6, 2, '#8fb7e0', INK, 1); ell(c, 0, 3, 4, 3, '#f7efe0', null); },
+  salt_cream: c => { ell(c, 0, 4, 12, 7, '#fff', INK, 1); c.beginPath(); c.moveTo(-9, 2); c.quadraticCurveTo(0, -16, 9, 2); c.fillStyle = '#f7efe0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); for (let i = 0; i < 5; i++) circ(c, -5 + i * 2.6, -3 + (i % 2) * 3, 0.8, '#b9c3cb', null); },
+  egg_yolk: c => { ell(c, -4, 2, 7, 9, '#f6e7cf', INK, 1); ell(c, 5, 3, 6, 8, '#f3dcbc', INK, 1); },
+  egg_cream: c => { ell(c, 0, 4, 12, 7, '#fff', INK, 1); c.beginPath(); c.moveTo(-9, 2); c.quadraticCurveTo(0, -16, 9, 2); c.fillStyle = '#f6d98a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); },
+  orange: c => { circ(c, 0, 2, 11, '#8fbf4a', INK, 1); circ(c, -3, -1, 3, 'rgba(255,255,255,.35)', null); leafy(c, 3, -10, 4, '#5fae3f', 0.6); },
+  orange_cut: c => { circ(c, 0, 0, 11, '#ffae3a', INK, 1); circ(c, 0, 0, 8, '#ffd36a', null); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; line(c, 0, 0, Math.cos(a) * 8, Math.sin(a) * 8, '#ffae3a', 1); } },
+  sea_salt: c => { box(c, -7, -8, 14, 18, 3, '#e6f2f8', INK, 1); box(c, -7, -12, 14, 5, 2, '#6f9fc8', INK, 1); for (let i = 0; i < 6; i++) circ(c, -4 + (i % 3) * 4, 0 + Math.floor(i / 3) * 5, 1, '#fff', null); },
+  scallop: c => { c.beginPath(); c.moveTo(0, 10); c.lineTo(-12, -2); c.quadraticCurveTo(0, -16, 12, -2); c.closePath(); c.fillStyle = '#f8c49a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); for (let i = -2; i <= 2; i++) line(c, 0, 10, i * 5, -8, '#d98f5a', 0.8); ell(c, 0, 0, 4, 3, '#fff3dc', INK, 0.6); },
+  peanuts: c => { for (const [x, y] of [[-5, 2], [4, -2], [0, 6], [-2, -5], [6, 5]]) { ell(c, x, y, 3.4, 2.4, '#d9a86e', INK, 0.6); } },
+  squid_cut: c => { ICONS.squid(c); },
+  paw: c => { ell(c, 0, 5, 8, 7, '#f2a14e', INK, 1); for (const [x, y] of [[-8, -4], [-3, -9], [3, -9], [8, -4]]) ell(c, x, y, 3.2, 3.8, '#f2a14e', INK, 1); },
+  squid: c => { for (let i = -2; i <= 2; i++) { c.strokeStyle = '#e88a78'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(i * 3, 4); c.quadraticCurveTo(i * 4 + 2, 10, i * 3, 14); c.stroke(); } c.beginPath(); c.moveTo(0, -14); c.quadraticCurveTo(10, -4, 7, 5); c.lineTo(-7, 5); c.quadraticCurveTo(-10, -4, 0, -14); c.fillStyle = '#f6a896'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); circ(c, -3, -1, 1.4, INK, null); circ(c, 3, -1, 1.4, INK, null); for (const x of [-4, 0, 4]) line(c, x - 2, -8, x + 2, -6, '#b8663a', 1); },
   scissors: c => { for (const s of [-1, 1]) { c.save(); c.rotate(s * 0.35); poly(c, [-1.6, -13, 1.6, -13, 1.2, 2, -1.2, 2], '#dfe6ea', INK, 1); c.restore(); } for (const s of [-1, 1]) circ(c, s * 5, 8, 4, null, '#e56b8b', 2.6); circ(c, 0, 0, 1.2, '#8a8f96', INK, 0.6); },
   icecream: c => { poly(c, [-7, -2, 7, -2, 0, 14], '#e2a95c', INK, 1); circ(c, 0, -4, 7, '#fff3d6', INK, 1); circ(c, 1, -11, 6, '#f4a9b8', INK, 1); circ(c, 2, -17, 2, '#e8584e', INK, 0.8); },
   sugarcane: c => { poly(c, [-7, -10, 7, -10, 5.5, 12, -5.5, 12], 'rgba(255,255,255,.85)', INK, 1); poly(c, [-6.5, -6, 6.5, -6, 5.3, 11, -5.3, 11], '#d7e98a', null); ell(c, 6, -10, 3.2, 2, '#8fcf5a', INK, 0.8); line(c, 1, -10, 4, -18, '#6fbf73', 2); },
@@ -255,6 +272,10 @@ export const DRINK_PREVIEW = {
   sinh_to_bo: { size: 'M', layers: [{ color: '#c5e08a', h: 1 }], straw: true, strawColor: '#8fd070' },
   tra_sua: { size: 'M', layers: [{ color: '#d9b28a', h: 1 }], ice: 1, bits: [{ kind: 'tapioca' }, { kind: 'tapioca' }, { kind: 'tapioca' }], straw: true },
   nuoc_chanh: { size: 'M', layers: [{ color: '#e8f5a8', h: 1 }], ice: 2, bits: [{ kind: 'lime', float: 1 }], straw: true },
+  ca_phe_muoi: { size: 'M', layers: [{ color: '#f2e6cc', h: 0.25 }, { color: '#6b4431', h: 0.5 }, { color: '#f7efe0', h: 0.25 }], ice: 1, straw: true, strawColor: '#f2c14e' },
+  bac_xiu: { size: 'M', layers: [{ color: '#f2e6cc', h: 0.3 }, { color: '#e9d8bd', h: 0.45 }, { color: '#a8764e', h: 0.25 }], ice: 2, straw: true },
+  ca_phe_trung: { size: 'S', layers: [{ color: '#5e3a28', h: 0.55 }, { color: '#f6d98a', h: 0.45 }] },
+  nuoc_cam: { size: 'M', layers: [{ color: '#ffae3a', h: 1 }], ice: 2, straw: true, strawColor: '#6fbf73' },
 };
 export function drawIcon(c, id, t = 0) {
   const fn = ICONS[id] || DISHES[id];

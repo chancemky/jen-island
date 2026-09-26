@@ -10,6 +10,7 @@ import { Actor } from '../world/actor.js';
 import { QUEUES } from '../world/island.js';
 import { bus, rand, randi, choice, chance, clamp, dist } from '../core/util.js';
 import { sfx } from '../core/audio.js';
+import { applyPronouns, customerProfile } from './pronouns.js';
 import { fx } from '../world/render.js';
 
 export const LOCAL_NAMES = ['Chị Thu', 'Anh Nam', 'Cô Ba', 'Bác Tâm', 'Em Bi', 'Chú Lộc', 'Chị Hằng', 'Anh Khôi', 'Cô Duyên', 'Bác Hòa', 'Em Tí', 'Chị Loan', 'Anh Phong', 'Cô Mận', 'Chú Tư', 'Chị Vân', 'Anh Hùng', 'Em Su', 'Cô Nga', 'Bác Sang', 'Chị Ánh', 'Anh Tín', 'Em Cốm', 'Cô Liên'];
@@ -234,6 +235,7 @@ export function orderText(order, cust) {
   const pn = G.state.player.name || T('friend', 'bạn');
   const reg = G.state.regulars[cust.key]?.visits >= 3;
   if (G.lang === 'vi') {
+    const prof = customerProfile(cust), P = x => applyPronouns(x, prof);
     const name = `*${R.vi}*`, parts = [];
     if (o.size) parts.push(`size *${o.size}*`);
     if (o.topping && o.topping !== 'none') parts.push(OPTIONS.topping.say[o.topping][1]);
@@ -243,12 +245,12 @@ export function orderText(order, cust) {
     const tail = parts.length ? ', ' + parts.join(', ') : '';
     const v = R.vessel === 'cup' || R.vessel === 'glass' ? 'ly' : R.vessel === 'bowl' ? 'tô' : R.vessel === 'bread' ? 'ổ' : 'phần';
     const k = pickLine(cust, 3);
-    if (reg) return [`Chào ${pn}! Như mọi khi nha: 1 ${v} ${name}${tail}!`, `Lại là em nè ${pn}! Cho 1 ${v} ${name}${tail} nhé!`, `${pn} ơi, món quen: 1 ${v} ${name}${tail}!`][k];
+    if (reg) return P([`Chào ${pn}! Như mọi khi nha: 1 ${v} ${name}${tail}!`, `Lại là {me} nè ${pn}! Cho {me} 1 ${v} ${name}${tail} nhé!`, `${pn} ơi, món quen: 1 ${v} ${name}${tail}!`][k]);
     if (cust.personality === 'tourist') return [`Xin chào! Cho tôi 1 ${v} ${name}${tail}, cảm ơn!`, `Chào bạn! Mình muốn 1 ${v} ${name}${tail} nhé!`, `Cho mình thử 1 ${v} ${name}${tail} nha!`][k];
-    if (cust.personality === 'rushed') return `Nhanh giúp em nha! 1 ${v} ${name}${tail}!`;
-    if (cust.personality === 'picky') return `Làm kỹ giúp chị nhé: 1 ${v} ${name}${tail}. Đúng y vậy nha.`;
-    if (cust.personality === 'excited') return [`Oa, thơm quá! Cho em 1 ${v} ${name}${tail} đi!`, `Em nghe đồn quán ngon lắm! 1 ${v} ${name}${tail} nha!`, `Hôm nay em thèm 1 ${v} ${name}${tail} ghê!`][k];
-    return [`Cho em 1 ${v} ${name}${tail} nha!`, `1 ${v} ${name}${tail} nhé!`, `Cho mình 1 ${v} ${name}${tail} với!`][k];
+    if (cust.personality === 'rushed') return P(`{You} ơi, nhanh giúp {me} nha! 1 ${v} ${name}${tail}!`);
+    if (cust.personality === 'picky') return P(`Làm kỹ giúp {me} nhé {you}: 1 ${v} ${name}${tail}. Đúng y vậy nha.`);
+    if (cust.personality === 'excited') return P([`Oa, thơm quá! {You} cho {me} 1 ${v} ${name}${tail} đi!`, `{Me} nghe đồn quán ngon lắm! 1 ${v} ${name}${tail} nha {you}!`, `Hôm nay {me} thèm 1 ${v} ${name}${tail} ghê!`][k]);
+    return P([`{You} ơi, cho {me} 1 ${v} ${name}${tail} nha!`, `1 ${v} ${name}${tail} nhé {you}!`, `Cho {me} 1 ${v} ${name}${tail} với!`][k]);
   }
   // English
   const sizeW = { S: 'small', M: 'medium', L: 'large' }[o.size];

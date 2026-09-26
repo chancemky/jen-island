@@ -18,7 +18,7 @@ import { HAIRCUTS } from '../data/hair.js';
 const CY = 0.96, SZ = 0.3;
 // skeleton dimensions (model units ≈ world units)
 const HIP_Y = 8.6, HIP_X = 2.45, THIGH = 4.1, SHIN = 3.9, FOOT_L = 2.8;
-const WAIST_Y = 9.0, CHEST_Y = 17.2, SHO_X = 5.0, SHO_Y = 16.3, UPPER = 3.9, FORE = 3.7;
+const WAIST_Y = 9.0, CHEST_Y = 17.2, SHO_X = 5.3, SHO_Y = 16.3, UPPER = 3.9, FORE = 3.7;
 // the big head sits right on the shoulders (overlapping the top of the body) — no neck
 const NECK_Y = 17.4, HEAD_Y = 26.6, HR = 10.6;
 export const HEAD_CENTER_Y = HEAD_Y;
@@ -56,6 +56,7 @@ function cols(L) {
 // ---------------------------------------------------------------- facing
 const DIR_YAW = { down: 0, right: Math.PI / 2, up: Math.PI, left: -Math.PI / 2 };
 function yawOf(a, t) {
+  if (a.yawOverride !== undefined) return a.yawOverride;
   let target = DIR_YAW[a.dir || 'down'] ?? 0;
   if ((a.moving || 0) > 0.2 && a.moveAng !== undefined) target = a.moveAng;
   if (a._yaw === undefined || a.portrait || a._yawT === undefined) { a._yaw = target; a._yawT = t; return target; }
@@ -92,7 +93,7 @@ function pose(a, t, yaw) {
     const phase = side < 0 ? ph + Math.PI : ph, sp = Math.sin(phase);
     const swing = sp * (2.6 + run * 2.2) * m;
     const bend = (0.8 + Math.max(0, sp) * 1.4 * m) + run * 2.4 * m;
-    P.hands[side < 0 ? 0 : 1] = { x: side * (SHO_X + 1.9 + run * 0.4), y: SHO_Y - UPPER - FORE + 1.2 + bend * 0.5 + run * 1.2 * m, z: swing * 0.9 };
+    P.hands[side < 0 ? 0 : 1] = { x: side * (SHO_X + 2.3 + run * 0.4), y: SHO_Y - UPPER - FORE + 1.2 + bend * 0.5 + run * 1.2 * m, z: swing * 0.9 };   // hands hang just outside the hips
   }
   // airborne: knees tuck, arms up a little
   const air = Math.min(1, (a.hop || 0) / 8);
@@ -123,7 +124,7 @@ function pose(a, t, yaw) {
     case 'ride': P.ride = true; break;
   }
   // carrying a shopping basket in the left hand (unless that hand is busy)
-  if (a.basket && !['cheer', 'carry', 'photo', 'dance', 'stretch', 'write', 'sweep', 'chop', 'work', 'stir', 'hammer'].includes(act)) { aim(0, -(SHO_X + 1.8), SHO_Y - 6.4 + P.bob * 0.3, 1.6 + Math.sin(ph) * 0.8 * m); P.basket = true; }
+  if (a.basket && !['cheer', 'carry', 'photo', 'dance', 'stretch', 'write', 'sweep', 'chop', 'work', 'stir', 'hammer'].includes(act)) { aim(0, -(SHO_X + 3.4), SHO_Y - 6.4 + P.bob * 0.3, 0.6 + Math.sin(ph) * 0.6 * m); P.basket = true; }
   // ---- sitting / riding: hips on the seat, thighs forward, shins down
   if (a.sit || P.ride) {
     const seat = a.seatH ?? 6;
@@ -231,14 +232,14 @@ function bumpyBlob(c, x, y, r, col, n = 10) {
   c.globalAlpha = 1;
 }
 // fill the part of the head sphere above the hairline (or a hat line)
-function capRegion(c, S, yawFace, latFn, r, fill, detail) {
+function capRegion(c, S, yawFace, latFn, r, fill, detail, clipPath = null) {
   const pts = [];
   const N = 72;
   for (let i = 0; i < N; i++) { const lon = -Math.PI + (i / N) * TAU, q = onHead(S, yawFace, lon, latFn(lon), r); pts.push(q); }
   // find the visible arc (dz >= 0), starting just after an invisible sample
   let start = pts.findIndex((q, i) => q.dz >= 0 && pts[(i - 1 + N) % N].dz < 0);
   const hc = proj(S.head), R2 = r * 1.02;
-  c.save(); c.beginPath(); c.ellipse(hc[0], hc[1], R2, R2 * 0.99, 0, 0, TAU); c.clip();
+  c.save(); if (clipPath) clipPath(); else { c.beginPath(); c.ellipse(hc[0], hc[1], R2, R2 * 0.99, 0, 0, TAU); c.clip(); }
   c.beginPath();
   if (start < 0) { // whole hairline visible (e.g. hat line near the equator seen from the side) or none
     if (pts[0].dz >= 0) { const f = proj(pts[0].p); c.moveTo(f[0], f[1]); for (const q of pts) { const s = proj(q.p); c.lineTo(s[0], s[1]); } c.closePath(); }
@@ -259,6 +260,34 @@ function capRegion(c, S, yawFace, latFn, r, fill, detail) {
 }
 
 const HAT_COVERS = ['cap', 'helmet', 'beanie', 'bandana', 'nonla', 'sunhat', 'bucket', 'boater', 'chef'];
+
+
+// The outer silhouette of a haircut: bigger than the head, lifted at the crown,
+// puffed at the sides, with a little texture on top. Hair never grows under
+// the chin: below the jaw line the shell is cut away in front of the face
+// (that's what made bobs and afros look like beards).
+function hairShell(hc, H, yawFace, grow = 0) {
+  const v = H.vol, crown = H.crown ?? 0.07, side = H.side ?? 0.03, tex = H.tex ?? 0.012, jaw = H.jaw ? 0.1 : 0, pts = [];
+  for (let i = 0; i < 64; i++) {
+    const th = i / 64 * TAU, cs = Math.cos(th), sn = Math.sin(th);
+    let r = HR * v + HR * crown * Math.pow(Math.max(0, -sn), 3) + HR * side * Math.pow(Math.abs(cs), 4) * (sn < 0.6 ? 1 : 0.6);
+    if (sn < 0.2) r += HR * tex * Math.abs(Math.sin(th * 9 + 0.5));
+    if (sn > 0) r += HR * jaw * Math.pow(Math.abs(cs), 2);
+    r += grow;
+    pts.push([hc[0] + cs * r, hc[1] - 0.8 - HR * crown * 0.4 + sn * r * 0.98]);
+  }
+  return pts;
+}
+function shellPath(c, pts) { c.moveTo(pts[0][0], pts[0][1]); for (const q of pts) c.lineTo(q[0], q[1]); c.closePath(); }
+// clip that removes the "beard" zone below the jaw in front of the face
+function noBeardClip(c, hc, yawFace) {
+  const fr = Math.cos(yawFace);
+  if (fr < -0.15) { c.rect(hc[0] - 60, hc[1] - 60, 120, 120); return; }
+  const cut = hc[1] + HR * 0.28, chinX = hc[0] + Math.sin(yawFace) * HR * 0.72, half = HR * (0.5 + 0.2 * Math.max(0, fr));
+  c.rect(hc[0] - 60, hc[1] - 60, 120, cut - hc[1] + 60);
+  c.rect(hc[0] - 60, cut, chinX - half - hc[0] + 60, 60);
+  c.rect(chinX + half, cut, 60, 60);
+}
 
 // ---------------------------------------------------------------- face
 function drawFace(c, a, L, S, yawFace, t, P) {
@@ -313,13 +342,14 @@ function drawFace(c, a, L, S, yawFace, t, P) {
 
 // ---------------------------------------------------------------- hats
 function drawHat(c, L, S, yawFace, t) {
-  const h = L.hat; if (!h) return;
+  const h = L.hat; if (!h && !L.flower) return;
   const col = L.hatColor || '#f2d894', hc = proj(S.head);
   const top = proj(add(S.head, [0, HR * 0.97, 0]));
-  const brimRing = (y, r, fill, stroke = INK) => { const cy = proj(add(S.head, [0, y, 0])); ell(c, cy[0], cy[1], r, r * SZ * 1.6 + 1, fill, stroke, 1); return cy; };
+  // brims: flat ellipses whose front edge sits on the upper forehead (never over the eyes)
+  const brimRing = (y, r, fill, stroke = INK) => { const ry = r * 0.2 + 1, cyS = hc[1] - HR * 0.3 - ry, cy = [hc[0], cyS]; void y; ell(c, cy[0], cy[1], r, ry, fill, stroke, 1); return cy; };
   if (h === 'nonla') {
     const by = brimRing(HR * 0.3, HR * 1.55, shade(col, -18));
-    const apex = proj(add(S.head, [0, HR * 1.45, 0]));
+    const apex = [by[0], by[1] - HR * 1.05];
     c.beginPath(); c.moveTo(by[0] - HR * 1.5, by[1] - 1); c.quadraticCurveTo(by[0] - HR * 0.5, apex[1] + HR * 0.5, apex[0], apex[1]); c.quadraticCurveTo(by[0] + HR * 0.5, apex[1] + HR * 0.5, by[0] + HR * 1.5, by[1] - 1); c.quadraticCurveTo(by[0], by[1] + 4, by[0] - HR * 1.5, by[1] - 1);
     c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
     c.strokeStyle = shade(col, -26); c.lineWidth = 0.5; for (let i = 1; i < 4; i++) { const k = i / 4; c.beginPath(); c.moveTo(by[0] - HR * 1.5 * (1 - k), by[1] - (by[1] - apex[1]) * k); c.quadraticCurveTo(by[0], by[1] - (by[1] - apex[1]) * k + 2 * (1 - k), by[0] + HR * 1.5 * (1 - k), by[1] - (by[1] - apex[1]) * k); c.stroke(); }
@@ -328,11 +358,12 @@ function drawHat(c, L, S, yawFace, t) {
   const dome = (lat, fill) => capRegion(c, S, yawFace, () => lat, HR * 1.07, fill, null);
   const outline = () => { c.beginPath(); c.ellipse(hc[0], hc[1], HR * 1.07, HR * 1.06, 0, 0, TAU); };
   if (h === 'cap' || h === 'helmet' || h === 'bandana' || h === 'beanie') {
-    const lat = h === 'helmet' ? -0.05 : h === 'beanie' ? 0.05 : h === 'bandana' ? 0.22 : 0.15;
-    dome(lat, col);
-    c.save(); outline(); c.clip(); capRegion(c, S, yawFace, () => lat + 0.07, HR * 1.07, 'rgba(0,0,0,0)', null); c.restore();
+    const front = h === 'helmet' ? 0.36 : h === 'beanie' ? 0.4 : h === 'bandana' ? 0.44 : 0.4, back = h === 'helmet' ? -0.25 : h === 'beanie' ? -0.2 : 0.05;
+    const latF = lon => { const k = Math.min(1, Math.abs(lon) / 1.6); return front + (back - front) * k * k; };
+    capRegion(c, S, yawFace, latF, HR * 1.07, col, null);
+    const lat = front;
     // outline of the dome edge
-    const e1 = [], N = 40; for (let i = 0; i <= N; i++) { const lon = -Math.PI + i / N * TAU, q = onHead(S, yawFace, lon, lat, HR * 1.07); if (q.dz >= 0) e1.push(proj(q.p)); }
+    const e1 = [], N = 40; for (let i = 0; i <= N; i++) { const lon = -Math.PI + i / N * TAU, q = onHead(S, yawFace, lon, latF(lon), HR * 1.07); if (q.dz >= 0) e1.push(proj(q.p)); }
     if (e1.length > 1) { c.beginPath(); c.moveTo(e1[0][0], e1[0][1]); for (const p of e1) c.lineTo(p[0], p[1]); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke(); }
     c.save(); c.beginPath(); c.ellipse(hc[0], hc[1], HR * 1.07, HR * 1.06, 0, Math.PI * 1.05, Math.PI * 1.95); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); c.restore();
     if (h === 'cap') { const f = onHead(S, yawFace, 0, lat + 0.02, HR * 1.1), fp = proj(add(f.p, rotY([0, 0, 5.5], yawFace))); const b = proj(f.p); c.beginPath(); c.ellipse((b[0] + fp[0]) / 2, (b[1] + fp[1]) / 2 + 0.5, 3 + Math.abs(fp[0] - b[0]) * 0.5 + 2, 2 + Math.abs(fp[1] - b[1]) * 0.5, 0, 0, TAU); c.fillStyle = shade(col, -16); c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); circ(c, top[0], top[1] + 1, 1, shade(col, -30), null); }
@@ -344,10 +375,10 @@ function drawHat(c, L, S, yawFace, t) {
   if (h === 'sunhat' || h === 'bucket' || h === 'boater') {
     const r = h === 'sunhat' ? HR * 1.7 : h === 'boater' ? HR * 1.5 : HR * 1.35;
     const by = brimRing(HR * 0.35, r, h === 'bucket' ? shade(col, -12) : col);
-    const crownH = h === 'boater' ? HR * 0.55 : HR * 0.75;
-    c.beginPath(); c.moveTo(by[0] - HR * 0.9, by[1]); c.quadraticCurveTo(by[0] - HR * 0.95, by[1] - crownH - 2, by[0], by[1] - crownH - 2.5); c.quadraticCurveTo(by[0] + HR * 0.95, by[1] - crownH - 2, by[0] + HR * 0.9, by[1]); c.closePath();
+    const crownH = h === 'boater' ? HR * 0.5 : HR * 0.68;
+    c.beginPath(); c.moveTo(by[0] - HR * 1.08, by[1] + 1); c.bezierCurveTo(by[0] - HR * 1.12, by[1] - crownH * 0.9, by[0] - HR * 0.6, by[1] - crownH - 2.5, by[0], by[1] - crownH - 2.5); c.bezierCurveTo(by[0] + HR * 0.6, by[1] - crownH - 2.5, by[0] + HR * 1.12, by[1] - crownH * 0.9, by[0] + HR * 1.08, by[1] + 1); c.closePath();
     c.fillStyle = shade(col, 8); c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
-    c.strokeStyle = L.hatRibbon || (h === 'boater' ? '#3f4a5e' : '#f28f7c'); c.lineWidth = 2; c.beginPath(); c.moveTo(by[0] - HR * 0.88, by[1] - 1.6); c.quadraticCurveTo(by[0], by[1] + 0.2, by[0] + HR * 0.88, by[1] - 1.6); c.stroke();
+    c.strokeStyle = L.hatRibbon || (h === 'boater' ? '#3f4a5e' : '#f28f7c'); c.lineWidth = 2; c.beginPath(); c.moveTo(by[0] - HR * 1.08, by[1] - 1.2); c.quadraticCurveTo(by[0], by[1] + 1.2, by[0] + HR * 1.08, by[1] - 1.2); c.stroke();
     return;
   }
   if (h === 'chef') { for (const [dx, dy, r] of [[-4.2, 0, 4.4], [4.2, 0, 4.4], [0, -2.4, 4.8]]) circ(c, top[0] + dx, top[1] - 4 + dy, r, '#fffdf8'); c.fillStyle = '#fffdf8'; c.fillRect(top[0] - 6, top[1] - 3, 12, 4.5); c.strokeStyle = INK; c.lineWidth = 0.9; c.strokeRect(top[0] - 6, top[1] - 3, 12, 4.5); return; }
@@ -356,6 +387,7 @@ function drawHat(c, L, S, yawFace, t) {
   // decorations that sit on a point of the head
   const onPt = (lon, lat, fn) => { const q = onHead(S, yawFace, lon, lat, HR * 1.08); if (q.dz < -0.35) return; const pp = proj(q.p); c.save(); if (q.dz < 0) c.globalAlpha = 0.9; fn(pp[0], pp[1], Math.max(0.5, Math.abs(q.dz) * 0.5 + 0.5)); c.restore(); };
   if (h === 'bow') onPt(0.9, 0.55, (x, y, k) => { for (const s of [-1, 1]) { c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + s * 5 * k, y - 4.2, x + s * 5 * k, y + 0.6); c.quadraticCurveTo(x + s * 3.6 * k, y + 3.2, x, y); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); } circ(c, x, y, 1.4, shade(col, -14), INK, 0.7); });
+  if (L.flower && h !== 'flower') onPt(0.85, 0.5, (x, y) => { for (let i = 0; i < 5; i++) { const an = i / 5 * TAU; circ(c, x + Math.cos(an) * 1.7, y + Math.sin(an) * 1.7, 1.45, L.flower, INK, 0.5); } circ(c, x, y, 1.1, '#ffd35a', INK, 0.5); });
   if (h === 'flower') onPt(0.8, 0.45, (x, y) => { for (let i = 0; i < 5; i++) { const an = i / 5 * TAU; circ(c, x + Math.cos(an) * 1.7, y + Math.sin(an) * 1.7, 1.45, col, INK, 0.5); } circ(c, x, y, 1.1, '#ffd35a', INK, 0.5); });
   if (h === 'catears') for (const s of [-1, 1]) onPt(s * 0.55, 0.7, (x, y) => { poly(c, [x - 2.9, y + 2.4, x + s * 0.6, y - 5, x + 2.9, y + 2.4], col, INK, 0.9); poly(c, [x - 1.4, y + 1.8, x + s * 0.4, y - 2.2, x + 1.4, y + 1.8], '#ffc0d0', null); });
   if (h === 'flowercrown') for (let i = 0; i < 12; i++) { const lon = -Math.PI + i / 12 * TAU; const q = onHead(S, yawFace, lon, 0.42, HR * 1.07); if (q.dz < 0) continue; const pp = proj(q.p); circ(c, pp[0], pp[1], 1.6, ['#ff8fb0', '#fff', '#ffd35a', '#c9a8ff'][i % 4], INK, 0.4); if (i % 2) ell(c, pp[0] + 1.4, pp[1] + 0.6, 1.2, 0.6, '#7fc062', null); }
@@ -411,7 +443,17 @@ function drawTorso(c, L, S, a, t) {
     if (L.lanyard) { c.strokeStyle = L.lanyard; c.lineWidth = 0.6; c.beginPath(); c.moveTo(fx - 2 * k, top[1] - 1.4); c.lineTo(fx, top[1] + 4.4); c.lineTo(fx + 2 * k, top[1] - 1.4); c.stroke(); c.fillStyle = '#fff'; c.fillRect(fx - 1.3, top[1] + 4, 2.6, 3); }
     if (L.camera) { c.strokeStyle = '#3d3d44'; c.lineWidth = 0.5; c.beginPath(); c.moveTo(fx - 3 * k, top[1] - 1); c.lineTo(fx, top[1] + 4); c.lineTo(fx + 3 * k, top[1] - 1); c.stroke(); c.fillStyle = '#4a4a54'; c.fillRect(fx - 2.2, top[1] + 3.6, 4.4, 3); circ(c, fx, top[1] + 5.1, 1, '#9fc9e6', '#2a2a30', 0.5); }
   }
-  if (L.necklace && facing > 0.1) { for (let i = 0; i <= 8; i++) { const u = i / 8 - 0.5, px = fx + u * 6 * k, py = top[1] - 1.3 + (1 - 4 * u * u) * 2.2; circ(c, px, py, 0.62, L.necklace, 'rgba(91,63,54,.55)', 0.3); } }
+  if (L.necklace && facing > 0.1) { for (let i = 0; i <= 8; i++) { const u = i / 8 - 0.5, px = fx + u * 8 * k, py = top[1] + 0.9 + (1 - 4 * u * u) * 2.6; circ(c, px, py, 0.62, L.necklace, 'rgba(91,63,54,.55)', 0.3); } }
+  // backpack straps (the pack itself hangs on the back)
+  if (L.backpack && facing > 0.1) { c.strokeStyle = shade(L.backpack, -18); c.lineWidth = 1.5; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(fx + sd * 3 * k, top[1] - 1.6); c.quadraticCurveTo(fx + sd * 3.6 * k, top[1] + 3, fx + sd * 3.2 * k, bot[1] - 2); c.stroke(); } }
+  // tote bag over the right shoulder
+  if (L.tote) {
+    const sd = Math.cos(yaw) >= 0 ? 1 : -1, bx = bot[0] + sd * (wB + 1.2) * Math.max(0.35, Math.abs(Math.cos(yaw))), by = bot[1] - 1;
+    c.strokeStyle = shade(L.tote, -30); c.lineWidth = 0.9; c.beginPath(); c.moveTo(top[0] + sd * wT * 0.5, top[1] - 1.6); c.lineTo(bx - sd * 1.5, by - 3); c.moveTo(top[0] + sd * wT * 0.7, top[1] - 1.4); c.lineTo(bx + sd * 1.5, by - 3); c.stroke();
+    c.beginPath(); c.moveTo(bx - 3.2, by - 3); c.lineTo(bx + 3.2, by - 3); c.lineTo(bx + 3.8, by + 4); c.lineTo(bx - 3.8, by + 4); c.closePath(); c.fillStyle = L.tote; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+    heart(c, bx, by + 0.8, 1.1, '#f28fa3', null);
+  }
+  if (L.cape) { c.beginPath(); c.moveTo(neck[0] - 3, top[1] - 2); c.lineTo(neck[0] + 3, top[1] - 2); c.lineTo(bot[0] + wB + 3.5, hemY + 2.5); c.quadraticCurveTo(bot[0], hemY + 4.5, bot[0] - wB - 3.5, hemY + 2.5); c.closePath(); c.fillStyle = L.cape; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke(); c.strokeStyle = 'rgba(111,191,176,.6)'; c.lineWidth = 0.6; for (let i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(neck[0] + i * 0.8, top[1]); c.lineTo(bot[0] + i * 2.4, hemY + 3); c.stroke(); } }
   if (L.scarf) { ell(c, neck[0], neck[1] + 1.4, w(4.8, 3.6), 1.9, L.scarf, INK, 0.8); }
   // neck
   void neck;
@@ -538,9 +580,22 @@ export function drawVillager(c, a, t) {
   const L2 = { ...L };
   // legs come out from under the shorts: always behind the body, unless seated (thighs on the lap)
   for (const lg of S.legs) parts.push({ z: P.seat !== undefined ? (depth(lg.knee) + depth(lg.ankle)) / 2 + 2 : -100 + depth(lg.ankle), draw: () => drawLeg(c, L, lg, P) });
+  // Arm layering. Relaxed arms hang at the sides: seen from the front both are
+  // drawn over the body edge, from the back both behind it, and from the side the
+  // near arm is in front and the far arm behind, no matter which way it swings.
+  // (Swinging used to flip each arm in front of the chest one at a time.)
+  const sideness = Math.sin(yaw);
   for (const arm of S.arms) {
-    const d = (depth(arm.elbow) + depth(arm.hand)) / 2;
-    parts.push({ z: facing < -0.25 ? -50 + d : d + 0.3, draw: () => { const h = drawArm(c, L, arm); if (arm.side > 0) P.hR = h; else P.hL = h; } });
+    if (L.cape) continue;                        // hands tucked under the salon cape
+    const d = (depth(arm.elbow) + depth(arm.hand)) / 2, shoZ = -arm.side * SHO_X * sideness, aimed = P.hands[arm.side > 0 ? 1 : 0].aim;
+    let z;
+    if (aimed && facing > -0.25 && depth(arm.hand) > 1.5) z = d + 0.3;             // reaching forward (eating, carrying)
+    else if (Math.abs(sideness) < 0.42) z = facing > 0 ? 0.3 + d * 0.01 : -50 + d;
+    else z = shoZ > 0 ? 0.3 + d * 0.01 : -50 + d;
+    parts.push({ z, draw: () => {
+      const h = drawArm(c, L, arm); if (arm.side > 0) P.hR = h; else P.hL = h;
+      if (arm.side < 0 && P.basket) drawBasket(c, h[0], h[1], a.basketItems || 0, t, (a.moving || 0) * Math.sin((a.walkPh || 0) * 2));
+    } });
   }
   parts.push({ z: 0, torso: true, draw: () => drawTorso(c, L, S, a, t) });
   if (L.backpack || L.surf || L.guitar) parts.push({ z: -3.8 * facing, draw: () => drawBackGear(c, L, S) });
@@ -578,7 +633,6 @@ export function drawVillager(c, a, t) {
   } });
   parts.sort((p, q) => (p.head ? 1 : 0) - (q.head ? 1 : 0) || p.z - q.z);
   for (const p of parts) p.draw();
-  if (P.basket && P.hL) drawBasket(c, P.hL[0], P.hL[1], a.basketItems || 0, t, (a.moving || 0) * Math.sin((a.walkPh || 0) * 2));
   // held item in the right hand (or both hands)
   if (P.held && P.hR) {
     if (P.heldHand === 'both' && P.hL) drawHeld(c, P.held, (P.hL[0] + P.hR[0]) / 2, (P.hL[1] + P.hR[1]) / 2 - 1.5, t, 'front');
@@ -598,10 +652,15 @@ function drawHead(c, a, L, S, yaw, t, P, H) {
   if (P.headTilt) { c.translate(hc[0], hc[1] + HR * 0.6); c.rotate(P.headTilt); c.translate(-hc[0], -hc[1] - HR * 0.6); }
   // hair volume behind the head
   const shaved = H.bald || H.fade || H.buzz;
-  if (!shaved) {
-    const v = H.vol, jaw = H.jaw ? 3 : 0, ry = HR * v * 0.98 + jaw * 0.4;
-    if (H.curls) for (let i = 0; i < 16; i++) { const an = i / 16 * TAU; circ(c, hc[0] + Math.cos(an) * HR * v, hc[1] - 0.8 + Math.sin(an) * ry, 2.6, L.hair, INK, 0.9); }
-    c.beginPath(); c.ellipse(hc[0], hc[1] - 0.8 + jaw * 0.3, HR * v, ry, 0, 0, TAU); c.fillStyle = L.hair; c.fill(); if (!H.curls) { c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); }
+  // hats press the hair down: no crown lift or texture poking out over the hat
+  const hatOn = HAT_COVERS.includes(L.hat);
+  const HS = hatOn ? { ...H, vol: Math.min(H.vol, 1.06), crown: 0.02, tex: 0, side: Math.min(H.side ?? 0.03, 0.05) } : H;
+  const shell = shaved ? null : hairShell(hc, HS, yawFace);
+  if (shell) {
+    c.save(); c.beginPath(); noBeardClip(c, hc, yawFace); c.clip();
+    if (H.curls) for (let i = 0; i < 18; i++) { const q = shell[Math.floor(i / 18 * shell.length)]; circ(c, q[0], q[1], 2.7, L.hair, INK, 0.9); }
+    c.beginPath(); shellPath(c, shell); c.fillStyle = L.hair; c.fill(); if (!H.curls) { c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); }
+    c.restore();
   }
   const covered = HAT_COVERS.includes(L.hat);
   if (H.buns && !covered) for (const s of [-1, 1]) { const b = add(S.head, rotY([s * 6.4, HR * 0.78, -1.5], yaw)), bp = proj(b); circ(c, bp[0], bp[1], 4, L.hair); c.strokeStyle = C.hairH; c.lineWidth = 0.8; c.beginPath(); c.arc(bp[0] - 0.8, bp[1] - 0.8, 2.2, 3.4, 4.6); c.stroke(); }
@@ -631,6 +690,7 @@ function drawHead(c, a, L, S, yaw, t, P, H) {
       c.restore();
     }
     if (!H.buzz && !H.mohawk) {
+      const inner = shell ? hairShell(hc, HS, yawFace, -0.55) : null;
       capRegion(c, S, yawFace, lon => hairLat(H, lon), HR * 1.04, L.hair, () => {
         // sheen
         c.strokeStyle = C.hairH; c.lineWidth = 1.2; c.globalAlpha = 0.55;
@@ -640,7 +700,7 @@ function drawHead(c, a, L, S, yaw, t, P, H) {
         if (H.slick) for (const lon0 of [-0.7, -0.35, 0, 0.35, 0.7]) { const q = []; for (let k = 0; k <= 6; k++) { const o = onHead(S, yawFace, lon0 * (1 - k / 8) + (H.sweep ? 0.2 : 0), H.f + 0.12 + k * 0.12, HR * 1.04); if (o.dz > 0.05) q.push(proj(o.p)); } if (q.length > 1) { c.beginPath(); c.moveTo(q[0][0], q[0][1]); for (const pt of q) c.lineTo(pt[0], pt[1]); c.stroke(); } }
         if (H.sweep || H.cpart) { const lp = H.cpart ? 0 : -Math.sign(H.sweep) * 0.5; const q = []; for (let k = 0; k <= 5; k++) { const o = onHead(S, yawFace, lp, hairLat(H, lp) + 0.02 + k * 0.14, HR * 1.04); if (o.dz > 0.05) q.push(proj(o.p)); } if (q.length > 1) { c.lineWidth = 0.8; c.beginPath(); c.moveTo(q[0][0], q[0][1]); for (const pt of q) c.lineTo(pt[0], pt[1]); c.stroke(); } }
         if (H.curls) { c.strokeStyle = C.hairS; c.lineWidth = 0.7; for (let i = 0; i < 14; i++) { const o = onHead(S, yawFace, -1.3 + (i % 5) * 0.65 + (i > 4 ? 0.3 : 0), 0.55 + Math.floor(i / 5) * 0.3, HR * 1.04); if (o.dz < 0.2) continue; const pp = proj(o.p); c.beginPath(); c.arc(pp[0], pp[1], 1.3, 0.4, 3.9); c.stroke(); } }
-      });
+      }, inner ? () => { c.beginPath(); shellPath(c, inner); c.clip(); c.beginPath(); noBeardClip(c, hc, yawFace); c.clip(); } : null);
       // outline the hairline so the fringe reads clearly
       const line2 = []; for (let i = 0; i <= 60; i++) { const lon = -Math.PI + i / 60 * TAU, q = onHead(S, yawFace, lon, hairLat(H, lon), HR * 1.04); if (q.dz >= 0.02) line2.push(proj(q.p)); else if (line2.length) { strokeLine(c, line2); line2.length = 0; } }
       if (line2.length) strokeLine(c, line2);

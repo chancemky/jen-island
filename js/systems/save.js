@@ -7,7 +7,8 @@ import * as cloud from './cloud.js';
 import { bus } from '../core/util.js';
 import { leaderboardRow, shouldPushLeaderboard } from './progress.js';
 
-const localKey = uid => 'jenisland.save.' + uid;
+// v4 (the 20-chapter island): older saves are not loaded — everyone starts fresh
+const localKey = uid => 'jenisland.save4.' + uid;
 let lastLocal = 0, lastCloud = 0, cloudDirty = false, cloudBusy = false;
 export const saveStatus = { cloudAt: 0, localAt: 0, offline: false, error: '' };
 
@@ -56,6 +57,9 @@ export async function loadGame(user) {
     try { remote = await cloud.loadCloud(); saveStatus.offline = false; }
     catch (e) { saveStatus.offline = true; saveStatus.error = e.message; console.warn('cloud load failed', e); }
   }
+  // everyone restarts on the new 20-chapter island: saves from before version 4 are ignored
+  if (remote && (remote.v || 1) < 4) remote = null;
+  if (local && (local.v || 1) < 4) local = null;
   const pick = !remote ? local : !local ? remote : ((remote.savedAt || 0) >= (local.savedAt || 0) ? remote : local);
   return pick ? migrate(pick) : defaultState();
 }

@@ -119,12 +119,13 @@ export class Actor {
     c.translate(Math.round(this.x * 4) / 4, Math.round(this.y * 4) / 4);
     if (this.alpha !== undefined) c.globalAlpha = this.alpha;
     if (this.kind === 'cat') drawCat(c, this, t);
+    else if (this.kind === 'pet') this.petDraw?.(c, this, t);
     else drawHuman(c, this, t);
     c.restore();
   }
   drawEmote(c, t) {
     if (!this.emote || !this.visible) return;
-    const top = this.kind === 'cat' ? -44 : -50 * (this.look?.scale || 1) - (this.look?.hat === 'nonla' || this.look?.hat === 'chef' || this.look?.hat === 'sunhat' ? 6 : 0);
+    const top = this.kind === 'pet' ? -26 : this.kind === 'cat' ? -44 : -50 * (this.look?.scale || 1) - (this.look?.hat === 'nonla' || this.look?.hat === 'chef' || this.look?.hat === 'sunhat' ? 6 : 0);
     drawEmote(c, this.emote.type, this.x + 9, this.y + top - this.hop, this.emote.t / this.emote.dur, t);
   }
 }

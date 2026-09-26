@@ -38,6 +38,7 @@ function applyHair(patch) {
   s.player.lookOpt = { ...(s.player.lookOpt || {}), ...patch };
   s.player.look = { ...(s.player.look || playerLook(s.player.lookOpt)), ...patch };
   delete s.player.look._v;
+  s.stats.haircuts = (s.stats.haircuts || 0) + 1;
   markDirty(true);
 }
 
@@ -49,13 +50,20 @@ async function haircut(patch, label) {
   try {
     if (chair) { await pl.walkTo([[chair.x, chair.y + 12]], { speed: 90 }); pl.face('up'); await sleep(100); pl.face('down'); pl.sit = true; pl.seatH = 11; pl.x = chair.x; pl.y = chair.y + 1.5; pl.squash = 0.8; sfx('pop'); }
     if (st && chair) { st._home = st._home || { x: st.x, y: st.y }; await st.walkTo([[chair.x + 16, chair.y + 2]], { speed: 90 }); st.face('left'); }
+    // cape on, snip snip (little bits of hair fall), then POOF: new look
+    const oldLook = pl.look; pl.look = { ...oldLook, cape: '#fffaf0' }; delete pl.look._v;
     st?.setAct('work', 'scissors');
-    for (let i = 0; i < 5; i++) {
-      sfx('snip'); await sleep(170); sfx('snip');
-      fx.burst('spark', pl.x + (Math.random() - 0.5) * 16, pl.y - 34, 3, { up: 20, col: patch.hair || '#8a6a5a' });
+    const hairCol = oldLook.hair || '#6e4430';
+    for (let i = 0; i < 6; i++) {
+      sfx('snip'); await sleep(160); sfx('snip');
+      fx.burst('snip', pl.x + (Math.random() - 0.5) * 18, pl.y - 38, 4, { up: 10, g: 60, col: hairCol, size: 2, life: 1 });
+      if (i === 2) { st?.face('up'); await sleep(200); st?.face('left'); }
       await sleep(260);
     }
     st?.setAct(null);
+    sfx('whoosh');
+    fx.burst('poof', pl.x, pl.y - 32, 9, { up: 20, g: 0, speed: 26, size: 9, life: 0.9, jitter: 14 });
+    await sleep(260);
     applyHair(patch); refreshPlayerLook();
     sfx('buy'); fx.burst('spark', pl.x, pl.y - 34, 16, { up: 50, col: '#ffd35a' });
     pl.setEmo('happy', 2); pl.showEmote('sparkle', 1.6);
@@ -64,7 +72,7 @@ async function haircut(patch, label) {
     if (chair) { pl.sit = false; pl.seatH = undefined; pl.doHop?.(70); pl.y = chair.y + 14; }
     toast({ text: T(`New look: ${label[0]}!`, `Kiểu mới: ${label[1]}!`), sub: T('Chị Tiên: "Gorgeous! Come back any time."', 'Chị Tiên: "Xinh quá trời! Ghé lại nha."'), icon: 'scissors' });
     if (st && st._home) { st.walkTo([[st._home.x, st._home.y]], { speed: 70 }).then(() => st.face('down')); }
-  } finally { pl.control = true; }
+  } finally { pl.control = true; if (pl.look?.cape) refreshPlayerLook(); }
 }
 
 export function openSalon() {

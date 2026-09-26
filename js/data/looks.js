@@ -26,7 +26,7 @@ export function playerLook(opt = {}) {
   return {
     skin: opt.skin || SKIN[1], hair: opt.hair || HAIR[0], hairStyle: opt.hairStyle || 'bob',
     top: opt.top || '#a9cf9a', topStyle: 'hoodie', sleeve: 0.9, bottom: '#6d7fa8', bottomLen: 1.5, shoe: '#f0e6da',
-    lashes: isFemCut(opt.hairStyle || 'bob'), accent: '#f28fa3', eyeCol: opt.eyeCol || '#4f9f7a',
+    lashes: opt.gender ? opt.gender === 'f' : isFemCut(opt.hairStyle || 'bob'), accent: '#f28fa3', eyeCol: opt.eyeCol || '#4f9f7a',
   };
 }
 
@@ -39,7 +39,7 @@ export const RESIDENTS = {
   co_lan: { name: 'Cô Lan', role: 'Florist', look: { skin: '#f8d6bd', eyeCol: '#4f9f7a', hair: '#2f2a30', hairStyle: 'sidepart', top: '#f8c0a0', topStyle: 'aodai', bottom: '#fff', bottomLen: 5, shoe: '#f0e6da', lashes: true, flower: '#ff8fb0' }, personality: 'picky' },
   be_na: { name: 'Bé Na', role: 'Kid who loves chè', look: { skin: '#fde5d2', eyeCol: '#c9803a', hair: '#6e4430', hairStyle: 'buns', top: '#f7de8c', topStyle: 'dress', bottom: '#f7de8c', shoe: '#e9848f', scale: 0.8, lashes: true }, personality: 'excited' },
   anh_tuan: { name: 'Anh Tuấn', role: 'Scooter taxi driver', look: { skin: '#e3b08b', eyeCol: '#8a6ad0', hair: '#2f2a30', hairStyle: 'crop', top: '#9fd8c8', topStyle: 'shirt', bottom: '#3f4a5e', bottomLen: 5, shoe: '#7a5040', hat: 'bucket', hatColor: '#7aa38a' }, personality: 'regular' },
-  chi_mai: { name: 'Chị Mai', role: 'Island nurse', look: { skin: '#f1c6a4', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'highpony', top: '#a9cf9a', topStyle: 'shirt', bottom: '#6d7fa8', bottomLen: 5, shoe: '#f0e6da', lashes: true, lanyard: '#f28f7c', accent: '#f7de8c' }, personality: 'rushed' },
+  chi_mai: { name: 'Chị Mai', role: 'Island doctor', look: { skin: '#f1c6a4', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'highpony', top: '#a9cf9a', topStyle: 'shirt', bottom: '#6d7fa8', bottomLen: 5, shoe: '#f0e6da', lashes: true, lanyard: '#f28f7c', accent: '#f7de8c' }, personality: 'rushed' },
 };
 // Lives on Firefly Islet; appears once the Long Bridge is fixed.
 RESIDENTS.vy = { name: 'Vy', role: 'Painter', islet: true, look: { skin: '#fde5d2', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'frenchbob', top: '#9fd8c8', topStyle: 'tee', bottom: '#556b8a', bottomLen: 3, shoe: '#fff', lashes: true, hat: 'bucket', hatColor: '#3f4a5e' }, personality: 'excited' };
@@ -51,6 +51,7 @@ export const MERCHANTS = {
   ba_sau: { name: 'Bà Sáu', role: 'Night market elder', look: { skin: '#e3b08b', eyeCol: '#5f8fd0', hair: '#c9c2c6', hairStyle: 'granny', top: '#f28f7c', topStyle: 'aodai', bottom: '#2f2a30', bottomLen: 5, shoe: '#7a5040', scale: 0.93 } },
   co_ba: { name: 'Cô Ba', role: 'Tailor & boutique owner', look: { skin: '#f8d6bd', eyeCol: '#8a5a40', hair: '#6e4430', hairStyle: 'curtain', top: '#fff', topStyle: 'dress', bottom: '#fff', bottomLen: 5, shoe: '#f0e6da', lashes: true, hat: 'sunhat', hatColor: '#f3dcae' } },
   chi_tien: { name: 'Chị Tiên', role: 'Hair stylist', look: { skin: '#f8d6bd', eyeCol: '#8a6ad0', hair: '#e59aac', hairStyle: 'shag', top: '#2f2a30', topStyle: 'tee', apron: '#9fd8c8', bottom: '#3f4a5e', bottomLen: 5, shoe: '#fff', lashes: true, glasses: '#5b3f36' } },
+  co_bong: { name: 'Cô Bông', role: 'Pet shop owner', look: { skin: '#f1c6a4', eyeCol: '#4f9f7a', hair: '#9a6443', hairStyle: 'messybun', top: '#f7de8c', topStyle: 'tee', apron: '#f2a14e', bottom: '#556b8a', bottomLen: 5, shoe: '#e9848f', lashes: true, glasses: '#8a6a5a' } },
   captain: { name: 'Thuyền trưởng Vũ', role: 'Ferry captain', look: { skin: '#cf9772', eyeCol: '#3f6f5a', hair: '#2f2a30', hairStyle: 'gentpart', top: '#fff1dc', topStyle: 'shirt', bottom: '#3f4a5e', bottomLen: 5, shoe: '#2f2a30', hat: 'cap', hatColor: '#3f4a5e' } },
 };
 

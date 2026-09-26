@@ -15,7 +15,7 @@ import { toast } from './hud.js';
 import { releaseJoystick } from '../core/input.js';
 
 let P = null;
-const METHOD = { chop: 'board', split: 'board', scoop: 'board', grill: 'grill', fry: 'pan', boil: 'pot' };
+const METHOD = { chop: 'board', split: 'board', scoop: 'board', grill: 'grill', fry: 'pan', boil: 'pot', whip: 'pot' };
 
 export function isPrepOpen() { return !!P; }
 export function openPrep(bizId, { onClose } = {}) {
@@ -96,7 +96,7 @@ function tapStation() {
   if (P.stage !== 'placed') { if (P.stage === 'empty') sfx('error'); return; }
   const m = INGREDIENTS[P.item].prep.method;
   P.stage = 'done'; P.anim = 0; P.chopT = 0.35;
-  sfx(m === 'grill' || m === 'fry' ? 'sizzle' : m === 'boil' ? 'splash' : 'chop');
+  sfx(m === 'grill' || m === 'fry' ? 'sizzle' : m === 'boil' ? 'splash' : m === 'whip' ? 'blend' : 'chop');
   if (m === 'chop' || m === 'split' || m === 'scoop') { setTimeout(() => sfx('chop'), 90); setTimeout(() => sfx('chop'), 180); }
   for (let i = 0; i < 14; i++) P.parts.push({ x: 0, y: 0, vx: (Math.random() - 0.5) * 220, vy: -80 - Math.random() * 140, life: 0, col: m === 'grill' || m === 'fry' ? '#ffffff' : ['#ffe07a', '#b9e08a', '#fff'][i % 3], smoke: m === 'grill' || m === 'fry' });
   hint();
