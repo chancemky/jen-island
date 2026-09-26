@@ -5,11 +5,13 @@
 // Supermarket aisles.
 export const AISLES = [
   { id: 'all', en: 'All', vi: 'Tất cả', icon: 'bag' },
-  { id: 'drinks', en: 'Drinks', vi: 'Đồ uống', icon: 'tea', items: ['tea', 'coffee', 'condensed_milk', 'milk', 'peach_syrup', 'sugar', 'ice', 'tapioca', 'jelly', 'cheese_foam', 'coconut_milk'] },
-  { id: 'produce', en: 'Fruit & Veg', vi: 'Rau củ quả', icon: 'kumquat', items: ['kumquat', 'peach', 'avocado', 'cucumber', 'cilantro', 'herbs', 'sprouts', 'lime', 'scallion', 'chili'] },
-  { id: 'meat', en: 'Meat & Seafood', vi: 'Thịt & hải sản', icon: 'pork', items: ['pork', 'beef', 'shrimp', 'egg', 'pate'] },
-  { id: 'dry', en: 'Bakery & Dry', vi: 'Bánh & đồ khô', icon: 'bread', items: ['bread', 'rice_paper', 'noodles', 'rice', 'batter', 'beans'] },
-  { id: 'sauce', en: 'Sauces & Broth', vi: 'Nước sốt & nước dùng', icon: 'fish_sauce', items: ['fish_sauce', 'pickles', 'broth', 'broth_spicy'] },
+  { id: 'produce', en: 'Fruit & Veg', vi: 'Rau củ quả', icon: 'kumquat', items: ['kumquat', 'peach', 'avocado', 'lime', 'cucumber', 'cilantro', 'herbs', 'sprouts', 'scallion', 'chili'] },
+  { id: 'meat', en: 'Meat, Seafood & Eggs', vi: 'Thịt, hải sản & trứng', icon: 'pork', items: ['pork', 'beef', 'shrimp', 'egg'] },
+  { id: 'bakery', en: 'Bakery & Grains', vi: 'Bánh & ngũ cốc', icon: 'bread', items: ['bread', 'rice', 'noodles', 'rice_paper', 'batter'] },
+  { id: 'dairy', en: 'Dairy & Drinks', vi: 'Sữa & đồ uống', icon: 'milk', items: ['milk', 'condensed_milk', 'coconut_milk', 'cheese_foam', 'tea', 'coffee', 'peach_syrup'] },
+  { id: 'sweets', en: 'Sweets & Toppings', vi: 'Đồ ngọt & topping', icon: 'sugar', items: ['sugar', 'tapioca', 'jelly', 'beans'] },
+  { id: 'deli', en: 'Sauces & Deli', vi: 'Nước sốt & đồ nguội', icon: 'fish_sauce', items: ['fish_sauce', 'pickles', 'pate', 'broth', 'broth_spicy'] },
+  { id: 'frozen', en: 'Frozen', vi: 'Đồ đông lạnh', icon: 'ice', items: ['ice'] },
 ];
 export const INGREDIENTS = {
   tea:            { vi: 'Trà',           en: 'Tea leaves',      price: 10, pack: 8 },

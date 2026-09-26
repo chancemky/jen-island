@@ -2,7 +2,7 @@
 // performance, milestones and achievements, then "Ngày mới" (new day).
 
 import { h } from './sheets.js';
-import { T } from '../systems/state.js';
+import { T, tr } from '../systems/state.js';
 import { bizName } from '../data/game.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml } from '../core/util.js';
@@ -22,7 +22,7 @@ export function showSummary(sum) {
         ${sum.lost ? `<div class="sum-stat wide"><small>${T('Customers who left', 'Khách bỏ đi')}</small><b data-n="${sum.lost}">0</b></div>` : ''}
       </div></div>
       ${biz.length ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Your shops', 'Cửa hàng')}</div><ul class="sum-list">${biz.map(([id, v]) => `<li><span>${escapeHtml(bizName(id))}</span><span>${T(`${v.served} served`, `${v.served} khách`)} · ${money(v.revenue)}</span></li>`).join('')}</ul></div>` : ''}
-      ${(sum.milestones.length || sum.achievements.length) ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Milestones', 'Cột mốc')}</div><ul class="sum-list">${sum.milestones.map(m => `<li class="ach"><span>★ ${escapeHtml(m)}</span></li>`).join('')}</ul></div>` : ''}
+      ${(sum.milestones.length || sum.achievements.length) ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Milestones', 'Cột mốc')}</div><ul class="sum-list">${sum.milestones.map(m => `<li class="ach"><span>★ ${escapeHtml(tr(m))}</span></li>`).join('')}</ul></div>` : ''}
       <div class="sum-card" style="text-align:center;font-weight:800;opacity:.85">${escapeHtml(sum.meoLine)}</div>
       ${sum.wages ? `<div class="sum-card" style="text-align:center;font-weight:800;opacity:.85">${T(`Staff wages paid: ${money(sum.wages)}`, `Đã trả lương nhân viên: ${money(sum.wages)}`)}</div>` : ''}
       <button class="btn big pink" type="button" style="max-width:420px">${T('Next day ☀', 'Ngày mới ☀')}</button>`;

@@ -66,6 +66,7 @@ export class Actor {
         if (!this.path.length) { this.path = null; const r = this._resolve; this._resolve = null; if (r) r(true); }
       } else {
         this.x += (dx / d) * step; this.y += (dy / d) * step;
+        this.moveAng = Math.atan2(dx, dy);   // body turns to face where it walks (8+ directions)
         this.setDirFromVel(dx, dy);
         this.walkPh += step * 0.18;
         this.moving = Math.min(1, this.moving + dt * 8);

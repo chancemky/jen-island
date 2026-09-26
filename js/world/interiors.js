@@ -36,7 +36,7 @@ export class Interior extends Scene {
   }
   furn(kind, x, y, o = {}, solid = null) {
     const p = { kind, x, y, ...o };
-    if (kind === 'rug' || kind === 'mat') p.flat = true;   // floor coverings sit under everyone
+    if (kind === 'rug' || kind === 'mat' || kind === 'cat_bed') p.flat = true;   // floor coverings (and the cat bed) sit under everyone
     p.draw = (c, t) => F[kind](c, t, p);
     p.cull = { x: x - 80, y: y - 90, w: 160, h: 110 };
     this.prop(p);

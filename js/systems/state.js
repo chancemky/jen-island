@@ -133,7 +133,7 @@ export function unlockAchievement(id) {
   const s = G.state;
   if (!ACHIEVEMENTS[id] || s.achievements.includes(id)) return;
   s.achievements.push(id);
-  s.today.milestones.push(ACHIEVEMENTS[id].en);
+  s.today.milestones.push([ACHIEVEMENTS[id].en, ACHIEVEMENTS[id].vi || ACHIEVEMENTS[id].en]);
   bus.emit('achievement', id);
   markDirty(true);
 }

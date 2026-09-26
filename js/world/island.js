@@ -293,13 +293,7 @@ function paintGround(c) {
     else for (let x = r.x + 7; x < r.x + r.w; x += 7) { c.beginPath(); c.moveTo(x, r.y + 1); c.lineTo(x, r.y + r.h - 1); c.stroke(); }
   }
   for (const [x, y] of [[870, 2440], [926, 2440], [870, 2520], [926, 2520], [818, 2606], [970, 2606], [894, 2608]]) { box(c, x - 4, y - 6, 8, 12, 2, '#8a5f3e', INK, 0.8); }
-  // bridges
-  for (const b of BRIDGES) {
-    c.fillStyle = 'rgba(40,80,90,.2)'; c.fillRect(b.x + 4, b.y + 4, b.w, b.h);
-    box(c, b.x, b.y, b.w, b.h, 4, '#d19a62', INK, 1.2);
-    c.strokeStyle = '#a8763f'; c.lineWidth = 1;
-    for (let y = b.y + 6; y < b.y + b.h; y += 6) { c.beginPath(); c.moveTo(b.x + 2, y); c.lineTo(b.x + b.w - 2, y); c.stroke(); }
-  }
+  // (river bridges are props now — see riverBridge in gfx/props.js)
 }
 function starfish(c, r) { const col = r < 0.5 ? '#f7a36b' : '#f28f9a'; c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 1.7 : 4.2; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = 'rgba(120,70,50,.6)'; c.lineWidth = 0.6; c.stroke(); }
 
@@ -434,6 +428,11 @@ export class Island extends Scene {
     for (let i = 4; i < RIVER.length - 4; i += 10) {
       const x = RIVER[i], y = RIVER[i + 1], nx = RIVER[i + 2] - RIVER[i - 2], ny = RIVER[i + 3] - RIVER[i - 1], l = Math.hypot(nx, ny) || 1;
       for (const sgn of [-1, 1]) { const rx = x - ny / l * 30 * sgn, ry = y + nx / l * 30 * sgn; if (!onBridge(rx, ry) && this.terrain(rx, ry)) { const p = { kind: 'reeds', x: rx, y: ry }; p.draw = (c, t) => P.reeds(c, t, p); p.cull = { x: rx - 16, y: ry - 34, w: 32, h: 40 }; this.prop(p); } }
+    }
+    // ---- river bridges: a planked deck (under walkers) and two railings (in front of them)
+    for (const b of BRIDGES) {
+      const deck = { kind: 'bridgeDeck', x: b.x + b.w / 2, y: b.y + b.h, b, flat: true }; deck.draw = (c, t) => P.bridgeDeck(c, t, deck); deck.cull = { x: b.x - 20, y: b.y - 20, w: b.w + 40, h: b.h + 40 }; this.prop(deck);
+      for (const side of [-1, 1]) { const rl = { kind: 'bridgeRail', x: b.x + b.w / 2 + side * (b.w / 2 - 3), y: b.y + b.h, b, side }; rl.draw = (c, t) => P.bridgeRail(c, t, rl); rl.cull = { x: rl.x - 10, y: b.y - 30, w: 20, h: b.h + 40 }; this.prop(rl); }
     }
     // ---- Firefly Islet (dressed by hand)
     this.add2('seaBridge', SEA_BRIDGE.x, SEA_BRIDGE.y + SEA_BRIDGE.h, { flat: true, cull: { x: SEA_BRIDGE.x - 20, y: SEA_BRIDGE.y - 40, w: SEA_BRIDGE.w + 40, h: 90 }, fixed: bridgeFixed });
@@ -622,7 +621,10 @@ export class Island extends Scene {
     c.save();
     if (MOUTH_PT) { c.beginPath(); c.rect(-2000, -2000, W + 4000, H + 4000); c.moveTo(MOUTH_PT[0] + 40, MOUTH_PT[1]); c.arc(MOUTH_PT[0], MOUTH_PT[1], 40, 0, TAU); c.clip('evenodd'); }
     c.lineCap = 'round'; c.lineJoin = 'round';
-    for (const l of LANDS) { tracePoly(c, l.sand); c.setLineDash([14, 20]); c.lineDashOffset = -t * 9; c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 3.2; c.stroke(); }
+    // keep the surf off the bridges and piers
+    c.beginPath(); c.rect(-2000, -2000, W + 4000, H + 4000);
+    for (const r of [...BRIDGES, PIER, PIER_END, SEA_BRIDGE]) c.rect(r.x - 3, r.y - 3, r.w + 6, r.h + 6);
+    c.clip('evenodd');
     // rolling waves: each front travels in from the shallows, washes up onto the
     // sand, leaves a wet darker band, then slides back and fades
     c.setLineDash([]);

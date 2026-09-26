@@ -31,7 +31,7 @@ export class Player extends Actor {
       const [nx, ny] = scene.moveWithCollision(this.x, this.y, this.vx * dt, this.vy * dt, this.radius);
       const moved = Math.hypot(nx - this.x, ny - this.y);
       this.x = nx; this.y = ny;
-      if (m > 0.05) this.setDirFromVel(ix, iy);
+      if (m > 0.05) { this.setDirFromVel(ix, iy); this.moveAng = Math.atan2(ix, iy); }
       this.walkPh += moved * (this.running ? 0.15 : 0.18);
       this.moving = clamp(sp / WALK_SPEED * 1.2, 0, 1);
       this._driven = true;

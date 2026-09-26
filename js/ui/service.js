@@ -9,6 +9,7 @@ import { rt, stockOf, takeStock, returnStock, evaluate, completeOrder, failOrder
 import { drawCup, DISHES, ICONS, iconURL, drawIcon } from '../gfx/food.js';
 import { drawAssembly } from '../gfx/assemble.js';
 import { drawHuman, EL } from '../gfx/character.js';
+import { drawVillagerHead } from '../gfx/villager.js';
 import { INK, ell, circ, box, shadow } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
 import { escapeHtml, money, bus, clamp, TAU, clock } from '../core/util.js';
@@ -35,7 +36,7 @@ export function openService(bizId, { onClose, tutorial = false, single = null } 
       <div class="svc-label">${escapeHtml(bizName(bizId).toUpperCase())}</div>
       <div class="svc-work"><div class="svc-board"><canvas width="300" height="210"></canvas><div class="svc-steps"></div></div><div class="svc-opts"></div></div>
       <div class="svc-grid"></div>
-      <div class="svc-bottom"><button class="btn trash" type="button" aria-label="Undo">↶</button><button class="btn pink serve" type="button">${T('Serve', 'Phục vụ')}</button></div>
+      <div class="svc-bottom"><button class="btn trash" type="button" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5 3.5 10l5 4.5" /><path d="M4 10h10.5a5 5 0 0 1 0 10H10" /></svg><small>${T('Undo', 'Hoàn tác')}</small></button><button class="btn pink serve" type="button">${T('Serve', 'Phục vụ')}</button></div>
     </div>`;
   root.appendChild(el);
   G.runtime.serviceOpen = bizId;
@@ -393,7 +394,7 @@ function drawQueue(t) {
     box.innerHTML = q.slice(0, 5).map((c, i) => `<div class="qface${i === 0 ? ' cur' : ''}" data-id="${c.id}"><canvas width="88" height="88"></canvas><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#86cf8a" stroke-width="3" stroke-dasharray="100.5" stroke-linecap="round"/></svg></div>`).join('');
     for (const el of box.children) {
       const c = q.find(x => x.id === el.dataset.id), cv = el.querySelector('canvas'), cc = cv.getContext('2d');
-      cc.save(); cc.lineJoin = 'round'; cc.translate(44, 88 + 70 + EL * 4.1); cc.scale(4.1, 4.1); drawHuman(cc, { look: c.actor.look, dir: 'down', emo: 'neutral', blinkAmt: 0, moving: 0, portrait: true }, 1); cc.restore();
+      cc.lineJoin = 'round'; drawVillagerHead(cc, 44, 47, 66, { look: c.actor.look, emo: 'neutral' }, 1);
     }
   }
   for (const el of box.children) {

@@ -1,10 +1,15 @@
 <!doctype html><body style="margin:0;background:#a3d68a"><canvas id=c></canvas><script type=module>
 import '../js/systems/state.js';
 import { drawHuman } from '../js/gfx/character.js';
-import { playerLook, RESIDENTS } from '../js/data/looks.js';
-const Z=8, cv=document.getElementById('c'); cv.width=8*50*Z; cv.height=2*62*Z; const c=cv.getContext('2d'); c.lineJoin='round'; c.lineCap='round';
-const L=[playerLook({hairStyle:'bob'}), RESIDENTS.linh.look];
+import { playerLook, RESIDENTS, visitorLook } from '../js/data/looks.js';
+const Q=new URLSearchParams(location.search), Z=+(Q.get('z')||7), cv=document.getElementById('c'); cv.width=8*50*Z; cv.height=5*62*Z; const c=cv.getContext('2d'); c.lineJoin='round'; c.lineCap='round';
+const L=[playerLook({hairStyle:'bob'}), RESIDENTS.linh.look, RESIDENTS.chu_hai.look, visitorLook(12,'tourist'), RESIDENTS.co_lan.look];
+const rows=[['right',1,0],['down',1,1],['up',1,2],['diag',1,3],['turn',0,4]];
 for(let i=0;i<8;i++){ const ph=i/8*Math.PI*2;
- for (const [r,dir] of [[0,'right'],[1,'down']]) { c.save(); c.setTransform(Z,0,0,Z,(i*50+25)*Z,(r*62+56)*Z); c.fillStyle='rgba(0,0,0,.08)'; c.fillRect(-25,0,50,0.4); drawHuman(c,{look:L[r],dir,moving:1,walkPh:ph,seed:1},0.3); c.restore(); } }
+ for (const [r,[mode,mv,li]] of rows.entries()) { c.save(); c.setTransform(Z,0,0,Z,(i*50+25)*Z,(r*62+56)*Z);
+  const a={look:L[li],dir:mode==='diag'?'down':mode==='turn'?'down':mode,moving:mv,walkPh:ph,seed:1,portrait:true};
+  if(mode==='diag') a.moveAng=Math.PI/4; if(mode==='turn'){a.moving=0;a.dir='down';a.moveAng=undefined; a.portrait=true; a._forceYaw=i/8*Math.PI*2;}
+  if(a._forceYaw!==undefined){a.moving=0.3; a.walkPh=0; a.moveAng=a._forceYaw; a.moving=0.21;}
+  drawHuman(c,a,0.3); c.restore(); } }
 window.done=1;
 </script>

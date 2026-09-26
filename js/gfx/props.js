@@ -755,3 +755,42 @@ export function flowerBed(c, t, p) {
   const R = rng((p.x + p.y * 3) | 0), cols = p.cols || ['#ff8fb0', '#ffd35a', '#fff', '#c9a8ff', '#ff6f6f'];
   for (let i = 0; i < w / 4; i++) { const x = -w / 2 + 3 + i * 4 + (R() - 0.5), sw = wind(p.x + x, t, p.y) * 1.6; limb(c, [x, -7, x + sw, -12 - R() * 3], 0.8, '#5f9f45', null); circ(c, x + sw, -13 - R() * 2, 1.9, cols[i % cols.length], INK, 0.4); circ(c, x + sw, -13, 0.6, '#ffd35a', null); }
 }
+
+// ---------------------------------------------------------------- river bridges
+// Drawn relative to the bottom-centre of the bridge (p.x, p.y); p.b = rect.
+export function bridgeDeck(c, t, p) {
+  const b = p.b, w = b.w, h = b.h, x0 = -w / 2, y0 = -h;
+  // shadow on the water beside the deck
+  c.fillStyle = 'rgba(30,70,80,.25)'; c.fillRect(x0 + 5, y0 + 6, w, h - 4);
+  // stone abutments at both ends
+  for (const yy of [y0 - 4, -6]) { c.beginPath(); c.roundRect ? c.roundRect(x0 - 5, yy, w + 10, 10, 4) : c.rect(x0 - 5, yy, w + 10, 10); c.fillStyle = '#c9c2b6'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); c.strokeStyle = 'rgba(91,63,54,.35)'; c.lineWidth = 0.6; for (let k = 1; k < 5; k++) { c.beginPath(); c.moveTo(x0 - 5 + k * (w + 10) / 5, yy + 1); c.lineTo(x0 - 5 + k * (w + 10) / 5 + (k % 2 ? 2 : -2), yy + 9); c.stroke(); } }
+  // stout support posts in the water
+  for (const yy of [y0 + h * 0.35, y0 + h * 0.7]) for (const xx of [x0 + 2, x0 + w - 2]) { box(c, xx - 3, yy, 6, 9, 1.5, '#7a5236', INK, 0.8); ell(c, xx, yy + 9, 5, 1.6, 'rgba(255,255,255,.5)', null); }
+  // the planked deck, a little lighter in the middle where it arches up
+  const g = c.createLinearGradient(x0, 0, x0 + w, 0); g.addColorStop(0, '#b98049'); g.addColorStop(0.5, '#dca56a'); g.addColorStop(1, '#b98049');
+  c.beginPath(); c.roundRect ? c.roundRect(x0, y0, w, h, 3) : c.rect(x0, y0, w, h); c.fillStyle = g; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke();
+  const n = Math.floor(h / 6);
+  for (let i = 0; i < n; i++) {
+    const yy = y0 + 3 + i * (h - 6) / n;
+    c.fillStyle = i % 2 ? 'rgba(120,70,30,.12)' : 'rgba(255,240,210,.1)'; c.fillRect(x0 + 1, yy, w - 2, (h - 6) / n);
+    c.strokeStyle = '#8f5f35'; c.lineWidth = 0.8; c.beginPath(); c.moveTo(x0 + 1, yy); c.lineTo(x0 + w - 1, yy); c.stroke();
+    for (const xx of [x0 + 5, x0 + w - 5]) { c.fillStyle = '#5b3f36'; c.fillRect(xx - 0.5, yy + 2, 1, 1); }
+  }
+  // edge beams along both sides
+  for (const xx of [x0, x0 + w - 4]) { c.fillStyle = '#9a6a42'; c.fillRect(xx, y0, 4, h); c.strokeStyle = INK; c.lineWidth = 0.8; c.strokeRect(xx, y0, 4, h); }
+}
+export function bridgeRail(c, t, p) {
+  const b = p.b, h = b.h, y0 = -h;
+  const posts = Math.max(3, Math.round(h / 18));
+  // posts with a rounded cap
+  for (let i = 0; i <= posts; i++) {
+    const yy = y0 + 2 + i * (h - 4) / posts;
+    box(c, -1.8, yy - 9, 3.6, 10, 1.2, '#9a6a42', INK, 0.8);
+    ell(c, 0, yy - 9.4, 2.2, 1.2, '#b98049', INK, 0.6);
+  }
+  // top rail and a rope strung between the posts
+  c.strokeStyle = INK; c.lineWidth = 3.2; c.beginPath(); c.moveTo(0, y0 - 6.5); c.lineTo(0, -8.5); c.stroke();
+  c.strokeStyle = '#c98f5a'; c.lineWidth = 1.8; c.stroke();
+  c.strokeStyle = '#e6d2a4'; c.lineWidth = 0.8;
+  for (let i = 0; i < posts; i++) { const ya = y0 + 2 + i * (h - 4) / posts - 3.5, yb = y0 + 2 + (i + 1) * (h - 4) / posts - 3.5; c.beginPath(); c.moveTo(p.side * 0.5, ya); c.quadraticCurveTo(p.side * 1.2, (ya + yb) / 2 + 2, p.side * 0.5, yb); c.stroke(); }
+}

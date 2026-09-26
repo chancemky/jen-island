@@ -89,7 +89,7 @@ export function openBiz(bizId) {
   if (!makeableRecipes(bizId).length) return { ok: false, why: T('Not enough ingredients!\nBuy supplies and prep them first.', 'Hết nguyên liệu!\nMua và sơ chế nguyên liệu trước nhé.') };
   b.open = true;
   const r = rt(bizId);
-  r.spawnT = r.first ? 3 : rand(4, 10);
+  r.spawnT = r.first ? 1 : rand(2, 5);
   r.noStockWarned = false;
   sfx('bell');
   bus.emit('biz:open', bizId);
@@ -151,10 +151,10 @@ export function spawnCustomer(bizId, opts = {}) {
   if (!actor) {
     // appear somewhere a little way off along the paths, then walk over
     const qx = q[0][0], qy = q[0][1];
-    const [lo, hi] = r.first ? [110, 200] : [170, 330];
+    const [lo, hi] = r.first ? [70, 140] : [100, 210];
     const nodes = island.nav.nodes.filter(n => n.tags.has('path') && dist(n.x, n.y, qx, qy) > lo && dist(n.x, n.y, qx, qy) < hi);
     const start = opts.from || (nodes.length ? choice(nodes) : island.nav.nearest(qx, qy));
-    actor = new Actor({ kind: 'human', look, x: start.x, y: start.y, speed: personality === 'rushed' ? 80 : rand(60, 70), data: { customer: true } });
+    actor = new Actor({ kind: 'human', look, x: start.x, y: start.y, speed: personality === 'rushed' ? 90 : rand(72, 82), data: { customer: true } });
     island.add(actor);
     actor.alpha = 0; actor.fadeIn = true;
   }
@@ -384,8 +384,9 @@ export function updateBusinesses(dt, gameMin) {
     }
     // patience: front customer drains fully, others slower
     for (const c of [...r.queue]) {
-      if (c.state === 'walking') continue;
-      const k = c.slot === 0 ? 1 : 0.35;
+      // the timer only runs once they've reached the counter (slot 0 and standing there)
+      if (c.state === 'walking' || c.slot !== 0 || c.actor.path) continue;
+      const k = 1;
       c.patience -= dt * k * (G.runtime.serviceOpen === id ? 1 : 0.85);
       if (c.patienceRatio < 0.35 && !c._warned) { c._warned = true; c.actor.showEmote('sweat', 1.2); c.actor.setAct('wait'); }
       if (c.patience <= 0) timeoutCustomer(c);
@@ -413,7 +414,7 @@ function nextSpawnDelay(id) {
   const appeal = recs.length ? recs.reduce((a, r) => a + priceAppeal(r), 0) / recs.length : 1;
   const gear = eq(id, 'attract') * (h >= 18 ? eq(id, 'night') : 1);
   const rate = attract * rep * tf * boat * special * early * appeal * gear; // customers per ~34 game-minutes baseline
-  return clamp(rand(22, 40) / (rate * 1.25), 4, 50);   // +25% customers
+  return clamp(rand(15, 28) / (rate * 1.25), 3, 34);   // quicker arrivals
 }
 
 export function stationStock(bizId, key) { return stockOf(bizId, key); }

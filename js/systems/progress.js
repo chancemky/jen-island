@@ -97,7 +97,7 @@ export function claimMilestone(id) {
   (G.state.milestones ||= {})[id] = st.claimed + 1;
   const r = milestoneReward(st.claimed);
   addMoney(r.money, 'milestone'); addXP(r.xp, 'milestone');
-  G.state.today.milestones.push(`${tr.en}: ${tr.money ? money(st.target) : st.target}`);
+  G.state.today.milestones.push([`${tr.en}: ${tr.money ? money(st.target) : st.target}`, `${tr.vi}: ${tr.money ? money(st.target) : st.target}`]);
   markDirty(true);
   return r;
 }

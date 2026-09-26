@@ -257,7 +257,9 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 .svc-bottom { display: flex; gap: 8px; }
 .svc-bottom .btn { flex: 1; padding: 13px 10px; }
-.svc-bottom .btn.trash { flex: 0 0 60px; background: #fff; color: var(--ink); text-shadow: none; }
+.svc-bottom .btn.trash { flex: 0 0 66px; background: #ffe7a8; color: var(--ink); text-shadow: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 6px 4px; }
+.svc-bottom .btn.trash svg { width: 24px; height: 24px; fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.svc-bottom .btn.trash small { font-size: 10.5px; font-weight: 900; letter-spacing: .3px; line-height: 1; }
 .svc-waiting { position: absolute; left: 12px; right: 12px; top: 80px; text-align: center; font-weight: 900; font-size: 15px; opacity: .7; }
 .flyer { position: absolute; z-index: 60; width: 42px; height: 42px; pointer-events: none; transition: transform .38s cubic-bezier(.4,-0.2,.6,1), opacity .38s; }
 .flyer img { width: 100%; height: 100%; }

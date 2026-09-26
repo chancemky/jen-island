@@ -11,7 +11,7 @@ import { ell, circ } from '../gfx/draw.js';
 import { updateBarks, drawBarks } from './fun.js';
 import { nearestSeat, hopOnto } from './seats.js';
 import { updateSideQuests, drawSideQuests } from './sidequests.js';
-import { PATHS, BUILDINGS } from '../world/island.js';
+import { PATHS, BUILDINGS, QUEUES } from '../world/island.js';
 import { rand, randi, choice, chance, dist, bus, clamp, TAU, smoothLine } from '../core/util.js';
 import { drawBoatTop } from './cinematic.js';
 import { scooter as drawScooter, seagull, duck, wind, LIGHT } from '../gfx/props.js';
@@ -33,7 +33,8 @@ export const npcs = {
   byId(id) { return this.residents.find(a => a.data.rid === id) || null; },
   freeResidents() { return this.residents.filter(a => a.visible && a.data.state !== 'busy' && a.data.state !== 'home' && a.data.state !== 'going-home'); },
   borrowResident(bizId) {
-    const free = this.freeResidents();
+    // only neighbours already close by (so nobody takes ages to walk over)
+    const q = QUEUES[bizId]?.[0]; const free = this.freeResidents().filter(a => !q || dist(a.x, a.y, q[0], q[1]) < 380);
     if (!free.length) return null;
     const a = choice(free);
     a.stop(); a.data.state = 'busy'; a.setAct(null); a.sit = false;

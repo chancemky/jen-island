@@ -535,6 +535,11 @@ function onWorldTap(cx, cy) {
   if (m && scenes.island.actors.includes(m) && !m.data.busy && dist(m.x, m.y - 16, wx, wy) < 22) { if (m.act === 'sleep') { m.setAct(null); m.data.napping = false; } sfx('meow'); m.doHop(90); m.showEmote('heart', 1.4); if (!m.act) meoAntic(m); }
 }
 bus.on('xp:add', n => addXP(n));
+// grab a shopping basket when you walk into the supermarket; it fills as you buy
+bus.on('enter', id => { if (id === 'supermarket' && G.player) { G.player.basket = true; G.player.basketItems = 0; } });
+bus.on('leave', id => { if (id === 'supermarket' && G.player) { G.player.basket = false; } });
+bus.on('scene', id => { if (id !== 'supermarket' && G.player) G.player.basket = false; });
+bus.on('bought', kind => { if (kind === 'ingredients' && G.player?.basket) G.player.basketItems = (G.player.basketItems || 0) + 1; });
 bus.on('scene', () => { const pl = G.player; if (pl?.seat) { pl.seat = null; pl.sit = false; pl.seatH = undefined; pl.control = true; } });
 
 // ---------------------------------------------------------------- visiting neighbours

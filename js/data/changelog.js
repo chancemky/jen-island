@@ -3,9 +3,24 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '3.4.0';
+export const APP_VERSION = '3.5.0';
 
 export const CHANGELOG = [
+  {
+    v: '3.5.0', date: '2026-09-26T03:54:26Z',
+    title: ['New Villagers', 'Cư Dân Mới'],
+    items: [
+      ['Every character rebuilt on a brand-new 3D villager model: they turn smoothly in every direction, including diagonals', 'Mọi nhân vật được làm lại trên mô hình cư dân 3D mới: xoay người mượt mà theo mọi hướng, kể cả đường chéo'],
+      ['New springy walk with a gentle bob, natural knee and elbow swing, and a jog with pumping arms', 'Dáng đi nhún nhảy mới, đầu gối và khuỷu tay đánh nhịp tự nhiên, chạy chậm với tay đánh mạnh'],
+      ['New faces: simple shiny eyes, rosy cheeks, tiny nose; hair and hats wrap around the head', 'Khuôn mặt mới: mắt tròn lấp lánh, má hồng, mũi nhỏ; tóc và mũ ôm theo đầu'],
+      ['Grab a shopping basket in the supermarket — it fills up as you buy', 'Cầm giỏ đi chợ trong siêu thị — giỏ đầy dần khi bạn mua'],
+      ['Real wooden bridges with stone ends, posts and rope rails', 'Cầu gỗ thật với mố đá, cột và lan can dây thừng'],
+      ['Waves no longer wash over bridges and piers; the dotted coast line is gone', 'Sóng không còn tràn lên cầu và bến; bỏ đường chấm dọc bờ biển'],
+      ['Customers\' patience only starts once they reach your counter, and they arrive sooner', 'Kiên nhẫn của khách chỉ bắt đầu khi họ tới quầy, và khách tới nhanh hơn'],
+      ['Queue faces show the whole face; tidier supermarket aisles; a nicer undo button', 'Hình khách đang tới hiện cả khuôn mặt; quầy siêu thị gọn hơn; nút hoàn tác đẹp hơn'],
+      ['Mèo Mây sleeps on top of her cat bed; the daily summary is fully in Vietnamese', 'Mèo Mây ngủ trên nệm; bảng tổng kết ngày hiển thị hoàn toàn tiếng Việt'],
+    ],
+  },
   {
     v: '3.4.0', date: '2026-09-26T03:30:56Z',
     title: ['A Livelier Island', 'Hòn Đảo Sống Động'],
