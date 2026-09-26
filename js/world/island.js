@@ -360,7 +360,8 @@ const CHUNK = 400;
 export class GroundCache {
   constructor() { this.map = new Map(); this.scale = 0; }
   get(ix, iy, scale) {
-    if (Math.abs(scale - this.scale) > 0.01) { this.map.clear(); this.scale = scale; }
+    scale = Math.min(2, Math.round(scale * 4) / 4);          // snap + cap: fewer rebuilds, far less canvas memory
+    if (Math.abs(scale - this.scale) > 0.01) { for (const v of this.map.values()) v.cv.width = v.cv.height = 0; this.map.clear(); this.scale = scale; }   // free old tiles right away (iOS turns tiles black when canvas memory runs out)
     const key = ix + ',' + iy;
     let e = this.map.get(key);
     if (!e) {
@@ -373,7 +374,7 @@ export class GroundCache {
       paintGround(c);
       e = { cv, used: 0 };
       this.map.set(key, e);
-      if (this.map.size > 36) { // evict least recently used
+      if (this.map.size > 16) { // evict least recently used (16 tiles ≈ 40 MB at 2x)
         let old = null, ou = Infinity; for (const [k, v] of this.map) if (v.used < ou && k !== key) { ou = v.used; old = k; }
         if (old) { const v = this.map.get(old); v.cv.width = v.cv.height = 0; this.map.delete(old); }
       }

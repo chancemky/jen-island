@@ -3,9 +3,18 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '4.1.0';
+export const APP_VERSION = '4.1.1';
 
 export const CHANGELOG = [
+  {
+    v: '4.1.1', date: '2026-09-26T14:11:40Z',
+    title: ['Calm Seas', 'Biển Êm'],
+    items: [
+      ['Fixed black patches on the beach by the ferry dock (the ground now uses much less memory on phones)', 'Sửa lỗi bãi biển bị đen gần bến tàu (mặt đất giờ tốn ít bộ nhớ trên điện thoại hơn nhiều)'],
+      ['Jumping fish are silent now', 'Cá nhảy giờ không phát tiếng nữa'],
+      ['Fish never jump through boats, buoys, bridges or the ferry', 'Cá không bao giờ nhảy xuyên qua thuyền, phao, cầu hay tàu khách'],
+    ],
+  },
   {
     v: '4.1.0', date: '2026-09-26T13:40:16Z',
     title: ['Every Chapter Counts', 'Chương Nào Cũng Đáng'],

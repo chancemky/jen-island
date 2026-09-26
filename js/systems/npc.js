@@ -457,11 +457,19 @@ const CLOUDS = Array.from({ length: 7 }, (_, i) => ({ x: i * 420 + rand(0, 200),
 const PETALS = Array.from({ length: 26 }, () => ({ x: rand(0, 400), y: rand(0, 800), ph: rand(0, 10), col: choice(['#ffc0d8', '#fff', '#ffd9a8', '#ffb3c7']), leaf: Math.random() < 0.35 }));
 const DRAGON = Array.from({ length: 5 }, (_, i) => ({ cx: i < 3 ? 770 : [680, 330][i - 3], cy: i < 3 ? 470 : [790, 990][i - 3], a: rand(0, 6), r: rand(30, 70), sp: rand(0.6, 1.1), col: choice(['#6fbfb0', '#8fb7e0', '#e8584e']) }));
 // fish that leap out of the sea now and then (never the river or pond)
-const JUMPS = []; let nextJump = 2;
+export const JUMPS = []; let nextJump = 2;
+// fish never leap through a boat, a buoy or the ferry
+const BOATS = new Set(['fishingBoat', 'basketBoat', 'buoy', 'boatShore', 'seaBridge']);
+let boatSpots = null;
+function nearBoat(x, y, dir) {
+  if (!boatSpots) boatSpots = G.scenes.island.props.filter(p => BOATS.has(p.kind)).map(p => p.kind === 'seaBridge' ? { x: p.x + (p.w || 262) / 2, y: p.y - 19, r: (p.w || 262) / 2 + 30 } : { x: p.x, y: p.y - 10, r: p.kind === 'fishingBoat' ? 95 : 60 });
+  const f = npcs.ferry, spots = f && f.state !== 'away' ? [...boatSpots, { x: f.x, y: f.y - 20, r: 150 }] : boatSpots;
+  return spots.some(b => [0, 14, 28].some(o => Math.hypot(x + dir * o - b.x, y - b.y) < b.r + 20));   // the whole arc stays clear
+}
 function drawFishJumps(c, t, v) {
   if (t > nextJump) {
     nextJump = t + rand(1.6, 4);
-    for (let k = 0; k < 12; k++) { const x = v.x + rand(20, v.w - 20), y = v.y + rand(20, v.h - 20); if (isOcean(x, y) && isOcean(x + 30, y) && isOcean(x - 30, y + 20)) { JUMPS.push({ x, y, t0: t, dir: chance(0.5) ? 1 : -1, col: choice(['#9fc3d8', '#f2b36a', '#c9d6e0']), len: rand(0.8, 1.1) }); if (G.player && Math.hypot(x - G.player.x, y - G.player.y) < 260) sfx('fishsplash'); break; } }
+    for (let k = 0; k < 12; k++) { const x = v.x + rand(20, v.w - 20), y = v.y + rand(20, v.h - 20); const dir = chance(0.5) ? 1 : -1; if (isOcean(x, y) && isOcean(x + 30, y) && isOcean(x - 30, y + 20) && !nearBoat(x, y, dir)) { JUMPS.push({ x, y, t0: t, dir, col: choice(['#9fc3d8', '#f2b36a', '#c9d6e0']), len: rand(0.8, 1.1) }); break; } }
   }
   for (let i = JUMPS.length - 1; i >= 0; i--) {
     const j = JUMPS[i], k = (t - j.t0) / j.len;
