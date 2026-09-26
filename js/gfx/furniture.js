@@ -516,3 +516,165 @@ Object.assign(F, {
   },
 });
 F.pass = (c, t, p) => counterBox2(c, p.w || 60, 30, 10, p.col || '#e9d8bf', p.top || '#fffdf6');
+
+// ---------------------------------------------------------------- v3.7 pieces + salon fixtures
+Object.assign(F, {
+  armchair(c, t, p) {
+    const col = p.col || '#8fb7e0';
+    shadow(c, 0, 1, 16, 4, 0.18);
+    for (const x of [-11, 11]) limb(c, [x, -4, x, 0], 1.8, '#8a5f3e');
+    fabric(c, -14, -30, 28, 20, 8, col); stitch(c, -11, -27, 22, 13, shade(col, -25));
+    fabric(c, -14, -14, 28, 10, 4, shade(col, 8));
+    for (const x of [-17, 11]) fabric(c, x, -22, 6, 17, 3, shade(col, -10));
+    box(c, -8, -13, 16, 5, 2, '#fffaf0', INK, 0.6);
+  },
+  bean_bag(c, t, p) {
+    const col = p.col || '#f7a868', sq = Math.sin(t * 1.5) * 0.3;
+    shadow(c, 0, 1, 15, 4, 0.18);
+    c.beginPath(); c.moveTo(-15, -2); c.quadraticCurveTo(-17, -20 + sq, -4, -22); c.quadraticCurveTo(10, -24, 14, -12); c.quadraticCurveTo(17, -3, 12, 0); c.quadraticCurveTo(0, 2, -15, -2);
+    c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    c.beginPath(); c.moveTo(-10, -8); c.quadraticCurveTo(0, -12, 11, -8); c.strokeStyle = shade(col, -25); c.lineWidth = 0.8; c.stroke();
+    ell(c, -6, -16, 4, 2.4, 'rgba(255,255,255,.3)', null);
+  },
+  rocking_chair(c, t, p) {
+    const r = Math.sin(t * 1.3) * 0.06;
+    shadow(c, 0, 1, 12, 3, 0.16);
+    c.save(); c.rotate(r);
+    c.beginPath(); c.moveTo(-13, -1); c.quadraticCurveTo(0, 3, 13, -1); c.strokeStyle = INK; c.lineWidth = 3; c.stroke(); c.strokeStyle = '#a8763f'; c.lineWidth = 1.6; c.stroke();
+    for (const x of [-7, 7]) limb(c, [x, 0, x, -10], 1.5, '#8a5f3e');
+    wood(c, -9, -13, 18, 4, 1.5, '#c98f5a', 0.8);
+    for (const x of [-8, 8]) limb(c, [x, -12, x + (x < 0 ? -1 : 1), -30], 1.5, '#8a5f3e');
+    for (let y = -28; y < -14; y += 4) line(c, -8, y, 8, y, '#a8763f', 1.2);
+    box(c, -7, -22, 14, 9, 3, '#f4a9b8', INK, 0.6);
+    c.restore();
+  },
+  dresser(c, t, p) {
+    shadow(c, 0, 1, 20, 4, 0.18);
+    wood(c, -19, -34, 38, 32, 3, '#d9a36a');
+    for (let i = 0; i < 3; i++) { wood(c, -16, -31 + i * 10, 32, 8, 1.5, '#e8b87e', 0.7); circ(c, -6, -27 + i * 10, 1, '#8a5f3e', null); circ(c, 6, -27 + i * 10, 1, '#8a5f3e', null); }
+    for (const x of [-16, 16]) limb(c, [x, -2, x, 0], 2, '#8a5f3e');
+    // things on top: a little mirror and a jewelry box
+    box(c, -12, -46, 11, 12, 5, '#e3b86a', INK, 0.8); box(c, -10, -44, 7, 8, 3, '#cfeaf5', null);
+    box(c, 4, -39, 9, 5, 1.5, '#e56b8b', INK, 0.6);
+  },
+  record_player(c, t, p) {
+    shadow(c, 0, 1, 12, 3, 0.16);
+    wood(c, -11, -20, 22, 20, 2, '#b77a4f');
+    for (const x of [-9, 9]) limb(c, [x, -1, x, 0], 1.4, '#5a3a24');
+    box(c, -12, -26, 24, 7, 2, '#8a5f3e', INK, 0.8);
+    ell(c, -1, -24.5, 8, 2.4, '#2f2a30', INK, 0.6); ell(c, -1, -24.5, 2.4, 0.8, '#e8584e', null);
+    const a = Math.sin(t * 6) * 0.3; c.strokeStyle = '#fff'; c.globalAlpha = 0.5; c.lineWidth = 0.5; c.beginPath(); c.ellipse(-1, -24.5, 5, 1.5, a, 0.3, 1.4); c.stroke(); c.globalAlpha = 1;
+    line(c, 9, -26, 4, -24, '#cfd6da', 1);
+    // floating notes
+    for (let i = 0; i < 2; i++) { const k = (t * 0.5 + i * 0.5) % 1; c.globalAlpha = 1 - k; text(c, '♪', 6 + i * 4, -32 - k * 14, 7, '#5b3f36', 900); } c.globalAlpha = 1;
+  },
+  vase_ceramic(c, t, p) {
+    shadow(c, 0, 1, 7, 2, 0.16);
+    c.beginPath(); c.moveTo(-3, -24); c.quadraticCurveTo(-9, -16, -6, -2); c.quadraticCurveTo(0, 1, 6, -2); c.quadraticCurveTo(9, -16, 3, -24); c.closePath();
+    c.fillStyle = '#f4f7fb'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+    c.strokeStyle = '#4f7fc8'; c.lineWidth = 0.8; c.beginPath(); c.moveTo(-6, -12); c.quadraticCurveTo(0, -16, 6, -12); c.stroke(); circ(c, 0, -8, 1.8, null, '#4f7fc8', 0.8); c.beginPath(); c.moveTo(-5, -4); c.quadraticCurveTo(0, -1, 5, -4); c.stroke();
+    // lotus stems
+    for (const [x, h, col] of [[-3, 36, '#f4a9b8'], [2, 40, '#fff'], [4, 32, '#f4a9b8']]) { line(c, x * 0.3, -24, x, -h, '#6fae5c', 1); circ(c, x, -h, 2.6, col, INK, 0.6); }
+    ell(c, -6, -30, 4, 2, '#7fc062', INK, 0.5);
+  },
+  hanging_plant(c, t, p) {
+    const sw = Math.sin(t * 1.1 + (p.x || 0)) * 1.2;
+    line(c, 0, -74, sw * 0.5, -60, '#a8763f', 0.8); line(c, -4, -60 + 0.2, 0, -74, '#a8763f', 0.6); line(c, 4, -60, 0, -74, '#a8763f', 0.6);
+    c.save(); c.translate(sw, 0);
+    poly(c, [-6, -60, 6, -60, 4, -52, -4, -52], '#d9784f', INK, 0.7);
+    for (let i = 0; i < 5; i++) { const x = -6 + i * 3; c.beginPath(); c.moveTo(x, -58); c.quadraticCurveTo(x + (i - 2) * 2, -50, x + (i - 2) * 1.5, -40 - (i % 2) * 4); c.strokeStyle = '#5f9e4c'; c.lineWidth = 1; c.stroke(); circ(c, x + (i - 2) * 1.5, -40 - (i % 2) * 4, 1.6, '#7fc062', INK, 0.4); circ(c, x + (i - 2) * 1.8, -48, 1.4, '#9fd67a', null); }
+    for (let i = 0; i < 4; i++) circ(c, -5 + i * 3.4, -61, 2.6, '#7fc062', INK, 0.5);
+    c.restore();
+  },
+  wall_mirror(c, t, p) {
+    ell(c, 0, -56, 11, 13, '#e3b86a', INK, 1);
+    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; circ(c, Math.cos(a) * 11.5, -56 + Math.sin(a) * 13.5, 1.6, '#f2c14e', INK, 0.4); }
+    const gr = c.createLinearGradient(-8, -66, 8, -46); gr.addColorStop(0, '#e6f7ff'); gr.addColorStop(1, '#a9cfe6');
+    ell(c, 0, -56, 8, 10, gr, 'rgba(91,63,54,.4)', 0.6);
+    c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-4, -58); c.lineTo(1, -63); c.moveTo(-3, -52); c.lineTo(3, -58); c.stroke();
+  },
+  lamp_table(c, t, p) {
+    shadow(c, 0, 1, 10, 3, 0.16);
+    for (const x of [-7, 7]) limb(c, [x, -14, x, 0], 1.4, '#8a5f3e');
+    wood(c, -10, -17, 20, 4, 1.5, '#c98f5a', 0.8); line(c, -7, -6, 7, -6, '#8a5f3e', 1);
+    ell(c, -1, -18, 3.6, 1.2, '#9fd8c8', INK, 0.6); c.beginPath(); c.moveTo(-3, -18); c.quadraticCurveTo(-5, -24, -1, -26); c.quadraticCurveTo(3, -24, 1, -18); c.fillStyle = '#9fd8c8'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.6; c.stroke();
+    poly(c, [-8, -26, 6, -26, 3, -35, -5, -35], '#fff1dc', INK, 0.8);
+    box(c, 5, -20, 5, 3, 0.5, '#e8584e', INK, 0.4);
+    g(p, -1, -30, 34, 'rgba(255,220,150,.55)');
+  },
+  bamboo_screen(c, t, p) {
+    shadow(c, 0, 1, 24, 4, 0.16);
+    for (let panel = 0; panel < 3; panel++) {
+      const x = -24 + panel * 16, dy = panel === 1 ? 2 : 0;
+      box(c, x, -50 + dy, 16, 50, 1, '#e9c98a', INK, 0.9);
+      for (let i = 1; i < 4; i++) line(c, x + i * 4, -49 + dy, x + i * 4, -1 + dy, '#c9a25e', 0.7);
+      for (const y of [-38, -20]) line(c, x + 1, y + dy, x + 15, y + dy, '#a8763f', 1.2);
+      if (panel === 1) { circ(c, x + 8, -30, 4, '#f36d86', null); c.globalAlpha = 0.9; ell(c, x + 5, -24, 3, 1.2, '#6fae5c', null); c.globalAlpha = 1; }
+    }
+  },
+  // ---- salon
+  salonChair(c, t, p) {
+    const col = p.col || '#e56b8b';
+    shadow(c, 0, 1, 11, 3, 0.18);
+    ell(c, 0, -1, 9, 2.6, '#9aa3ad', INK, 0.8); limb(c, [0, -2, 0, -9], 2.4, '#9aa3ad');
+    fabric(c, -10, -16, 20, 7, 3, col);
+    fabric(c, -9, -32, 18, 17, 5, col); stitch(c, -6, -29, 12, 11, shade(col, -25));
+    for (const x of [-12, 8]) box(c, x, -20, 4, 3, 1, '#2f2a30', INK, 0.6);
+    line(c, 0, -3, 6, -3, '#6b737c', 1.4);
+  },
+  salonStation(c, t, p) {
+    shadow(c, 0, 1, 18, 3, 0.16);
+    wood(c, -18, -20, 36, 12, 2, '#fffaf0');
+    box(c, -14, -64, 28, 42, 6, '#f2c14e', INK, 1);
+    const gr = c.createLinearGradient(-10, -60, 10, -26); gr.addColorStop(0, '#e6f7ff'); gr.addColorStop(1, '#a9cfe6');
+    box(c, -11, -61, 22, 36, 4, gr, 'rgba(91,63,54,.4)', 0.6);
+    c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-6, -50); c.lineTo(0, -57); c.moveTo(-7, -42); c.lineTo(3, -52); c.stroke();
+    for (let i = 0; i < 4; i++) circ(c, -12 + i * 8, -66, 1.6, '#fff4c8', INK, 0.4);
+    // bottles, comb and scissors
+    for (const [x, col] of [[-13, '#c9b6e8'], [-9, '#9fd8c8'], [12, '#f4a9b8']]) { box(c, x - 1.6, -26, 3.2, 6, 1, col, INK, 0.5); }
+    box(c, 2, -22, 7, 1.6, 0.5, '#2f2a30', null);
+  },
+  hairWash(c, t, p) {
+    shadow(c, 0, 1, 16, 4, 0.16);
+    fabric(c, -16, -12, 26, 10, 3, '#3f4a5e');
+    box(c, 8, -24, 10, 22, 3, '#fffaf0', INK, 0.9);
+    ell(c, 13, -24, 8, 3.4, '#fffaf0', INK, 0.9); ell(c, 13, -24, 5.5, 2, '#bfe3ef', null);
+    limb(c, [15, -30, 15, -26], 1.2, '#b9c3cb'); line(c, 15, -30, 11, -30, '#b9c3cb', 1.2);
+    const k = (t * 1.5) % 1; circ(c, 13 + Math.sin(t * 3) * 2, -30 - k * 8, 1.2 * (1 - k) + 0.3, 'rgba(255,255,255,.9)', 'rgba(111,159,200,.6)', 0.4);
+  },
+  hoodDryer(c, t, p) {
+    shadow(c, 0, 1, 12, 3, 0.16);
+    ell(c, 0, -1, 8, 2.4, '#9aa3ad', INK, 0.8); limb(c, [0, -2, 0, -34], 1.8, '#9aa3ad');
+    c.beginPath(); c.moveTo(-9, -36); c.quadraticCurveTo(-11, -52, 0, -54); c.quadraticCurveTo(11, -52, 9, -36); c.quadraticCurveTo(0, -32, -9, -36);
+    c.fillStyle = '#c9b6e8'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    ell(c, 0, -36, 8, 2.4, '#8f7fb0', INK, 0.6); ell(c, -3, -47, 3, 2, 'rgba(255,255,255,.4)', null);
+    circ(c, 7, -44, 1.2, Math.sin(t * 4) > 0 ? '#9fd67a' : '#6f9f5a', null);
+  },
+  productShelf(c, t, p) {
+    const w = p.w || 50;
+    wood(c, -w / 2, -52, w, 50, 2, '#fffaf0');
+    for (let r = 0; r < 3; r++) {
+      line(c, -w / 2 + 2, -36 + r * 15, w / 2 - 2, -36 + r * 15, '#c9a25e', 1.4);
+      const n = Math.floor((w - 6) / 7);
+      for (let i = 0; i < n; i++) { const x = -w / 2 + 5 + i * 7, col = ['#f4a9b8', '#9fd8c8', '#c9b6e8', '#f7de8c', '#8fb7e0'][(i + r) % 5], hh = 7 + ((i * 3 + r) % 3) * 1.5; box(c, x - 2.2, -37 + r * 15 - hh, 4.4, hh, 1.2, col, INK, 0.5); box(c, x - 1, -39 + r * 15 - hh, 2, 2, 0.5, '#fffaf0', INK, 0.3); }
+    }
+  },
+  barberPole(c, t, p) {
+    box(c, -3.5, -62, 7, 28, 3, '#fff', INK, 0.8);
+    c.save(); c.beginPath(); c.rect(-3, -61, 6, 26); c.clip(); const off = (t * 10) % 8;
+    for (let y = -70; y < -30; y += 8) { line(c, -4, y + off, 4, y + off - 5, '#e8584e', 2); line(c, -4, y + 4 + off, 4, y + off - 1, '#6f9fc8', 2); }
+    c.restore(); circ(c, 0, -63, 3, '#f2c14e', INK, 0.7); circ(c, 0, -33, 2.6, '#f2c14e', INK, 0.7);
+  },
+});
+Object.assign(FURN_DRAW, {
+  armchair: (c, t, p) => F.armchair(c, t, p),
+  bean_bag: (c, t, p) => F.bean_bag(c, t, p),
+  rocking_chair: (c, t, p) => F.rocking_chair(c, t, p),
+  dresser: (c, t, p) => F.dresser(c, t, p),
+  record_player: (c, t, p) => F.record_player(c, t, p),
+  vase_ceramic: (c, t, p) => F.vase_ceramic(c, t, p),
+  hanging_plant: (c, t, p) => { c.save(); c.translate(0, p.preview ? 60 : 0); F.hanging_plant(c, t, p); c.restore(); },
+  wall_mirror: (c, t, p) => { c.save(); c.translate(0, p.preview ? 46 : 0); F.wall_mirror(c, t, p); c.restore(); },
+  lamp_table: (c, t, p) => F.lamp_table(c, t, p),
+  bamboo_screen: (c, t, p) => F.bamboo_screen(c, t, p),
+});

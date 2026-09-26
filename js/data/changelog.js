@@ -3,9 +3,24 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '3.6.0';
+export const APP_VERSION = '3.7.0';
 
 export const CHANGELOG = [
+  {
+    v: '3.7.0', date: '2026-09-26T07:42:50Z',
+    title: ['Salon Day', 'Ngày Làm Đẹp'],
+    items: [
+      ['Stylish new haircuts for everyone on the island: curtain bangs, lobs, braids, quiffs, undercuts, curls and more', 'Kiểu tóc mới thời thượng cho cả đảo: mái bay, tóc lob, tóc tết, quiff, undercut, tóc xoăn và nhiều nữa'],
+      ['New: Chị Tiên\'s Hair Salon east of the plaza. Pick from 22 women\'s and 21 men\'s cuts, or dye your hair in 12 colours', 'Mới: Salon Tóc Xinh của Chị Tiên ở phía đông quảng trường. Chọn 22 kiểu tóc nữ, 21 kiểu tóc nam, hoặc nhuộm 12 màu'],
+      ['Getting a haircut is a little show: hop in the chair, snip snip, sparkle!', 'Cắt tóc là cả một màn: ngồi lên ghế, xoẹt xoẹt, lấp lánh!'],
+      ['10 new furniture pieces at Anh Khoa\'s: armchair, bean bag, rocking chair, dresser, record player, Bát Tràng vase, hanging plant, sunburst mirror, bedside lamp table and bamboo screen', '10 món nội thất mới ở tiệm Anh Khoa: ghế bành, ghế lười, ghế bập bênh, tủ ngăn kéo, máy hát đĩa, bình gốm Bát Tràng, chậu cây treo, gương mặt trời, bàn đèn ngủ và bình phong tre'],
+      ['You can sit in the armchair, bean bag and rocking chair', 'Có thể ngồi lên ghế bành, ghế lười và ghế bập bênh'],
+      ['10 new items at Cô Ba\'s Boutique: tennis polo, varsity jacket, denim overalls, gingham dress, linen set, loafers, high-tops, sunglasses, heart shades and a pearl necklace', '10 món mới ở Tiệm Áo Cô Ba: áo polo, áo khoác varsity, quần yếm denim, váy caro, bộ linen, giày lười, giày cổ cao, kính râm, kính trái tim và vòng ngọc trai'],
+      ['Friendly grandmas now run the ice cream, sugarcane and bánh mì carts. Buy a cheap treat and enjoy it on the spot', 'Các bà hiền hậu giờ bán ở xe kem, xe nước mía và xe bánh mì. Mua món ăn vặt giá rẻ và thưởng thức ngay tại chỗ'],
+      ['Feet and shoes redrawn as real feet: rounded toes, soles, laces, sandals that show your toes', 'Vẽ lại bàn chân và giày cho giống thật: mũi tròn, đế giày, dây giày, dép lộ ngón chân'],
+      ['Fixed white clothes getting odd blue shading', 'Sửa lỗi quần áo trắng bị bóng màu xanh lạ'],
+    ],
+  },
   {
     v: '3.6.0', date: '2026-09-26T04:03:21Z',
     title: ['Cozy Villagers', 'Cư Dân Ấm Áp'],

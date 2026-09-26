@@ -26,6 +26,24 @@ export function drawHeld(c, what, x, y, t, view, P) {
     case 'wood': c.rotate(-0.2); box(c, -6, -1.6, 12, 3.2, 1, '#c98c55', INK, 0.8); break;
     case 'fish': ell(c, 0, 0, 4.2, 1.8, '#a6c7d8'); poly(c, [3.6, 0, 6, -2, 6, 2], '#a6c7d8', INK, 0.7); break;
     case 'rod': limb(c, [0, 0, 7, -14], 0.9, '#9c6e46', null); break;
+    case 'icecream': case 'icecream_b': case 'icecream_c': {   // cone + scoops that get eaten (P.bites 0..3)
+      c.scale(0.8, 0.8);
+      const b = P?.bites || 0, cols = { icecream: ['#fff3d6', '#f4a9b8'], icecream_b: ['#8fcf9a', '#fff3d6'], icecream_c: ['#8a5a40', '#ffe08a'] }[what];
+      poly(c, [-2.6, -1.5, 2.6, -1.5, 0, 7], '#e2a95c', INK, 0.7); line(c, -1.4, 0.8, 1, 2.4, '#b77a3f', 0.5); line(c, 1.4, 0.8, -1, 2.4, '#b77a3f', 0.5);
+      if (b < 3) circ(c, 0, -2.6, 2.8, cols[0], INK, 0.7);
+      if (b < 2) circ(c, 0.3, -6, 2.5, cols[1], INK, 0.7);
+      if (b < 1) circ(c, 0.6, -8.6, 0.9, '#e8584e', INK, 0.5);
+      break;
+    }
+    case 'sugarcane': {   // plastic cup of nước mía with a lime wedge and straw
+      const k = 1 - Math.min(3, P?.bites || 0) / 3.4;
+      poly(c, [-2.8, -5, 2.8, -5, 2.2, 3.4, -2.2, 3.4], 'rgba(255,255,255,.8)', INK, 0.7);
+      c.save(); c.beginPath(); c.rect(-3, 3.4 - 8 * k, 6, 8 * k); c.clip(); poly(c, [-2.6, -4.6, 2.6, -4.6, 2, 3.2, -2, 3.2], '#d7e98a', null); circ(c, -1, 1.5, 0.5, 'rgba(255,255,255,.8)', null); circ(c, 0.8, -0.5, 0.6, 'rgba(255,255,255,.8)', null); c.restore();
+      ell(c, 2.4, -5, 1.4, 0.9, '#8fcf5a', INK, 0.5);
+      line(c, 0.4, -5, 1.8, -9, '#6fbf73', 0.9);
+      break;
+    }
+    case 'banh_mi_bite': c.rotate(-0.4); ell(c, 0, 0, 5.5 - (P?.bites || 0) * 1.2, 2.2, '#e7b160'); line(c, -2.4, -0.6, 2, -0.6, '#8fb466', 1); break;
     default: if (typeof what === 'string' && ICONS[what]) { c.scale(0.28, 0.28); ICONS[what](c, t); }
   }
   c.restore();
@@ -43,6 +61,9 @@ const leafy = (c, x, y, s, col, rot = 0) => { c.save(); c.translate(x, y); c.rot
 const jar = (c, body, lid, label, fill) => { box(c, -9, -8, 18, 19, 4, body); if (fill) { c.save(); c.beginPath(); c.roundRect ? c.roundRect(-8.5, -3, 17, 13.5, 3.5) : c.rect(-8.5, -3, 17, 13.5); c.clip(); c.fillStyle = fill; c.fillRect(-9, -3, 18, 15); c.restore(); } box(c, -10, -12, 20, 5, 2, lid); if (label) box(c, -6, -1, 12, 7, 1.5, label, INK, 0.7); };
 
 export const ICONS = {
+  scissors: c => { for (const s of [-1, 1]) { c.save(); c.rotate(s * 0.35); poly(c, [-1.6, -13, 1.6, -13, 1.2, 2, -1.2, 2], '#dfe6ea', INK, 1); c.restore(); } for (const s of [-1, 1]) circ(c, s * 5, 8, 4, null, '#e56b8b', 2.6); circ(c, 0, 0, 1.2, '#8a8f96', INK, 0.6); },
+  icecream: c => { poly(c, [-7, -2, 7, -2, 0, 14], '#e2a95c', INK, 1); circ(c, 0, -4, 7, '#fff3d6', INK, 1); circ(c, 1, -11, 6, '#f4a9b8', INK, 1); circ(c, 2, -17, 2, '#e8584e', INK, 0.8); },
+  sugarcane: c => { poly(c, [-7, -10, 7, -10, 5.5, 12, -5.5, 12], 'rgba(255,255,255,.85)', INK, 1); poly(c, [-6.5, -6, 6.5, -6, 5.3, 11, -5.3, 11], '#d7e98a', null); ell(c, 6, -10, 3.2, 2, '#8fcf5a', INK, 0.8); line(c, 1, -10, 4, -18, '#6fbf73', 2); },
   tea: c => { jar(c, '#e3f1d9', '#6fa56d', '#fff8e8', '#b9d98f'); leafy(c, 0, 2.5, 3.2, '#79b35f', 0.4); },
   kumquat: c => { for (const [x, y] of [[-5, 3], [5, 3], [0, -3]]) { circ(c, x, y, 6.2, '#ffa53a'); circ(c, x - 2, y - 2, 1.6, 'rgba(255,255,255,.6)', null); } leafy(c, 3, -9, 3.6, '#6db35a', 0.8); },
   kumquat_cut: c => { for (const [x, y] of [[-5.5, 2], [5.5, 2], [0, -4]]) { circ(c, x, y, 5.8, '#ffc15c'); circ(c, x, y, 4.2, '#ffe07a', '#f0a53a', 0.6); for (let i = 0; i < 6; i++) { const an = i / 6 * TAU; line(c, x, y, x + Math.cos(an) * 3.4, y + Math.sin(an) * 3.4, '#f7c04a', 0.5); } } },

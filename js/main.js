@@ -42,6 +42,8 @@ import { BRIDGE_REPAIR } from './data/game.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { showWhatsNew } from './ui/whatsnew.js';
 import { openBoutique, openWardrobe, currentLook, refreshPlayerLook } from './ui/clothes.js';
+import { openSalon } from './ui/salon.js';
+import { spawnVendors, updateVendors, buyFromVendor } from './systems/vendors.js';
 import { bus, dist, clamp, sleep, choice, money } from './core/util.js';
 import { LIGHT } from './gfx/props.js';
 
@@ -106,6 +108,7 @@ function startGame() {
   G.meo.talkable = true;
   scenes.island.add(G.meo); G.meo.x = 970; G.meo.y = 1650;
   initNPCs(scenes.island);
+  spawnVendors(scenes.island);
   spawnMerchants();
   rebuildHouseFurniture();
   scenes.restaurant.applyLevel();
@@ -133,7 +136,7 @@ function startGame() {
 }
 
 function spawnMerchants() {
-  for (const id of ['supermarket', 'materials', 'furniture', 'boutique']) {
+  for (const id of ['supermarket', 'materials', 'furniture', 'boutique', 'salon']) {
     const sc = scenes[id], mp = sc.merchantPos;
     const def = MERCHANTS[mp.id];
     const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: mp.x, y: mp.y, data: { mid: mp.id, merchant: true } });
@@ -157,7 +160,7 @@ function updateInteriorLife(dt) {
 }
 bus.on('enter', id => {
   const sc = scenes[id];
-  if (id.startsWith('home_')) { const rid = id.slice(5); const nm = RESIDENTS[rid]?.name || ''; showArea(T(`${nm}'s Home`, `Nhà ${nm}`), ''); } else showArea(T({ house: 'Your Home', supermarket: 'Cô Hoa\'s Supermarket', materials: 'Chú Bảy\'s Materials', furniture: 'Anh Khoa\'s Furniture', boutique: 'Cô Ba\'s Boutique', meo: 'Mèo Mây\'s Home', shed1: 'Your Drink Stand', shed2: 'Your Bánh Mì Shed', truck: 'Your Food Truck', restaurant: 'Your Restaurant' }[id] || '', { house: 'Nhà của bạn', supermarket: 'Siêu thị Cô Hoa', materials: 'Vật liệu Chú Bảy', furniture: 'Nội thất Anh Khoa', boutique: 'Tiệm Áo Cô Ba', meo: 'Nhà Mèo Mây', shed1: 'Quán Nước', shed2: 'Bánh Mì Góc Phố', truck: 'Xe Cuốn', restaurant: 'Nhà hàng' }[id] || ''), '');
+  if (id.startsWith('home_')) { const rid = id.slice(5); const nm = RESIDENTS[rid]?.name || ''; showArea(T(`${nm}'s Home`, `Nhà ${nm}`), ''); } else showArea(T({ house: 'Your Home', supermarket: 'Cô Hoa\'s Supermarket', materials: 'Chú Bảy\'s Materials', furniture: 'Anh Khoa\'s Furniture', boutique: 'Cô Ba\'s Boutique', salon: 'Chị Tiên\'s Hair Salon', meo: 'Mèo Mây\'s Home', shed1: 'Your Drink Stand', shed2: 'Your Bánh Mì Shed', truck: 'Your Food Truck', restaurant: 'Your Restaurant' }[id] || '', { house: 'Nhà của bạn', supermarket: 'Siêu thị Cô Hoa', materials: 'Vật liệu Chú Bảy', furniture: 'Nội thất Anh Khoa', boutique: 'Tiệm Áo Cô Ba', salon: 'Salon Tóc Xinh', meo: 'Nhà Mèo Mây', shed1: 'Quán Nước', shed2: 'Bánh Mì Góc Phố', truck: 'Xe Cuốn', restaurant: 'Nhà hàng' }[id] || ''), '');
   if (sc.merchant) { sc.merchant.face('down'); sc.merchant.setAct('wave'); sc.merchant.showEmote('happy', 1.4); setTimeout(() => sc.merchant.setAct(null), 1300); }
   if (id === 'meo' && !sc.actors.includes(G.meo)) setTimeout(() => toast({ text: T('Mèo Mây is out for a walk', 'Mèo Mây đang đi dạo'), sub: T('It\'s usually home for a nap at noon and at night.', 'Mèo Mây thường về nhà ngủ trưa và ngủ tối.'), icon: 'notebook' }), 400);
 });
@@ -201,6 +204,7 @@ function loop(now) {
   if (sc !== scenes.island) scenes.island.update(dt, t);
   if (sc.kind === 'interior') updateInteriorLife(dt);
   updateNPCs(dt);
+  if (G.scene === scenes.island) updateVendors(dt);
   updateBusinesses(dt, gm);
   updateRestaurant(dt, gm);
   updateMeo(dt);
@@ -301,6 +305,7 @@ async function talkTo(a) {
     else if (a.data?.mid) await talkToMerchant(a);
     else if (a.data?.emp) await talkToStaff(a);
     else if (a.data?.tourist) await talkToVisitor(a);
+    else if (a.data?.vendor) await buyFromVendor(a);
     else await say(a, T('Hello!', 'Xin chào!'));
   }, { bars: false, keepHud: true });
 }
@@ -373,6 +378,7 @@ function actAction(tr) {
     'shop:materials': () => { const st = G.state.story.step; if (st === 'materials') G.runtime.materialNeed = () => ({ label: bizName('shed1'), mats: BUSINESSES.shed1.repair }); openMaterialShop(); },
     'shop:furniture': () => openFurnitureShop(),
     'shop:boutique': () => openBoutique(),
+    'shop:salon': () => openSalon(),
     wardrobe: () => openWardrobe(),
     serve: () => serveAtCounter(bizId),
     prep: () => openPrep(bizId),

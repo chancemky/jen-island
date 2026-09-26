@@ -1,0 +1,11 @@
+<!doctype html><body style="margin:0;background:#a3d68a"><canvas id=c></canvas><script type=module>
+import '../js/systems/state.js';
+import { drawHuman } from '../js/gfx/character.js';
+import { playerLook } from '../js/data/looks.js';
+import { HAIRCUTS } from '../js/data/hair.js';
+const q=new URLSearchParams(location.search), g=q.get('g')||'f', dirs=(q.get('d')||'down,right,up').split(',');
+const ids=Object.keys(HAIRCUTS).filter(k=>HAIRCUTS[k].g===g);
+const Z=4, cv=document.getElementById('c'), cols=dirs.length*4; cv.width=cols*34*Z; cv.height=Math.ceil(ids.length*dirs.length/cols)*50*Z; const c=cv.getContext('2d'); c.lineJoin='round'; c.lineCap='round';
+let i=0; for(const id of ids) for(const d of dirs){ const L=playerLook({hairStyle:id, hair:'#6e4430'}); L.hat=q.get('hat')||null; c.save(); c.setTransform(Z,0,0,Z,((i%cols)*34+17)*Z,(Math.floor(i/cols)*50+46)*Z); drawHuman(c,{look:L,dir:d,moving:0,seed:1},0.3); c.restore(); i++; }
+window.done=1;
+</script>

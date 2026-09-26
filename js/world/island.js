@@ -80,6 +80,7 @@ export const PATHS = {
   beachW: [[900, 2252], [760, 2250], [600, 2236], [450, 2176], [330, 2066], [250, 1960]],
   beachE: [[900, 2252], [1060, 2250], [1230, 2236], [1380, 2196], [1500, 2100], [1580, 1990]],
   east: [[1000, 1580], [1120, 1690], [1260, 1766], [1420, 1766], [1560, 1720], [1610, 1640]],
+  salon: [[1492, 1346], [1500, 1450], [1500, 1570]],
   lane: [[1120, 1690], [1232, 1660], [1340, 1634], [1440, 1604], [1500, 1572]],
   north: [[900, 1436], [900, 1300], [900, 1186]],
   market: [[480, 1184], [700, 1190], [900, 1188], [1100, 1186], [1340, 1178], [1418, 1170]],
@@ -114,6 +115,7 @@ export const BUILDINGS = [
   { id: 'materials', type: 'shop', kind: 'materials', x: 1090, y: 1154, w: 140, fp: 56, door: [48, 0], interior: 'materials', wall: '#e9ddd0' },
   { id: 'furniture', type: 'shop', kind: 'furniture', x: 1310, y: 1146, w: 140, fp: 56, door: [48, 0], interior: 'furniture', wall: '#f4e6d6' },
   { id: 'boutique', type: 'shop', kind: 'boutique', x: 900, y: 1146, w: 136, fp: 56, door: [44, 0], interior: 'boutique', wall: '#fff3f5' },
+  { id: 'salon', type: 'shop', kind: 'salon', x: 1450, y: 1340, w: 132, fp: 54, door: [42, 0], interior: 'salon', wall: '#effaf6' },
   // resident homes (not enterable)
   { id: 'h_batu', type: 'house', interior: 'home_ba_tu', door: [0, 0], x: 420, y: 1546, w: 100, fp: 52, wall: '#e9c9a2', roof: '#a8563f', shutter: '#7aa38a', home: 'ba_tu', style: 'wood' },
   { id: 'h_linh', type: 'house', interior: 'home_linh', door: [0, 0], x: 300, y: 1384, w: 100, fp: 52, wall: '#cfe6d8', roof: '#d9784f', shutter: '#e89a8a', home: 'linh', style: 'student' },

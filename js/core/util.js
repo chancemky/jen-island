@@ -42,7 +42,8 @@ export function shade(hex, amt) {
   const key = hex + amt;
   let v = shadeCache.get(key);
   if (v) return v;
-  const n = parseInt(hex.slice(1), 16);
+  let hx = hex.slice(1); if (hx.length === 3) hx = hx[0] + hx[0] + hx[1] + hx[1] + hx[2] + hx[2];
+  const n = parseInt(hx, 16);
   const r = clamp((n >> 16) + amt, 0, 255), g = clamp(((n >> 8) & 255) + amt, 0, 255), b = clamp((n & 255) + amt, 0, 255);
   v = '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
   shadeCache.set(key, v);

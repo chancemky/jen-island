@@ -345,6 +345,32 @@ export function drawShop(c, t, b) {
     // a little hanger icon
     c.strokeStyle = '#fff'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(w / 2 - 14, -h - 5); c.lineTo(w / 2 - 6, -h - 11); c.lineTo(w / 2 + 2, -h - 5); c.closePath(); c.stroke();
   }
+  else if (kind === 'salon') {
+    // mint salon: big window with a styling chair and mirror, spinning barber pole, scissors sign
+    box(c, -w / 2 + 10, -h + 14, w - 60, h - 18, 4, nightA() > 0.05 ? winLit() : '#e6f5fb');
+    const wx = -w / 2 + 38;
+    ell(c, wx, -h + 30, 10, 12, '#fffaf0', INK, 0.8); ell(c, wx, -h + 30, 7.5, 9.5, '#cfeaf5', null);
+    c.fillStyle = 'rgba(255,255,255,.7)'; c.fillRect(wx - 4, -h + 24, 2, 8);
+    box(c, wx - 8, -18, 16, 8, 3, '#e56b8b', INK, 0.7); box(c, wx - 7, -30, 14, 12, 4, '#e56b8b', INK, 0.7); limb(c, [wx, -10, wx, -5], 2, '#9aa3ad'); ell(c, wx, -5, 6, 1.6, '#9aa3ad', INK, 0.6);
+    box(c, -w / 2 + 58, -26, 8, 20, 2, '#f7de8c', INK, 0.6); circ(c, -w / 2 + 62, -30, 4, '#c9b6e8', INK, 0.6);
+    if (nightA() > 0.05) glow(b, -w / 2 + 40, -h + 30, 46, 'rgba(200,255,240,.5)');
+    door(c, w / 2 - 24, 24, 36, '#6fbfb0', b.doorOpen || 0, { matCol: '#c9b6e8', inside: '#effaf6' });
+    // barber pole (stripes scroll)
+    const px = w / 2 - 6, py = -h + 6;
+    box(c, px - 3.6, py, 7.2, 30, 3, '#fff', INK, 0.8);
+    c.save(); c.beginPath(); c.rect(px - 3, py + 1, 6, 28); c.clip();
+    const off = (t * 10) % 8; c.strokeStyle = '#e8584e'; c.lineWidth = 2;
+    for (let y = -8; y < 36; y += 8) { c.beginPath(); c.moveTo(px - 4, py + y + off); c.lineTo(px + 4, py + y + off - 5); c.stroke(); }
+    c.strokeStyle = '#6f9fc8'; for (let y = -4; y < 36; y += 8) { c.beginPath(); c.moveTo(px - 4, py + y + off); c.lineTo(px + 4, py + y + off - 5); c.stroke(); }
+    c.restore();
+    circ(c, px, py - 1, 3.4, '#f2c14e', INK, 0.8); circ(c, px, py + 31, 3, '#f2c14e', INK, 0.8);
+    awning(c, -14, -h + 12, w - 32, ['#effaf6', '#6fbfb0'], 12);
+    box(c, -w / 2 - 2, -h - 22, w + 4, 22, 10, '#6fbfb0');
+    text(c, T('SALON TÓC XINH', 'SALON TÓC XINH'), -6, -h - 11, 10.5, '#fff', 900, 'center', INK, 2.4);
+    // scissors icon
+    c.strokeStyle = '#fff'; c.lineWidth = 1.3; circ(c, w / 2 - 12, -h - 7, 2, null, '#fff', 1.3); circ(c, w / 2 - 6, -h - 7, 2, null, '#fff', 1.3);
+    c.beginPath(); c.moveTo(w / 2 - 11, -h - 9); c.lineTo(w / 2 - 4, -h - 16); c.moveTo(w / 2 - 7, -h - 9); c.lineTo(w / 2 - 14, -h - 16); c.stroke();
+  }
   if (kind === 'supermarket') { /* flat roof edge */ }
 }
 

@@ -260,6 +260,16 @@ export const FURNITURE = {
   cat_bed:     { vi: 'Nệm mèo',        en: 'Cat bed',         price: 50,  w: 24, h: 16 },
   piano:       { vi: 'Đàn piano',      en: 'Little piano',    price: 380, w: 46, h: 18, unlock: 5 },
   aquarium_big:{ vi: 'Hồ cá koi',      en: 'Koi basin',       price: 450, w: 46, h: 26, unlock: 6 },
+  armchair:    { vi: 'Ghế bành',       en: 'Comfy armchair',  price: 130, w: 30, h: 14 },
+  bean_bag:    { vi: 'Ghế lười',       en: 'Bean bag',        price: 70,  w: 30, h: 14 },
+  rocking_chair:{ vi: 'Ghế bập bênh',  en: 'Rocking chair',   price: 115, w: 26, h: 12 },
+  dresser:     { vi: 'Tủ ngăn kéo',    en: 'Dresser',         price: 140, w: 38, h: 14, wallish: true },
+  record_player:{ vi: 'Máy hát đĩa',   en: 'Record player',   price: 160, w: 24, h: 12 },
+  vase_ceramic:{ vi: 'Bình gốm Bát Tràng', en: 'Blue ceramic vase', price: 85, w: 16, h: 10 },
+  hanging_plant:{ vi: 'Chậu cây treo', en: 'Hanging plant',   price: 45,  w: 14, h: 8, wall: true },
+  wall_mirror: { vi: 'Gương mặt trời', en: 'Sunburst mirror', price: 80,  w: 24, h: 8, wall: true },
+  lamp_table:  { vi: 'Bàn đèn ngủ',    en: 'Bedside lamp table', price: 75, w: 20, h: 12, light: true },
+  bamboo_screen:{ vi: 'Bình phong tre', en: 'Bamboo screen',  price: 120, w: 48, h: 10 },
 };
 
 // ---------------------------------------------------------------- customers

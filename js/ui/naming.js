@@ -4,6 +4,7 @@ import { h } from './sheets.js';
 import { sfx } from '../core/audio.js';
 import { escapeHtml } from '../core/util.js';
 import { PLAYER_OPTIONS, playerLook } from '../data/looks.js';
+import { HAIRCUTS } from '../data/hair.js';
 import { drawHuman, EL } from '../gfx/character.js';
 import { G, T } from '../systems/state.js';
 
@@ -33,7 +34,7 @@ export function chooseLook(start = {}) {
     G.runtime.pause++;
     const opt = { hairStyle: start.hairStyle || 'bob', hair: start.hair || PLAYER_OPTIONS.hair[0], top: start.top || PLAYER_OPTIONS.top[0], skin: start.skin || PLAYER_OPTIONS.skin[1], eyeCol: start.eyeCol || PLAYER_OPTIONS.eyeCol[1] };
     const el = h('div', 'modal');
-    const HS = T({ bob: 'Bob', short: 'Short', long: 'Long', buns: 'Twin buns', pony: 'Ponytail', spiky: 'Spiky', twin: 'Pigtails', wavy: 'Wavy' }, { bob: 'Tóc ngắn', short: 'Tóc tém', long: 'Tóc dài', buns: 'Búi đôi', pony: 'Đuôi ngựa', spiky: 'Tóc dựng', twin: 'Hai bím', wavy: 'Tóc xoăn' });
+    const HS = Object.fromEntries(Object.entries(HAIRCUTS).map(([k, v]) => [k, T(v.en, v.vi)]));
     el.innerHTML = `<div class="card"><h2>${T('What do you look like?', 'Trông bạn thế nào?')}</h2><div class="look-preview"><canvas width="300" height="300"></canvas></div>
       <div class="cycler" data-k="hairStyle"><small>${T('Hair', 'Kiểu tóc')}</small><button type="button" data-d="-1">‹</button><div class="val"></div><button type="button" data-d="1">›</button></div>
       <div class="cycler" data-k="hair"><small>${T('Hair colour', 'Màu tóc')}</small><div class="sw"></div></div>

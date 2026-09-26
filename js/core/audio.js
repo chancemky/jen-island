@@ -62,6 +62,9 @@ export function sfx(name, opt = {}) {
     case 'cluck': for (let i = 0; i < 3; i++) tone(700 + i * 60, 0.05, { type: 'triangle', vol: 0.08, slide: -200, when: i * 0.08 }); break;
     case 'coo': tone(360, 0.25, { type: 'sine', vol: 0.09, slide: 60 }); tone(330, 0.2, { type: 'sine', vol: 0.07, slide: -40, when: 0.26 }); break;
     case 'bleat': tone(520, 0.35, { type: 'sawtooth', vol: 0.05, slide: -60, vibrato: 18 }); break;
+    case 'snip': tone(2400, 0.03, { type: 'square', vol: 0.05, slide: -900 }); tone(2000, 0.03, { type: 'square', vol: 0.04, slide: -700, when: 0.07 }); break;
+    case 'slurp': tone(500, 0.18, { type: 'sine', vol: 0.06, slide: 300, vibrato: 30 }); break;
+    case 'munch': for (let i = 0; i < 2; i++) tone(180 + Math.random() * 60, 0.05, { type: 'square', vol: 0.05, slide: -60, when: i * 0.09 }); break;
     case 'click': for (let i = 0; i < 4; i++) tone(1800, 0.02, { type: 'square', vol: 0.05, when: i * 0.06 }); break;
     case 'mew': tone(900, 0.16, { type: 'triangle', vol: 0.11, slide: 200, attack: 0.02 }); break;
     case 'splash': tone(300, 0.18, { type: 'sine', vol: 0.06, slide: -200 }); tone(900, 0.08, { type: 'triangle', vol: 0.04, slide: -500, when: 0.02 }); break;

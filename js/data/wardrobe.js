@@ -39,6 +39,11 @@ export const CLOTHES = {
   gala:         { slot: 'outfit', price: 600, lv: 14, en: 'Gala Night Dress', vi: 'Váy dạ tiệc', look: { top: '#3d3550', bottom: '#3d3550', topStyle: 'dress', sleeve: 0, shoe: '#ffd35a', scarf: '#ffd35a' } },
   captain:      { slot: 'outfit', price: 520, lv: 12, en: 'Ferry Captain', vi: 'Thuyền trưởng', look: { top: '#fffaf0', topStyle: 'shirt', sleeve: 0.9, bottom: '#3f4a5e', bottomLen: 5, shoe: '#2f2a30', scarf: '#6f9fc8' } },
   tycoon:       { slot: 'outfit', price: 1500, lv: 20, en: 'Island Tycoon Suit', vi: 'Vest ông chủ đảo', look: { top: '#2f2a30', topStyle: 'shirt', sleeve: 1, bottom: '#2f2a30', bottomLen: 5, shoe: '#7a5040', scarf: '#e8584e' } },
+  polo:         { slot: 'outfit', price: 120, en: 'Tennis Polo', vi: 'Áo polo tennis', look: { top: '#fffaf0', topStyle: 'polo', top2: '#6fbfb0', sleeve: 0.5, bottom: '#6fbfb0', bottomLen: 2, shoe: '#fff', shoeStyle: 'sneaker' } },
+  varsity:      { slot: 'outfit', price: 190, lv: 3, en: 'Varsity Jacket', vi: 'Áo khoác varsity', look: { top: '#3f4a5e', top2: '#fffaf0', topStyle: 'varsity', sleeve: 1, bottom: '#556b8a', bottomLen: 5, shoe: '#fff' } },
+  overalls:     { slot: 'outfit', price: 150, en: 'Denim Overalls', vi: 'Quần yếm denim', look: { top: '#f7de8c', topStyle: 'tee', sleeve: 0.5, overall: '#6d7fa8', bottom: '#6d7fa8', bottomLen: 3, shoe: '#e9848f' } },
+  gingham:      { slot: 'outfit', price: 170, lv: 2, en: 'Gingham Picnic Dress', vi: 'Váy caro dã ngoại', look: { top: '#f4a9b8', bottom: '#f4a9b8', topStyle: 'dress', check: '#fffaf0', sleeve: 0.3, shoe: '#fff' } },
+  linen:        { slot: 'outfit', price: 210, lv: 4, en: 'Linen Resort Set', vi: 'Bộ linen nghỉ dưỡng', look: { top: '#efe6d2', topStyle: 'shirt', sleeve: 0.6, bottom: '#d8c3a5', bottomLen: 5, shoe: '#8a5f3e', shoeStyle: 'loafer' } },
   // ---- hats
   no_hat:       { slot: 'hat', price: 0, en: 'No hat', vi: 'Không đội mũ', look: { hat: null } },
   nonla:        { slot: 'hat', price: 70,  en: 'Nón Lá', vi: 'Nón lá', look: { hat: 'nonla', hatColor: '#efd69a' } },
@@ -73,6 +78,8 @@ export const CLOTHES = {
   boots:        { slot: 'shoes', price: 180, lv: 6, en: 'Leather Boots', vi: 'Bốt da', look: { shoe: '#8a5f3e', shoeStyle: 'boot' } },
   slippers:     { slot: 'shoes', price: 70, lv: 2, en: 'Bunny Slippers', vi: 'Dép thỏ bông', look: { shoe: '#fff4f6', shoeStyle: 'slipper' } },
   gold_shoes:   { slot: 'shoes', price: 900, lv: 15, en: 'Golden Kicks', vi: 'Giày vàng', look: { shoe: '#ffd35a', shoeStyle: 'sneaker' } },
+  loafers:      { slot: 'shoes', price: 130, lv: 3, en: 'Penny Loafers', vi: 'Giày lười da', look: { shoe: '#7a4a32', shoeStyle: 'loafer' } },
+  hightops:     { slot: 'shoes', price: 150, lv: 2, en: 'Red High-Tops', vi: 'Giày cổ cao đỏ', look: { shoe: '#e8584e', shoeStyle: 'hightop' } },
   // ---- accessories
   no_extra:     { slot: 'extra', price: 0, en: 'Nothing', vi: 'Không có', look: {} },
   backpack:     { slot: 'extra', price: 90,  en: 'Mint Backpack', vi: 'Ba lô bạc hà', look: { backpack: '#9fd8c8' } },
@@ -83,6 +90,9 @@ export const CLOTHES = {
   scarf:        { slot: 'extra', price: 80,  en: 'Cozy Scarf', vi: 'Khăn quàng', look: { scarf: '#f28f7c' } },
   lanyard:      { slot: 'extra', price: 50,  en: 'Staff Lanyard', vi: 'Dây đeo thẻ', look: { lanyard: '#f28f7c' } },
   guitar:       { slot: 'extra', price: 420, lv: 9, en: 'Little Guitar', vi: 'Đàn ghi-ta nhỏ', look: { guitar: true } },
+  sunglasses:   { slot: 'extra', price: 110, en: 'Cool Sunglasses', vi: 'Kính râm', look: { shades: '#2f2a30' } },
+  heart_shades: { slot: 'extra', price: 130, lv: 3, en: 'Heart Shades', vi: 'Kính trái tim', look: { shades: '#f36d86', shadesHeart: true } },
+  pearls:       { slot: 'extra', price: 260, lv: 6, en: 'Pearl Necklace', vi: 'Vòng ngọc trai', look: { necklace: '#fffaf0' } },
   surfboard:    { slot: 'extra', price: 480, lv: 11, en: 'Surfboard', vi: 'Ván lướt sóng', look: { surf: '#6fbfb0' } },
 };
 export const FREE_CLOTHES = ['classic', 'no_hat', 'no_extra', 'basic_shoes'];
@@ -96,6 +106,6 @@ export function applyOutfit(base, wardrobe) {
     Object.assign(L, it.look);
   }
   if (L.topStyle === 'dress') L.bottom = L.top;
-  delete L._c;
+  delete L._c; delete L._v;
   return L;
 }

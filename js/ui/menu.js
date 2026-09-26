@@ -132,8 +132,8 @@ function drawMap(cv) {
   c.font = 'italic 900 40px Nunito, sans-serif'; c.textAlign = 'center'; c.fillStyle = 'rgba(91,63,54,.35)';
   for (const [x, y, en, vi] of [[520, 1700, 'West Village', 'Xóm Tây'], [1350, 1860, 'East Village', 'Xóm Đông'], [900, 2330, 'Sunny Beach', 'Bãi Biển'], [1520, 980, 'Rice Paddies', 'Ruộng Lúa'], [900, 1060, 'Market Street', 'Phố Chợ'], ...(bridge ? [[2250, 1580, 'Firefly Islet', 'Cù Lao Đom Đóm']] : [])]) c.fillText(T(en, vi), x, y);
   // buildings as little rounded houses with an icon
-  const labels = T({ shed1: 'Drinks', shed2: 'Bánh Mì', truck: 'Truck', restaurant: 'Restaurant', house: 'Home', meo: 'Mèo Mây', supermarket: 'Market', materials: 'Materials', furniture: 'Furniture', boutique: 'Boutique', dinh: 'Temple' }, { shed1: 'Quán Nước', shed2: 'Bánh Mì', truck: 'Xe Cuốn', restaurant: 'Nhà Hàng', house: 'Nhà bạn', meo: 'Mèo Mây', supermarket: 'Siêu thị', materials: 'Vật liệu', furniture: 'Nội thất', boutique: 'Tiệm áo', dinh: 'Đình' });
-  const icons = { shed1: 'tea', shed2: 'banh_mi_thit', truck: 'goi_cuon', restaurant: 'pho_bo', house: 'heart', meo: 'notebook', supermarket: 'bag', materials: 'wood', furniture: 'sofa', boutique: 'shirt', dinh: 'lantern' };
+  const labels = T({ shed1: 'Drinks', shed2: 'Bánh Mì', truck: 'Truck', restaurant: 'Restaurant', house: 'Home', meo: 'Mèo Mây', supermarket: 'Market', materials: 'Materials', furniture: 'Furniture', boutique: 'Boutique', salon: 'Salon', dinh: 'Temple' }, { shed1: 'Quán Nước', shed2: 'Bánh Mì', truck: 'Xe Cuốn', restaurant: 'Nhà Hàng', house: 'Nhà bạn', meo: 'Mèo Mây', supermarket: 'Siêu thị', materials: 'Vật liệu', furniture: 'Nội thất', boutique: 'Tiệm áo', salon: 'Tiệm tóc', dinh: 'Đình' });
+  const icons = { shed1: 'tea', shed2: 'banh_mi_thit', truck: 'goi_cuon', restaurant: 'pho_bo', house: 'heart', meo: 'notebook', supermarket: 'bag', materials: 'wood', furniture: 'sofa', boutique: 'shirt', salon: 'scissors', dinh: 'lantern' };
   for (const b of BUILDINGS) {
     if (b.id === 'h_vy' && !bridge) continue;
     const own = G.state.biz[b.id];

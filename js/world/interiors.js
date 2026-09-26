@@ -228,6 +228,29 @@ export function buildInteriors() {
     r.merchantPos = { x: 145, y: 80, id: 'co_ba' };
     S.boutique = r;
   }
+  // Chị Tiên's hair salon
+  {
+    const r = new Interior({ id: 'salon', name: 'Salon Tóc Xinh', w: 290, h: 290, WH: 66, wall: '#e3f5ef', wall2: '#cfeee4', wallStyle: 'dots', floor: '#f4efe6', floorStyle: 'tile', door: { x: 145, w: 32 }, building: 'salon' });
+    r.wallItem('bunting', 145, { w: 200, cols: ['#9fd8c8', '#fff', '#c9b6e8', '#fff', '#f4a9b8'] });
+    r.wallItem('window', 232, { w: 40, h: 24, hgt: 50, curtain: '#c9b6e8' });
+    r.furn('pass', 145, 104, { w: 70, col: '#cfeee4', top: '#fffdf8' }, [-35, -24, 70, 22]);
+    r.furn('salonStation', 46, 88, {}, [-18, -8, 36, 8]);
+    r.furn('salonStation', 98, 88, {}, [-18, -8, 36, 8]);
+    r.furn('salonChair', 46, 122, { col: '#e56b8b' }, [-9, -5, 18, 5]);
+    r.furn('salonChair', 98, 122, { col: '#6fbfb0' }, [-9, -5, 18, 5]);
+    r.furn('hairWash', 238, 150, {}, [-16, -6, 34, 6]);
+    r.furn('hoodDryer', 250, 222, {}, [-9, -4, 18, 4]);
+    r.furn('armchair', 210, 222, { col: '#c9b6e8' }, [-14, -5, 28, 5]);
+    r.furn('productShelf', 214, 80, { w: 44 }, [-22, -6, 44, 6]);
+    r.furn('barberPole', 20, 70, {});
+    r.furn('rug', 145, 196, { w: 72, h: 30, col: '#9fd8c8' });
+    r.furn('plant', 24, 270, {}, [-6, -6, 12, 6]);
+    r.furn('plant', 266, 270, {}, [-6, -6, 12, 6]);
+    r.furn('vase_ceramic', 60, 220, {}, [-6, -3, 12, 3]);
+    r.trigger({ id: 'shop', kind: 'act', x: 104, y: 102, w: 82, h: 34, label: 'Cắt tóc', en: 'Haircut', icon: 'scissors', action: 'shop:salon' });
+    r.merchantPos = { x: 145, y: 80, id: 'chi_tien' };
+    S.salon = r;
+  }
   // Mèo Mây's home
   {
     const r = new Interior({ id: 'meo', name: 'Nhà Mèo Mây', w: 250, h: 280, WH: 62, wall: '#e2eaf7', wallStyle: 'paw', floor: '#e8c9a0', door: { x: 125, w: 30 }, building: 'meo' });

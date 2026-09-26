@@ -16,6 +16,10 @@ const KINDS = {
   sofa: [{ dx: -12, dy: 1.5, h: 12 }, { dx: 12, dy: 1.5, h: 12 }],
   cushion: [{ dx: 0, dy: 1, h: 4 }],
   lounger: [{ dx: -5, dy: 1, h: 5.5 }],
+  armchair: [{ dx: 0, dy: 1.5, h: 10 }],
+  bean_bag: [{ dx: 0, dy: 1, h: 6 }],
+  rocking_chair: [{ dx: 0, dy: 1.5, h: 10 }],
+  salonChair: [{ dx: 0, dy: 1.5, h: 11 }],
   rattanSet: [{ dx: -16, dy: 1.5, h: 10.5 }, { dx: 16, dy: 1.5, h: 10.5 }],
 };
 function kindOf(p) { return p.homeFurn ? p.homeFurn.id : p.kind; }
