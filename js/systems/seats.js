@@ -3,7 +3,7 @@
 // hop and lands butt-first with a squash. Move the joystick (or tap Stand) to
 // hop back off.
 
-import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
+import { lockInput, releaseInput } from '../core/locks.js';
 import { G } from './state.js';
 import { dist, sleep } from '../core/util.js';
 import { sfx } from '../core/audio.js';
@@ -105,6 +105,13 @@ export async function standUp() {
     if (pl.lie) { for (let i = 12; i >= 0; i--) { pl.lie.k = i / 12; await sleep(18); } clearLoad(pl.lie.prop); pl.lie = null; }
     await hopOff(pl, s);
   } finally { releaseInput('seat'); busy = false; }
+}
+// Force-clear seat/lie (cutscenes, scene changes). No hop animation.
+export function clearSeat(pl = G.player, { release = true } = {}) {
+  if (!pl) return;
+  if (pl.lie) { clearLoad(pl.lie.prop); pl.lie = null; }
+  pl.seat = null; pl.sit = false; pl.seatH = undefined;
+  if (release) releaseInput('seat');
 }
 // while seated: any real joystick push gets you up
 export function updateSeat(mag) { if (isSeated() && !busy && mag > 0.5) standUp(); }

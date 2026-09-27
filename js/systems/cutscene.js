@@ -8,6 +8,7 @@ import { sleep, dist, bus } from '../core/util.js';
 import { say, ask, closeDialog } from '../ui/dialogue.js';
 import { releaseJoystick } from '../core/input.js';
 import { lockInput, releaseInput } from '../core/locks.js';
+import { clearSeat } from './seats.js';
 import { sfx } from '../core/audio.js';
 
 const cinema = document.getElementById('cinema');
@@ -21,7 +22,7 @@ const ping = (busyFor = 0) => { const now = performance.now(); activity.at = now
 function begin(name, { bars, keepHud }) {
   running = name; runId++;
   const pl = G.player;
-  if (pl.seat && !keepHud) { pl.seat = null; pl.sit = false; pl.seatH = undefined; releaseInput('seat'); } // story scenes stand you up
+  if ((pl.seat || pl.lie) && !keepHud) clearSeat(pl); // story scenes stand you up (incl. hammock lie)
   lockInput('cutscene'); releaseJoystick();
   document.body.classList.add('cutscene');
   if (bars) cinema.classList.remove('hidden'), requestAnimationFrame(() => cinema.classList.add('on'));

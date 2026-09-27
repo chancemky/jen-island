@@ -3,7 +3,7 @@
 // across the fields, gulls wheel past the railing, and at night the lamp's beam
 // sweeps the sea. One button takes you back down.
 
-import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
+import { lockInput, releaseInput } from '../core/locks.js';
 import { G, T } from '../systems/state.js';
 import { cam } from '../world/render.js';
 import { LIGHT } from '../gfx/props.js';

@@ -1,7 +1,7 @@
 // Side quests: neighbours lose things (a kite, a net, a sandal…). Ask them if
 // they need help, find the sparkle on the island, bring it back for a reward.
 
-import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
+import { lockInput, releaseInput } from '../core/locks.js';
 import { applyPlayerPronouns, profileOf } from './pronouns.js';
 import { G, T, tr, markDirty, addMoney, addMat, addPantry } from './state.js';
 import { MORE_QUESTS } from '../data/quests.js';

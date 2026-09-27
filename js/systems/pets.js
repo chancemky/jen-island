@@ -3,7 +3,7 @@
 // and feed them. Pets that are following you can't be petted (so tapping around
 // the island still talks to people, not your dog).
 
-import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
+import { lockInput, releaseInput } from '../core/locks.js';
 import { G, T, markDirty, addMoney, canAfford } from './state.js';
 import { Actor } from '../world/actor.js';
 import { ANIMAL_DRAW } from './animals.js';
