@@ -10,7 +10,7 @@ import { buildRestaurant, updateRestaurant, initRestaurantRuntime, restRT, guest
 import { Player } from './systems/player.js';
 import { Actor } from './world/actor.js';
 import { initInput, input, moveVector, releaseJoystick } from './core/input.js';
-import { unlockAudio, sfx, musicTick, setAudio, suspendAudio, setMood } from './core/audio.js';
+import { unlockAudio, audioRunning, sfx, musicTick, setAudio, suspendAudio, setMood } from './core/audio.js';
 import { G, T, setLang, defaultState, bizOf, markDirty, flag, setFlag, hasMats, canAfford, addMoney, learnRecipe } from './systems/state.js';
 import { showReward } from './ui/sheets.js';
 import { scenes, setScene, enterBuilding, exitBuilding, updateDoors, isTransitioning, fadeOut, fadeIn } from './systems/scenes.js';
@@ -91,9 +91,13 @@ async function boot() {
   input.onTap = (cx, cy) => onWorldTap(cx, cy);
   window.addEventListener('resize', () => renderer.resize());
   window.visualViewport?.addEventListener('resize', () => renderer.resize());
-  // one-time audio unlock on the first touch (iOS requirement)
-  const unlock = () => { unlockAudio(); window.removeEventListener('pointerdown', unlock, true); };
-  window.addEventListener('pointerdown', unlock, true);
+  // Sound: try to start right away (allowed when the browser already trusts the site),
+  // otherwise on the very first tap/click/key. Phones only count touchend/click as a real
+  // gesture (not pointerdown), so listen for all of them and keep listening until the
+  // audio is actually running — and again whenever iOS suspends it.
+  unlockAudio();
+  const unlock = () => { if (!audioRunning()) unlockAudio(); };
+  for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) window.addEventListener(ev, unlock, { capture: true, passive: true });
   await sleep(10);
   scenes.island = new Island();
   progress(0.55, bootText('decor'));
@@ -122,10 +126,18 @@ async function boot() {
   startGame();
 }
 
+// If the browser is still holding the sound back (no tap yet), say so — gently, until it plays.
+function soundHint(wanted) {
+  if (!wanted || audioRunning() || $('soundHint')) return;
+  const el = document.createElement('div'); el.id = 'soundHint'; el.textContent = T('🔊 Tap anywhere for sound', '🔊 Chạm để bật âm thanh');
+  $('app').appendChild(el);
+  const check = setInterval(() => { if (audioRunning()) { clearInterval(check); el.classList.add('out'); setTimeout(() => el.remove(), 400); } }, 250);
+}
 function startGame() {
   const s = G.state;
   if (G.runtime.paused) { G.runtime.paused = false; document.getElementById('pauseCard')?.remove(); }   // a new start is never paused
   setAudio({ music: s.settings.music, sfx: s.settings.sfx });
+  soundHint(s.settings.music || s.settings.sfx);
   const look = currentLook(); // base look + clothes from the wardrobe
   G.player = new Player(look);
   G.player.name = s.player.name;
@@ -805,7 +817,7 @@ if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__jen = { G, sc
 if (window.__jen) {
   window.__jen.endDay = endDay;
   // stability tests: everything that can hold the screen or the player
-  Object.assign(window.__jen, { say, showReward, triggerAction, dialogue, isUiOpen, isPresenting, inputLocked, lockNames, lockInput, unlockAchievement, claimMilestone, isTransitioning,
+  Object.assign(window.__jen, { say, ask, addXP, showReward, triggerAction, dialogue, isUiOpen, isPresenting, inputLocked, lockNames, lockInput, unlockAchievement, claimMilestone, isTransitioning,
     health: () => ({ cs: cs.active, csName: cs.name, queued: cs.queued, inCutscene: G.runtime.inCutscene, pause: G.runtime.pause, locks: lockNames(), dialog: dialogue.active, ui: isUiOpen(), presenting: isPresenting(),
       dlgState: { typing: dialogue.typing, choices: !!dialogue.choices, resolve: !!dialogue.resolve, shown: dialogue.shown, len: dialogue.len, sinceShown: Math.round(performance.now() - (dialogue.shownAt || 0)) },
       overlays: [...document.querySelectorAll('.reward, .levelup, .summary, .modal, .sheet-wrap, .wn-wrap, .fishing, .album-view, .cs-continue')].map(e => e.className),

@@ -132,7 +132,8 @@ function advance() {
   // hide the box unless another line follows right away
   nextOrClose();
 }
-box.addEventListener('pointerdown', e => { e.preventDefault(); advance(); });
+// (never preventDefault a tap on a choice button — on iOS that cancels its click)
+box.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; e.preventDefault(); advance(); });
 window.addEventListener('keydown', e => { if (!D.active) return; if (e.key === ' ' || e.key === 'Enter' || e.key === 'e') { e.preventDefault(); e.stopImmediatePropagation(); advance(); } }, true);
 // Tapping anywhere on the game while dialogue is up advances it too — including during
 // cutscenes, when the joystick layer is switched off (a tap on the scene must never feel ignored).

@@ -17,10 +17,12 @@ export function askText({ title, sub = '', placeholder = '', max = 16, value = '
     document.getElementById('app').appendChild(el);
     const inp = el.querySelector('input'), b = el.querySelector('button');
     setTimeout(() => inp.focus(), 250);
+    let closed = false;
     const done = () => {
+      if (closed) return;
       const v = inp.value.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
       if (!v) { sfx('error'); inp.parentElement.animate([{ transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'none' }], { duration: 240 }); inp.focus(); return; }
-      sfx('success'); inp.blur(); G.runtime.pause--;
+      closed = true; sfx('success'); inp.blur(); G.runtime.pause--;
       el.style.transition = 'opacity .2s'; el.style.opacity = 0;
       setTimeout(() => { el.remove(); window.scrollTo(0, 0); res(v); }, 200);
     };
@@ -68,6 +70,6 @@ export function chooseLook(start = {}) {
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
-    el.querySelector('.btn').onclick = () => { alive = false; sfx('success'); G.runtime.pause--; el.style.transition = 'opacity .2s'; el.style.opacity = 0; setTimeout(() => { el.remove(); res(opt); }, 200); };
+    el.querySelector('.btn').onclick = () => { if (!alive) return; alive = false; sfx('success'); G.runtime.pause--; el.style.transition = 'opacity .2s'; el.style.opacity = 0; setTimeout(() => { el.remove(); res(opt); }, 200); };
   });
 }

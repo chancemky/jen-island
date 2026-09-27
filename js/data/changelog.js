@@ -3,9 +3,19 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.1.2';
+export const APP_VERSION = '5.1.3';
 
 export const CHANGELOG = [
+  {
+    v: '5.1.3', date: '2026-09-27T09:56:19Z',
+    title: ['Every Tap Counts', 'Chạm Là Ăn Ngay'],
+    items: [
+      ['Fixed getting stuck on the level-up card ("Yay!" not responding) and on reward cards: some phones quietly dropped the tap, and now the game catches it and presses the button for you', 'Sửa lỗi kẹt ở thẻ lên cấp (bấm “Tuyệt!” không ăn) và thẻ phần thưởng: một số điện thoại lặng lẽ bỏ qua cú chạm, giờ game sẽ bắt được và tự bấm giúp bạn'],
+      ['Fixed answers in a conversation sometimes not responding to a tap, which could leave you stuck mid-chat', 'Sửa lỗi đôi khi chạm vào câu trả lời trong hội thoại không có tác dụng, khiến bạn bị kẹt giữa cuộc trò chuyện'],
+      ['Music and sound start as soon as the game allows: on your very first tap or key press (and right away where the browser permits it), with a small "Tap anywhere for sound" hint until they play', 'Nhạc và âm thanh bật ngay khi game được phép: ngay cú chạm hoặc phím bấm đầu tiên (và bật luôn nếu trình duyệt cho phép), kèm gợi ý nhỏ “Chạm để bật âm thanh” cho đến khi có tiếng'],
+      ['Sound comes back after a phone call or switching apps (at the latest on your next tap)', 'Âm thanh bật lại sau cuộc gọi hoặc khi chuyển ứng dụng (chậm nhất là ở cú chạm tiếp theo)'],
+    ],
+  },
   {
     v: '5.1.2', date: '2026-09-27T08:40:36Z',
     title: ['A Rounder Question', 'Dấu Hỏi Tròn Trịa'],

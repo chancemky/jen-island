@@ -600,7 +600,40 @@ if (only === 'all' || only === 'stability') {
   if (h8.pause || h8.locks.length) fail('stability', `leaked pause ${h8.pause} / locks ${h8.locks} were not recovered`); else pass('stability', 'a leaked pause count and input lock are recovered');
   await clean('after the fail-safes');
 
-  const real = errors.filter(e => !/\[watchdog\]|\[cutscene\]/.test(e));
+  // real finger taps (not scripted clicks): the level-up "Yay!", a reward card and dialogue
+  // must answer a touch — and still do when the phone drops the click (iOS does that)
+  {
+    const tapEl = async sel => { const c = await p.evaluate(sel => { const e = [...document.querySelectorAll(sel)].pop(); if (!e) return null; const r = e.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, t = document.elementFromPoint(x, y); return { x, y, hit: !!t && e.contains(t) }; }, sel); if (c) await p.touchscreen.tap(c.x, c.y); return c; };
+    const until = async (fn, ms) => { for (let t = 0; t < ms; t += 100) { if (await p.evaluate(fn)) return true; await p.waitForTimeout(100); } return false; };
+    const bad = [];
+    await p.evaluate(() => { window.addEventListener('click', e => { if (window.__dropClicks && e.isTrusted) e.stopImmediatePropagation(); }, true); });
+    for (const drop of [false, true]) {
+      const how = drop ? ' (click dropped)' : '';
+      await p.evaluate(d => { window.__dropClicks = d; }, drop);
+      // level up
+      await p.evaluate(() => { const s = window.__jen.G.state; window.__jen.addXP(Math.round(90 * Math.pow(s.level || 1, 1.5)) - (s.xp || 0) + 1, 'test'); });
+      if (!(await until(() => !!document.querySelector('.levelup:not(.out) button'), 6000))) bad.push('level-up card never showed' + how);
+      else { await p.waitForTimeout(700); const c = await tapEl('.levelup:not(.out) button'); if (!c.hit) bad.push('something covers the level-up "Yay!"' + how);
+        if (!(await until(() => !document.querySelector('.levelup'), 2500))) bad.push('a tap on "Yay!" did not close the level-up card' + how); }
+      // reward card
+      await p.evaluate(() => { window.__jen.showReward({ title: 'Test', text: 'tap me' }); });
+      if (await until(() => !!document.querySelector('.reward:not(.out) button'), 3000)) { await p.waitForTimeout(400); await tapEl('.reward:not(.out) button');
+        if (!(await until(() => !document.querySelector('.reward'), 2500))) bad.push('a tap did not close a reward card' + how); } else bad.push('reward card never showed' + how);
+      // dialogue: a line (tap the box), then a choice (tap the second answer)
+      await p.evaluate(() => { window.__said = 0; window.__jen.say(null, 'A test line.').then(() => { window.__said = 1; }); });
+      for (let k = 0; k < 4 && !(await p.evaluate(() => window.__said)); k++) { await p.waitForTimeout(300); await tapEl('#dialog'); }
+      if (!(await until(() => window.__said, 1500))) bad.push('tapping the dialogue box did not move the chat on' + how);
+      await p.evaluate(() => { window.__pick = -1; window.__jen.ask(null, 'Pick one?', ['First', 'Second']).then(i => { window.__pick = i; }); });
+      if (await until(() => !!document.querySelector('.dlg-choices button'), 3000)) { await p.waitForTimeout(500); await tapEl('.dlg-choices button:last-child');
+        if (!(await until(() => window.__pick === 1, 2500))) bad.push(`tapping a dialogue answer did nothing (got ${await p.evaluate(() => window.__pick)})` + how); } else bad.push('dialogue choices never showed' + how);
+      await until(() => !window.__jen.dialogue.active, 2000);
+    }
+    await p.evaluate(() => { window.__dropClicks = false; });
+    if (bad.length) bad.forEach(b => fail('stability', b)); else pass('stability', 'real taps work on "Yay!", reward cards and dialogue — even when the phone drops the click');
+    await clean('after the tap checks');
+  }
+
+  const real = errors.filter(e => !/\[watchdog\]|\[cutscene\]|\[input\]/.test(e));
   if (real.length) fail('stability', 'errors: ' + real.slice(0, 3).join(' | ')); else pass('stability', 'no errors');
   await ctx.close();
 }

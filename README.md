@@ -34,7 +34,7 @@ On `localhost` only:
 | screens | Business / Milestones / Staff screens draw |
 | quests | every side quest plays start to finish (find, meet, puzzle, deliver, routes) |
 | world | TV, radio, piano, lamp, fish, books, fountain, timetable, fishing and the garden all work |
-| stability | stuck-screen regressions: stacked rewards/achievements/level-ups queue one at a time; cutscene + chapter card + achievements + quest + milestone rewards together (with rapid tapping); duplicate scene requests; overlapping dialogue; sleep with pending popups; doors after a cutscene; the watchdog recovering a hung scene, leaked pause and leaked lock — then controls, movement and the action button must work |
+| stability | stuck-screen regressions: stacked rewards/achievements/level-ups queue one at a time; cutscene + chapter card + achievements + quest + milestone rewards together (with rapid tapping); duplicate scene requests; overlapping dialogue; sleep with pending popups; doors after a cutscene; the watchdog recovering a hung scene, leaked pause and leaked lock; real finger taps on "Yay!", reward cards and dialogue, also with the click dropped the way iOS sometimes does — then controls, movement and the action button must work |
 | chaos (`npm run test:chaos`, not in `npm test`) | Chapters 1→20 with an impatient player: random taps, mashing the action key, opening/closing the menu around transitions |
 | render | every look × pose × direction draws pixels, and every figure keeps its big head |
 
@@ -90,6 +90,7 @@ No build step, no framework. Canvas 2D for the world, DOM for UI.
 - **One blocking card at a time**: rewards, level-ups, the day summary and "what's new" go through `present()` (`ui/sheets.js`); a card never opens under the black fade.
 - **Dialogue lines queue** instead of replacing each other, and closing the dialogue always resolves whoever was waiting.
 - **Story checks wait** while a menu, card, dialogue, door transition, sleep or the lighthouse is open.
+- **Taps always land** (`core/input.js`): a finger that goes down and up on a button presses it, even if the phone drops the click (logged as `[input] tap rescue`) — so card buttons must ignore a second press. Never `preventDefault` a `pointerdown` over a button that works by `click` (on iOS that cancels the click).
 - **Watchdog** (`main.js`, defensive only, every rescue logged with `[watchdog]`): scripted walks that overrun arrive, a scene with no activity for 15 s hands control back, and a pause count, input lock or black fade with nothing on screen is cleared.
 
 ### Design rules

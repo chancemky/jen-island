@@ -15,12 +15,13 @@ export function unlockAudio() {
       musicGain = ctx.createGain(); musicGain.gain.value = state.music ? 0.22 : 0; musicGain.connect(master);
       sfxGain = ctx.createGain(); sfxGain.gain.value = state.sfx ? 0.55 : 0; sfxGain.connect(master);
     }
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state !== 'running') ctx.resume?.().catch?.(() => {});
     // iOS needs a sound started inside the gesture to fully unlock
     const b = ctx.createBuffer(1, 1, 22050), s = ctx.createBufferSource(); s.buffer = b; s.connect(ctx.destination); s.start(0);
     started = true;
   } catch (e) { console.warn('audio', e); }
 }
+export const audioRunning = () => !!ctx && ctx.state === 'running';
 export function setAudio(opts) {
   Object.assign(state, opts);
   if (musicGain) musicGain.gain.setTargetAtTime(state.music ? 0.22 : 0, ctx.currentTime, 0.3);
@@ -34,7 +35,7 @@ export function setRoomMusic(style) { state.room = ROOM[style] ? style : null; }
 export const roomMusic = () => state.room || null;
 // one piano note (midi number): a soft hammer and a decaying string
 export function playNote(n, vol = 0.14) {
-  if (!ctx || !started || !state.sfx) return;
+  if (!ctx || !started || !state.sfx || ctx.state !== 'running') return;
   const hz = 440 * Math.pow(2, (n - 69) / 12);
   tone(hz, 1.2, { type: 'triangle', vol, attack: 0.004, decay: 1.3 }); tone(hz * 2, 0.5, { type: 'sine', vol: vol * 0.25, attack: 0.004, decay: 0.6 });
 }
@@ -94,7 +95,7 @@ function voice(pts, { vol = 0.12, type = 'sawtooth', vib = 0, vibRate = 7, when 
 }
 
 export function sfx(name, opt = {}) {
-  if (!ctx || !started || !state.sfx) return;
+  if (!ctx || !started || !state.sfx || ctx.state !== 'running') return;
   switch (name) {
     case 'blip': { const now = performance.now(); if (now - state.lastBlip < 45) return; state.lastBlip = now; tone((opt.pitch || 620) * (0.94 + Math.random() * 0.12), 0.05, { type: 'triangle', vol: 0.09 }); break; }
     case 'quack': for (const w of [0, 0.2]) voice([[0, 300, 900, 2400], [0.05, 320, 1100, 2600], [0.16, 240, 800, 2200]], { vol: 0.16, q: 9, when: w, breath: 0.03 }); break;

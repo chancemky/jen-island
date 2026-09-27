@@ -312,6 +312,8 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 .sum-list li.ach { background: rgba(242,193,78,.18); color: #ffe7a8; }
 
 /* ---------------------------------------------------------------- toasts */
+#soundHint { position: absolute; left: 50%; bottom: calc(150px + var(--sab)); transform: translateX(-50%); z-index: 81; pointer-events: none; padding: 7px 14px; border-radius: 999px; background: rgba(40,28,24,.72); color: #fff8ea; font-weight: 900; font-size: 13px; white-space: nowrap; animation: fadeIn .4s; transition: opacity .35s; }
+#soundHint.out { opacity: 0; }
 #toasts { position: absolute; left: 0; right: 0; top: calc(100px + var(--sat)); z-index: 80; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
 .toast { display: flex; align-items: center; gap: 10px; max-width: calc(100% - 28px); padding: 9px 16px 9px 10px; background: var(--paper); border: 3px solid var(--ink); border-radius: 18px; font-weight: 900; font-size: 14px; box-shadow: 0 4px 0 rgba(91,63,54,.25); animation: toastIn .4s cubic-bezier(.3,1.5,.5,1); }
 .toast.out { animation: toastOut .3s ease forwards; }

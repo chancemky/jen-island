@@ -38,6 +38,25 @@ export function initInput(zoneEl, baseEl, knobEl) {
   // Pinch-zoom (iOS ignores user-scalable=no). Double-tap zoom is disabled via touch-action in CSS,
   // so taps on buttons are never swallowed.
   document.addEventListener('gesturestart', e => e.preventDefault());
+  // Tap rescue: a finger that goes down and comes up on the same button is a press, even
+  // when the phone never delivers the click (iOS drops it now and then — a tiny slide, a
+  // card still animating in). Then we click it ourselves; buttons ignore a second press.
+  // (Buttons that act on pointerdown and cancel it — the action button, prep and service
+  // taps — have already done their job, so they're left alone.)
+  let tapBtn = null, tapDown = null;
+  const BTN = 'button, [role="button"]';
+  document.addEventListener('pointerdown', e => { tapBtn = e.pointerType === 'mouse' ? null : e.target.closest?.(BTN) || null; tapDown = e; }, true);
+  document.addEventListener('pointerup', e => {
+    const b = tapBtn; tapBtn = null;
+    if (!b || !tapDown || e.pointerId !== tapDown.pointerId || tapDown.defaultPrevented) return;
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    if (!under || !b.contains(under)) return;
+    let clicked = false;
+    const mark = ev => { if (b.contains(ev.target)) clicked = true; };
+    document.addEventListener('click', mark, true);
+    setTimeout(() => { document.removeEventListener('click', mark, true); if (!clicked && b.isConnected && !b.disabled) { console.warn('[input] tap rescue:', b.textContent.trim().slice(0, 30)); b.click(); } }, 350);
+  }, true);
+  document.addEventListener('pointercancel', () => { tapBtn = null; }, true);
   resetKnob();
 }
 
