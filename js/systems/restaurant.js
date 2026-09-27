@@ -4,7 +4,7 @@
 // Without staff the player does those jobs (take orders, collect the register,
 // clear tables). With a full team it runs while you're elsewhere.
 
-import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
+import { lockInput, releaseInput } from '../core/locks.js';
 import { G, T, bizOf, addMoney, addRep, markDirty, unlockAchievement } from './state.js';
 import { Interior } from '../world/interiors.js';
 import { Grid } from '../world/scene.js';

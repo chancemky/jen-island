@@ -2,7 +2,7 @@
 // Every row previews the cut on *your* head. After paying you hop into the
 // chair, Chị Tiên snips away, and you pop out with the new look.
 
-import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
+import { lockInput, releaseInput } from '../core/locks.js';
 import { G, T, markDirty, addMoney, canAfford } from '../systems/state.js';
 import { HAIRCUTS, HAIR_COLORS } from '../data/hair.js';
 import { MERCHANTS, playerLook } from '../data/looks.js';

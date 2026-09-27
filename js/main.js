@@ -1,6 +1,6 @@
 // JEN Island — boot, main loop and the glue between systems.
 
-import { lockInput, unlockInput, releaseInput } from './core/locks.js';
+import { lockInput, releaseInput } from './core/locks.js';
 import { Renderer, cam, fx, lightingFor } from './world/render.js';
 import { Island, areaAt, areaIdAt, AREAS, BUILDINGS, TRUCK_SPOTS } from './world/island.js';
 import { COUNTS } from './core/counts.js';
@@ -34,7 +34,7 @@ import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs } from './systems
 import { updateClock, endDay, specialsInit, timePaused } from './systems/time.js';
 import { repairBridge, STEPS , stallHandover } from './systems/story.js';
 import { buildSeaBridge } from './systems/story.js';
-import { runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, buyScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
+import { runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
 import { talkToResident, talkToMerchant, talkToStaff, talkToVisitor } from './systems/talk.js';
 import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, saveStatus } from './systems/save.js';
 import * as cloud from './systems/cloud.js';
@@ -42,7 +42,7 @@ import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, MATERIALS, bizN
 import { applyStaticText, bootText } from './ui/statictext.js';
 import { MERCHANTS, RESIDENTS, playerLook } from './data/looks.js';
 import { tapAnimals, react as reactAnimal } from './systems/animals.js';
-import { nearestSeat, sitDown, standUp, updateSeat } from './systems/seats.js';
+import { nearestSeat, sitDown, standUp, updateSeat, clearSeat } from './systems/seats.js';
 import { feedDucks, nearPond } from './systems/npc.js';
 import { meoAntic } from './systems/fun.js';
 import { initLedger } from './systems/ledger.js';
@@ -621,7 +621,7 @@ function updateBizButton() {
 }
 function statueSheet() {
   const c = STATUE_COST;
-  if (!statueReady()) { say('meo', T('Not yet! We need 300 reputation and at least one fully upgraded shop. Then we build the statue!', 'Chưa được đâu! Cần 300 danh tiếng và ít nhất một quán nâng cấp tối đa. Rồi mình dựng tượng!')); return; }
+  if (!statueReady()) { say('meo', T('Not yet! We need 400 reputation and at least one fully upgraded shop. Then we build the statue!', 'Chưa được đâu! Cần 400 danh tiếng và ít nhất một quán nâng cấp tối đa. Rồi mình dựng tượng!')); return; }
   openRequirement({ title: T('The Founder Statue', 'Tượng Người Sáng Lập'), cost: c.cost, mats: c.mats, action: () => buildStatue(), actionLabel: T('Unveil it!', 'Khánh thành!'), who: 'meo' });
 }
 async function homeSnack() {
@@ -721,7 +721,7 @@ bus.on('enter', id => { if (id === 'supermarket' && G.player) { G.player.basket 
 bus.on('leave', id => { if (id === 'supermarket' && G.player) { G.player.basket = false; } });
 bus.on('scene', id => { if (id !== 'supermarket' && G.player) G.player.basket = false; });
 bus.on('bought', kind => { if (kind === 'ingredients' && G.player?.basket) G.player.basketItems = (G.player.basketItems || 0) + 1; });
-bus.on('scene', () => { const pl = G.player; if (pl?.seat) { pl.seat = null; pl.sit = false; pl.seatH = undefined; releaseInput('seat'); } });
+bus.on('scene', () => { const pl = G.player; if (pl?.seat || pl?.lie) clearSeat(pl); });
 
 // ---------------------------------------------------------------- visiting neighbours
 // The owner is sometimes home to greet you; at night they're asleep in bed.

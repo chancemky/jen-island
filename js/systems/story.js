@@ -754,25 +754,6 @@ async function truckIntro() {
   });
   G.runtime.inCutscene = false;
 }
-export async function buyScene(bizId) {
-  const def = BUSINESSES[bizId], b = bizOf(bizId), bld = B(bizId);
-  await cs.run('buy:' + bizId, async () => {
-    G.runtime.inCutscene = true;
-    addMoney(-def.buy, 'business');
-    b.owned = true; b.unlocked = true; if (!def.repair) b.repair = 1;
-    markDirty(true);
-    await camTo(bld.x, bld.y - 50, { zoom: bizId === 'restaurant' ? 0.95 : 1.3, rate: 2.4 });
-    sfx('cash'); await wait(0.4);
-    fx.burst('spark', bld.x, bld.y - 50, 20, { up: 60, speed: 80, col: '#ffd35a', life: 1.2 });
-    fx.burst('dust', bld.x, bld.y - 20, 12, { up: 30, speed: 60 });
-    sfx('fanfare');
-    G.player.setEmo('happy', 2); G.player.doHop();
-    await wait(1.2);
-    if (bizId === 'truck') unlockAchievement('truck');
-  });
-  G.runtime.inCutscene = false;
-  checkStory();
-}
 async function afterTruck() {
   await cs.run('truckdone', async () => {
     G.runtime.inCutscene = true;

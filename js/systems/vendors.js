@@ -2,7 +2,7 @@
 // one cheap treat. Buying it doesn't go in any bag: you eat or drink it right
 // there with a happy little animation.
 
-import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
+import { lockInput, releaseInput } from '../core/locks.js';
 import { G, T, addMoney, canAfford } from './state.js';
 import { Actor } from '../world/actor.js';
 import { say, ask } from '../ui/dialogue.js';
