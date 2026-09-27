@@ -1,0 +1,18 @@
+<!doctype html><body style="margin:0;background:#f7efdc"><canvas id=c width=1440 height=900></canvas><script type=module>
+// A contact sheet of the whole cast (for eyeballing art consistency against docs/reference).
+import '../js/systems/state.js';
+import { drawHuman } from '../js/gfx/character.js';
+import { RESIDENTS, MERCHANTS, visitorLook, employeeLook, playerLook } from '../js/data/looks.js';
+const cv = document.getElementById('c'), c = cv.getContext('2d');
+const looks = [...Object.entries({ ...RESIDENTS, ...MERCHANTS }).map(([id, r]) => [r.name, r.look]),
+  ...Array.from({ length: 14 }, (_, i) => ['tourist ' + i, visitorLook(i * 131 + 7, i % 3 ? 'tourist' : 'regular')]),
+  ...['cook', 'server', 'cleaner', 'cashier', 'prep', 'manager'].map(r => [r, employeeLook(11, r)]), ['player', playerLook({ hairStyle: 'bob' })]];
+c.font = '700 11px sans-serif'; c.textAlign = 'center';
+looks.forEach(([name, L], i) => {
+  const col = i % 12, row = Math.floor(i / 12), x = 60 + col * 115, y = 150 + row * 190;
+  c.setTransform(2, 0, 0, 2, x, y); c.lineJoin = 'round'; c.lineCap = 'round';
+  try { drawHuman(c, { look: L, dir: 'down', moving: 0, seed: i, actT: 0.3 }, 0.3); } catch (e) { }
+  c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#5b3f36'; c.fillText(String(name).slice(0, 18), x, y + 24);
+});
+window.done = 1;
+</script>

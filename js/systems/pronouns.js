@@ -20,6 +20,7 @@ const NAMED = {
   anh_tuan: ['anh', 'em'], anh_khoa: ['anh', 'em'], chi_mai: ['anh', 'em'], chi_tien: ['chị', 'em'],   // chi_mai is Doctor An (a man)
   linh: ['mình', 'bạn'], minh: ['mình', 'bạn'], vy: ['mình', 'bạn'],
   be_na: ['em', null],
+  ong_loc: ['ông', 'con'], chi_ngoc: ['chị', 'em'], co_dua: ['cô', 'con'],
 };
 export function profileOf(id) {
   const p = NAMED[id]; if (!p) return null;

@@ -317,6 +317,114 @@ if (only === 'all' || only === 'ui') {
   await ctx.close();
 }
 
+// ---------------------------------------------------------------- side quests
+// Play every side quest from start to finish: accept it, find / meet / solve it,
+// deliver it (every stop of a route), and check it ends in the scrapbook.
+if (only === 'all' || only === 'quests') {
+  console.log('side quests');
+  const { p, errors, ctx } = await openGame('quests');
+  if (!(await reachFreeRoam(p))) fail('quests', 'never reached free roam');
+  const pump = makePump(p);
+  await p.evaluate(() => {
+    const J = window.__jen, s = J.G.state;
+    s.story.chapter = 20; Object.assign(s.story.flags, { harbourBridge: true, coveBridge: true, bridgeFixed: true, keeper: true });
+    s.nightMarket.restored = true; s.pets = [{ uid: 'p1', id: 'mutt', name: 'Bông', love: 3 }];
+    for (const r of ['ba_tu', 'chu_hai', 'linh', 'minh', 'co_lan', 'be_na', 'anh_tuan', 'chi_mai', 'vy', 'ong_loc', 'chi_ngoc', 'co_dua']) s.friends[r] = 80;
+    s.recipes = [...new Set([...s.recipes, 'banh_mi_thit'])];
+    J.G.npcs.spawnIsletResidents();
+    window.__qStart = (id, who) => { const q = J.sq.SIDE_QUESTS.find(q => q.id === id); const rid = who || q.giver; const a = rid === 'meo' ? J.G.meo : J.G.npcs.byId(rid) || (J.G.npcs.vendors || []).find(v => v.data?.mid === rid); window.__qBusy = true; J.cs.run('qtest', () => J.sq.questTalk(a, rid)).finally(() => { window.__qBusy = false; }); };
+  });
+  const ids = await p.evaluate(() => window.__jen.sq.SIDE_QUESTS.map(q => q.id));
+  const state = id => p.evaluate(id => window.__jen.G.state.sideQuests?.[id] || '', id);
+  const settle = async (id, until, ms = 20000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { await pump(500); const st = await state(id); if (until.includes(st) && !(await p.evaluate(() => window.__qBusy || window.__jen.cs.active))) return st; } return state(id); };
+  let ok = 0;
+  for (const id of ids) {
+    // make sure what it needs is done first
+    const pre = await p.evaluate(id => { const q = window.__jen.sq.SIDE_QUESTS.find(q => q.id === id); return window.__jen.sq.eligible(q) ? '' : `not eligible (after ${q.after})`; }, id);
+    if (pre) { fail('quests', `${id}: ${pre}`); continue; }
+    await p.evaluate(id => window.__qStart(id), id);
+    let st = await settle(id, ['active', 'found']);
+    if (st === 'active') {
+      await p.evaluate(async id => {
+        const J = window.__jen, q = J.sq.SIDE_QUESTS.find(q => q.id === id), pl = J.G.player, s = J.G.state, wait = ms => new Promise(r => setTimeout(r, ms));
+        if (J.G.scene !== J.scenes.island) J.setScene('island', q.x, q.y + 40, 'up');
+        if (q.time) s.time = Math.round((q.time[0] + 0.3) * 60);
+        if (q.type === 'puzzle') {
+          pl.x = q.x; pl.y = q.y + 60; await wait(400);
+          const r = J.sq.__rt(q), STONES = [[-26, 6], [0, -10], [26, 6]];
+          const log = [JSON.stringify(r.order)];
+          for (const i of r.order) { pl.x = q.x + STONES[i][0]; pl.y = q.y + STONES[i][1]; await wait(1200); log.push(`${i}:${Math.round(pl.x)},${Math.round(pl.y)} step${r.step}`); pl.x = q.x; pl.y = q.y + 30; await wait(800); }
+          return log.join(' ');
+        }
+        const r = J.sq.__rt(q); if (r) { r.flee = 2; r.pages = [true, true, true]; }
+        pl.x = q.x + (r?.dx || 0); pl.y = q.y + (r?.dy || 0) + 4;
+      }, id);
+      st = await settle(id, ['found', 'done'], 25000);
+    }
+    // deliver it — to each person on the route in turn
+    for (let leg = 0; leg < 4 && st === 'found'; leg++) {
+      const who = await p.evaluate(id => { const J = window.__jen, q = J.sq.SIDE_QUESTS.find(q => q.id === id); if (q.time && q.type === 'deliver') J.G.state.time = Math.round((q.time[0] + 0.3) * 60); return J.sq.deliverTarget(q); }, id);
+      await p.evaluate(([id, who]) => window.__qStart(id, who), [id, who]);
+      await pump(1500);
+      st = await settle(id, ['found', 'done'], 20000);
+    }
+    if (st !== 'done') fail('quests', `${id} got stuck at "${st || 'not started'}"`);
+    else ok++;
+  }
+  const scrap = await p.evaluate(() => Object.keys(window.__jen.G.state.keepsakes || {}).length);
+  if (ok === ids.length) pass('quests', `all ${ids.length} side quests playable start to finish · ${scrap} keepsakes in the scrapbook`);
+  if (errors.length) fail('quests', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('quests', 'no errors');
+  await ctx.close();
+}
+
+// ---------------------------------------------------------------- world interactions
+// Walk up to things and use them: furniture at home, the fountain, the pier, the shore,
+// fishing, the garden. Each should offer an action, run without errors and count as a discovery.
+if (only === 'all' || only === 'world') {
+  console.log('world interactions');
+  const { p, errors, ctx } = await openGame('world');
+  if (!(await reachFreeRoam(p))) fail('world', 'never reached free roam');
+  const pump = makePump(p);
+  const tryAt = async (scene, x, y, expect) => {
+    const label = await p.evaluate(([scene, x, y]) => { const J = window.__jen; if (J.G.scene.id !== scene) J.setScene(scene, x, y, 'up'); const pl = J.G.player; pl.x = x; pl.y = y; pl.face('up'); return new Promise(r => setTimeout(() => r(document.getElementById('actBtn')?.innerText || document.querySelector('.act-btn, #action')?.innerText || ''), 500)); }, [scene, x, y]);
+    const act = await p.evaluate(([scene, x, y]) => { const J = window.__jen, sc = J.G.scene, pl = J.G.player; const a = J.ix.nearbyThing(sc, pl) || J.fishing.fishingAction(pl) || J.garden.gardenAction(pl) || J.ix.outdoorAction(pl) || J.garden.plaqueAction(pl); if (!a) return ''; window.__run = a.run(); return a.label; }, [scene, x, y]);
+    if (!act) { fail('world', `nothing to do at ${scene} (${x}, ${y}) — wanted ${expect}`); return false; }
+    await pump(2500);
+    return true;
+  };
+  await p.evaluate(() => {
+    const J = window.__jen, s = J.G.state;
+    s.money = 500; s.story.chapter = Math.max(s.story.chapter, 8); s.story.flags.fishing = true;
+    s.home.furniture = [{ id: 'tv', x: 90, y: 150 }, { id: 'radio', x: 150, y: 150 }, { id: 'piano', x: 210, y: 150 }, { id: 'fishtank', x: 90, y: 230 }, { id: 'lamp_floor', x: 150, y: 230 }, { id: 'bookshelf', x: 210, y: 230 }];
+    J.setScene('house', 120, 250, 'up'); J.decorate.rebuildHouseFurniture();
+  });
+  for (const [x, y, what] of [[90, 164, 'tv'], [150, 164, 'radio'], [150, 244, 'lamp'], [90, 244, 'fish'], [210, 244, 'books']]) await tryAt('house', x, y, what);
+  // the piano opens a keyboard: play a note and close it
+  if (await tryAt('house', 210, 164, 'piano')) { await p.evaluate(() => { document.querySelector('.pkey')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); [...document.querySelectorAll('.sheet-wrap:not(.out) .x')].pop()?.click(); }); await pump(600); }
+  await p.evaluate(() => window.__jen.setScene('island', 900, 1650, 'up'));
+  await tryAt('island', 900, 1586, 'fountain');
+  await tryAt('island', 900, 2420, 'timetable');
+  // fishing: wait for the bite, then reel in
+  if (await tryAt('island', 880, 2580, 'fishing')) {
+    await p.waitForSelector('.fs-bob.dip', { timeout: 8000 }).catch(() => {});
+    await p.evaluate(() => document.querySelector('.fishing button')?.click());
+    await pump(1500);
+    if (!(await p.evaluate(() => Object.keys(window.__jen.G.state.fishBag || {}).length))) fail('world', 'caught nothing while fishing');
+  }
+  // garden: plant, water twice over two days, harvest
+  const G0 = await p.evaluate(() => window.__jen.garden.GARDEN);
+  if (await tryAt('island', G0.x - 30, G0.y + 14, 'garden')) {
+    await p.evaluate(() => { const g = window.__jen.G.state.garden; if (g?.beds?.[0]) { g.beds[0].water = 2; } });
+    await tryAt('island', G0.x - 30, G0.y + 14, 'harvest');
+  }
+  const found = await p.evaluate(() => Object.keys(window.__jen.G.state.discovered || {}));
+  const want = ['tv', 'radio', 'lamp', 'fish', 'books', 'piano', 'coin', 'timetable', 'fishing', 'garden'];
+  const miss = want.filter(k => !found.includes(k));
+  if (miss.length) fail('world', 'not discovered: ' + miss.join(', ')); else pass('world', `${found.length} kinds of interaction tried and remembered (${found.join(', ')})`);
+  if (errors.length) fail('world', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('world', 'no errors');
+  await ctx.close();
+}
+
 // ---------------------------------------------------------------- render
 if (only === 'all' || only === 'render') {
   console.log('render');

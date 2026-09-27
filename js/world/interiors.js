@@ -263,7 +263,7 @@ export function buildInteriors() {
   {
     const r = new Interior({ id: 'meo', name: 'Nhà Mèo Mây', w: 250, h: 280, WH: 62, wall: '#e2eaf7', wallStyle: 'paw', floor: '#e8c9a0', door: { x: 125, w: 30 }, building: 'meo' });
     r.wallItem('window', 125, { w: 44, h: 26, hgt: 52, curtain: '#f7a6b4' });
-    r.wallItem('photoWall', 196);
+    r.wallItem('photoWall', 196, { grow: () => Object.keys(G.state.keepsakes || {}).length });
     r.furn('cat_tree', 34, 112, {}, [-12, -6, 24, 6]);
     r.furn('bookshelf', 214, 92, {}, [-18, -10, 36, 10]);
     r.furn('table', 124, 146, { w: 40, col: '#b77a4f' }, [-20, -10, 40, 10]);
@@ -328,7 +328,7 @@ export function buildInteriors() {
 function buildHomes() {
   const S = {};
   const home = (rid, o, dress, looks) => {
-    const r = new Interior({ id: 'home_' + rid, w: 240, h: 250, WH: 60, door: { x: 120, w: 30 }, building: 'h_' + ({ ba_tu: 'batu', linh: 'linh', co_lan: 'lan', anh_tuan: 'tuan', chi_mai: 'mai', chu_hai: 'hai', vy: 'vy' })[rid], ...o });
+    const r = new Interior({ id: 'home_' + rid, w: 240, h: 250, WH: 60, door: { x: 120, w: 30 }, building: 'h_' + ({ ba_tu: 'batu', linh: 'linh', co_lan: 'lan', anh_tuan: 'tuan', chi_mai: 'mai', chu_hai: 'hai', vy: 'vy', ong_loc: 'hb3', chi_ngoc: 'hb1', co_dua: 'cove' })[rid], ...o });
     r.owner = rid;
     r.bedSleeper = null;
     r.furn('bed', 46, 112, { col: o.bed || '#9fb4dc', sleeper: () => r.bedSleeper, drawSleeper: (c, a, t) => drawHuman(c, a, t) }, [-30, -52, 60, 50]);
@@ -383,6 +383,21 @@ function buildHomes() {
     r.prop({ x: 205, y: 190, draw: (c, t) => PR.easel(c, t, {}), cull: { x: 175, y: 140, w: 60, h: 60 } }); r.solid(199, 186, 12, 5);
     r.furn('lantern', 60, 200, {}); r.furn('cushion', 110, 200, { col: '#f7de8c' });
   }, [[160, 140, 'A half-finished painting of your shops, seen from the lookout tower.', 'Một bức tranh vẽ dở những quán của bạn, nhìn từ tháp canh.'], [140, 66, 'Paintings of fireflies. Up close, every dot is a tiny smiling face.', 'Tranh đom đóm. Nhìn gần, mỗi chấm là một khuôn mặt cười nhỏ xíu.']]);
+  home('ong_loc', { wall: '#e0e8ee', wall2: '#cfdbe3', floor: '#9c7f62', bed: '#5f8fb8' }, r => {
+    r.wallItem('window', 206, { w: 36, h: 22, hgt: 48, curtain: '#6f9fc8' }); r.wallItem('familyPhoto', 120);
+    r.furn('sacks', 214, 220, {}, [-20, -14, 40, 12]); r.furn('table', 130, 160, { w: 36, col: '#7a5a3e' }, [-18, -10, 36, 10]);
+    r.furn('stool', 104, 168, {}); r.furn('crateStack', 40, 214, {}, [-20, -16, 40, 14]); r.furn('rug', 150, 214, { w: 70, h: 28, col: '#8fb7e0' });
+  }, [[120, 66, 'A faded photo: the harbour full of boats, bunting on every mast. "Harbour Day, 1992" in pencil.', 'Một tấm ảnh bạc màu: bến cảng đầy thuyền, cờ treo trên mọi cột buồm. Ghi bằng bút chì: “Ngày hội bến cảng, 1992”.'], [130, 160, 'Half a net on the table, a needle still in it. Ông Lộc mends one knot a day "to keep the fingers honest".', 'Nửa tấm lưới trên bàn, kim vẫn còn cắm. Ông Lộc vá mỗi ngày một nút “cho ngón tay khỏi lười”.']]);
+  home('chi_ngoc', { wall: '#fbeede', wall2: '#f4dfc6', floor: '#c9a27a', bed: '#f28f7c', host: { x: 170, y: 140 } }, r => {
+    r.wallItem('clock', 200); r.wallItem('painting', 130);
+    r.furn('deskNook', 190, 104, {}, [-20, -8, 40, 8]); r.furn('sofa', 110, 150, { col: '#f2c14e' }, [-30, -24, 60, 22]);
+    r.furn('plant', 216, 200, {}, [-6, -6, 12, 6]); r.furn('rug', 150, 214, { w: 90, h: 30, col: '#f7c59f' });
+  }, [[190, 104, 'The guestbook. The newest page is full; the oldest pages go back to when the ferry came every day.', 'Sổ lưu bút của khách. Trang mới nhất đã kín chữ; những trang cũ nhất từ hồi ngày nào cũng có tàu.'], [130, 66, 'A painting of the harbour at night, lanterns on the water.', 'Bức tranh bến cảng về đêm, lồng đèn trên mặt nước.']]);
+  home('co_dua', { wall: '#fff6de', wall2: '#f4e7c4', floor: '#d6b98a', bed: '#9fd8c8' }, r => {
+    r.wallItem('window', 180, { w: 36, h: 22, hgt: 48, curtain: '#7fae4d' });
+    r.furn('crateStack', 206, 204, {}, [-20, -16, 40, 14]); r.furn('table', 130, 160, { w: 36, col: '#a8784e', cloth: '#f7de8c' }, [-18, -10, 36, 10]);
+    r.furn('hammock', 70, 190, {}, [-26, -6, 52, 6]); r.furn('plant', 216, 118, { pot: '#d9784f' }, [-6, -6, 12, 6]);
+  }, [[206, 204, 'Coconuts, sorted by size, then by how friendly they look.', 'Dừa, xếp theo kích cỡ, rồi theo độ dễ thương.'], [130, 160, 'A notebook of tide times, and a doodle of Mèo Mây asleep on a coconut.', 'Cuốn sổ ghi giờ thủy triều, và hình vẽ Mèo Mây ngủ trên trái dừa.']]);
   return S;
 }
 export { shadow, text, TAU };

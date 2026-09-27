@@ -5,11 +5,15 @@
 import { INGREDIENTS, PREPPED, PREP_VERB, STATION, RECIPES, BUSINESSES, MATERIALS, OPTIONS, ACHIEVEMENTS, CHAPTERS, FURNITURE, VY_VIEWS, recipeCost } from '../data/game.js';
 import { RESIDENTS, MERCHANTS } from '../data/looks.js';
 import { hasIcon } from '../gfx/food.js';
+import { FURN_DRAW } from '../gfx/furniture.js';
 import { STEPS } from '../systems/story.js';
 import { SIDE_QUESTS } from '../systems/sidequests.js';
 import { PLACES } from '../systems/economy.js';
 import { TRACKS } from '../systems/progress.js';
 import { CLOTHES } from '../data/wardrobe.js';
+import { LATER } from '../systems/interact.js';
+import { CROPS } from '../systems/garden.js';
+import { FISH } from '../systems/fishing.js';
 import { BUILDINGS } from '../world/island.js';
 
 export function validateContent(scenes = null) {
@@ -78,14 +82,25 @@ export function validateContent(scenes = null) {
   let lastCh = 0; for (const id of order) { const c = STEPS[id]?.ch || 0; if (c < lastCh) bad('story', `chapter goes backwards at ${id} (${lastCh} → ${c})`); lastCh = Math.max(lastCh, c); }
   // ---- people
   const people = new Set([...Object.keys(RESIDENTS), ...Object.keys(MERCHANTS)]);
+  const qids = new Set(SIDE_QUESTS.map(q => q.id));
+  if (qids.size !== SIDE_QUESTS.length) bad('sidequest', 'two side quests share an id');
   for (const q of SIDE_QUESTS) {
-    if (!people.has(q.giver)) bad('sidequest', `${q.id} is given by unknown ${q.giver}`);
-    if (scenes?.island && !scenes.island.terrain(q.x, q.y)) bad('sidequest', `${q.id} item sits off the island (${q.x}, ${q.y})`);
-    if (q.deliver && !people.has(q.deliver) && q.deliver !== 'meo') bad('sidequest', `${q.id} is delivered to unknown ${q.deliver}`);
+    if (!people.has(q.giver) && q.giver !== 'meo') bad('sidequest', `${q.id} is given by unknown ${q.giver}`);
+    if (q.x != null && scenes?.island && !scenes.island.terrain(q.x, q.y)) bad('sidequest', `${q.id} sits off the island (${q.x}, ${q.y})`);
+    if (q.x == null && q.type !== 'deliver') bad('sidequest', `${q.id} has no place in the world`);
+    for (const d of q.route || (q.deliver ? [q.deliver] : [])) if (!people.has(d) && d !== 'meo') bad('sidequest', `${q.id} is delivered to unknown ${d}`);
+    if (q.after && !qids.has(q.after)) bad('sidequest', `${q.id} comes after missing quest ${q.after}`);
+    if (q.type === 'meet' && (!q.time || !q.place)) bad('sidequest', `${q.id} is a meeting with no time or place`);
+    if (q.route && (q.legs || []).length !== q.route.length - 1) bad('sidequest', `${q.id} needs a line for each stop on its route`);
+    if (q.icon && !hasIcon(q.icon)) bad('asset', `side quest ${q.id} icon ${q.icon} is missing`);
+    if (q.reward?.furniture && !FURNITURE[q.reward.furniture]) bad('sidequest', `${q.id} gives unknown furniture`);
+    if (q.reward?.recipeLv && !RECIPES[q.reward.recipeLv[0]]) bad('sidequest', `${q.id} upgrades unknown recipe`);
+    if (!q.ask || !q.item) bad('sidequest', `${q.id} is missing its text`);
   }
   for (const v of VY_VIEWS) if (scenes?.island && !scenes.island.terrain(v.x, v.y)) bad('story', `Vy's view ${v.id} is off the island`);
   // ---- furniture
   for (const [id, f] of Object.entries(FURNITURE)) if (!(f.price > 0)) bad('furniture', `${id} has no price`);
+  for (const id of Object.keys(FURNITURE)) if (!FURN_DRAW[id]) bad('asset', `furniture ${id} has no drawing`);
   // ---- milestones: a finite track may never ask for more than exists
   for (const tr of TRACKS) {
     if (!tr.finite) continue;
@@ -96,5 +111,9 @@ export function validateContent(scenes = null) {
   }
   for (const tr of TRACKS) for (const g of Object.values(tr.gifts || {})) { if (g.furniture && !FURNITURE[g.furniture]) bad('milestone', `${tr.id} gives unknown furniture ${g.furniture}`); if (g.clothes && !CLOTHES[g.clothes]) bad('milestone', `${tr.id} gives unknown clothes ${g.clothes}`); }
   for (const [id, a] of Object.entries(ACHIEVEMENTS)) if (a.hidden && !a.hint) bad('achievement', `secret ${id} has no hint`);
+  // things that change with the story point at real spots
+  if (scenes) for (const key of Object.keys(LATER)) { const [sid, tid] = key.split(':'); if (!scenes[sid]?.triggers?.some(t => t.id === tid)) bad('world', `story-changing look ${key} points at nothing`); }
+  for (const id of Object.keys(CROPS)) if (!INGREDIENTS[id]) bad('garden', `crop ${id} is not an ingredient`);
+  for (const [id, f] of Object.entries(FISH)) if (f.ing && !INGREDIENTS[f.ing]) bad('fishing', `${id} gives unknown ingredient`);
   return out;
 }

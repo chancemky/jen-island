@@ -1,6 +1,8 @@
 // The island: terrain, ground painting (chunk-cached), animated water,
 // buildings, scenery, collision and the NPC navigation graph.
 
+import { MORE_QUESTS } from '../data/quests.js';
+import { BRAND_COLOURS } from '../data/game.js';
 import { smoothLoop, smoothLine, inPoly, distToLine, rng, clamp, TAU, shade, dist } from '../core/util.js';
 import { Scene } from './scene.js';
 import { INK, ell, circ, box, poly, line, text, star, flower } from '../gfx/draw.js';
@@ -137,7 +139,7 @@ export const PATHS = {
 };
 const PATH_W = 30;
 // where the side-quest items lie (keep in sync with SIDE_QUESTS in systems/sidequests.js)
-const QUEST_SPOTS = [[1330, 2330], [610, 1790], [1600, 1250], [760, 560], [1420, 1180], [1020, 700], [1560, 1640], [300, 1880], [2420, 1800]];
+const QUEST_SPOTS = [[1330, 2330], [610, 1790], [1600, 1250], [760, 560], [1420, 1180], [1020, 700], [1560, 1640], [300, 1880], [2420, 1800], ...MORE_QUESTS.filter(q => q.x != null).map(q => [q.x, q.y])];
 const TALL = new Set(['tree', 'flameTree', 'palm', 'banana', 'bamboo', 'banyan']);
 
 // ---------------------------------------------------------------- building placements
@@ -165,11 +167,12 @@ export const BUILDINGS = [
   // Harbour Town
   { id: 'petshop', type: 'shop', kind: 'petshop', x: 2380, y: 606, w: 140, fp: 56, door: [46, 0], interior: 'petshop', wall: '#fff6e0', region: 'harbour' },
   { id: 'cafe', type: 'kiosk', style: 'cafe', x: 2800, y: 690, w: 112, fp: 40, biz: 'cafe', region: 'harbour' },
-  { id: 'h_hb1', type: 'house', door: [0, 0], x: 2230, y: 620, w: 96, fp: 50, wall: '#e6f0fa', roof: '#6f9fc8', shutter: '#f2c14e', style: 'wood', region: 'harbour' },
+  { id: 'h_hb1', type: 'house', interior: 'home_chi_ngoc', home: 'chi_ngoc', label: ['GUESTHOUSE', 'NHÀ NGHỈ'], door: [0, 0], x: 2230, y: 620, w: 96, fp: 50, wall: '#e6f0fa', roof: '#6f9fc8', shutter: '#f2c14e', style: 'wood', region: 'harbour' },
   { id: 'h_hb2', type: 'house', door: [0, 0], x: 2660, y: 560, w: 96, fp: 50, wall: '#fbe7d6', roof: '#c9674a', shutter: '#6fbfb0', style: 'flowers', label: ['HARBOUR', 'BẾN CẢNG'], region: 'harbour' },
-  { id: 'h_hb3', type: 'house', door: [0, 0], x: 3010, y: 560, w: 96, fp: 50, wall: '#eef6e8', roof: '#5f8fb8', shutter: '#e8584e', style: 'tin', fisher: true, region: 'harbour' },
+  { id: 'h_hb3', type: 'house', interior: 'home_ong_loc', home: 'ong_loc', door: [0, 0], x: 3010, y: 560, w: 96, fp: 50, wall: '#eef6e8', roof: '#5f8fb8', shutter: '#e8584e', style: 'tin', fisher: true, region: 'harbour' },
   // Coconut Cove
   { id: 'grill', type: 'kiosk', style: 'grill', x: 2250, y: 2204, w: 112, fp: 40, biz: 'grill', region: 'cove' },
+  { id: 'h_cove', type: 'house', interior: 'home_co_dua', home: 'co_dua', door: [0, 0], x: 2450, y: 2130, w: 96, fp: 50, wall: '#fff3d6', roof: '#7fae4d', shutter: '#e9a23b', style: 'wood', region: 'cove' },
   { id: 'h_vy', type: 'house', interior: 'home_vy', door: [0, 0], x: 2350, y: 1668, w: 96, fp: 50, wall: '#fdf0d8', roof: '#8fb7e0', shutter: '#f28f7c', home: 'vy', style: 'painter' },
 ];
 
@@ -271,6 +274,13 @@ const mixCol = (a, b, k) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice
 function tracePoly(c, pts) { c.beginPath(); c.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]); c.closePath(); }
 function traceLine(c, pts) { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); }
 // walk-only routes: inside the Night Market plaza and across the bridge deck
+// where the food truck can park (Menu of the truck → Drive to…)
+export const TRUCK_SPOTS = {
+  beach: { x: 1420, y: 2152, en: 'East Beach', vi: 'Bãi biển phía đông', fx: 'Beach lunches and hot afternoons', fxVi: 'Trưa bãi biển và chiều nắng' },
+  dock: { x: 1064, y: 2340, en: 'Ferry Dock', vi: 'Bến tàu', fx: 'A rush whenever the ferry comes in; tourists mind prices less', fxVi: 'Đông mỗi khi tàu cập bến; du khách ít để ý giá', ferry: 1.6, tolerance: 1.12 },
+  plaza: { x: 1000, y: 1720, en: 'Wind Plaza', vi: 'Quảng trường gió', fx: 'Steady neighbours all day, busy evenings', fxVi: 'Hàng xóm ghé đều cả ngày, tối đông', steady: 1.15 },
+  harbour: { x: 2552, y: 707, en: 'Harbour Town', vi: 'Phố Cảng', need: 'harbourBridge', fx: 'Visitors from the guesthouse; pricier menus are fine', fxVi: 'Khách từ nhà nghỉ; giá cao hơn cũng được', tolerance: 1.18, steady: 1.05 },
+};
 export const NAV_ONLY = new Set(['nm', 'bridge', 'hbridge', 'cbridge', 'beachE']);   // walkable routes for NPCs with no road drawn (beachE: no road behind the food truck)
 const SMOOTH_PATHS = Object.fromEntries(Object.entries(PATHS).filter(([k]) => !NAV_ONLY.has(k)).map(([k, p]) => [k, p.length > 2 ? chunkPts(smoothLine(p, 6)) : p]));
 function chunkPts(flat) { const o = []; for (let i = 0; i < flat.length; i += 2) o.push([flat[i], flat[i + 1]]); return o; }
@@ -761,6 +771,19 @@ export class Island extends Scene {
       this.trigger({ id: 'front:' + b.id, kind: 'front', x: b.x - 50, y: b.y - 4, w: 70, h: 40, building: b.id, biz: b.biz });
     }
   }
+  // the food truck drives to a new spot: move it, its door, its counter and its queue
+  moveBuilding(id, x, y) {
+    const b = this.buildings[id]; if (!b) return;
+    const dx = x - b.x, dy = y - b.y; if (!dx && !dy) return;
+    b.x = x; b.y = y; b.cull.x += dx; b.cull.y += dy;
+    const def = BUILDINGS.find(q => q.id === id); if (def) { def.x = x; def.y = y; }
+    for (const s of this.solids) if (s.building === id) { s.x += dx; s.y += dy; }
+    for (const t of this.triggers) if (t.building === id) { t.x += dx; t.y += dy; if (t.doorX != null) { t.doorX += dx; t.doorY += dy; } }
+    if (QUEUES[id]) for (const q of QUEUES[id]) { q[0] += dx; q[1] += dy; }
+    for (const n of this.nav.nodes) if (n.tags?.has('queue:' + id)) { n.x += dx; n.y += dy; }
+    // tidy the grass and flowers off the new pitch
+    this.props = this.props.filter(p => p.isBuilding || p.flat !== true || !(Math.abs(p.x - x) < 70 && p.y > y - 40 && p.y < y + 12));
+  }
   addStall(s) {
     const st = { ...s, type: 'stall', w: 66, state: () => this.stallState(s) };
     st.draw = (c, t) => B.drawNightStall(c, t, st);
@@ -776,7 +799,11 @@ export class Island extends Scene {
     const s = G.state, rt = G.runtime?.biz?.[b.biz || b.id] || {};
     if (b.biz) {
       const bz = s.biz[b.biz];
-      return { repair: rt.repairAnim ?? bz.repair, level: bz.level, open: bz.open, owned: bz.owned, sign: bizSign(b.biz), flapOpen: rt.flap, signFlip: rt.signFlip, color: b.biz === 'shed2' ? '#fde2c4' : '#f7e3c0', roof: b.biz === 'shed2' ? '#f28f7c' : '#6fbfb0', signCol: b.biz === 'shed2' ? '#e8a24a' : '#e8584e', awning: b.biz === 'shed2' ? ['#fff5df', '#e8a24a'] : ['#fff5df', '#f28f7c'] };
+      const base = { repair: rt.repairAnim ?? bz.repair, level: bz.level, open: bz.open, owned: bz.owned, sign: bizSign(b.biz), flapOpen: rt.flap, signFlip: rt.signFlip, color: b.biz === 'shed2' ? '#fde2c4' : '#f7e3c0', roof: b.biz === 'shed2' ? '#f28f7c' : '#6fbfb0', signCol: b.biz === 'shed2' ? '#e8a24a' : '#e8584e', awning: b.biz === 'shed2' ? ['#fff5df', '#e8a24a'] : ['#fff5df', '#f28f7c'] };
+      const br = s.brand?.[b.biz], pal = br?.colour && BRAND_COLOURS[br.colour];
+      if (pal?.awning) Object.assign(base, { awning: pal.awning, signCol: pal.sign, roof: pal.roof, color: pal.wall, branded: true });
+      if (br?.sign) base.signStyle = br.sign;
+      return base;
     }
     return {};
   }
@@ -810,6 +837,10 @@ export class Island extends Scene {
     for (const b of BUILDINGS) if (b.home) spot(b.x, b.y + 10, ['home:' + b.home]);
     for (const [id, q] of Object.entries(QUEUES)) spot(q[0][0], q[0][1] + 8, ['queue:' + id]);
     spot(1200, 760, ['door:restaurant']);
+    // restored places the islanders start visiting once they open
+    for (const [x, y] of [[2600, 700], [2720, 660], [2480, 720]]) spot(x, y, ['harbour', 'spot']);
+    for (const [x, y] of [[2400, 2300], [2520, 2260]]) spot(x, y, ['cove', 'spot']);
+    for (const [x, y] of [[2250, 1420], [2400, 1520]]) spot(x, y, ['islet', 'spot']);
   }
 
   // ---------------------------------------------------------------- per-frame water
@@ -903,6 +934,7 @@ function drawFounderStatue(c, t) {
 
 export function bizSign(id) {
   const s = G.state;
+  const own = s.brand?.[id]?.name; if (own) return own.toUpperCase();
   if (id === 'shed1') return T('TEA & COFFEE', 'TRÀ & CÀ PHÊ');
   if (id === 'shed2') return 'BÁNH MÌ';
   if (id === 'truck') return T('ROLL TRUCK', 'XE CUỐN');

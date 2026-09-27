@@ -10,7 +10,9 @@
     "test": "node tests/run.mjs",
     "test:story": "node tests/run.mjs story",
     "test:render": "node tests/run.mjs render",
-    "test:economy": "node tests/run.mjs economy"
+    "test:economy": "node tests/run.mjs economy",
+    "test:quests": "node tests/run.mjs quests",
+    "test:world": "node tests/run.mjs world"
   },
   "devDependencies": {
     "playwright": "1.63.0"

@@ -28,6 +28,16 @@ export function setAudio(opts) {
 }
 export function suspendAudio(on) { if (!ctx) return; if (on) ctx.suspend?.(); else ctx.resume?.(); }
 export function setMood(m) { state.mood = m; }
+// a radio or record player playing in the room you're in (null = the island's own music)
+const ROOM = { radio: { bpm: 104, scale: [0, 2, 4, 5, 7, 9, 11, 12], root: 62, wave: 'square', vol: 0.035 }, record: { bpm: 66, scale: [0, 3, 5, 7, 10, 12, 14, 15], root: 55, wave: 'sine', vol: 0.09 }, tv: { bpm: 120, scale: [0, 2, 4, 7, 9, 12], root: 64, wave: 'triangle', vol: 0.05 } };
+export function setRoomMusic(style) { state.room = ROOM[style] ? style : null; }
+export const roomMusic = () => state.room || null;
+// one piano note (midi number): a soft hammer and a decaying string
+export function playNote(n, vol = 0.14) {
+  if (!ctx || !started || !state.sfx) return;
+  const hz = 440 * Math.pow(2, (n - 69) / 12);
+  tone(hz, 1.2, { type: 'triangle', vol, attack: 0.004, decay: 1.3 }); tone(hz * 2, 0.5, { type: 'sine', vol: vol * 0.25, attack: 0.004, decay: 0.6 });
+}
 
 function tone(freq, dur, { type = 'sine', vol = 0.3, attack = 0.005, decay = null, slide = 0, dest = sfxGain, when = 0, detune = 0 } = {}) {
   if (!ctx || !dest) return;
@@ -139,6 +149,14 @@ export function musicTick() {
   const now = ctx.currentTime;
   if (state.nextNote < now - 1) state.nextNote = now + 0.1;
   while (state.nextNote < now + 0.4) {
+    const R = ROOM[state.room];
+    if (R) {                                         // the room's radio / record player
+      const beat = 60 / R.bpm / 2, when = state.nextNote - now, hz = n => 440 * Math.pow(2, (n - 69) / 12), s = state.step;
+      if (s % 8 === 0) tone(hz(R.root - 24 + [0, 5, 7, 5][Math.floor(s / 8) % 4]), beat * 6, { type: 'sine', vol: 0.1, attack: 0.05, decay: beat * 6, dest: musicGain, when });
+      if (Math.random() < (s % 2 ? 0.5 : 0.85)) { state.mel = Math.max(0, Math.min(R.scale.length - 1, (state.mel ?? 3) + Math.round((Math.random() - 0.5) * 3))); tone(hz(R.root + R.scale[state.mel]), beat * 1.4, { type: R.wave, vol: R.vol, attack: 0.004, decay: beat * 1.5, dest: musicGain, when }); }
+      if (s % 2 === 1) noise(0.02, { vol: 0.015, freq: 6000, q: 1, when });
+      state.nextNote += beat; state.step++; continue;
+    }
     const beat = 60 / (state.mood === 'night' ? 76 : 88) / 2;
     const s = state.step, bar = Math.floor(s / 8) % 4;
     const root = (state.mood === 'night' ? 57 : 60) + [0, 5, 3, 4][bar] * (PROG[state.mood][bar] === 0 ? 0 : 1);

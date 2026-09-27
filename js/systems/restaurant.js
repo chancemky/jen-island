@@ -19,6 +19,7 @@ import { canMake, takeStock, recipeUses, bizRecipes, recipePrice } from './busin
 import { PREPPED, INGREDIENTS, recipeCost } from '../data/game.js';
 import { recordSale, recordCost } from './ledger.js';
 import { recordUse } from './economy.js';
+import { eventBoost } from './interact.js';
 import { sfx } from '../core/audio.js';
 import { fx } from '../world/render.js';
 
@@ -416,7 +417,7 @@ export function updateRestaurant(dt, gameMin) {
       const h = G.state.time / 60;
       const tf = (h >= 11 && h < 13.5) || (h >= 17.5 && h < 20.5) ? 1.6 : 1;
       const att = BUSINESSES.restaurant.upgrades?.[b.level]?.attract || 1;
-      r.spawnT = clamp(rand(26, 44) / (rep * tf * att * 1.25), 5, 50);
+      r.spawnT = clamp(rand(26, 44) / (rep * tf * att * 1.25 * eventBoost('restaurant')), 5, 50);
       spawnGuest();
     }
   }

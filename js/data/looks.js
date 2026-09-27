@@ -37,13 +37,17 @@ export const RESIDENTS = {
   chu_hai: { name: 'Chú Hải', role: 'Fisherman', look: { skin: '#cf9772', eyeCol: '#3f6f5a', hair: '#2f2a30', hairStyle: 'crew', top: '#8fb7e0', topStyle: 'stripe', top2: '#fff', bottom: '#8b6b5a', bottomLen: 3, shoe: '#5f6b86', hat: 'nonla', hatColor: '#efd69a' }, personality: 'regular' },
   linh: { name: 'Linh', role: 'University student', look: { skin: '#fde5d2', eyeCol: '#5f8fd0', hair: '#3d3550', hairStyle: 'braids', top: '#f4a9b8', topStyle: 'tee', bottom: '#f4efe6', bottomLen: 2, shoe: '#e9848f', lashes: true, backpack: '#9fd8c8' }, personality: 'excited' },
   minh: { name: 'Minh', role: 'Photographer', look: { skin: '#e3b08b', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'messy', top: '#f7de8c', topStyle: 'tee', bottom: '#556b8a', bottomLen: 3, shoe: '#fff', camera: true, hat: 'cap', hatColor: '#f28f7c' }, personality: 'rushed' },
-  co_lan: { name: 'Cô Lan', role: 'Florist', look: { skin: '#f8d6bd', eyeCol: '#4f9f7a', hair: '#2f2a30', hairStyle: 'sidepart', top: '#f8c0a0', topStyle: 'aodai', bottom: '#fff', bottomLen: 5, shoe: '#f0e6da', lashes: true, flower: '#ff8fb0' }, personality: 'picky' },
+  co_lan: { name: 'Cô Lan', role: 'Florist', look: { skin: '#f8d6bd', eyeCol: '#4f9f7a', hair: '#2f2a30', hairStyle: 'sidepart', top: '#f8c0a0', topStyle: 'aodai', bottom: '#fff', bottomLen: 5, shoe: '#f0e6da', lashes: true, flower: '#ff8fb0' , tote: '#f4a9b8' }, personality: 'picky' },
   be_na: { name: 'Bé Na', role: 'Kid who loves chè', look: { skin: '#fde5d2', eyeCol: '#c9803a', hair: '#6e4430', hairStyle: 'buns', top: '#f7de8c', topStyle: 'dress', bottom: '#f7de8c', shoe: '#e9848f', scale: 0.8, lashes: true }, personality: 'excited' },
   anh_tuan: { name: 'Anh Tuấn', role: 'Scooter taxi driver', look: { skin: '#e3b08b', eyeCol: '#8a6ad0', hair: '#2f2a30', hairStyle: 'crop', top: '#9fd8c8', topStyle: 'shirt', bottom: '#3f4a5e', bottomLen: 5, shoe: '#7a5040', hat: 'bucket', hatColor: '#7aa38a' }, personality: 'regular' },
   chi_mai: { get name() { return T('Doctor An', 'Bác sĩ An'); }, role: 'Island doctor', look: { skin: '#f1c6a4', eyeCol: '#8a5a40', hair: '#2f2a30', hairStyle: 'gentpart', top: '#a9d4f0', topStyle: 'shirt', coat: '#fdfdfb', steth: true, bottom: '#3f4a5e', bottomLen: 5, shoe: '#5f4a40', glasses: '#5b3f36', badge: '#3fae5c' }, personality: 'rushed' },
 };
 // Lives on Firefly Islet; appears once the Long Bridge is fixed.
-RESIDENTS.vy = { name: 'Vy', role: 'Painter', islet: true, look: { skin: '#fde5d2', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'frenchbob', top: '#9fd8c8', topStyle: 'tee', bottom: '#556b8a', bottomLen: 3, shoe: '#fff', lashes: true, hat: 'bucket', hatColor: '#3f4a5e' }, personality: 'excited' };
+// Harbour Town and Coconut Cove folks: they appear once their bridge is built.
+RESIDENTS.ong_loc = { name: 'Ông Lộc', role: 'Net-mender & old harbour master', region: 'harbourBridge', look: { skin: '#c98f6a', eyeCol: '#5a4a3a', hair: '#e6e2dc', hairStyle: 'crew', top: '#6f8fa8', topStyle: 'shirt', bottom: '#5f5a52', bottomLen: 3, shoe: '#6b5040', scale: 0.96, glasses: '#6a5a4a', tote: '#b98a5a' }, personality: 'patient' };
+RESIDENTS.chi_ngoc = { name: 'Chị Ngọc', role: 'Runs the harbour guesthouse', region: 'harbourBridge', look: { skin: '#f1c6a4', eyeCol: '#6a4a3a', hair: '#2f2a30', hairStyle: 'bun', top: '#f7de8c', topStyle: 'shirt', bottom: '#6d7fa8', bottomLen: 4, shoe: '#fff', lashes: true, lanyard: '#e8584e' }, personality: 'excited' };
+RESIDENTS.co_dua = { name: 'Cô Dừa', role: 'Coconut seller at the cove', region: 'coveBridge', look: { skin: '#d9a07a', eyeCol: '#4f3a2a', hair: '#3a2a26', hairStyle: 'long', top: '#9fd8c8', topStyle: 'floral', top2: '#fff', bottom: '#e9c46f', bottomLen: 4, shoe: '#c9955e', lashes: true, hat: 'nonla', hatColor: '#efd69a', tote: '#c9a26a' }, personality: 'regular' };
+RESIDENTS.vy = { name: 'Vy', role: 'Painter', islet: true, region: 'bridgeFixed', look: { skin: '#fde5d2', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'frenchbob', top: '#9fd8c8', topStyle: 'tee', bottom: '#556b8a', bottomLen: 3, shoe: '#fff', lashes: true, hat: 'bucket', hatColor: '#3f4a5e' }, personality: 'excited' };
 // Shopkeepers.
 export const MERCHANTS = {
   co_hoa: { name: 'Cô Hoa', role: 'Supermarket owner', look: { skin: '#f8d6bd', eyeCol: '#8a5a40', hair: '#4a322b', hairStyle: 'messybun', top: '#f28f7c', topStyle: 'tee', apron: '#6fbf73', badge: '#e8584e', bottom: '#556b8a', bottomLen: 5, shoe: '#f0e6da', lashes: true } },
@@ -103,5 +107,8 @@ export function employeeLook(seed, role) {
   L.top = role === 'cook' ? '#fff6e6' : '#f28f7c'; L.topStyle = 'tee'; L.apron = role === 'cook' ? '#f7d6c0' : '#fff6e6';
   if (role === 'cook') { L.hat = 'chef'; } else if (role === 'cleaner') { L.hat = 'bandana'; L.hatColor = '#8fb7e0'; } else { L.hat = null; }
   if (role === 'manager') { L.top = '#3f6f8f'; L.topStyle = 'shirt'; L.apron = null; }
+  // every job reads at a glance: the cashier's name badge, the prep cook's bandana
+  if (role === 'cashier') { L.top = '#8fcfc0'; L.lanyard = '#f2c14e'; L.apron = null; }
+  if (role === 'prep') { L.top = '#f7de8c'; L.hat = 'bandana'; L.hatColor = '#e8584e'; }
   return L;
 }

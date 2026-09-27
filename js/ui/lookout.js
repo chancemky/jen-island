@@ -54,9 +54,22 @@ export async function leaveLighthouse() {
 
 function buildOverlay() {
   const el = document.createElement('div'); el.className = 'lookout-ui';
-  el.innerHTML = `<canvas></canvas><div class="lk-title"><b>${T('The Old Lighthouse', 'Ngọn Hải Đăng Cũ')}</b><small>${T(`${G.state.island.name || 'The island'}, seen from the gallery`, `${G.state.island.name || 'Hòn đảo'} nhìn từ ban công hải đăng`)}</small></div><button type="button" class="btn big pink lk-leave">${T('Leave the lighthouse', 'Rời hải đăng')}</button>`;
+  el.innerHTML = `<canvas></canvas><div class="lk-title"><b>${T('The Old Lighthouse', 'Ngọn Hải Đăng Cũ')}</b><small>${T(`${G.state.island.name || 'The island'}, seen from the gallery`, `${G.state.island.name || 'Hòn đảo'} nhìn từ ban công hải đăng`)}</small></div><button type="button" class="btn big ghost lk-scope">🔭 ${T('Telescope', 'Ống nhòm')}</button><button type="button" class="btn big pink lk-leave">${T('Leave the lighthouse', 'Rời hải đăng')}</button>`;
   document.getElementById('app').appendChild(el);
   el.querySelector('.lk-leave').onclick = () => leaveLighthouse();
+  // the telescope: zoom in and drag to look around the island
+  el.querySelector('.lk-scope').onclick = e => {
+    e.stopPropagation();
+    L.scope = !L.scope; sfx(L.scope ? 'click' : 'back');
+    el.classList.toggle('scoping', L.scope);
+    if (L.scope) { L.sx = cam.override?.x ?? 900; L.sy = cam.override?.y ?? 1300; import('../systems/interact.js').then(m => m.discover('telescope')); }
+  };
+  let drag = null;
+  el.addEventListener('pointerdown', e => { if (!L?.scope || e.target.closest('button')) return; drag = { x: e.clientX, y: e.clientY, sx: L.sx, sy: L.sy }; });
+  el.addEventListener('pointermove', e => { if (!drag || !L) return; const k = 1 / (cam.zoom || 1); L.sx = Math.max(100, Math.min(3100, drag.sx - (e.clientX - drag.x) * k)); L.sy = Math.max(200, Math.min(2700, drag.sy - (e.clientY - drag.y) * k)); });
+  el.addEventListener('pointerup', () => { drag = null; });
+  // up here at dawn?
+  if (G.state.time >= 5 * 60 && G.state.time < 7 * 60) import('../systems/state.js').then(m => m.unlockAchievement('sunrise'));
   L.el = el; L.cv = el.querySelector('canvas'); L.c = L.cv.getContext('2d');
   let last = performance.now();
   const frame = now => {
@@ -71,6 +84,7 @@ function buildOverlay() {
 // the slow reveal, then a gentle drift over the island
 function step(dt) {
   const t = L.t, full = fullZoom();
+  if (L.scope) { cam.override = { x: L.sx, y: L.sy, zoom: full * 3.2, rate: 6 }; return; }
   if (t < 1.2) return;
   const k = Math.min(1, (t - 1.2) / 7), e = k * k * (3 - 2 * k);
   cam.override = { x: 900 + Math.sin(t * 0.05) * 50 * e, y: 520 + (1330 - 520) * e + Math.cos(t * 0.04) * 60 * e, zoom: full * (2.6 - 1.6 * e) * (1 + Math.sin(t * 0.07) * 0.04 * e), rate: 1.2 };
@@ -113,6 +127,13 @@ function draw() {
   // a little telescope on the rail
   c.save(); c.translate(W - 60, ry - 2); c.rotate(-0.35); c.fillStyle = '#b9905a'; c.fillRect(-4, -26, 8, 26); c.fillStyle = '#8a5f3e'; c.fillRect(-5, -30, 10, 6); c.restore();
   c.fillStyle = post; c.fillRect(W - 64, ry - 4, 8, 10);
+  // through the telescope: a round view
+  if (L.scope) {
+    c.save(); c.fillStyle = 'rgba(20,24,30,.92)'; c.beginPath(); c.rect(0, 0, W, H); c.arc(W / 2, H / 2 - 30, Math.min(W, H) * 0.42, 0, TAU, true); c.fill('evenodd');
+    c.strokeStyle = '#8a5f3e'; c.lineWidth = 8; c.beginPath(); c.arc(W / 2, H / 2 - 30, Math.min(W, H) * 0.42, 0, TAU); c.stroke(); c.restore();
+    c.fillStyle = 'rgba(255,248,234,.85)'; c.font = '800 13px Nunito, sans-serif'; c.textAlign = 'center'; c.fillText(T('Drag to look around', 'Kéo để nhìn xung quanh'), W / 2, H / 2 + Math.min(W, H) * 0.42 - 6);
+    return;
+  }
   // soft vignette
   const vg = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(20,30,40,.28)'); c.fillStyle = vg; c.fillRect(0, 0, W, H);

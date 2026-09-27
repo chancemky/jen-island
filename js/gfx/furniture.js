@@ -7,7 +7,7 @@ import { LIGHT, glows, lanternShape } from './props.js';
 import { ICONS, drawIcon } from './food.js';
 import { drawHuman } from './character.js';
 
-const g = (p, x, y, r, col) => glows.push([p.x + x, p.y + y, r, col]);
+const g = (p, x, y, r, col) => { if (!p.off) glows.push([p.x + x, p.y + y, r, col]); };   // lamps you switched off don't glow
 
 // Generic counter-like box with a top surface.
 export function counterBox(c, w, h, d, col, top) {
@@ -159,7 +159,11 @@ export const F = {
   calendar(c, t, p) { box(c, -9, -62, 18, 20, 2, '#fff'); box(c, -9, -62, 18, 6, 2, '#e8584e'); text(c, String(p.day?.() ?? 1), 0, -49, 8, INK, 900); },
   altarShelf(c, t, p) { box(c, -18, -50, 36, 6, 2, '#a8563f'); for (const x of [-10, 0, 10]) circ(c, x, -54, 3, ['#ffb74a', '#9fd67a', '#f36d86'][(x / 10 + 1) | 0], INK, 0.6); },
   crateStack(c, t, p) { for (const [x, y] of [[-10, 0], [10, 0], [0, -16]]) { box(c, x - 9, y - 16, 18, 16, 2, '#c9955e'); line(c, x - 8, y - 15, x + 8, y - 1, '#a8763f', 0.8); } },
-  photoWall(c, t, p) { for (let i = 0; i < 4; i++) { const x = -24 + i * 16, y = -62 + (i % 2) * 6; box(c, x - 6, y, 12, 14, 1, '#fff'); box(c, x - 4.5, y + 1.5, 9, 8, 0.6, ['#aee4ed', '#f7de8c', '#f4a9b8', '#9fd8c8'][i], null); } line(c, -32, -63, 32, -63, INK, 0.6); },
+  photoWall(c, t, p) {
+    // Mèo Mây's memory wall grows with every keepsake you collect: little frames fill the wall around the main ones
+    const extra = Math.min(10, p.grow ? p.grow() : 0);
+    for (let i = 0; i < extra; i++) { const x = -44 + (i % 5) * 22, y = -84 + Math.floor(i / 5) * 42 + (i % 2) * 3; if (Math.abs(x) < 34 && y > -70) continue; box(c, x - 4, y, 8, 9, 0.8, '#fff'); box(c, x - 3, y + 1, 6, 5, 0.4, ['#f7de8c', '#9fd8c8', '#f4a9b8', '#aee4ed', '#c9b6e8'][i % 5], null); }
+    for (let i = 0; i < 4; i++) { const x = -24 + i * 16, y = -62 + (i % 2) * 6; box(c, x - 6, y, 12, 14, 1, '#fff'); box(c, x - 4.5, y + 1.5, 9, 8, 0.6, ['#aee4ed', '#f7de8c', '#f4a9b8', '#9fd8c8'][i], null); } line(c, -32, -63, 32, -63, INK, 0.6); },
   cashBox(c, t, p) { box(c, -9, -10, 18, 10, 2, '#f2c14e'); box(c, -6, -13, 12, 3, 1, '#d9a032'); if ((p.amount?.() || 0) > 0) { for (let i = 0; i < 3; i++) circ(c, -4 + i * 4, -15 - (i % 2) * 2, 2.4, '#ffd35a', INK, 0.6); } },
   pass(c, t, p) { counterBox(c, p.w || 60, 30, 10, p.col || '#e9d8bf', p.top || '#fffdf6'); },
   // ---- boutique
@@ -203,6 +207,7 @@ export const F = {
     c.fillStyle = p.col || '#e56b8b';
     for (let i = 0; i < 6; i++) { const x = -19 + i * 6.4; c.beginPath(); c.moveTo(x, -57); c.lineTo(x + 6.4, -57); c.lineTo(x + 6.4 + sw * (i / 6), -2); c.lineTo(x + sw * (i / 6), -2); c.closePath(); c.fillStyle = i % 2 ? shade(p.col || '#e56b8b', -12) : (p.col || '#e56b8b'); c.fill(); }
     c.strokeStyle = INK; c.lineWidth = 0.8; c.strokeRect(-19, -57, 38, 55);
+    if (p.occupied) { ell(c, -4, -1, 3.2, 1.6, '#5a4a48', null); ell(c, 4, -1, 3.2, 1.6, '#5a4a48', null); }   // someone's changing
     text(c, 'FITTING', 0, -66, 5, INK, 900);
   },
   shoeShelf(c, t, p) {
@@ -413,7 +418,7 @@ Object.assign(F, {
     limb(c, [0, 0, 0, -36], 1.6, '#5a4a48'); ell(c, 0, 0, 5.4, 2, '#5a4a48');
     poly(c, [-8.5, -36, 8.5, -36, 5, -47, -5, -47], '#f7de8c', INK, 0.9);
     c.strokeStyle = '#e3b64a'; c.lineWidth = 0.6; for (const x of [-4, 0, 4]) { c.beginPath(); c.moveTo(x * 1.4, -36.5); c.lineTo(x, -46.5); c.stroke(); }
-    if (LIGHT.night > 0.2) { c.fillStyle = 'rgba(255,230,160,.25)'; c.beginPath(); c.moveTo(-8, -36); c.lineTo(8, -36); c.lineTo(16, -8); c.lineTo(-16, -8); c.closePath(); c.fill(); }
+    if (LIGHT.night > 0.2 && !p.off) { c.fillStyle = 'rgba(255,230,160,.25)'; c.beginPath(); c.moveTo(-8, -36); c.lineTo(8, -36); c.lineTo(16, -8); c.lineTo(-16, -8); c.closePath(); c.fill(); }
     g(p, 0, -38, 44, 'rgba(255,220,150,.6)');
   },
   sofa(c, t, p) {
@@ -453,7 +458,8 @@ Object.assign(F, {
     shadow(c, 0, 1, 16, 3, 0.16);
     wood(c, -15, -9, 30, 9, 2, '#8a5f3e');
     box(c, -14, -31, 28, 22, 5, '#7c7680', INK, 1); box(c, -11, -28, 19, 16, 4, '#3d3a42', INK, 0.6);
-    const hue = (t * 30) % 360; c.save(); c.beginPath(); c.roundRect ? c.roundRect(-10, -27, 17, 14, 3) : c.rect(-10, -27, 17, 14); c.clip();
+    const hue = (t * 30 + (p.ch || 0) * 90) % 360; c.save(); c.beginPath(); c.roundRect ? c.roundRect(-10, -27, 17, 14, 3) : c.rect(-10, -27, 17, 14); c.clip();
+    if (p.off) { c.fillStyle = '#2f2c34'; c.fillRect(-10, -27, 17, 14); c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(-9, -26, 6, 3); c.restore(); circ(c, 11, -24, 1.4, '#5a4a48', INK, 0.4); circ(c, 11, -19, 1.4, '#5a4a48', INK, 0.4); limb(c, [-4, -31, -9, -39], 0.8, INK); limb(c, [4, -31, 9, -39], 0.8, INK); return; }
     c.fillStyle = `hsl(${hue},60%,78%)`; c.fillRect(-10, -27, 17, 14); c.fillStyle = `hsl(${(hue + 90) % 360},60%,65%)`; c.beginPath(); c.arc(-1.5 + Math.sin(t) * 3, -20, 3.5, 0, TAU); c.fill();
     c.fillStyle = 'rgba(255,255,255,.3)'; c.fillRect(-10, -27, 17, 3); c.restore();
     circ(c, 11, -24, 1.4, '#e8584e', INK, 0.4); circ(c, 11, -19, 1.4, '#f2c14e', INK, 0.4);
@@ -867,4 +873,23 @@ Object.assign(F, {
     stext(c, T('BOUQUETS', 'BÓ HOA'), 0, -26, 3.2, '#fff', 900);
     stext(c, '50k', 0, -21, 3.4, '#ffd35a', 900); flower(c, -4.5, -15, 1.6, '#ff8fb0'); flower(c, 0, -15, 1.6, '#fff', 1); flower(c, 4.5, -15, 1.6, '#ffd35a');
   },
+});
+
+// ---------------------------------------------------------------- collector's pieces (luxury)
+Object.assign(FURN_DRAW, {
+  meo_plush: (c, t, p) => { shadow(c, 0, 1, 10, 3, 0.16); ell(c, 0, -8, 9, 8, '#fffaf0', INK, 1); circ(c, 0, -20, 8, '#fffaf0', INK, 1); poly(c, [-7, -24, -5, -32, -1, -26], '#fffaf0', INK, 0.9); poly(c, [7, -24, 5, -32, 1, -26], '#fffaf0', INK, 0.9); ell(c, 3, -23, 4, 3, '#9fb4dc', null); circ(c, -3, -20, 1, INK, null); circ(c, 3, -20, 1, INK, null); ell(c, 0, -17, 1.4, 0.9, '#f08ca0', null); line(c, 0, -14, 0, -10, '#e8584e', 1.4); circ(c, 0, -10, 1.6, '#f2c14e', INK, 0.5); },
+  meo_statue: (c, t, p) => { shadow(c, 0, 1, 16, 4, 0.2); box(c, -14, -14, 28, 14, 2, '#d9cfc0', INK, 1); box(c, -16, -17, 32, 4, 1.5, '#e9e1d4', INK, 0.8); const gold = '#e9b949', k = (Math.sin(t * 2) + 1) / 2;
+    ell(c, 0, -26, 10, 9, gold, INK, 1); circ(c, 0, -40, 9, gold, INK, 1); poly(c, [-8, -44, -6, -54, -1, -47], gold, INK, 0.9); poly(c, [8, -44, 6, -54, 1, -47], gold, INK, 0.9);
+    c.strokeStyle = gold; c.lineWidth = 3; c.beginPath(); c.moveTo(9, -22); c.quadraticCurveTo(20, -30, 14, -40); c.stroke(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+    circ(c, -3, -40, 1, INK, null); circ(c, 3, -40, 1, INK, null); c.fillStyle = `rgba(255,255,255,${0.35 + k * 0.4})`; c.beginPath(); c.arc(-4, -44, 2, 0, TAU); c.fill(); },
+  ship_model: (c, t, p) => { shadow(c, 0, 1, 16, 3, 0.16); box(c, -14, -8, 28, 8, 2, '#8a5f3e', INK, 0.9); line(c, -8, -8, -8, -14, '#5a4a48', 1.4); line(c, 8, -8, 8, -14, '#5a4a48', 1.4);
+    poly(c, [-18, -18, 18, -18, 12, -12, -12, -12], '#c9674a', INK, 0.9); line(c, 0, -18, 0, -46, '#8a5f3e', 1.2); poly(c, [1, -44, 1, -22, 15, -22], '#fffaf0', INK, 0.8); poly(c, [-1, -40, -1, -24, -12, -24], '#fffaf0', INK, 0.8); poly(c, [0, -46, 7, -44, 0, -42], '#e8584e', null); },
+  art_commission: (c, t, p) => { c.save(); c.translate(0, p.preview ? 50 : 0);
+    box(c, -24, -70, 48, 32, 2, '#c99a4a', INK, 1); box(c, -21, -67, 42, 26, 1, '#aee4ed', null);
+    ell(c, 0, -48, 16, 5, '#f2dca8', null); ell(c, -2, -51, 11, 5, '#8fcf6a', null); box(c, -6, -58, 5, 5, 1, '#f28f7c', INK, 0.5); box(c, 2, -57, 5, 4, 1, '#6fbfb0', INK, 0.5);
+    for (let i = 0; i < 5; i++) circ(c, -16 + i * 8, -62 + (i % 2) * 2, 1.2, '#ffd35a', null); circ(c, 14, -63, 2.6, '#fff6b0', null);
+    c.fillStyle = INK; c.font = '900 3px Nunito, sans-serif'; c.textAlign = 'right'; c.fillText('Vy', 19, -43); c.restore(); },
+  lantern_wall: (c, t, p) => { c.save(); c.translate(0, p.preview ? 50 : 0); line(c, -24, -66, 24, -66, '#5b3f36', 0.8);
+    ['#ea5a4f', '#f2c14e', '#f08ca0', '#6fbfb0', '#b39ddb', '#ffae3a'].forEach((col, i) => { const x = -20 + i * 8, y = -62 + (i % 2) * 3; line(c, x, -66, x, y - 5, INK, 0.5); ell(c, x, y, 3.2, 4, col, INK, 0.6); }); c.restore(); },
+  garden_terrace: (c, t, p) => { box(c, -22, -12, 44, 12, 3, '#a8784e', INK, 1); for (let i = -1; i <= 1; i++) { line(c, i * 12, -4, i * 12, -12, '#5f9f3a', 1.2); circ(c, i * 12, -13, 3, '#6fbf4a', INK, 0.5); } },
 });

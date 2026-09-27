@@ -7,13 +7,14 @@ import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGRED
 import { RESIDENTS, visitorLook } from '../data/looks.js';
 import { addXP } from './progress.js';
 import { Actor } from '../world/actor.js';
-import { QUEUES } from '../world/island.js';
+import { QUEUES, TRUCK_SPOTS } from '../world/island.js';
 import { bus, rand, randi, choice, chance, clamp, dist } from '../core/util.js';
 import { sfx } from '../core/audio.js';
 import { applyPronouns, customerProfile } from './pronouns.js';
 import { fx } from '../world/render.js';
 import { recordSale } from './ledger.js';
 import { recordUse } from './economy.js';
+import { eventBoost } from './interact.js';
 
 export const LOCAL_NAMES = ['Chị Thu', 'Anh Nam', 'Cô Ba', 'Bác Tâm', 'Em Bi', 'Chú Lộc', 'Chị Hằng', 'Anh Khôi', 'Cô Duyên', 'Bác Hòa', 'Em Tí', 'Chị Loan', 'Anh Phong', 'Cô Mận', 'Chú Tư', 'Chị Vân', 'Anh Hùng', 'Em Su', 'Cô Nga', 'Bác Sang', 'Chị Ánh', 'Anh Tín', 'Em Cốm', 'Cô Liên'];
 const TOURIST_NAMES = ['Emma', 'Kenji', 'Lucas', 'Aiko', 'Mia', 'Noah', 'Hana', 'Leo', 'Sofia', 'Min-jun', 'Ava', 'Oliver', 'Chloé', 'Mateo', 'Yuki', 'Sam'];
@@ -94,7 +95,7 @@ export const PRICE_TOLERANCE = { tourist: 1.35, regular: 1.15, picky: 0.9, rushe
 export function tolerance(bizId, personality, perfectShop = false) {
   let t = PRICE_TOLERANCE[personality] ?? 1;
   if (personality === 'picky' && perfectShop) t = 1.1;           // picky people pay for quality
-  return t * (BUSINESSES[bizId]?.tolerance || 1);
+  return t * (bizId === 'truck' ? TRUCK_SPOTS[G.state.truckSpot || 'beach'].tolerance || BUSINESSES.truck.tolerance || 1 : BUSINESSES[bizId]?.tolerance || 1);
 }
 // how customers feel about a price: <1 means fewer people want it. A gentle curve —
 // cheap, fair and pricey menus are all workable; they just attract different crowds.
@@ -212,7 +213,7 @@ function walkToSlot(c) {
   const q = QUEUES[c.bizId], [x, y] = q[Math.min(c.slot, q.length - 1)];
   const island = G.scenes.island;
   const pts = c.state === 'walking' && dist(c.actor.x, c.actor.y, x, y) > 60 ? island.nav.path(c.actor.x, c.actor.y, x, y) : [[x, y]];
-  c.actor.walkTo(pts).then(ok => { if (ok && c.state === 'walking') { c.state = 'waiting'; c.actor.face('up'); if (c.slot === 0) c.actor.showEmote(c.order.special ? 'heart' : '...', 1.4); } else if (ok) c.actor.face('up'); });
+  c.actor.walkTo(pts).then(ok => { if (ok && c.state === 'walking') { c.state = 'waiting'; c.actor.face('up'); if (c.slot === 0) c.actor.showEmote(c.order.special ? 'heart' : '...', 1.4); if (c.slot === 0 && G.state.regulars[c.key]?.visits >= 3 && !c._named) { c._named = true; import('./fun.js').then(m => m.bark(c.actor, `♥ ${c.name}`, 2.2)); } } else if (ok) c.actor.face('up'); });
 }
 function shiftQueue(bizId) {
   const r = rt(bizId);
@@ -462,6 +463,7 @@ export function demandAt(id, h = G.state.time / 60) {
   const def = BUSINESSES[id], curve = DEMAND[def.biz] || [[0, 1]];
   let k = curve[0][1]; for (const [from, v] of curve) if (h >= from) k = v;
   if (def.late) k = h >= 20 ? 1.7 : h >= 19 ? 1.2 : 0.8;          // skewers: the later the busier
+  if (id === 'truck') { const sp = TRUCK_SPOTS[G.state.truckSpot || 'beach']; if (sp.steady) k = (k + 1) / 2 * sp.steady; if (sp.ferry && G.runtime.boatBoost > 0) k *= sp.ferry; }
   return k * (def.pace || 1);
 }
 function nextSpawnDelay(id) {
@@ -474,10 +476,11 @@ function nextSpawnDelay(id) {
   const special = b.special ? 1.12 : 1;
   const early = s.story.chapter <= 2 ? 1.35 : 1;
   const owned = s.property?.[id] ? 1.05 : 1;                      // your own place: you can put a sign out front
+  const festive = eventBoost(def.biz);                            // Tết, summer beach days, Mid-Autumn…
   const recs = bizRecipes(id);
   const appeal = recs.length ? recs.reduce((a, r) => a + priceAppeal(r, id), 0) / recs.length : 1;
   const gear = eq(id, 'attract') * (h >= 18 ? eq(id, 'night') : 1);
-  const rate = attract * rep * tf * boat * special * early * appeal * gear * owned; // customers per ~34 game-minutes baseline
+  const rate = attract * rep * tf * boat * special * early * appeal * gear * owned * festive; // customers per ~34 game-minutes baseline
   return clamp(rand(26, 44) / rate, 6, 60);
 }
 

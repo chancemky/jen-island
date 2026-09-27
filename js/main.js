@@ -1,7 +1,7 @@
 // JEN Island — boot, main loop and the glue between systems.
 
 import { Renderer, cam, fx, lightingFor } from './world/render.js';
-import { Island, areaAt, areaIdAt, AREAS, BUILDINGS } from './world/island.js';
+import { Island, areaAt, areaIdAt, AREAS, BUILDINGS, TRUCK_SPOTS } from './world/island.js';
 import { COUNTS } from './systems/progress.js';
 import { unlockAchievement } from './systems/state.js';
 import { buildInteriors } from './world/interiors.js';
@@ -30,7 +30,7 @@ import { showAuth } from './ui/auth.js';
 import { updateBusinesses, openBiz, closeBiz, rt as bizRT } from './systems/business.js';
 import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs } from './systems/npc.js';
 import { updateClock, endDay, specialsInit, timePaused } from './systems/time.js';
-import { repairBridge, STEPS } from './systems/story.js';
+import { repairBridge, STEPS , stallHandover } from './systems/story.js';
 import { buildSeaBridge } from './systems/story.js';
 import { runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, buyScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
 import { talkToResident, talkToMerchant, talkToStaff, talkToVisitor } from './systems/talk.js';
@@ -44,6 +44,10 @@ import { nearestSeat, sitDown, standUp, updateSeat } from './systems/seats.js';
 import { feedDucks, nearPond } from './systems/npc.js';
 import { meoAntic } from './systems/fun.js';
 import { initLedger } from './systems/ledger.js';
+import { initAlbum } from './systems/album.js';
+import { nearbyThing, outdoorAction, morningEvent, updateWorldEvents, lookText } from './systems/interact.js';
+import { fishingAction } from './systems/fishing.js';
+import { gardenAction, plaqueAction } from './systems/garden.js';
 import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones, TRACKS, trackState } from './systems/progress.js';
 import { BRIDGE_REPAIR, FESTIVAL_REQ, KEEPER_REQ } from './data/game.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
@@ -51,7 +55,7 @@ import { showWhatsNew } from './ui/whatsnew.js';
 import { openBoutique, openWardrobe, currentLook, refreshPlayerLook } from './ui/clothes.js';
 import { openSalon } from './ui/salon.js';
 import { spawnVendors, updateVendors, buyFromVendor } from './systems/vendors.js';
-import { updateKeepers, spawnKeepers } from './systems/economy.js';
+import { updateKeepers, spawnKeepers, keeperActor } from './systems/economy.js';
 import { rebuildPets, updatePets, petMenu } from './systems/pets.js';
 import { openPetShop } from './ui/petshop.js';
 import { bus, dist, clamp, sleep, choice, money, rand, clock } from './core/util.js';
@@ -91,7 +95,7 @@ async function boot() {
   progress(0.7, bootText('meo'));
   // pre-warm the ground chunks near the dock
   scenes.island.cache.get(2, 6, Math.min(2, renderer.dpr * cam.baseZoom * 1.15));
-  initHud(); initSaveHooks(); initLedger();
+  initHud(); initSaveHooks(); initLedger(); initAlbum();
   progress(0.85, bootText('net'));
   let user = null;
   const dev = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).has('dev');
@@ -122,6 +126,7 @@ function startGame() {
   spawnVendors(scenes.island);
   spawnMerchants();
   rebuildHouseFurniture();
+  if (G.state.truckSpot && TRUCK_SPOTS[G.state.truckSpot]) { const sp = TRUCK_SPOTS[G.state.truckSpot]; scenes.island.moveBuilding('truck', sp.x, sp.y); }
   spawnKeepers();
   rebuildPets();
   scenes.restaurant.applyLevel();
@@ -252,6 +257,7 @@ function loop(now) {
   if (sc !== scenes.island) scenes.island.update(dt, t);
   if (sc.kind === 'interior') updateInteriorLife(dt);
   updateNPCs(dt);
+  updateWorldEvents(dt);
   if (G.scene === scenes.island) updateVendors(dt);
   updateBusinesses(dt, gm);
   updateKeepers(dt);
@@ -321,6 +327,9 @@ function updateInteraction(dt) {
     if (tr.kind === 'front') return frontAction(tr);
     if (tr.kind === 'act') return actAction(tr);
   }
+  // things in the room that do something (TV, radio, piano, lamps, fish, books…)
+  const thing = nearbyThing(sc, pl);
+  if (thing) { setAction(thing.label, thing.run, thing.icon); return; }
   // benches, chairs, stools, sofas, cushions
   const seat = nearestSeat(sc, pl.x, pl.y, 18);
   if (seat) { setAction(seat.lie ? T('Lie down', 'Nằm võng') : T('Sit', 'Ngồi'), () => sitDown(seat), seat.lie ? 'zzz' : 'sofa'); return; }
@@ -343,6 +352,14 @@ function updateInteraction(dt) {
   if (sc === scenes.island && dist(pl.x, pl.y, 900, 1600) < 50 && G.state.story.step === 'destination') {
     setAction(T('Statue', 'Tượng đài'), () => statueSheet(), 'star'); return;
   }
+  // fishing off the end of the pier (once Chú Hải has shown you how)
+  const fish = fishingAction(pl); if (fish) { setAction(fish.label, fish.run, fish.icon); return; }
+  // the garden patch behind your house
+  const gd = gardenAction(pl); if (gd) { setAction(gd.label, gd.run, gd.icon); return; }
+  // the fountain, the pier, the shore
+  const od = outdoorAction(pl); if (od) { setAction(od.label, od.run, od.icon); return; }
+  // lore on restored places
+  const pq = plaqueAction(pl); if (pq) { setAction(pq.label, pq.run, pq.icon); return; }
   setAction('', null);
 }
 function nearestTalkable(sc, pl) {
@@ -417,7 +434,25 @@ function frontAction(tr) {
     return doorAction(trig);
   }
   if (bizId === 'truck' && !z.owned) return doorAction(scenes.island.triggers.find(t => t.kind === 'door' && t.building === 'truck'));
+  if (bizId === 'truck') return setAction(T('Drive to…', 'Lái xe tới…'), () => driveTruck(), 'goi_cuon');
   setAction('', null);
+}
+// the food truck goes where the customers are
+async function driveTruck() {
+  const s = G.state, cur = s.truckSpot || 'beach';
+  const ids = Object.keys(TRUCK_SPOTS).filter(k => !TRUCK_SPOTS[k].need || s.story.flags[TRUCK_SPOTS[k].need]);
+  const pick = await ask(null, T('Where to today?', 'Hôm nay đi đâu?'), [...ids.map(k => `${T(TRUCK_SPOTS[k].en, TRUCK_SPOTS[k].vi)}${k === cur ? ' ✓' : ''} — ${T(TRUCK_SPOTS[k].fx, TRUCK_SPOTS[k].fxVi)}`), T('Stay here', 'Ở lại đây')]);
+  const to = ids[pick]; if (!to || to === cur) return;
+  if (bizOf('truck').open) closeBiz('truck', 'moving');
+  await fadeOut(350);
+  sfx('beep');
+  s.truckSpot = to; markDirty(true);
+  const sp = TRUCK_SPOTS[to], old = scenes.island.buildings.truck, ka = keeperActor('truck');
+  if (ka) { ka.x += sp.x - old.x; ka.y += sp.y - old.y; }
+  scenes.island.moveBuilding('truck', sp.x, sp.y);
+  G.player.x = sp.x - 40; G.player.y = sp.y + 26; G.player.face('up'); cam.snap(G.player.x, G.player.y - 18);
+  await fadeIn(350);
+  toast({ text: T(`The truck is at ${sp.en} now`, `Xe đã tới ${sp.vi}`), sub: T(sp.fx, sp.fxVi), icon: 'goi_cuon' });
 }
 // Stalls and kiosks are run from the counter outside.
 const KIOSK_ICON = { night: 'banh_trang_nuong', cafe: 'coffee', grill: 'squid' };
@@ -449,6 +484,7 @@ async function buyKiosk(id) {
   for (const [rid, r] of Object.entries(RECIPES)) if (r.biz === def.biz && r.starter && !G.state.recipes.includes(rid)) learnRecipe(rid);
   for (const rid of def.menu || []) if (!G.state.recipes.includes(rid)) learnRecipe(rid);      // the family's speciality comes with the stall
   markDirty(true); sfx('fanfare'); addXP(150, 'buy');
+  if (def.stall) await stallHandover(id);                 // the family says goodbye and passes on their speciality
   fx.burst('confetti', G.player.x, G.player.y - 30, 30, { up: 80, speed: 70, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 60, life: 1.6 });
   await showReward({ icon: KIOSK_ICON[def.biz] || 'key', kicker: T('New shop!', 'Quán mới!'), title: bizName(id), text: T('Open it from the counter. You can hire a shopkeeper for it in the Business tab.', 'Mở cửa ở quầy. Có thể thuê người trông quán trong mục Kinh doanh.') });
   bus.emit('bought', 'shop', id);
@@ -460,7 +496,7 @@ function actAction(tr) {
   const L = T(tr.en || tr.label || '', tr.label || '');
   const map = {
     sleep: () => sleepFlow(),
-    look: () => say(null, T(tr.text[0], tr.text[1])),
+    look: () => { const t = lookText(tr); return say(null, T(t[0], t[1])); },
     homeSnack: () => homeSnack(),
     'shop:ingredients': () => openIngredientShop(),
     'shop:materials': () => { const st = G.state.story.step; if (st === 'materials') G.runtime.materialNeed = () => ({ label: bizName('shed1'), mats: BUSINESSES.shed1.repair }); openMaterialShop(); },
@@ -720,6 +756,7 @@ document.addEventListener('visibilitychange', () => suspendAudio(document.hidden
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__jen = { G, scenes, cam, cs, setStep, checkStory, openBiz, bizRT, npcs, restRT, sleepFlow, doSleep, toggleBiz, discoverRecipe, triggerAction, setScene, STEPS, FESTIVAL_REQ, KEEPER_REQ, restoreNightMarket, buildStatue, NIGHT_MARKET_RESTORE, STATUE_COST };
 if (window.__jen) {
   window.__jen.endDay = endDay; window.__jen.openMenu = openMenu; window.__jen.openJournal = openJournal; window.__jen.openStaffBoard = openStaffBoard;
+  import('./systems/sidequests.js').then(m => { window.__jen.sq = m; }); import('./systems/story.js').then(m => { window.__jen.story = m; }); import('./systems/interact.js').then(m => { window.__jen.ix = m; }); import('./systems/garden.js').then(m => { window.__jen.garden = m; }); import('./systems/fishing.js').then(m => { window.__jen.fishing = m; }); import('./ui/decorate.js').then(m => { window.__jen.decorate = m; });
   Promise.all([import('./data/game.js'), import('./systems/economy.js'), import('./systems/business.js'), import('./systems/ledger.js'), import('./systems/progress.js')])
     .then(([g, e, b, l, pr]) => { Object.assign(window.__jen, { spawnCustomer: b.spawnCustomer, bizRecipes: b.bizRecipes }); window.__jen.econ = { ...g, ...e, ...b, ...l, GATES: pr.GATES, levelReward: pr.levelReward, milestoneReward: pr.milestoneReward }; });
 }

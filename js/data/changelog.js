@@ -3,9 +3,43 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '4.3.1';
+export const APP_VERSION = '5.0.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.0.0', date: '2026-09-27T03:54:53Z',
+    title: ['The Island Remembers', 'Hòn Đảo Còn Nhớ'],
+    items: [
+      ['Everyone starts fresh: all accounts were reset — sign up and begin again on the boat', 'Mọi người bắt đầu lại: tất cả tài khoản đã được xóa — hãy đăng ký và bắt đầu lại từ chuyến tàu'],
+      ['A fair economy: every dish is priced from what goes into it, the first repair costs about 230k, and no dish is a money printer', 'Kinh tế công bằng: giá mỗi món tính từ nguyên liệu, lần sửa quán đầu tiên khoảng 230k, và không món nào là “máy in tiền”'],
+      ['Gentler pricing: cheap, fair and pricey menus all work; tourists and harbour/cove customers mind prices less, picky ones more — unless your food is excellent', 'Định giá nhẹ nhàng hơn: giá rẻ, vừa hay cao đều được; du khách và khách ở bến cảng, vịnh dừa ít để ý giá, khách khó tính để ý hơn — trừ khi món thật ngon'],
+      ['Toppings are charged, large drinks cost a little more, and bonuses never stack past +45%', 'Topping có tính tiền, ly lớn đắt hơn chút, và các khoản thưởng giá không cộng dồn quá +45%'],
+      ['One price per business (Mèo Mây\'s keys cost the same), properties pay back in 45–65 days, and owning brings +5% customers and cheaper upgrades', 'Mỗi quán một giá (chìa khóa của Mèo Mây cũng vậy), mua nhà hoàn vốn sau 45–65 ngày, và sở hữu giúp thêm 5% khách và nâng cấp rẻ hơn'],
+      ['The Night Market stalls are all different now: lemongrass snails, sugarcane juice, grilled skewers — each family hands over its speciality', 'Các sạp Chợ Đêm giờ khác nhau: ốc luộc sả, nước mía, xiên nướng — mỗi gia đình trao lại món tủ của mình'],
+      ['The books: profit and loss for each business, spending by category, net worth, lifetime profit, and a comparison with yesterday', 'Sổ sách: lãi lỗ từng quán, chi tiêu theo mục, tổng tài sản, lợi nhuận từ trước tới nay, và so sánh với hôm qua'],
+      ['Shopkeepers have skill levels and grow with experience; restaurant staff are paid by their job, get better over time, and there\'s a manager from Chapter 19', 'Người trông quán có cấp tay nghề và giỏi dần; nhân viên nhà hàng được trả lương theo vị trí, tiến bộ theo thời gian, và có quản lý từ Chương 19'],
+      ['Supply runners and Stock Up buy what you actually sell (about a day and a half), not mountains of stock', 'Người giao hàng và nút Mua đủ mua đúng thứ bạn bán (khoảng một ngày rưỡi), không chất đống'],
+      ['Milestones end when there\'s nothing left to count (COMPLETED in gold), give keepsakes, and there are new ones — plus five secret achievements', 'Cột mốc kết thúc khi đã đủ (HOÀN THÀNH màu vàng), tặng kỷ vật, và có thêm cột mốc mới — cùng năm thành tựu bí mật'],
+      ['34 side quests: every neighbour has their own story in several parts, told as you become friends', '34 nhiệm vụ phụ: mỗi người hàng xóm có câu chuyện riêng nhiều phần, mở ra khi các bạn thân nhau hơn'],
+      ['Mèo Mây tells you where it came from, a memory at a time — and why the island went quiet', 'Mèo Mây kể về nguồn gốc của mình, từng kỷ niệm một — và vì sao hòn đảo từng vắng lặng'],
+      ['New neighbours in Harbour Town and Coconut Cove: Ông Lộc, Chị Ngọc and Cô Dừa', 'Hàng xóm mới ở Phố Cảng và Vịnh Dừa: Ông Lộc, Chị Ngọc và Cô Dừa'],
+      ['New story scenes: the busy ferry of Chapter 3, the bánh mì shed\'s history, stall handovers, the Night Market celebration, a day the island runs itself, and a longer ending', 'Cảnh truyện mới: chuyến tàu đông của Chương 3, lịch sử quán bánh mì, trao lại sạp, đêm mừng Chợ Đêm, một ngày hòn đảo tự vận hành, và đoạn kết dài hơn'],
+      ['After the story: the families who left come home to visit', 'Sau câu chuyện: những gia đình đã rời đi quay về thăm đảo'],
+      ['Things to do: TV, radio, records, piano, feeding fish, lamps, books, mirrors, the fitting room, coin wishes, skipping stones, the lighthouse telescope, waving at the ferry', 'Việc để làm: tivi, radio, đĩa hát, đàn piano, cho cá ăn, đèn, sách, gương, phòng thử đồ, ném đồng xu ước, ném thia lia, ống nhòm hải đăng, vẫy tay chào tàu'],
+      ['Fishing off the pier (after Chú Hải\'s story) and a garden patch beside your house', 'Câu cá ở cầu tàu (sau câu chuyện của Chú Hải) và một mảnh vườn cạnh nhà'],
+      ['Tết, Summer Beach Days, Mid-Autumn and Night Market Saturdays; neighbours\' birthdays and gifts they love', 'Tết, Những ngày hè, Trung Thu và tối thứ Bảy ở Chợ Đêm; sinh nhật hàng xóm và những món quà họ thích'],
+      ['Pet tricks, Mèo Mây meeting your pet, favourite street snacks, regulars you recognise, little things happening around the island', 'Thú cưng làm xiếc, Mèo Mây gặp thú cưng, món vặt ruột, nhận ra khách quen, những chuyện nhỏ xảy ra quanh đảo'],
+      ['The food truck can drive to the Ferry Dock, Wind Plaza or Harbour Town', 'Xe đồ ăn có thể lái tới Bến tàu, Quảng trường gió hoặc Phố Cảng'],
+      ['Name your shops, pick their colours and sign style (the marquee and neon signs are something to save for)', 'Đặt tên quán, chọn màu và kiểu bảng hiệu (bảng đèn và neon là thứ đáng để dành tiền)'],
+      ['A photo album of the big moments, a scrapbook of the neighbours you helped, and a list of everything you discovered', 'Album ảnh những khoảnh khắc lớn, sổ kỷ niệm những người hàng xóm bạn đã giúp, và danh sách mọi điều bạn khám phá'],
+      ['The island visibly comes back to life chapter by chapter: bunting, planters, festival lanterns, boats and a welcome banner', 'Hòn đảo sống lại rõ ràng qua từng chương: cờ dây, chậu hoa, lồng đèn lễ hội, thuyền bè và băng rôn chào mừng'],
+      ['Collector\'s corner: a Mèo Mây plush, a golden statue, a model ferry, a painting from Vy, a lantern collection and a garden terrace', 'Góc sưu tầm: thú bông Mèo Mây, tượng vàng, mô hình tàu, tranh của Vy, bộ sưu tập lồng đèn và thềm vườn'],
+      ['Everyday clothes and haircuts are affordable again; rare pieces are the luxury', 'Quần áo thường ngày và cắt tóc lại vừa túi tiền; đồ hiếm mới là hàng xa xỉ'],
+      ['Every job in the restaurant looks different, and several neighbours carry things that show who they are', 'Mỗi vị trí trong nhà hàng có trang phục riêng, và vài người hàng xóm mang theo đồ đạc thể hiện họ là ai'],
+      ['Your island is safer: automatic backups, a daily cloud snapshot, and recovery from a damaged save (Menu → Account)', 'Hòn đảo an toàn hơn: tự sao lưu, ảnh chụp đám mây mỗi ngày, và khôi phục khi dữ liệu bị hỏng (Menu → Tài khoản)'],
+      ['The Lantern Festival now asks for exactly what it says, and Chapter 20 shows its title card only once', 'Lễ Hội Đèn Lồng giờ yêu cầu đúng như đã nói, và Chương 20 chỉ hiện thẻ tiêu đề một lần'],
+    ],
+  },
   {
     v: '4.3.1', date: '2026-09-26T22:58:29Z',
     title: ['The Lamp Room', 'Phòng Đèn'],

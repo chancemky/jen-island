@@ -114,10 +114,13 @@ function windowBox(c, x, y, w, h, opt = {}) {
 }
 function signBoard(c, x, y, w, h, label, bg, fg = '#fff', opt = {}) {
   c.save(); c.translate(x, y); if (opt.tilt) c.rotate(opt.tilt);
-  box(c, -w / 2, -h / 2, w, h, 3, bg);
-  box(c, -w / 2 + 2, -h / 2 + 2, w - 4, h - 4, 2, null, shade(bg, 30), 0.8);
+  const style = opt.style || 'plain', t = performance.now() / 1000;
+  if (style === 'neon') { c.save(); c.shadowColor = bg; c.shadowBlur = 8 + Math.sin(t * 3) * 2; box(c, -w / 2, -h / 2, w, h, 4, '#2f2a3a'); c.restore(); box(c, -w / 2 + 1.5, -h / 2 + 1.5, w - 3, h - 3, 3, null, bg, 1.4); }
+  else { box(c, -w / 2, -h / 2, w, h, 3, bg); box(c, -w / 2 + 2, -h / 2 + 2, w - 4, h - 4, 2, null, shade(bg, 30), 0.8); }
   const fs = Math.min(h * 0.55, (w - 8) / Math.max(4, label.length) * 1.7);
-  stext(c, label, 0, 0.6, fs, fg, 900, 'center', opt.outline || null, 2);
+  if (style === 'neon') { c.save(); c.shadowColor = fg; c.shadowBlur = 6; stext(c, label, 0, 0.6, fs, '#fff6d6', 900, 'center', null, 2); c.restore(); }
+  else stext(c, label, 0, 0.6, fs, fg, 900, 'center', style === 'outline' ? shade(bg, -40) : opt.outline || null, style === 'outline' ? 2.4 : 2);
+  if (style === 'lights') { const n = Math.max(6, Math.round(w / 7)); for (let i = 0; i < n; i++) { const u = i / n, px = -w / 2 + u * w, on = (Math.floor(t * 4) + i) % 3 !== 0; circ(c, px + 3, -h / 2 - 1.5, 1.3, on ? '#ffe89a' : '#c9b37a', null); circ(c, px + 3, h / 2 + 1.5, 1.3, on ? '#c9b37a' : '#ffe89a', null); } }
   c.restore();
 }
 function awning(c, x, y, w, cols, depth = 12, opt = {}) {
@@ -180,7 +183,7 @@ export function drawShed(c, t, b) {
   // sign on the roof edge
   const label = s.sign || '???';
   if (k < 0.8) signBoard(c, -8, -h - 20, 56, 13, broken ? T('SHOP...', 'QUÁN...') : label, '#b8a898', '#6e5a4e', { tilt: broken ? 0.18 : 0.18 * (1 - k) });
-  else signBoard(c, -8, -h - 22, 66, 15, label, s.signCol || '#e8584e', '#fff5df');
+  else signBoard(c, -8, -h - 22, 66, 15, label, s.signCol || '#e8584e', '#fff5df', { style: s.signStyle });
   if (!broken && (s.level || 1) >= 3) stringLights(c, w + 6, -h + 2, t, b);
   if (!broken && s.open) {
     // OPEN sign flips on the door
@@ -466,9 +469,9 @@ export function drawRestaurant(c, t, b) {
   if (broken) { line(c, -18, -40, 18, -4, '#a07a50', 4); signBoard(c, 0, -52, 44, 12, T('FOR SALE', 'BÁN'), '#fff5df', '#e8584e', { tilt: -0.08 }); }
   tileRoof(c, w, 50, h, mix('#8a7f78', '#d9784f', clamp(k * 2 - 0.5, 0, 1)), { overhang: 12, missing: k < 0.5, ridgeOrnament: !broken });
   const name = s.sign || T('RESTAURANT', 'NHÀ HÀNG');
-  if (!broken) { signBoard(c, 0, -h - 12, 128, 20, name, '#a8563f', '#ffe7a8'); }
+  if (!broken) { signBoard(c, 0, -h - 12, 128, 20, name, s.branded ? s.signCol : '#a8563f', '#ffe7a8', { style: s.signStyle }); }
   if (!broken) {
-    awning(c, 0, -h / 2 + 8, 150, ['#fff5df', '#e8584e'], 10);
+    awning(c, 0, -h / 2 + 8, 150, s.branded ? s.awning : ['#fff5df', '#e8584e'], 10);
     for (const x of [-w / 2 + 10, w / 2 - 10]) { lanternShape(c, x, -h / 2 + 2, 0.9, '#ea5a4f', t, x); if (nightA() > 0.05) glow(b, x, -h / 2 + 12, 34, 'rgba(255,190,110,.55)'); }
     if ((s.level || 1) >= 3) stringLights(c, w + 10, -h + 4, t, b);
   }
@@ -493,11 +496,11 @@ export function drawFoodTruck(c, t, b) {
   if (open) { for (let i = 0; i < 4; i++) box(c, -34 + i * 14, -46, 8, 10, 1.5, ['#f0b04a', '#ff9a7a', '#e0a052', '#9fd67a'][i], INK, 0.5); glow(b, -10, -42, 46, 'rgba(255,210,130,.5)'); }
   const flap = s.flapOpen ?? (open ? 1 : 0);
   if (flap < 0.98) box(c, -40, -54, 60, 24 * (1 - flap), 2, shade(col, -8));
-  if (flap > 0.02) awning(c, -10, -56, 66, ['#fff5df', '#f28f7c'], 14 * flap);
+  if (flap > 0.02) awning(c, -10, -56, 66, s.awning || ['#fff5df', '#f28f7c'], 14 * flap);
   box(c, -44, -32, 68, 5, 2, '#c9955e');
   c.restore();
   if (!owned) { signBoard(c, -10, -76, 60, 14, T('FOR SALE', 'BÁN'), '#fff5df', '#e8584e'); ell(c, 0, -30, 40, 14, 'rgba(160,150,140,.12)', null); }
-  else signBoard(c, -10, -76, 76, 14, s.sign || T('FOOD TRUCK', 'XE BÁNH'), '#f28f7c', '#fff5df');
+  else signBoard(c, -10, -76, 76, 14, s.sign || T('FOOD TRUCK', 'XE BÁNH'), s.signCol && s.awning?.[1] !== '#f28f7c' ? s.signCol : '#f28f7c', '#fff5df', { style: s.signStyle });
   if (open && nightA() > 0.05) stringLights(c, 90, -68, t, b);
 }
 

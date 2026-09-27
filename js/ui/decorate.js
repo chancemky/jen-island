@@ -78,7 +78,7 @@ export function rebuildHouseFurniture() {
 function addFurnProp(sc, f) {
   const def = FURNITURE[f.id]; if (!def) return;
   const rot = f.rot || 0, fp = footprint(def.w, def.h, rot, f.id);
-  const p = { homeFurn: f, x: f.x, y: f.y, draw: (c, t) => drawTurned(c, t, f.id, rot, () => FURN_DRAW[f.id](c, t, { ...def, x: f.x, y: f.y })), cull: { x: f.x - 70, y: f.y - 100, w: 140, h: 120 } };
+  const p = { homeFurn: f, x: f.x, y: f.y, draw: (c, t) => drawTurned(c, t, f.id, rot, () => FURN_DRAW[f.id](c, t, { ...def, ...(f.fs || {}), x: f.x, y: f.y })), cull: { x: f.x - 70, y: f.y - 100, w: 140, h: 120 } };
   if (def.floor) p.flat = true; // rugs sit under everything
   if (def.wall) p.sortY = -1;
   sc.prop(p);

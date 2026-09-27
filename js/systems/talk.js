@@ -4,12 +4,28 @@
 
 import { G, T, markDirty, unlockAchievement } from './state.js';
 import { recipeName, ROLES } from '../data/game.js';
-import { say } from '../ui/dialogue.js';
+import { say, ask } from '../ui/dialogue.js';
+import { questOption, questTalk } from './sidequests.js';
 import { choice } from '../core/util.js';
 import { residentMenu, randomJoke } from './fun.js';
 
 // Three tiers per resident: early game, mid game (chapter 3+), late game (chapter 5+).
 const LINES = {
+  ong_loc: [
+    [['Forty years I kept this harbour. Then the boats got fewer, and I kept the nets instead.', 'Bốn mươi năm ông giữ bến cảng này. Rồi thuyền thưa dần, ông chuyển sang giữ lưới.'], ['A knot a day. That\'s how you mend a net — and most other things.', 'Mỗi ngày một nút. Vá lưới là vậy — mà vá mấy chuyện khác cũng vậy.']],
+    [['You hear that? Engines. More boats than last month. My old ears like it.', 'Con nghe không? Tiếng máy. Nhiều thuyền hơn tháng trước. Tai già của ông thích lắm.'], ['The storm took the bridge, not the people. People just needed a reason to come back.', 'Cơn bão cuốn cây cầu, chứ đâu cuốn con người. Người ta chỉ cần một lý do để quay về.']],
+    [['Harbour Day used to have bunting on every mast. I think we\'ll need bunting again.', 'Ngày hội bến cảng xưa có cờ trên mọi cột buồm. Chắc sắp phải treo cờ lại rồi.'], ['That cat of yours visits me. She checks my knots. Very strict inspector.', 'Con mèo của con hay ghé ông. Nó kiểm tra từng nút lưới. Thanh tra khó tính lắm.']],
+  ],
+  chi_ngoc: [
+    [['Welcome to the guesthouse! Well — it\'s my house, with extra pillows.', 'Chào mừng tới nhà nghỉ! À — là nhà chị, có thêm gối thôi.'], ['I have four rooms and, until last week, zero guests. Now I have two!', 'Chị có bốn phòng và, tới tuần trước, không một vị khách. Giờ có hai rồi!']],
+    [['Guests ask where to eat. I send them to you. You\'re welcome!', 'Khách hỏi ăn ở đâu. Chị chỉ qua quán em. Khỏi cảm ơn!'], ['My guestbook has handwriting from thirty years ago. The ferry came every morning back then.', 'Sổ lưu bút của chị có chữ viết từ ba mươi năm trước. Hồi đó sáng nào cũng có tàu.']],
+    [['Fully booked this weekend! I had to buy a second kettle.', 'Cuối tuần này kín phòng! Chị phải mua thêm cái ấm thứ hai.'], ['A guest cried at the view from Lighthouse Point. Happy tears. I gave them a coconut.', 'Có vị khách khóc khi ngắm cảnh ở Ngọn Hải Đăng. Khóc vì vui. Chị đưa họ trái dừa.']],
+  ],
+  co_dua: [
+    [['Coconut? Fresh this morning. The tree didn\'t want to let go, but I asked nicely.', 'Dừa không con? Mới hái sáng nay. Cây không muốn buông, nhưng cô năn nỉ.'], ['The cove is the quietest place on the island. Even the waves whisper here.', 'Vịnh là chỗ yên nhất đảo. Sóng ở đây cũng nói thì thầm.']],
+    [['Tourists! At my cove! I had to learn to say "coconut" in four languages.', 'Du khách! Ở vịnh của cô! Cô phải học chữ “dừa” bằng bốn thứ tiếng.'], ['Your grill smells so good the crabs line up. They\'re not paying, though.', 'Quán nướng của con thơm tới mức cua cũng xếp hàng. Mà tụi nó không trả tiền.']],
+    [['When the bridge was out, I rowed coconuts to the market. My arms remember.', 'Hồi cầu còn gãy, cô chèo thuyền chở dừa ra chợ. Tay cô còn nhớ.'], ['Sunset here, with the lanterns across the water… I could sell tickets.', 'Hoàng hôn ở đây, lồng đèn bên kia mặt nước… cô bán vé được đó.']],
+  ],
   vy: [
     [['Fireflies only glow when they feel safe. Same as painters.', 'Đom đóm chỉ phát sáng khi thấy an toàn. Họa sĩ cũng vậy.'], ['I\'ve painted this banyan forty times. It looks different every evening.', 'Mình vẽ cây đa này bốn mươi lần rồi. Chiều nào nhìn cũng khác.']],
     [['Your shops look lovely from the lookout tower. Like little sweets on a tray.', 'Nhìn từ tháp canh, quán của bạn đẹp lắm. Như mấy viên kẹo trên khay.'], ['Mèo Mây posed for me once. For four seconds. Then it ate my eraser.', 'Mèo Mây từng làm mẫu cho mình. Được bốn giây. Rồi nó ăn cục gôm.']],
@@ -96,13 +112,27 @@ export async function talkToResident(a) {
 }
 export async function talkToMerchant(a) {
   a.face(G.player); a.showEmote('happy', 1.2); a.setEmo('happy', 2);
+  const qo = questOption(a.data.mid);
+  if (qo) {
+    const pick = await ask(a, pickT(choice(MERCH[a.data.mid] || [['Hello!', 'Xin chào!']])), [qo, T('Bye!', 'Tạm biệt!')], { emo: 'happy' });
+    if (pick === 0) await questTalk(a, a.data.mid);
+    return;
+  }
   await say(a, pickT(choice(MERCH[a.data.mid] || [['Hello!', 'Xin chào!']])));
 }
 export async function talkToStaff(a) {
   const e = a.data.emp;
   a.face(G.player);
   const role = T(ROLES[e.role].en, ROLES[e.role].vi);
-  await say(a, `(${role}) ${pickT(choice(STAFF[e.trait] || STAFF.steady))}`);
+  // they talk about their day, their growing skill, or just their personality
+  const d = e.today || {}, did = Object.entries(d).filter(([, n]) => n > 0).sort((x, y) => y[1] - x[1])[0];
+  const WHAT = { served: ['dishes to the tables', 'món ra bàn'], orders: ['orders', 'order'], cooked: ['dishes', 'món'], cleaned: ['tables', 'bàn'], prepped: ['batches of prep', 'mẻ sơ chế'], deposits: ['trips to the register', 'lần nộp tiền'], helped: ['guests', 'khách'], };
+  const lines = [pickT(choice(STAFF[e.trait] || STAFF.steady))];
+  if (did && did[1] >= 3) lines.push(T(`${did[1]} ${WHAT[did[0]][0]} today so far. Not bad, right?`, `Hôm nay {me} đã xong ${did[1]} ${WHAT[did[0]][1]} rồi. Cũng được ha?`));
+  if ((e.grown || 0) >= 1) lines.push(T('I\'m getting quicker at this. You noticed? You noticed.', '{Me} ngày càng nhanh tay hơn đó. Sếp thấy không? Thấy mà.'));
+  if (e.role === 'manager') lines.push(T('Everyone\'s on schedule, the pantry\'s stocked, and I only had to hum twice to keep morale up.', 'Mọi người đúng giờ, kho đủ hàng, và {me} chỉ phải ngân nga hai lần để giữ tinh thần.'));
+  a.setEmo('happy', 2);
+  await say(a, `(${role}) ${choice(lines)}`);
 }
 export async function talkToVisitor(a) {
   a.face(G.player); a.showEmote('happy', 1.2);

@@ -107,6 +107,13 @@ export function updatePets(dt) {
     if (p.uid === s.petFollow) {
       // follow the player into whatever scene they're in
       if (!G.scene.actors.includes(a)) { for (const sc of Object.values(G.scenes)) if (sc?.actors?.includes(a)) sc.remove(a); G.scene.add(a); a.x = pl.x - 16; a.y = pl.y + 6; a.stop?.(); }
+      // Mèo Mây meets your pet: curious the first time, a friendly boop after that
+      const m = G.meo;
+      if (m && G.scene.actors.includes(m) && dist(m.x, m.y, a.x, a.y) < 46 && !m.data?.busy) {
+        const key = 'meoMet:' + p.uid, f = s.story.flags;
+        if (!f[key]) { f[key] = true; markDirty(); m.face(a); m.showEmote('!', 1.4); a.showEmote('heart', 1.4); sfx('meow'); import('./fun.js').then(M => M.bark(m, T(`Oh! Hello, ${p.name}. I'm in charge here. Welcome.`, `Ồ! Chào ${p.name}. Ở đây mình làm chủ. Chào mừng nha.`), 3.2)); import('./interact.js').then(M => M.discover('meo_pet')); }
+        else if ((a.data.boopT = (a.data.boopT ?? 12) - dt) <= 0) { a.data.boopT = 25 + Math.random() * 30; m.face(a); a.face(m); m.showEmote('heart', 1.1); a.data.happy = 1; }
+      }
       const d = dist(a.x, a.y, pl.x, pl.y);
       if (d > 120) { a.x = pl.x - 14; a.y = pl.y + 8; a.stop?.(); }
       else if (d > 30 && (!a.path || a.data.re <= 0)) { const behind = pl.dir === 'left' ? 18 : pl.dir === 'right' ? -18 : 0, dy = pl.dir === 'up' ? 16 : pl.dir === 'down' ? -10 : 8; a.walkTo([[pl.x + behind + rand(-4, 4), pl.y + dy]], { speed: Math.max(70, d * 2.2) }); a.data.re = 0.4; }
@@ -147,7 +154,7 @@ export async function petMenu(a) {
   a.data.busy = true; a.stop?.();
   try {
     a.face(pl.x < a.x ? 'left' : 'right'); a.data.greet = 1; sfx(def.sfx);
-    const opts = [T('Pet ❤', 'Vuốt ve ❤'), T(`Feed (${s.petFood} food)`, `Cho ăn (${s.petFood} phần)`), T('Take on walks', 'Dắt đi dạo'), T('Bye!', 'Tạm biệt!')];
+    const opts = [T('Pet ❤', 'Vuốt ve ❤'), T(`Feed (${s.petFood} food)`, `Cho ăn (${s.petFood} phần)`), T('Take on walks', 'Dắt đi dạo'), T('Do a trick!', 'Làm xiếc nào!'), T('Bye!', 'Tạm biệt!')];
     const pick = await ask(null, T(`${p.name} looks up at you.`, `${p.name} ngước nhìn bạn.`), opts);
     if (pick === 0) {
       pl.control = false; pl.face(a.x < pl.x ? 'left' : 'right');
@@ -170,7 +177,28 @@ export async function petMenu(a) {
     } else if (pick === 2) {
       setFollower(p.uid); sfx('success');
       await say(null, T(`${p.name} will follow you everywhere now!`, `Giờ ${p.name} sẽ theo bạn khắp nơi!`));
-    }
+    } else if (pick === 3) await trick(a, p, def);
   } finally { a.data.busy = false; pl.control = true; }
+}
+// tricks come with trust: the more love, the more they know
+const TRICKS = [
+  { id: 'sit', love: 0, en: 'sits very nicely', vi: 'ngồi ngoan ngoãn' },
+  { id: 'spin', love: 5, en: 'spins in a happy circle', vi: 'xoay một vòng vui vẻ' },
+  { id: 'jump', love: 10, en: 'jumps as high as it can', vi: 'nhảy cao hết sức' },
+  { id: 'wave', love: 18, en: 'waves a paw at you', vi: 'vẫy chân chào bạn' },
+];
+async function trick(a, p, def) {
+  const known = TRICKS.filter(t => (p.love || 0) >= t.love), next = TRICKS.find(t => (p.love || 0) < t.love);
+  const pick = await ask(null, T(`Which trick? ${next ? `(More tricks at ${next.love} love)` : ''}`, `Làm trò gì? ${next ? `(Thêm trò khi tình cảm đạt ${next.love})` : ''}`), [...known.map(t => T(t.id === 'sit' ? 'Sit' : t.id === 'spin' ? 'Spin' : t.id === 'jump' ? 'Jump' : 'Wave', t.id === 'sit' ? 'Ngồi' : t.id === 'spin' ? 'Xoay vòng' : t.id === 'jump' ? 'Nhảy' : 'Vẫy chân')), T('Never mind', 'Thôi')]);
+  const t = known[pick]; if (!t) return;
+  G.player.setAct('wave'); await sleep(300); G.player.setAct(null);
+  if (t.id === 'spin') for (const d of ['left', 'up', 'right', 'down', 'left']) { a.face(d); await sleep(120); }
+  else if (t.id === 'jump') { for (let i = 0; i < 3; i++) { a.doHop?.(90); await sleep(300); } }
+  else if (t.id === 'wave') { a.face('down'); a.doHop?.(40); await sleep(250); a.doHop?.(40); }
+  else { a.face('down'); a.data.happy = 0.5; await sleep(500); }
+  sfx(def.sfx); a.showEmote('heart', 1.4); fx.burst('star', a.x, a.y - 18, 5, { up: 30, col: '#ffd35a' });
+  p.love = (p.love || 0) + 0.5; markDirty();
+  import('./interact.js').then(m => m.discover('trick'));
+  await say(null, T(`${p.name} ${t.en}! Good ${def.kind}!`, `${p.name} ${t.vi}! Giỏi quá!`));
 }
 export { drawPet as drawPetPreview };

@@ -273,6 +273,23 @@ BUSINESSES.night.upgrades = [null, null,
   { cost: 2000, mats: { cable: 2, paint: 4 }, label: 'Charcoal grill upgrade', labelVi: 'Nâng cấp bếp than', queue: 5, attract: 1.6, price: 1.1 },
   { cost: 3800, mats: { lantern: 6, tile: 8 }, label: 'Stools & a festival banner', labelVi: 'Ghế đẩu & băng rôn lễ hội', queue: 5, attract: 1.9, price: 1.15 },
   { cost: 7000, mats: { cable: 4, lantern: 8 }, label: 'Famous street-food stall', labelVi: 'Sạp ăn vặt nổi tiếng', queue: 5, attract: 2.2, price: 1.22 }];
+// Branding: your own name for a shop, a colour scheme and a sign style.
+export const BRAND_COLOURS = {
+  classic: { en: 'Classic', vi: 'Cổ điển', awning: null },
+  coral: { en: 'Coral', vi: 'San hô', awning: ['#fff5df', '#f28f7c'], sign: '#e8584e', roof: '#6fbfb0', wall: '#f7e3c0' },
+  mint: { en: 'Mint', vi: 'Bạc hà', awning: ['#effaf6', '#6fbfb0'], sign: '#3f9f8a', roof: '#8fb7e0', wall: '#eef8f1' },
+  sunny: { en: 'Sunny', vi: 'Nắng vàng', awning: ['#fff8e0', '#f2c14e'], sign: '#d9a032', roof: '#e8584e', wall: '#fff3d6' },
+  lilac: { en: 'Lilac', vi: 'Tím hoa cà', awning: ['#f8f2ff', '#b39ddb'], sign: '#8a6fbf', roof: '#f4a9b8', wall: '#f6effa' },
+  sky: { en: 'Sky', vi: 'Trời xanh', awning: ['#f0f7ff', '#8fb7e0'], sign: '#5f8fb8', roof: '#f2c14e', wall: '#eef4fb' },
+  rose: { en: 'Rose', vi: 'Hồng', awning: ['#fff5f7', '#f28fa3'], sign: '#d9607a', roof: '#9fd8c8', wall: '#fbeaee' },
+};
+export const SIGN_STYLES = {
+  plain: { en: 'Painted board', vi: 'Bảng sơn', cost: 0 },
+  outline: { en: 'Hand-lettered', vi: 'Chữ viết tay', cost: 250 },
+  lights: { en: 'Marquee lights', vi: 'Bảng đèn', cost: 1500, lv: 12 },
+  neon: { en: 'Neon glow', vi: 'Đèn neon', cost: 4000, lv: 20 },
+};
+export const BRAND_RECOLOUR = 60;   // repainting costs a little paint money
 // island level needed for each shop level
 export const SHOP_LEVEL_REQ = [0, 0, 1, 3, 10, 15];
 
@@ -342,6 +359,13 @@ export const FURNITURE = {
   wall_mirror: { vi: 'Gương mặt trời', en: 'Sunburst mirror', price: 80,  w: 24, h: 8, wall: true },
   lamp_table:  { vi: 'Bàn đèn ngủ',    en: 'Bedside lamp table', price: 75, w: 20, h: 12, light: true },
   bamboo_screen:{ vi: 'Bình phong tre', en: 'Bamboo screen',  price: 120, w: 48, h: 10 },
+  // collector's corner: expensive treats to save up for (prices here are final)
+  meo_plush:   { vi: 'Thú bông Mèo Mây', en: 'Mèo Mây plush',  price: 900,  w: 18, h: 12, collector: true, unlock: 4, fixed: true },
+  lantern_wall:{ vi: 'Bộ sưu tập lồng đèn', en: 'Night Market lantern collection', price: 1800, w: 50, h: 8, wall: true, collector: true, unlock: 9, fixed: true },
+  ship_model:  { vi: 'Mô hình thuyền', en: 'Model ferry',        price: 2500, w: 36, h: 12, collector: true, unlock: 12, fixed: true },
+  art_commission:{ vi: 'Tranh đặt vẽ của Vy', en: 'A painting commissioned from Vy', price: 3500, w: 50, h: 8, wall: true, collector: true, unlock: 14, need: 'vy_brushes', fixed: true },
+  meo_statue:  { vi: 'Tượng Mèo Mây mạ vàng', en: 'Golden Mèo Mây statue', price: 6000, w: 34, h: 16, collector: true, unlock: 16, fixed: true },
+  garden_terrace:{ vi: 'Mở rộng vườn', en: 'Garden terrace (3 more beds)', price: 1200, w: 44, h: 12, collector: true, unlock: 5, fixed: true, special: 'garden' },
 };
 
 // ---------------------------------------------------------------- customers
@@ -430,5 +454,5 @@ export const STATUE_COST = { cost: 3500, mats: { paint: 10, tile: 10 } };
 // Prices above are the real ones (no blanket multipliers). Furniture is priced as
 // a cosy reward, not a wall; shop upgrades cost a little more than their list price.
 export const ECON = { furniture: 2.5, upgrades: 1.5 };
-for (const v of Object.values(FURNITURE)) v.price = Math.round(v.price * ECON.furniture / 5) * 5;
+for (const v of Object.values(FURNITURE)) if (!v.fixed) v.price = Math.round(v.price * ECON.furniture / 5) * 5;
 for (const b of Object.values(BUSINESSES)) for (const u of b.upgrades || []) if (u?.cost) u.cost = Math.round(u.cost * ECON.upgrades / 10) * 10;

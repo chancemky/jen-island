@@ -5,13 +5,17 @@ import { INGREDIENTS, AISLES, MATERIALS, FURNITURE, RECIPES, STATION, PREPPED, B
 import { MERCHANTS } from '../data/looks.js';
 import { openSheet, tabs, rowEl, btn, h, flyIcon, showReward } from './sheets.js';
 import { sfx } from '../core/audio.js';
-import { money, escapeHtml, bus } from '../core/util.js';
+import { money, escapeHtml, bus, clock } from '../core/util.js';
 import { iconURL } from '../gfx/food.js';
 import { drawFurniturePreview } from '../gfx/furniture.js';
 import { bizRecipes, ingredientsForBiz, canMake, recipePrice, priceMul, priceAppeal } from '../systems/business.js';
 import { level } from '../systems/progress.js';
-import { activeQuests } from '../systems/sidequests.js';
-import { EQUIPMENT, SHOP_LEVEL_REQ, PRICE_RANGE, recipeUpgradeCost } from '../data/game.js';
+import { activeQuests, SIDE_QUESTS, deliverTarget } from '../systems/sidequests.js';
+import { MEO_MEMORIES } from '../data/lore.js';
+import { DISCOVERIES } from '../systems/interact.js';
+import { albumPhotos } from '../systems/album.js';
+import { RESIDENTS } from '../data/looks.js';
+import { EQUIPMENT, SHOP_LEVEL_REQ, PRICE_RANGE, recipeUpgradeCost, BRAND_COLOURS, SIGN_STYLES, BRAND_RECOLOUR } from '../data/game.js';
 import { upgradeCost, shopNeed } from '../systems/economy.js';
 import { toast } from './hud.js';
 
@@ -156,8 +160,14 @@ export function openFurnitureShop() {
   openSheet({ title: T('Anh Khoa\'s Furniture', 'Nhà đẹp Anh Khoa'), sub: T('Make your house a home', 'Đồ đạc cho ngôi nhà'), who: MERCHANTS.anh_khoa, build: (body, api) => {
     const list = h('div', 'list scroll'); list.style.flex = '1'; body.appendChild(list);
     const s = G.state;
-    for (const [id, f] of Object.entries(FURNITURE)) {
+    const ids = Object.keys(FURNITURE).sort((a, b) => !!FURNITURE[a].collector - !!FURNITURE[b].collector);
+    let collectorHead = false;
+    for (const id of ids) {
+      const f = FURNITURE[id];
       if (f.unlock && s.story.chapter < f.unlock) continue;
+      if (f.need && !s.story.flags[f.need] && !(s.sideQuests?.[f.need] === 'done')) continue;
+      if (f.special === 'garden' && s.garden?.big) continue;
+      if (f.collector && !collectorHead) { collectorHead = true; list.appendChild(h('div', 'section-title', T('✦ Collector\'s corner', '✦ Góc sưu tầm'))); }
       const owned = s.home.owned.filter(x => x === id).length + s.home.furniture.filter(x => x.id === id).length;
       const r = h('div', 'row');
       const cv = document.createElement('canvas'); cv.width = 96; cv.height = 96; cv.style.width = cv.style.height = '48px';
@@ -166,7 +176,9 @@ export function openFurnitureShop() {
       const info = h('div', 'info', `<b>${escapeHtml(furnName(id))}</b><small>${kind}</small>${owned ? `<span class="have">${T('Owned', 'Đã có')}: ${owned}</span>` : ''}`);
       r.append(ico, info, btn(money(f.price), () => {
         if (!canAfford(f.price)) return noMoney();
-        addMoney(-f.price, 'furniture'); s.home.owned.push(id); markDirty(true); sfx('buy'); merchantSay();
+        addMoney(-f.price, 'furniture'); sfx('buy'); merchantSay();
+        if (f.special === 'garden') { (s.garden ||= { beds: [null, null, null] }).big = true; s.garden.beds.push(null, null, null); markDirty(true); toast({ text: T('Anh Khoa built you a garden terrace', 'Anh Khoa đã làm cho bạn một thềm vườn'), sub: T('Three more beds beside your house.', 'Thêm ba luống cạnh nhà bạn.'), icon: 'herbs' }); api.rebuild(); return; }
+        s.home.owned.push(id); markDirty(true);
         toast({ text: T(`${furnName(id)} delivered to your home`, `${furnName(id)} đã được gửi về nhà`), sub: T('Tap Decorate inside your house.', 'Bấm Trang trí trong nhà nhé.') });
         bus.emit('bought', 'furniture', id); api.rebuild();
       }));
@@ -219,7 +231,9 @@ export function openBag() {
 export function openBizMenu(bizId, { onUpgrade } = {}) {
   const s = G.state, def = BUSINESSES[bizId], b = s.biz[bizId];
   openSheet({ title: bizName(bizId), sub: T(`Level ${b.level}`, `Cấp ${b.level}`), full: true, build: (body, api) => {
-    tabs(body, [T('Menu', 'Thực đơn'), T('Prices', 'Giá bán'), T('Daily special', 'Món đặc biệt'), T('Upgrades', 'Nâng cấp'), T('Equipment', 'Dụng cụ'), T('Stats', 'Thống kê')], (i, pane) => {
+    const brandable = ['shed1', 'shed2', 'truck', 'restaurant'].includes(bizId);
+    tabs(body, [T('Menu', 'Thực đơn'), T('Prices', 'Giá bán'), T('Daily special', 'Món đặc biệt'), T('Upgrades', 'Nâng cấp'), T('Equipment', 'Dụng cụ'), T('Stats', 'Thống kê'), ...(brandable ? [T('Branding', 'Thương hiệu')] : [])], (i, pane) => {
+      if (i === 6) return brandPane(pane, bizId, api);
       if (i === 1) return pricesPane(pane, bizId, api);
       if (i === 4) return equipPane(pane, bizId, api);
       if (i > 1) i--; if (i > 2) i--;
@@ -281,6 +295,31 @@ function pricesPane(pane, bizId, api) {
     const reset = list.lastChild.querySelector('[data-reset]'); if (reset) reset.onclick = () => set(1);
   }
 }
+// your shop, your name: a sign, a colour scheme and a sign style (the fancy signs are a treat to save for)
+function brandPane(pane, bizId, api) {
+  const s = G.state, br = ((s.brand ||= {})[bizId] ||= {}), list = h('div', 'list'); pane.appendChild(list);
+  list.appendChild(h('div', 'empty-note', T('Make it yours. Customers remember a shop with a name.', 'Làm cho nó thành của bạn. Khách nhớ những quán có tên riêng.')));
+  const nameRow = h('div', 'row'), inp = document.createElement('input');
+  inp.maxLength = 16; inp.value = br.name || ''; inp.placeholder = bizSignDefault(bizId); inp.style.cssText = 'flex:1;font:inherit;font-weight:900;font-size:14px;padding:10px;border-radius:12px;border:2.5px solid #e1ccad';
+  nameRow.append(inp, btn(T('Save name', 'Lưu tên'), () => { br.name = inp.value.trim().slice(0, 16) || undefined; if (!br.name) delete br.name; markDirty(true); sfx('success'); toast({ text: T('New sign painted!', 'Đã sơn bảng hiệu mới!'), sub: br.name || bizSignDefault(bizId), icon: 'sign_open' }); api.rebuild(); }, 'buy'));
+  list.appendChild(h('div', 'section-title', T('Shop name', 'Tên quán'))); list.appendChild(nameRow);
+  list.appendChild(h('div', 'section-title', T(`Colours · repaint ${money(BRAND_RECOLOUR)}`, `Màu sắc · sơn lại ${money(BRAND_RECOLOUR)}`)));
+  const sw = h('div', 'brand-swatches'); list.appendChild(sw);
+  for (const [k, c] of Object.entries(BRAND_COLOURS)) {
+    const b = h('button', 'swatch' + ((br.colour || 'classic') === k ? ' on' : ''), `<i style="background:linear-gradient(90deg, ${(c.awning || ['#fff5df', '#f28f7c'])[0]} 50%, ${(c.awning || ['#fff5df', '#f28f7c'])[1]} 50%)"></i><small>${escapeHtml(T(c.en, c.vi))}</small>`); b.type = 'button';
+    b.onclick = () => { if ((br.colour || 'classic') === k) return; if (!canAfford(BRAND_RECOLOUR)) return noMoney(); addMoney(-BRAND_RECOLOUR, 'upgrade'); br.colour = k; markDirty(true); sfx('buy'); api.rebuild(); };
+    sw.appendChild(b);
+  }
+  list.appendChild(h('div', 'section-title', T('Sign style', 'Kiểu bảng hiệu')));
+  const owned = (br.signsOwned ||= ['plain']);
+  for (const [k, st] of Object.entries(SIGN_STYLES)) {
+    const have = owned.includes(k), on = (br.sign || 'plain') === k, locked = st.lv && level() < st.lv;
+    const r = rowEl({ icon: 'sign_open', title: escapeHtml(T(st.en, st.vi)) + (on ? ` <span class="pill new">${T('On', 'Đang dùng')}</span>` : ''), sub: locked ? T(`Needs island level ${st.lv}`, `Cần đảo cấp ${st.lv}`) : have ? T('Yours', 'Đã có') : money(st.cost), dim: locked });
+    if (!on && !locked) r.appendChild(btn(have ? T('Use', 'Dùng') : money(st.cost), () => { if (!have) { if (!canAfford(st.cost)) return noMoney(); addMoney(-st.cost, 'upgrade'); owned.push(k); } br.sign = k; markDirty(true); sfx('success'); api.rebuild(); }, have ? 'buy alt' : 'buy'));
+    list.appendChild(r);
+  }
+}
+const bizSignDefault = id => ({ shed1: T('TEA & COFFEE', 'TRÀ & CÀ PHÊ'), shed2: 'BÁNH MÌ', truck: T('ROLL TRUCK', 'XE CUỐN'), restaurant: T('RESTAURANT', 'NHÀ HÀNG') })[id] || '';
 function equipPane(pane, bizId, api) {
   const list = h('div', 'list'); pane.appendChild(list);
   const b = G.state.biz[bizId]; b.equip ||= {};
@@ -385,6 +424,18 @@ export function openJournal() {
   const s = G.state;
   openSheet({ title: T('Chapters & Story', 'Các chương & câu chuyện'), sub: T('Every chapter of your island, the ones still to come, side quests and Mèo Mây\'s stories', 'Các chương của hòn đảo, những chương sắp tới, nhiệm vụ phụ và chuyện Mèo Mây kể'), who: 'meo', full: true, build: (body) => {
     const list = h('div', 'list scroll'); list.style.flex = '1'; body.appendChild(list);
+    // the photo album: snapshots of the big moments
+    const photos = albumPhotos();
+    list.appendChild(h('div', 'section-title', T(`Photo album (${photos.length})`, `Album ảnh (${photos.length})`)));
+    if (!photos.length) list.appendChild(h('div', 'empty-note', T('The big moments are photographed for you — the first repair, the first customer, every new chapter…', 'Những khoảnh khắc lớn sẽ được chụp lại — lần sửa quán đầu tiên, vị khách đầu tiên, mỗi chương mới…')));
+    else {
+      const grid = h('div', 'album'); list.appendChild(grid);
+      for (const ph of [...photos].reverse()) {
+        const f = h('button', 'album-ph', `<img src="${ph.img}" alt=""><small>${escapeHtml(T(ph.title[0], ph.title[1]))}<br>${T(`Day ${ph.day}`, `Ngày ${ph.day}`)}</small>`); f.type = 'button';
+        f.onclick = () => { const o = h('div', 'album-view', `<img src="${ph.img}" alt=""><b>${escapeHtml(T(ph.title[0], ph.title[1]))}</b><small>${T(`Day ${ph.day}`, `Ngày ${ph.day}`)}</small>`); o.onclick = () => o.remove(); document.getElementById('app').appendChild(o); sfx('page'); };
+        grid.appendChild(f);
+      }
+    }
     for (let i = 1; i < CHAPTERS.length; i++) {
       const ch = CHAPTERS[i], got = s.story.chapter >= i;
       list.appendChild(rowEl({ icon: got ? 'lantern' : 'lock', title: got ? escapeHtml(T(`Chapter ${i}: ${ch.title}`, `Chương ${i}: ${ch.vi}`)) : T(`Chapter ${i}: ???`, `Chương ${i}: ???`), dim: !got }));
@@ -392,10 +443,29 @@ export function openJournal() {
     const qs = activeQuests();
     if (qs.length) {
       list.appendChild(h('div', 'section-title', T('Side quests', 'Nhiệm vụ phụ')));
-      for (const q of qs) list.appendChild(rowEl({ icon: 'star', title: G.state.sideQuests[q.id] === 'found' ? T(`Bring the ${q.item[0]} back`, `Mang ${q.item[1]} về trả`) : T(`Find the ${q.item[0]}`, `Tìm ${q.item[1]}`), sub: T('Marked ★ on your map', 'Đánh dấu ★ trên bản đồ') }));
+      for (const q of qs) {
+        const found = G.state.sideQuests[q.id] === 'found', to = deliverTarget(q), who = to === 'meo' ? 'Mèo Mây' : (RESIDENTS[to]?.name || MERCHANTS[to]?.name || to);
+        const title = found ? (to === q.giver ? T(`Bring the ${q.item[0]} back to ${who}`, `Mang ${q.item[1]} về cho ${who}`) : T(`Take the ${q.item[0]} to ${who}`, `Mang ${q.item[1]} cho ${who}`))
+          : q.type === 'meet' ? T(`Meet at ${q.place[0]}`, `Hẹn ở ${q.place[1]}`) : q.type === 'puzzle' ? T(`Play ${q.item[0]}`, `Chơi ${q.item[1]}`) : T(`Find the ${q.item[0]}`, `Tìm ${q.item[1]}`);
+        list.appendChild(rowEl({ icon: q.icon || 'star', title: escapeHtml(title), sub: q.time ? T(`Between ${clock(q.time[0] * 60)} and ${clock(Math.min(1439, q.time[1] * 60))} · ★ on your map`, `Trong khoảng ${clock(q.time[0] * 60)}–${clock(Math.min(1439, q.time[1] * 60))} · ★ trên bản đồ`) : T('Marked ★ on your map', 'Đánh dấu ★ trên bản đồ') }));
+      }
+    }
+    // discoveries: every kind of thing you've tried in the world
+    const found = G.state.discovered || {}, all = Object.entries(DISCOVERIES);
+    list.appendChild(h('div', 'section-title', T(`Discoveries (${Object.keys(found).length}/${all.length})`, `Khám phá (${Object.keys(found).length}/${all.length})`)));
+    list.appendChild(h('div', 'empty-note', all.map(([k, v]) => found[k] ? `✓ ${escapeHtml(T(v[0], v[1]))}` : '· ???').join('<br>')));
+    // the scrapbook: every neighbour you helped, and what they gave you to remember it by
+    const doneQs = SIDE_QUESTS.filter(q => G.state.sideQuests?.[q.id] === 'done');
+    list.appendChild(h('div', 'section-title', T(`Scrapbook (${doneQs.length}/${SIDE_QUESTS.length})`, `Sổ kỷ niệm (${doneQs.length}/${SIDE_QUESTS.length})`)));
+    if (!doneQs.length) list.appendChild(h('div', 'empty-note', T('Help your neighbours and their stories end up here.', 'Giúp hàng xóm và câu chuyện của họ sẽ được ghi ở đây.')));
+    for (const q of doneQs) {
+      const k = q.reward?.keepsake, mem = q.memory || q.thanks;
+      list.appendChild(rowEl({ icon: q.icon || 'star', title: escapeHtml(k ? T(k[0], k[1]) : T(q.item[0], q.item[1])), sub: escapeHtml(mem ? T(mem[0], mem[1]) : '') + (G.state.keepsakes?.[q.id] ? T(` · day ${G.state.keepsakes[q.id].day}`, ` · ngày ${G.state.keepsakes[q.id].day}`) : '') }));
     }
     list.appendChild(h('div', 'section-title', T('Stories Mèo Mây told you', 'Chuyện Mèo Mây kể')));
     for (const [ch, en, vi] of LORE) { if (s.story.chapter >= ch) list.appendChild(rowEl({ icon: 'notebook', title: escapeHtml(T(en, vi)) })); }
+    for (const mem of MEO_MEMORIES.slice(0, s.story.flags.meoMem || 0)) list.appendChild(rowEl({ icon: 'heart', title: escapeHtml(mem.lines.map(l => T(l[0], l[1])).join(' ')) }));
+    if ((s.story.flags.meoMem || 0) < MEO_MEMORIES.length) list.appendChild(h('div', 'empty-note', T('Ask Mèo Mây to "tell me something" — there\'s more to hear as the island grows.', 'Hỏi Mèo Mây “kể chuyện đi” — hòn đảo càng lớn, Mèo Mây càng có nhiều chuyện kể.')));
   } });
 }
 export { repStars, showReward };

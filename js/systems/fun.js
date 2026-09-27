@@ -2,6 +2,7 @@
 // game of oẳn tù tì (rock-paper-scissors) with the neighbours, floating
 // speech bubbles when you walk past, and Mèo Mây's silly antics.
 
+import { BIRTHDAYS, isBirthday } from './interact.js';
 import { applyPlayerPronouns, profileOf } from './pronouns.js';
 import { G, T, tr, markDirty, addMoney, addPantry, addMat } from './state.js';
 import { say, ask } from '../ui/dialogue.js';
@@ -9,7 +10,7 @@ import { showReward } from '../ui/sheets.js';
 import { sfx } from '../core/audio.js';
 import { choice, rand, dist, TAU } from '../core/util.js';
 import { INK } from '../gfx/draw.js';
-import { ingName, matName } from '../data/game.js';
+import { ingName, matName, INGREDIENTS } from '../data/game.js';
 import { addXP } from './progress.js';
 import { questOption, questTalk } from './sidequests.js';
 
@@ -50,6 +51,9 @@ JOKES.push(
 );
 // every islander has a few of their own
 const CHAR_JOKES = {
+  ong_loc: [['Why do old fishermen never get lost? Because they know all the knots… I mean, the nots.', 'Sao ngư dân già không bao giờ lạc? Vì họ biết hết mọi nút… à, mọi lối.'], ['I asked the sea for a raise. It sent a wave.', 'Ông xin biển tăng lương. Biển gửi một con sóng.']],
+  chi_ngoc: [['My guesthouse has five-star reviews. From the geckos. They love the ceiling.', 'Nhà nghỉ chị được năm sao. Của mấy con thằn lằn. Tụi nó mê cái trần nhà.'], ['A guest asked for a room with a view. I gave them a mirror. They laughed. I gave them the real one.', 'Khách đòi phòng có view. Chị đưa cái gương. Khách cười. Chị đưa phòng thật.']],
+  co_dua: [['Why did the coconut go to school? To get a little more mature. Ripe, I mean.', 'Sao trái dừa đi học? Để chín chắn hơn. Chín, ý cô là vậy.'], ['I dropped a coconut on my foot once. It was a very hard lesson.', 'Có lần cô làm rớt trái dừa trúng chân. Bài học rất… cứng.']],
   ba_tu: [['When I was young, kumquats were so sour we used them to wake the roosters.', 'Hồi bà còn trẻ, tắc chua tới mức người ta dùng nó để đánh thức gà trống.'], ['My knees predict the weather. Today they say: sit down.', 'Đầu gối bà dự báo thời tiết giỏi lắm. Hôm nay nó bảo: ngồi xuống đi.'], ['Forty years selling tea, and the best customer was a cat who never paid.', 'Bốn mươi năm bán trà, khách ruột nhất là một con mèo chưa trả đồng nào.']],
   chu_hai: [['The fish I caught yesterday was THIS big. The one I lost was bigger.', 'Con cá chú câu hôm qua to CỠ NÀY. Con bị sổng còn to hơn.'], ['I talk to the fish. They never answer. Very polite listeners.', 'Chú hay nói chuyện với cá. Tụi nó chẳng bao giờ trả lời. Nghe lịch sự lắm.'], ['Why do fishermen never lie? Because the net always tells the truth. Mostly.', 'Sao ngư dân không bao giờ nói dối? Vì tấm lưới luôn nói thật. Gần như vậy.']],
   linh: [['My exams are like the tide. They come back twice a day.', 'Mấy kỳ thi của mình như thủy triều. Ngày nào cũng quay lại hai lần.'], ['I studied so hard I dreamed in equations. The answer was milk tea.', 'Mình học nhiều tới mức nằm mơ toàn phương trình. Đáp án là trà sữa.'], ['My professor said I have a bright future. Then he looked at my phone battery: 3%.', 'Thầy nói tương lai mình sáng lạn. Rồi thầy nhìn pin điện thoại mình: 3%.']],
@@ -88,6 +92,9 @@ export const meoJoke = () => tr(fromBag('meo', MEO_JOKES));
 
 // ---------------------------------------------------------------- gifts
 const GIFTS = {
+  ong_loc: [{ mat: 'wood', n: 5, why: ['Driftwood. The sea brings it, I keep it, you use it. That\'s how the harbour works.', 'Gỗ trôi dạt. Biển mang tới, ông giữ, con dùng. Bến cảng vận hành vậy đó.'] }],
+  chi_ngoc: [{ money: 40, why: ['My guests left a tip "for the cook". That\'s you.', 'Khách của chị để lại tiền boa “cho đầu bếp”. Là em đó.'] }],
+  co_dua: [{ ing: 'coconut_milk', n: 8, why: ['Fresh coconut cream. For your chè — and a spoon for me.', 'Nước cốt dừa tươi. Cho nồi chè của con — với một muỗng cho cô.'] }],
   ba_tu: [{ ing: 'kumquat', n: 6, why: ['My kumquat tree gave too many again. Take them before the birds do!', 'Cây tắc nhà bà lại sai quả quá. Cầm đi con, kẻo chim ăn hết!'] }, { money: 30, why: ['For you! You remind me of me when I had the tea stand.', 'Cho con nè! Nhìn con bà nhớ hồi bà còn bán trà.'] }],
   chu_hai: [{ ing: 'shrimp', n: 6, why: ['The net came up too full this morning. The sea likes you.', 'Sáng nay lưới đầy quá. Biển thương con đó.'] }, { mat: 'wood', n: 4, why: ['Found this driftwood. Too pretty to burn.', 'Nhặt được gỗ trôi dạt. Đẹp quá đốt thì tiếc.'] }],
   linh: [{ money: 25, why: ['I won a photo contest with a picture of your shop! Half the prize is yours.', 'Mình thắng cuộc thi ảnh nhờ chụp quán bạn! Chia bạn nửa giải nè.'] }, { ing: 'milk', n: 8, why: ['My dorm fridge is too full of milk. Long story.', 'Tủ lạnh ký túc xá đầy sữa. Chuyện dài lắm.'] }],
@@ -156,16 +163,37 @@ export async function playRPS(a, who) {
 export async function residentMenu(a, rid, chat) {
   const P = x => applyPlayerPronouns(x, profileOf(rid));   // what you say, addressed properly (bà / cô / anh / bạn…)
   const opts = [T('Chat', 'Trò chuyện'), T('Tell me a joke!', P('{Them} kể chuyện cười cho {i} nghe đi!')), T('Rock, paper, scissors?', P('{Them} chơi oẳn tù tì với {i} không?')), T('Bye!', P('{I} chào {them} nha!'))];
+  const canGift = BIRTHDAYS[rid] && G.state.story.flags['gift:' + rid + ':' + G.state.day] == null;
+  if (canGift) opts.splice(3, 0, isBirthday(rid) ? T('🎂 Give a birthday gift', '🎂 Tặng quà sinh nhật') : T('Give a gift', 'Tặng quà'));
   const qo = questOption(rid);
   if (qo) opts.unshift(qo);
   let pick = await ask(a, choice([T('Oh, hi!', 'Ơ, chào {you}!'), T(`Hey ${G.state.player.name}!`, `Ê ${G.state.player.name}!`), T('What\'s up?', 'Có chuyện gì vậy?')]), opts, { emo: 'happy' });
   if (qo) { if (pick === 0) { await questTalk(a, rid); return; } pick--; }
+  if (canGift && pick === 3) { await giveResidentGift(a, rid); return; }
+  if (canGift && pick > 3) pick--;
   if (pick === 0) await chat();
   else if (pick === 1) { await say(a, randomJoke(rid), { emo: 'happy' }); a.setAct('cheer'); G.player.showEmote('happy', 1.4); sfx('pop'); setTimeout(() => a.act === 'cheer' && a.setAct(null), 1200); }
   else if (pick === 2) await playRPS(a, rid);
   else { a.setAct('wave'); await say(a, T('See you!', 'Gặp lại nha!')); a.setAct(null); }
   const g = pick !== 3 && tryGift(rid);
   if (g) await giveGift(a, g);
+}
+
+// ---------------------------------------------------------------- gifts for neighbours
+async function giveResidentGift(a, rid) {
+  const s = G.state, likes = BIRTHDAYS[rid].likes, bday = isBirthday(rid);
+  const have = Object.keys(s.pantry).filter(k => s.pantry[k] > 0 && INGREDIENTS[k]);
+  const fav = likes.filter(k => have.includes(k)), other = have.filter(k => !likes.includes(k)).slice(0, 3);
+  const choices = [...fav, ...other];
+  if (!choices.length) { await say(a, T('That\'s sweet — but your bag is empty! Bring something from the market another time.', 'Dễ thương ghê — mà túi {you} trống trơn! Lần sau mang gì đó từ chợ nha.'), { emo: 'happy' }); return; }
+  const pick = await ask(null, T('What will you give?', 'Tặng gì đây?'), [...choices.map(k => ingName(k) + (likes.includes(k) ? ' ♥' : '')), T('Never mind', 'Thôi')]);
+  const k = choices[pick]; if (!k) return;
+  addPantry(k, -1); s.story.flags['gift:' + rid + ':' + s.day] = 1; markDirty(true);
+  const loved = likes.includes(k), pts = (loved ? 4 : 1) * (bday ? 2 : 1) + (bday ? 1 : 0);
+  s.friends[rid] = (s.friends[rid] || 0) + pts;
+  a.setEmo('love', 2.5); a.showEmote('heart', 1.8); a.doHop?.(60); sfx(loved ? 'success' : 'pop');
+  import('./interact.js').then(m => m.discover('gift'));
+  await say(a, bday ? (loved ? T('For my birthday — and it\'s my favourite! You remembered!', 'Quà sinh nhật — lại đúng món {me} thích nhất! {You} nhớ luôn!') : T('A birthday present! Thank you, that\'s so thoughtful.', 'Quà sinh nhật! Cảm ơn {you}, chu đáo quá.')) : loved ? T('Oh! This is exactly what I like. How did you know?', 'Ơ! Đúng món {me} thích luôn. Sao {you} biết vậy?') : T('For me? Thank you!', 'Cho {me} hả? Cảm ơn nha!'), { emo: 'happy' });
 }
 
 // ---------------------------------------------------------------- floating speech bubbles
@@ -209,6 +237,9 @@ const ANTICS = [
   { act: 'faint', dur: 2.6, say: ['*smells grilled fish* …I\'m fine. I\'m FINE.', '*ngửi thấy cá nướng* …mình ổn. Mình ỔN.'] },
   { act: 'roll', dur: 1.6, say: ['Belly rub? Just kidding, it\'s a trap.', 'Gãi bụng hông? Đùa thôi, bẫy đó.'] },
   { act: 'sneeze', dur: 1.2, say: ['Achoo! …pardon me. Pollen.', 'Hắt xì! …xin lỗi nha. Phấn hoa.'] },
+  { act: 'pounce', dur: 1.4, say: ['A leaf! I have defeated a leaf!', 'Một chiếc lá! Mình đã hạ gục chiếc lá!'] },
+  { act: 'stretch', dur: 2, say: ['Big stretch… management is exhausting.', 'Vươn vai cái… làm quản lý mệt ghê.'] },
+  { act: 'loaf', dur: 2.4, say: ['I am a loaf now. Do not disturb the loaf.', 'Giờ mình là ổ bánh mì. Đừng làm phiền ổ bánh mì.'] },
 ];
 export function meoAntic(m) {
   const a = choice(ANTICS);
@@ -226,5 +257,8 @@ export function anticTransform(c, a) {
     case 'faint': { const k = Math.min(1, at / 0.35); c.rotate(-k * Math.PI / 2 * 0.95); c.translate(-k * 3, 0); break; }
     case 'roll': c.translate(0, -8); c.rotate(at / 1.6 * TAU); c.translate(0, 8); break;
     case 'sneeze': { const k = at < 0.5 ? at / 0.5 : 1 - (at - 0.5) / 0.7; c.rotate(-k * 0.2); c.scale(1 + k * 0.06, 1 - k * 0.06); break; }
+    case 'pounce': { const k = Math.min(1, at / 0.5); c.translate(k * 10, -Math.sin(k * Math.PI) * 12); break; }
+    case 'stretch': { const k = Math.sin(Math.min(1, at / 2) * Math.PI); c.scale(1 + k * 0.18, 1 - k * 0.12); break; }
+    case 'loaf': c.scale(1.12, 0.84); c.translate(0, 2); break;
   }
 }

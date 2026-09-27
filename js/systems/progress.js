@@ -126,6 +126,7 @@ export const TRACKS = [
   { id: 'haircuts', icon: 'scissors', en: 'Haircuts & colours', vi: 'Lần làm tóc', get: s => s.stats.haircuts || 0, tier: doubleOn([1, 3, 8, 15, 30]) },
   { id: 'treats', icon: 'icecream', en: 'Street treats eaten', vi: 'Món vặt đã ăn', get: s => s.stats.treats || 0, tier: doubleOn([1, 5, 15, 40, 100]) },
   finite({ id: 'upgrades', icon: 'hammer', en: 'Shop upgrades', vi: 'Nâng cấp quán', get: s => Object.values(s.biz).reduce((a, b) => a + Math.max(0, (b.level || 1) - 1), 0), gifts: { last: { furniture: 'aquarium_big' } } }, [1, 3, 6, 10, 16, 24, 32], upgradeSlots),
+  finite({ id: 'discoveries', icon: 'star', en: 'Things tried', vi: 'Điều đã thử', get: s => Object.keys(s.discovered || {}).length, gifts: { last: { furniture: 'record_player' } } }, [3, 8, 14, 20], () => COUNTS.discoveries || 26),
   finite({ id: 'secrets', icon: 'star', en: 'Island secrets', vi: 'Bí mật của đảo', get: s => (s.achievements || []).filter(id => ACHIEVEMENTS[id]?.hidden).length, gifts: { last: { clothes: 'cat_ears' } } }, [1, 2, 3, 4], () => Object.values(ACHIEVEMENTS).filter(a => a.hidden).length),
 ];
 for (const tr of TRACKS) if (!tr.max) tr.max = null;

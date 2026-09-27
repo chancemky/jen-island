@@ -11,6 +11,8 @@ import { ell, circ } from '../gfx/draw.js';
 import { updateBarks, drawBarks } from './fun.js';
 import { nearestSeat, hopOnto } from './seats.js';
 import { updateSideQuests, drawSideQuests, sideQuestDrawables } from './sidequests.js';
+import { gardenDrawables } from './garden.js';
+import { growthDrawables } from './growth.js';
 import { PATHS, BUILDINGS, QUEUES } from '../world/island.js';
 import { rand, randi, choice, chance, dist, bus, clamp, TAU, smoothLine } from '../core/util.js';
 import { drawBoatTop } from './cinematic.js';
@@ -48,7 +50,7 @@ G.npcs = npcs;
 npcs.spawnIsletResidents = () => {
   const island = G.scenes.island;
   for (const [rid, def] of Object.entries(RESIDENTS)) {
-    if (!def.islet || npcs.residents.some(a => a.data.rid === rid)) continue;
+    if (!def.region || !G.state.story.flags[def.region] || npcs.residents.some(a => a.data.rid === rid)) continue;
     const home = HOME_OF[rid];
     const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: home.x, y: home.y + 16, speed: rand(46, 58), data: { rid, state: 'idle', until: 0, npc: true } });
     Object.defineProperty(a, 'name', { get: () => def.name, set() {}, configurable: true });   // follows the language (e.g. Doctor An / Bác sĩ An)
@@ -62,6 +64,7 @@ npcs.spawnVisitorAt = (x, y, tag) => {
   island.add(a); npcs.tourists.push(a);
   const nodes = island.nav.tagged(tag); const sp = nodes.length ? choice(nodes) : island.nav.nearest(x, y);
   a.walkTo(island.nav.path(x, y, sp.x + rand(-14, 14), sp.y + rand(-8, 8))).then(() => { a.data.state = 'idle'; a.data.until = G.state.time + rand(20, 50); });
+  return a;
 };
 
 const VENDORS = [['nm1', 'ba_sau'], ['nm2', 0], ['nm3', 1], ['nm5', 2], ['nm6', 3]];
@@ -86,7 +89,7 @@ function updateVendors(island) {
 export function initNPCs(island) {
   npcs.residents.length = 0;
   for (const [rid, def] of Object.entries(RESIDENTS)) {
-    if (def.islet && !G.state.story.flags.bridgeFixed) continue;
+    if (def.region && !G.state.story.flags[def.region]) continue;
     const home = HOME_OF[rid];
     const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: home ? home.x : 900, y: home ? home.y + 16 : 1600, speed: rand(46, 58), data: { rid, state: 'idle', until: 0, npc: true } });
     Object.defineProperty(a, 'name', { get: () => def.name, set() {}, configurable: true });   // follows the language (e.g. Doctor An / Bác sĩ An)
@@ -130,8 +133,19 @@ function pickSpot(island, a) {
   return pickSpot1(island, a);
 }
 function pickSpot1(island, a) {
-  const h = G.state.time / 60, nm = G.state.nightMarket.restored;
-  const opts = [['beach', 2], ['bench', 2.5], ['market', 3], ['view', 1], ['plaza', 1.5]];
+  const h = G.state.time / 60, nm = G.state.nightMarket.restored, f = G.state.story.flags, rid = a.data?.rid;
+  // habits that come from things you did together: Bà Tư and Chú Hải take their morning tea at the plaza benches
+  if (f.batu_tea && (rid === 'ba_tu' || rid === 'chu_hai') && h >= 6.5 && h < 9) { const n = island.nav.tagged('bench'); if (n.length) return n[rid === 'ba_tu' ? 0 : 1] || n[0]; }
+  // everyday routines: Chú Hải at the pier at dawn, Minh at the lighthouse for sunset,
+  // Cô Lan at the market in the morning, Bé Na by the lotus pond after school
+  const ROUTINE = { chu_hai: [5.5, 8, 'dock'], minh: [17, 19, 'view'], co_lan: [7, 10, 'market'], be_na: [14, 17, 'view'], chi_ngoc: [8, 11, 'harbour'], ong_loc: [6, 18, 'harbour'], co_dua: [9, 17, 'cove'] };
+  const rt = ROUTINE[rid];
+  if (rt && h >= rt[0] && h < rt[1] && Math.random() < 0.7) { const n = island.nav.tagged(rt[2]); if (n.length) return rid === 'minh' ? n.find(x => x.y < 500) || choice(n) : rid === 'be_na' ? n.find(x => x.y < 700) || choice(n) : choice(n); }
+  // once the lanterns were lit, the evening plaza is where everyone meets
+  const opts = [['beach', 2], ['bench', 2.5], ['market', 3], ['view', 1], ['plaza', 1.5 + ((G.state.achievements || []).includes('lantern_festival') && h >= 18 ? 3 : 0)]];
+  if (f.harbourBridge) opts.push(['harbour', RESIDENTS[rid]?.region === 'harbourBridge' ? 8 : 1]);
+  if (f.coveBridge) opts.push(['cove', RESIDENTS[rid]?.region === 'coveBridge' ? 8 : 0.8]);
+  if (f.bridgeFixed) opts.push(['islet', rid === 'vy' ? 6 : 0.6]);
   if (npcs.ferry && (npcs.ferry.state === 'arriving' || npcs.ferry.state === 'docked')) opts.push(['dock', 2]);
   if (nm && h >= 17) opts.push(['nightmarket', 6]);
   const total = opts.reduce((s, o) => s + o[1], 0);
@@ -157,7 +171,9 @@ function goTo(island, a, x, y, then) {
 function updateResident(island, a, dt) {
   const d = a.data, s = G.state, h = s.time / 60;
   if (d.inTalk) return;                                  // never walk off mid-conversation
-  const bedtime = s.nightMarket.restored ? 22.5 : 21.3;
+  // Linh studies on the mainland during the week once she got into university
+  const away = d.rid === 'linh' && s.story.flags.linh_uni && s.day % 7 >= 1 && s.day % 7 <= 4;
+  const bedtime = away ? 0 : s.nightMarket.restored ? 22.5 : 21.3;
   if (d.state === 'busy') return;
   if (d.state === 'indoors') {
     const hs = G.scenes['home_' + d.rid], door = HOME_OF[d.rid], pl = G.player;
@@ -495,6 +511,8 @@ export function npcDrawables() {
   out.push(...animalDrawables());
   if (G.state.time >= 6 * 60 && G.state.time < 24 * 60) for (const sc of npcs.scooters) out.push(scooterDrawable(sc));
   for (const d of sideQuestDrawables()) out.push(d);
+  for (const d of gardenDrawables()) out.push(d);
+  for (const d of growthDrawables()) out.push(d);
   for (const b of npcs.butterflies) out.push({ x: b.x, y: b.y, sortY: b.y + 30, draw: (c, t) => { c.save(); c.translate(0, -22 - Math.sin(b.t * 3) * 4); const f = Math.abs(Math.sin(b.t * 16)); c.fillStyle = b.col; c.strokeStyle = 'rgba(91,63,54,.7)'; c.lineWidth = 0.6; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * 2.6 * f, -1, 2.6 * f + 0.4, 3, s * 0.4, 0, TAU); c.fill(); c.stroke(); } c.restore(); } });
   return out;
 }

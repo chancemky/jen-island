@@ -112,12 +112,17 @@ export async function talkToVendor(a) {
   a.data.busy = true;
   try {
     a.face('down'); a.setEmo('happy', 2); a.showEmote('happy', 1.2);
-    const opts = [...v.menu.map(m => `${T(m.en, m.vi)} · ${money(m.price)}`), T('Just saying hi', 'Chào bà thôi ạ')];
-    const pick = await ask(a, tt(choice(v.hi)), opts, { emo: 'happy' });
+    // they remember your favourite: after a few, it's "the usual" and a coin off
+    const sn = (G.state.snacks ||= {}), favId = Object.keys(sn).filter(k => v.menu.some(m => m.id === k)).sort((x, y) => sn[y] - sn[x])[0], fav = favId && sn[favId] >= 4 ? favId : null;
+    const priceOf = m => Math.max(1, m.price - (m.id === fav ? 1 : 0));
+    const opts = [...v.menu.map(m => `${T(m.en, m.vi)} · ${money(priceOf(m))}${m.id === fav ? ' ♥' : ''}`), T('Just saying hi', 'Chào bà thôi ạ')];
+    const pick = await ask(a, fav ? T(`Ah, it's you! The usual ${T(v.menu.find(m => m.id === fav).en, '')}? A coin off for my favourite customer.`, `A, con đó hả! Như mọi khi — ${v.menu.find(m => m.id === fav).vi}? Bớt con một đồng nha.`) : tt(choice(v.hi)), opts, { emo: 'happy' });
     const item = v.menu[pick];
     if (!item) { await say(a, T('Ah, such a polite child! Come back when you\'re hungry.', 'Ôi, ngoan quá! Đói thì ghé bà nha.')); return; }
-    if (!canAfford(item.price)) { sfx('error'); await say(a, T('Short on coins? Next time, dear.', 'Hết tiền hả? Lần sau nha cháu.')); return; }
-    addMoney(-item.price, 'snack'); sfx('coin');
+    const price = priceOf(item);
+    if (!canAfford(price)) { sfx('error'); await say(a, T('Short on coins? Next time, dear.', 'Hết tiền hả? Lần sau nha cháu.')); return; }
+    addMoney(-price, 'snack'); sfx('coin');
+    sn[item.id] = (sn[item.id] || 0) + 1; if (sn[item.id] === 4) import('./interact.js').then(m => m.discover('snack'));
     a.setAct('hold', item.id); await sleep(500); a.setAct('wave'); setTimeout(() => a.setAct(null), 800);
     await say(a, v.act === 'drink' ? T('Here you go! Drink it while it\'s nice and cold.', 'Của con đây! Uống liền cho mát nha.') : T('Here you go! Enjoy it while it\'s fresh.', 'Của con đây! Ăn liền cho ngon nha.'));
     return item;

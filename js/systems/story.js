@@ -7,10 +7,12 @@
 import { G, T, flag, setFlag, hasMats, spendMats, addMoney, canAfford, learnRecipe, unlockAchievement, markDirty, bizOf, pantry, mats, addRep } from './state.js';
 import { ingName, matName, bizName, recipeName } from '../data/game.js';
 import { BUSINESSES, RECIPES, CHAPTERS, NIGHT_MARKET_RESTORE, STATUE_COST, STATION, BRIDGE_REPAIR, VY_VIEWS, HARBOUR_BRIDGE, COVE_BRIDGE, FESTIVAL_REQ, KEEPER_REQ } from '../data/game.js';
+import { MEO_MEMORIES } from '../data/lore.js';
 import { keeperOf, keeperActor, staffedCount, PLACES, propertyPrice, upgradeCost } from './economy.js';
 import { cs, wait, say, ask, camTo, camFollow, walk, face, emote, hop, startFollow, stopFollow, caption } from './cutscene.js';
 import { scenes, setScene, fadeOut, fadeIn } from './scenes.js';
 import { cam, fx } from '../world/render.js';
+import { QUEUES } from '../world/island.js';
 import { setQuest, toast, showHud } from '../ui/hud.js';
 import { showReward } from '../ui/sheets.js';
 import { askText, chooseLook } from '../ui/naming.js';
@@ -22,6 +24,8 @@ import { sfx, setMood } from '../core/audio.js';
 import { bus, rand, choice, dist, sleep, clamp, money } from '../core/util.js';
 import { rt as bizRT, bizRecipes } from './business.js';
 import { availableRecipes } from '../ui/shops.js';
+import { questOption, questTalk } from './sidequests.js';
+import { morningEvent, birthdaysToday } from './interact.js';
 import { npcs } from './npc.js';
 import { playCinematic, drawBoatTop } from './cinematic.js';
 import * as cloud from './cloud.js';
@@ -111,7 +115,7 @@ export const STEPS = {
   regulars: { ch: 2, text: () => goals(T('First regulars', 'Khách quen đầu tiên'), regularGoals()), target: () => null, done: () => allDone(regularGoals()), next: 'grow' },
   // ---- Chapter 5: a helping hand
   hireKeeper: { ch: 5, text: () => T('Hire a shopkeeper for the drink stand (Menu → Business)', 'Thuê người trông quán nước (Menu → Kinh doanh)'), target: () => null, done: () => !!keeperOf('shed1'), next: 'keeperRun', scene: () => firstHelper() },
-  keeperRun: { ch: 5, text: () => goals(T('Two shops at once', 'Hai quán cùng lúc'), keeperGoals()), target: () => null, done: () => allDone(keeperGoals()), next: 'supplies', scene: () => newChapter(6) },
+  keeperRun: { ch: 5, text: () => goals(T('Two shops at once', 'Hai quán cùng lúc'), keeperGoals()), target: () => null, done: () => allDone(keeperGoals()), next: 'supplies', scene: () => newChapter(6).then(() => landlordIntro()) },
   // ---- Chapter 6: supplies & rent
   supplies: { ch: 6, text: () => goals(T('Supplies & rent', 'Hàng hóa & tiền thuê'), supplyGoals()), target: () => null, done: () => allDone(supplyGoals()), next: 'truck', scene: () => truckIntro() },
   // ---- Chapter 9: more stalls
@@ -130,9 +134,9 @@ export const STEPS = {
   grill: { ch: 17, text: () => T(`Buy the Coconut Cove Grill (money ${money(Math.floor(G.state.money))}/${money(BUSINESSES.grill.buy)})`, `Mua Quán Nướng Vịnh Dừa (tiền ${money(Math.floor(G.state.money))}/${money(BUSINESSES.grill.buy)})`), target: () => frontOf('grill'), done: () => bizOf('grill').owned, next: 'grillServe' },
   grillServe: { ch: 17, text: () => T(`Grill ${Math.min(25, bizServedSince('grill', 'grillServe'))}/25 seafood plates at the cove`, `Nướng ${Math.min(25, bizServedSince('grill', 'grillServe'))}/25 phần hải sản ở vịnh`), target: () => null, done: () => bizServedSince('grill', 'grillServe') >= 25, next: 'allStalls', scene: () => newChapter(18) },
   // ---- Chapter 18: the whole Night Market
-  allStalls: { ch: 18, text: () => { const n = STALL_IDS.filter(id => bizOf(id).owned).length; return T(`Own every Night Market stall (${n}/${STALL_IDS.length})`, `Sở hữu mọi sạp Chợ Đêm (${n}/${STALL_IDS.length})`); }, target: () => null, done: () => STALL_IDS.every(id => bizOf(id).owned), next: 'allStaff', scene: () => newChapter(19) },
+  allStalls: { ch: 18, text: () => { const n = STALL_IDS.filter(id => bizOf(id).owned).length; return T(`Own every Night Market stall (${n}/${STALL_IDS.length})`, `Sở hữu mọi sạp Chợ Đêm (${n}/${STALL_IDS.length})`); }, target: () => null, done: () => STALL_IDS.every(id => bizOf(id).owned), next: 'allStaff', scene: () => nightQueen().then(() => newChapter(19)) },
   // ---- Chapter 19: the island runs itself
-  allStaff: { ch: 19, text: () => { const c = staffedCount(); return T(`The island runs itself: every business staffed — shopkeepers, stall keepers and a restaurant team (${c.staffed}/${c.total}) — Menu → Business`, `Hòn đảo tự vận hành: quán nào cũng có người trông, nhà hàng có đội nhân viên (${c.staffed}/${c.total}) — Menu → Kinh doanh`); }, target: () => null, done: () => { const c = staffedCount(); return c.total >= Object.keys(BUSINESSES).length && c.staffed >= c.total; }, next: 'keeper', scene: () => newChapter(20) },
+  allStaff: { ch: 19, text: () => { const c = staffedCount(); return T(`The island runs itself: every business staffed — shopkeepers, stall keepers and a restaurant team (${c.staffed}/${c.total}) — Menu → Business`, `Hòn đảo tự vận hành: quán nào cũng có người trông, nhà hàng có đội nhân viên (${c.staffed}/${c.total}) — Menu → Kinh doanh`); }, target: () => null, done: () => { const c = staffedCount(); return c.total >= Object.keys(BUSINESSES).length && c.staffed >= c.total; }, next: 'keeper', scene: () => automationMontage().then(() => newChapter(20)) },
   materials: { ch: 1, text: () => { const r = BUSINESSES.shed1.repair; return T(`Buy ${r.wood} wood, ${r.metal} metal and ${r.paint} paint at Ben Vung Materials (${mats('wood')}/${r.wood} · ${mats('metal')}/${r.metal} · ${mats('paint')}/${r.paint})`, `Mua ${r.wood} gỗ, ${r.metal} tôn, ${r.paint} sơn ở VLXD Bền Vững (${mats('wood')}/${r.wood} · ${mats('metal')}/${r.metal} · ${mats('paint')}/${r.paint})`); }, target: () => G.scene?.id === 'materials' ? null : doorOf('materials'), done: () => hasMats(BUSINESSES.shed1.repair) || bizOf('shed1').repair >= 1, next: 'repair' },
   repair: { ch: 1, text: () => T('Repair the little shed on the beach', 'Sửa căn chòi nhỏ ở bãi biển'), target: () => frontOf('shed1'), done: () => bizOf('shed1').repair >= 1, next: 'ingredients', scene: () => afterFirstRepair() },
   // ---- Chapter 1 (continued): first ingredients, prep, opening day
@@ -178,6 +182,12 @@ function freeText() {
   if (av.length) return T('Mèo Mây has a new recipe for you — visit its house!', 'Mèo Mây có công thức mới! Ghé nhà Mèo Mây nhé');
   const up = Object.entries(G.state.biz).find(([id, b]) => b.owned && b.level < 3 && BUSINESSES[id].upgrades);
   if (up) return T(`Upgrade ${bizName(up[0])} and keep growing your island`, `Nâng cấp ${bizName(up[0])} và tiếp tục phát triển đảo`);
+  // after the story: the families who left, the neighbours' own stories, the island's secrets
+  if (flag('keeper')) {
+    if (!(G.state.sideQuests?.post_lam === 'done')) return T('Mèo Mây has news from the mainland — go and see it', 'Mèo Mây có tin từ đất liền — ghé gặp nhé');
+    const open = Object.keys(G.state.sideQuests || {}).filter(k => ['active', 'found'].includes(G.state.sideQuests[k])).length;
+    if (open) return T(`${open} neighbour${open > 1 ? 's are' : ' is'} waiting on you (★ on the map)`, `${open} người hàng xóm đang chờ bạn (★ trên bản đồ)`);
+  }
   return T(`Day ${G.state.day}: ${G.state.island.name} is buzzing!`, `Ngày ${G.state.day}: đảo ${G.state.island.name} đang rộn ràng!`);
 }
 function hasStockFor(k) {
@@ -255,6 +265,7 @@ function releaseMeo(to = 'plaza') {
   m.data.busy = false; m.data.until = 0; m.data.goal = to;
 }
 function titleCard(n) {
+  bus.emit('chapterCard', n, [`Chapter ${n}: ${CHAPTERS[n]?.title || ''}`, `Chương ${n}: ${CHAPTERS[n]?.vi || ''}`]);
   const ch = CHAPTERS[n];
   setFlag('card:' + n);
   caption(T(`Chapter ${n}: ${ch.title}`, `Chương ${n}: ${ch.vi}`));
@@ -291,9 +302,11 @@ async function newChapter(n) {
   G.runtime.inCutscene = false;
 }
 async function harbourOpened() {
+  npcs.spawnIsletResidents?.();                  // Ông Lộc and Chị Ngọc come out to see who built the bridge
   toast({ text: T('The Harbour Bridge is open!', 'Cầu Bến Cảng đã thông!'), sub: T('Harbour Town and Cô Bông\'s pet shop await.', 'Phố Cảng và tiệm thú cưng của Cô Bông đang chờ.'), icon: 'paw', ms: 3800 });
 }
 async function coveOpened() {
+  npcs.spawnIsletResidents?.();                  // and Cô Dừa at the cove
   toast({ text: T('The Cove Bridge is open!', 'Cầu Vịnh Dừa đã thông!'), sub: T('Coconut Cove\'s grill kiosk is for sale.', 'Ki-ốt quán nướng ở Vịnh Dừa đang cần bán.'), icon: 'squid', ms: 3800 });
 }
 // build the Harbour or Cove bridge (a hammering montage like the Long Bridge)
@@ -619,6 +632,8 @@ async function afterFirstCustomers() {
 // ---------------------------------------------------------------- mornings: Chapter 3 begins (word is spreading)
 export async function morningHooks() {
   const s = G.state;
+  morningEvent();
+  for (const rid of birthdaysToday()) toast({ text: T(`It's ${RESIDENTS[rid]?.name}'s birthday!`, `Hôm nay là sinh nhật ${RESIDENTS[rid]?.name}!`), sub: T('A little gift would make their day (chat → Give a gift).', 'Một món quà nhỏ sẽ làm họ vui cả ngày (trò chuyện → Tặng quà).'), icon: 'heart', ms: 4200 });
   if (S().step === 'grow' && !flag('ch3intro')) await wordSpreadingIntro();
   else if (availableRecipes().length && !flag('recipeNote' + s.day)) { setFlag('recipeNote' + s.day); toast({ text: T('Mèo Mây has a new recipe!', 'Mèo Mây có công thức mới!'), sub: T('Visit Mèo Mây\'s house to learn it.', 'Ghé nhà Mèo Mây để học nhé.'), icon: 'notebook' }); }
 }
@@ -641,6 +656,8 @@ async function wordSpreadingIntro() {
     await camTo((m.x + pl.x) / 2, pl.y - 20, { zoom: 1.3 });
     await say('meo', T('Good morning! Guess what — people on the mainland are talking about a tiny tea stand with *very* good kumquat tea.', 'Chào buổi sáng! Đoán xem — người trong đất liền đang bàn tán về một quán nhỏ bán trà tắc *cực* ngon đó.'), { emo: 'happy' });
     await titleCard(3);
+    await busyFerry();
+    await camTo((m.x + pl.x) / 2, pl.y - 20, { zoom: 1.3 });
     await say('meo', T('More visitors are coming by ferry now. And they\'ll want something to wake them up…', 'Giờ khách đi tàu tới đông hơn rồi. Và họ sẽ muốn thứ gì đó cho tỉnh ngủ…'));
     await discoverRecipe('ca_phe_sua_da');
     await say('meo', T('Iced milk coffee! Condensed milk first, *then* coffee. Never the other way. That\'s the law.', 'Cà phê sữa đá! Sữa đặc trước, *rồi mới* tới cà phê. Không bao giờ ngược lại. Luật đó.'), { emo: 'happy', tilt: 0.15 });
@@ -668,6 +685,8 @@ async function introShed2() {
     stopFollow(); await pl.walkTo([[512, 1618]], { speed: 60 });
     face(m, { x: 560, y: 1520 }); face(pl, { x: 560, y: 1520 });
     await camTo(560, 1530, { zoom: 1.3 });
+    await say('meo', T('This was the Lâm family\'s shed. Mr Lâm baked the bread at four every morning; you could smell it from the ferry.', 'Đây là quán của nhà họ Lâm. Chú Lâm nướng bánh lúc bốn giờ sáng mỗi ngày; đứng trên tàu cũng ngửi thấy.'), { tilt: 0.1 });
+    await say('meo', T('When the ferry cut its route, their kids went to work on the mainland, and the Lâms followed. Mrs Lâm gave me the key and said “someone has to stay”.', 'Khi hãng tàu cắt tuyến, con cái họ ra đất liền làm việc, rồi hai vợ chồng cũng đi theo. Cô Lâm đưa mình chìa khóa và nói “phải có ai đó ở lại”.'));
     await say('meo', T('Ta-da. It\'s even more broken than the first one! Isn\'t that exciting?', 'Tèn ten. Nó còn hư hơn căn đầu tiên! Hào hứng ghê chưa?'), { emo: 'happy', tilt: 0.2 });
     await say('meo', T('Repair it and I\'ll teach you bánh mì. Two shops means twice the running around — but I think you can handle it.', 'Sửa nó đi rồi mình dạy bạn làm bánh mì. Hai quán là chạy gấp đôi — nhưng mình nghĩ bạn làm được.'));
     await say('meo', T(`Oh, one tiny thing. The owner left the key with me. It costs ${GATES.shed2.cost}k. A cat has expenses. Fish is expensive. And you need to be level ${GATES.shed2.level} first — I only sell keys to serious shopkeepers.`, `À, một chuyện nhỏ xíu. Chủ quán gửi chìa khóa cho mình. Giá ${GATES.shed2.cost}k. Mèo cũng phải chi tiêu chứ. Cá đắt lắm. Và bạn phải đạt cấp ${GATES.shed2.level} trước — mình chỉ bán chìa cho chủ quán nghiêm túc thôi.`), { emo: 'happy', tilt: 0.2 });
@@ -1072,11 +1091,164 @@ async function keeperCeremony() {
     fx.burst('confetti', pl.x, pl.y - 40, 50, { up: 120, speed: 110, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 70, life: 2 });
     await hop(m, 3);
     await showReward({ icon: 'trophy', kicker: T('The end… of the beginning', 'Kết thúc… của sự khởi đầu'), title: T('Keeper of the Island', 'Người Giữ Đảo'), text: T('+2,000k · +500 XP. The island will keep growing with you — levels have no cap!', '+2.000k · +500 KN. Hòn đảo sẽ tiếp tục lớn lên cùng bạn — cấp độ không giới hạn!') });
+    await epilogue();
+    face(m, pl); face(pl, m); await camTo((m.x + pl.x) / 2, pl.y - 20, { zoom: 1.3 });
     await say('meo', T('Now… about my salary as Chief Cat Officer. Let\'s say… one fish a day?', 'Giờ thì… về lương của mình, Giám Đốc Mèo. Mỗi ngày một con cá nhé?'), { emo: 'happy', tilt: 0.2 });
+    await say('meo', T('Oh — and Doctor An says there\'s a lot of mail for me lately. Letters from the mainland. Come and find me when you have a moment.', 'À — Bác sĩ An nói dạo này có nhiều thư cho mình lắm. Thư từ đất liền. Rảnh thì ghé tìm mình nha.'), { tilt: 0.12 });
     releaseMeo('plaza');
   });
   G.runtime.inCutscene = false;
 }
+
+// ---------------------------------------------------------------- Chapter 3: the ferry is full again
+async function busyFerry() {
+  const isl = island();
+  G.runtime.boatBoost = 120;
+  await camTo(900, 2470, { zoom: 1.1, rate: 2 });
+  caption(T('The morning ferry — fuller than it has been in years…', 'Chuyến tàu sáng — đông khách nhất trong nhiều năm…'));
+  sfx('bell');
+  const vs = [];
+  for (let i = 0; i < 7; i++) { const v = npcs.spawnVisitorAt?.(880 + (i % 3) * 18, 2560 - Math.floor(i / 3) * 10, 'beach'); if (v) vs.push(v); await wait(0.22); }
+  await wait(1.2); caption(null);
+  // a visitor asks a neighbour the way
+  const bt = npcs.byId('ba_tu'), v0 = vs[0];
+  if (bt && v0) {
+    bt.stop?.(); bt.sit = false; bt.data.state = 'busy'; bt.visible = true; bt.x = 930; bt.y = 2380;
+    v0.stop?.(); v0.x = 962; v0.y = 2384; face(v0, bt); face(bt, v0);
+    await camTo(946, 2360, { zoom: 1.4, rate: 2 });
+    await say(v0, T('Excuse me — where\'s the kumquat tea everyone keeps talking about?', 'Cho hỏi — quán trà tắc mà ai cũng nhắc ở đâu vậy ạ?'));
+    bt.setAct('wave'); await say(bt, T('Along the beach, dear. Just follow the line!', 'Dọc bãi biển đó con. Cứ theo hàng người mà đi!'), { emo: 'happy' }); bt.setAct(null);
+    npcs.returnResident(bt);
+  }
+  // …and a line forms at your stand
+  const b = B('shed1'), spots = [...QUEUES.shed1, [452, 2210], [428, 2196]];
+  await fadeOut(300);
+  vs.forEach((v, i) => { const [x, y] = spots[Math.min(i, spots.length - 1)]; v.stop?.(); v.alpha = 1; v.fadeIn = false; v.x = x; v.y = y + 4; v.face?.(i ? 'right' : 'up'); v.data.state = 'idle'; v.data.leaveAt = G.state.time + 40; });
+  await camTo(b.x - 40, b.y + 20, { zoom: 1.15, rate: 9 });
+  await fadeIn(300);
+  caption(T('A line. At your stand.', 'Xếp hàng. Trước quán của bạn.'));
+  await wait(2.4); caption(null);
+}
+
+// ---------------------------------------------------------------- Chapter 6: who you pay rent to
+async function landlordIntro() {
+  if (flag('landlordIntro')) return;
+  setFlag('landlordIntro');
+  await cs.run('landlord', async () => {
+    G.runtime.inCutscene = true;
+    const pl = G.player;
+    if (G.scene.id !== 'island') { await fadeOut(250); const t = island().triggers.find(t => t.kind === 'door' && t.building === G.scene.building); setScene('island', t ? t.doorX : 900, t ? t.doorY + 16 : 1650, 'down'); await fadeIn(300); }
+    const at = npcs.byId('anh_tuan'), bt = npcs.byId('ba_tu');
+    const place = (a, dx) => { if (!a) return; a.stop?.(); a.sit = false; a.data.state = 'busy'; a.visible = true; a.x = pl.x + dx; a.y = pl.y + 4; face(a, pl); };
+    place(at, 40); place(bt, -40);
+    await camTo(pl.x, pl.y - 20, { zoom: 1.35 });
+    if (at) await say(at, T('Rent day again! Did anyone ever tell you who the landlord actually is?', 'Lại tới ngày đóng tiền nhà! Có ai kể em nghe chủ nhà thật ra là ai chưa?'), { emo: 'happy' });
+    if (bt) await say(bt, T('There isn\'t one, really. When the families moved to the mainland, they asked Cô Hoa at the supermarket to look after their places. The rent goes back to them.', 'Thật ra không có ai hết. Khi các gia đình ra đất liền, họ nhờ Cô Hoa ở siêu thị trông nhà giùm. Tiền thuê gửi lại cho họ.'));
+    if (at) await say(at, T('So when you buy a place outright, you buy it from the family who left. They\'re glad. It means somebody stays.', 'Nên khi em mua đứt chỗ nào, là mua lại từ gia đình đã đi. Họ mừng lắm. Vậy nghĩa là có người ở lại.'));
+    if (bt) await say(bt, T('And the supplies — no need to carry every bag yourself any more. Ask about a supply runner in the Business tab.', 'Còn hàng hóa — khỏi phải tự xách từng túi nữa. Hỏi người giao hàng trong mục Kinh doanh nha con.'), { emo: 'happy' });
+    for (const a of [at, bt]) if (a) npcs.returnResident(a);
+  });
+  G.runtime.inCutscene = false;
+}
+
+// ---------------------------------------------------------------- a Night Market family hands over its stall
+const HANDOVER = {
+  nm1: [['This was my mother\'s stall. I blew out the last lantern here myself, the night the market closed.', 'Đây là sạp của mẹ bà. Chính bà thổi tắt chiếc lồng đèn cuối cùng ở đây, cái đêm chợ đóng cửa.'], ['Light it every evening for me. And don\'t burn the bánh tráng — the edges should crackle, not smoke.', 'Thắp đèn mỗi tối giùm bà nha. Và đừng để cháy bánh tráng — mép phải giòn rụm, không được khói.']],
+  nm2: [['Three generations of chè at this stall. My grandchildren want to be engineers. Good for them!', 'Ba đời bán chè ở sạp này. Cháu bà muốn làm kỹ sư. Tốt cho tụi nó!'], ['Beans soft, jelly cold, coconut last. Quick hands, small prices — that\'s chè.', 'Đậu mềm, thạch lạnh, nước cốt dừa sau cùng. Tay nhanh, giá nhỏ — chè là vậy.']],
+  nm3: [['Lemongrass first, then the snails. And never rush a snail — they\'ve had a long life already.', 'Sả trước, rồi mới tới ốc. Và đừng bao giờ hối con ốc — nó sống cả đời chậm rãi rồi.'], ['People who order snails stay and talk. Charge them properly for the company.', 'Người gọi ốc thì ngồi lâu, nói nhiều. Tính tiền cho xứng với bầu bạn nha.']],
+  nm5: [['Press it twice. The second press is sweeter — like most second chances.', 'Ép hai lần. Lần ép thứ hai ngọt hơn — như hầu hết những cơ hội thứ hai.'], ['A cup of cane juice is cheap, so sell a lot of them. Fast hands!', 'Ly nước mía rẻ, nên phải bán thật nhiều. Tay nhanh lên!']],
+  nm6: [['Charcoal, never gas. After nine o\'clock people can taste the difference.', 'Than, không dùng ga. Sau chín giờ tối là khách phân biệt được liền.'], ['The later it gets, the longer the line. Don\'t go to bed early.', 'Càng khuya càng đông. Đừng đi ngủ sớm nha.']],
+};
+export async function stallHandover(id) {
+  const lines = HANDOVER[id]; if (!lines) return;
+  await cs.run('handover:' + id, async () => {
+    G.runtime.inCutscene = true;
+    const b = B(id) || island().buildings[id], pl = G.player;
+    const v = (npcs.vendors || []).find(a => a.data.vendor === id);
+    const who = v || new Actor({ kind: 'human', look: id === 'nm1' ? MERCHANTS.ba_sau.look : undefined, name: id === 'nm1' ? 'Bà Sáu' : T('Stall owner', 'Chủ sạp'), x: b.x + 30, y: b.y + 20 });
+    if (!v) island().add(who);
+    who.visible = true; who.alpha = 1; who.x = b.x + 30; who.y = b.y + 22; face(who, pl); face(pl, who);
+    await camTo((who.x + pl.x) / 2, pl.y - 24, { zoom: 1.4, rate: 2 });
+    for (const [en, vi] of lines) await say(who, T(en, vi), { emo: 'happy' });
+    who.setAct('wave'); sfx('success'); await wait(0.8); who.setAct(null);
+    if (!v) { who.fadeOut = true; }
+  });
+  G.runtime.inCutscene = false;
+}
+
+// ---------------------------------------------------------------- Chapter 18: the whole Night Market is yours
+async function nightQueen() {
+  await cs.run('nightQueen', async () => {
+    G.runtime.inCutscene = true;
+    await fadeOut(600, true);
+    caption(T('That evening, at the Night Market…', 'Tối hôm đó, ở Chợ Đêm…'));
+    G.state.time = Math.max(G.state.time, 19 * 60); setMood('night');
+    if (G.scene.id !== 'island') setScene('island', 430, 720, 'up');
+    const pl = G.player; pl.x = 430; pl.y = 720; pl.face('up');
+    placeMeo('island', 460, 726);
+    const ba = new Actor({ kind: 'human', look: MERCHANTS.ba_sau.look, name: 'Bà Sáu', x: 430, y: 670 }); island().add(ba); ba.face('down');
+    for (const [i, a] of npcs.residents.entries()) { a.data.state = 'busy'; a.stop(); a.visible = true; a.sit = false; a.x = 330 + (i % 6) * 40; a.y = 770 + Math.floor(i / 6) * 22; a.face('up'); }
+    await wait(1.4); caption(null); await fadeIn(700);
+    await camTo(430, 690, { zoom: 1.25, rate: 1.6 });
+    await say(ba, T('Every stall, every lantern. My mother would have liked you.', 'Mọi sạp, mọi lồng đèn. Mẹ bà hẳn sẽ quý con lắm.'), { emo: 'happy' });
+    await say(ba, T('Queen, king — the title doesn\'t matter. The market is yours now. Keep it bright.', 'Nữ hoàng hay vua — danh xưng không quan trọng. Chợ giờ là của con. Giữ cho nó sáng nhé.'));
+    sfx('fanfare');
+    for (let i = 0; i < 8; i++) setTimeout(() => fx.burst('spark', 330 + rand(0, 200), 640 + rand(-20, 30), 18, { up: 40, g: 20, speed: 120, col: choice(['#ffd35a', '#f08ca0', '#ff9a4a', '#fff']), life: 1.4 }), i * 260);
+    for (const a of npcs.residents) { a.setAct('cheer'); a.setEmo('happy', 4); }
+    pl.setAct('cheer'); await wait(2.6); pl.setAct(null);
+    for (const a of npcs.residents) { a.setAct(null); npcs.returnResident(a); }
+    await say('meo', T('The Night Market was the last place to go dark. It\'s the first one fully lit again. That\'s poetry. I\'m a poet now.', 'Chợ Đêm là nơi cuối cùng tắt đèn. Giờ là nơi đầu tiên sáng trọn vẹn trở lại. Thơ ghê. Giờ mình là nhà thơ.'), { emo: 'happy', tilt: 0.15 });
+    addXP(250, 'market'); ba.fadeOut = true;
+    releaseMeo('nightmarket');
+  });
+  G.runtime.inCutscene = false;
+}
+
+// ---------------------------------------------------------------- Chapter 19 → 20: the island runs itself
+async function automationMontage() {
+  const s = G.state, list = staffedCount().list;
+  await cs.run('montage', async () => {
+    G.runtime.inCutscene = true;
+    await fadeOut(500, true);
+    caption(T('A day on the island — while you take a walk…', 'Một ngày trên đảo — trong lúc bạn đi dạo…'));
+    await wait(1.4); caption(null); await fadeIn(500);
+    for (const id of list.slice(0, 8)) {
+      const b = B(id) || island().buildings[id]; if (!b) continue;
+      const k = keeperOf(id), a = keeperActor(id);
+      if (a) { a.visible = true; a.setAct('work'); }
+      await camTo(b.x, b.y - 10, { zoom: 1.3, rate: 2.6 });
+      const who = id === 'restaurant' ? T(`a team of ${s.biz.restaurant.employees.length}`, `đội ${s.biz.restaurant.employees.length} người`) : k?.name || T('a shopkeeper', 'người trông quán');
+      caption(T(`${bizName(id)} — ${who} has it covered`, `${bizName(id)} — ${who} lo hết`));
+      await wait(1.5);
+      if (a) a.setAct(null);
+    }
+    caption(null);
+    await summonMeo();
+    await say('meo', T('Every shop opened this morning without you. Nobody panicked. Well, I panicked a little, out of habit.', 'Sáng nay mọi quán tự mở cửa mà không cần bạn. Không ai hoảng. À, mình hoảng chút xíu, theo thói quen thôi.'), { emo: 'happy', tilt: 0.15 });
+    releaseMeo('plaza');
+  });
+  G.runtime.inCutscene = false;
+}
+
+// ---------------------------------------------------------------- Chapter 20: what the island became
+async function epilogue() {
+  const s = G.state, regs = regularsCount(), shops = Object.values(s.biz).filter(b => b.owned).length;
+  const friends = Object.keys(RESIDENTS).filter(r => (s.friends[r] || 0) >= 20).length;
+  const stops = [
+    [900, 1560, T('Wind Plaza — where the whole island meets again.', 'Quảng trường gió — nơi cả đảo lại tụ họp.')],
+    [430, 650, T('The Night Market — every lantern lit.', 'Chợ Đêm — mọi chiếc lồng đèn đều sáng.')],
+    [1200, 700, T(`The restaurant on the hill — ${s.biz.restaurant.employees.length} people work there now.`, `Nhà hàng trên đồi — giờ có ${s.biz.restaurant.employees.length} người làm việc ở đó.`)],
+    [2650, 640, T('Harbour Town — boats at every mooring.', 'Phố Cảng — bến nào cũng có thuyền.')],
+    [2280, 1400, T('Firefly Islet — Vy is painting it all again.', 'Cù Lao Đom Đóm — Vy đang vẽ lại tất cả.')],
+    [2300, 2240, T('Coconut Cove — the grill smoke drifts over the water.', 'Vịnh Dừa — khói quán nướng bay trên mặt nước.')],
+    [900, 2470, T('The ferry — coming every morning again.', 'Con tàu — lại cập bến mỗi sáng.')],
+  ];
+  await fadeOut(500, true); caption(T(`Day ${s.day}.`, `Ngày ${s.day}.`)); await wait(1.4); caption(null); await fadeIn(500);
+  for (const [x, y, text] of stops) { await camTo(x, y, { zoom: 1.05, rate: 2.2 }); caption(text); await wait(1.8); }
+  caption(T(`When you arrived: one broken shed and a cat. Now: ${shops} businesses, ${regs} regulars, ${friends} close neighbours${(s.pets || []).length ? `, ${(s.pets || []).length} pet${(s.pets || []).length > 1 ? 's' : ''}` : ''} — and the same cat.`, `Khi bạn tới: một căn chòi hư và một con mèo. Giờ: ${shops} quán, ${regs} khách quen, ${friends} người hàng xóm thân${(s.pets || []).length ? `, ${(s.pets || []).length} thú cưng` : ''} — và vẫn con mèo đó.`));
+  await wait(3.4); caption(null);
+}
+
 
 // ---------------------------------------------------------------- talking to Mèo Mây
 const MEO_LINES = [
@@ -1100,17 +1272,31 @@ export async function talkToMeo() {
     const st = currentStep();
     const avail = availableRecipes();
     const gate = pendingGate();
+    const qo = questOption('meo');
     const opts = [T('What should I do next?', 'Mình nên làm gì tiếp?'), T('Tell me something', 'Kể chuyện đi'), T('Tell me a joke!', 'Kể chuyện cười đi!'), T('Rock, paper, scissors!', 'Oẳn tù tì!'), T('Bye!', 'Tạm biệt!')];
     if (gate) opts.unshift(T(`About the key to ${GATES[gate].en}…`, `Về chìa khóa ${GATES[gate].vi}…`));
+    if (qo) opts.unshift(qo);
+    const fishy = (G.state.fishForMeo || 0) > 0;
+    if (fishy) opts.unshift(T('🐟 Here\'s a fish for you!', '🐟 Cá cho bạn nè!'));
     const pick = await ask('meo', choice([T(`Hi ${G.state.player.name}! Need something?`, `Chào ${G.state.player.name}! Cần gì không?`), T('Mew? Oh, it\'s you! Hello!', 'Meo? Ơ, bạn đó hả! Chào nha!'), T('I was *definitely* not asleep. What\'s up?', 'Mình *chắc chắn* không có ngủ. Có chuyện gì?')]), opts, { emo: 'happy' });
     let p = pick;
-    if (gate) { if (p === 0) { await keyTalk(gate); p = -1; } else p--; }
+    if (fishy) { if (p === 0) { G.state.fishForMeo--; markDirty(true); m.doHop(90); sfx('meow'); fx.burst('heart', m.x, m.y - 30, 8, { up: 40 }); await say('meo', choice([T('A FISH. For ME. This is the best day of my life. (Until tomorrow\'s fish.)', 'CÁ. Cho MÌNH. Hôm nay là ngày đẹp nhất đời mình. (Cho tới con cá ngày mai.)'), T('*happy crunching noises* …Chú Hải taught you well.', '*tiếng nhai rộp rộp sung sướng* …Chú Hải dạy bạn giỏi ghê.'), T('You know the way to a cat\'s heart. It\'s through the fish.', 'Bạn biết đường tới trái tim mèo rồi đó. Đi qua con cá.')]), { emo: 'love' }); addXP(15, 'meo'); p = -1; } else p--; }
+    if (p >= 0 && qo) { if (p === 0) { await questTalk(m, 'meo'); p = -1; } else p--; }
+    if (p >= 0 && gate) { if (p === 0) { await keyTalk(gate); p = -1; } else p--; }
     if (p === -1) void 0;
     else if (p === 0) {
       if (avail.length) await say('meo', T('I wrote a new recipe in my notebook! Come to my house and have a look.', 'Mình vừa ghi công thức mới vào sổ tay! Qua nhà mình xem nhé.'), { emo: 'happy' });
       if (st?.text) await say('meo', hintFor(S().step));
       else await say('meo', T('Upgrade your shops, try new recipes, make everyone a regular. And visit me!', 'Nâng cấp quán, thử công thức mới, biến ai cũng thành khách quen. Và ghé thăm mình nữa!'));
-    } else if (p === 1) await say('meo', choice(MEO_LINES), { tilt: 0.15 });
+    } else if (p === 1) {
+      // her story, a memory at a time (then the usual chatter)
+      const i = S().flags.meoMem || 0, mem = MEO_MEMORIES[i];
+      if (mem && G.state.story.chapter >= mem.ch) {
+        for (const [en, vi] of mem.lines) await say('meo', T(en, vi), { tilt: 0.12 });
+        S().flags.meoMem = i + 1; markDirty(true);
+        if (i === 0) toast({ text: T('Mèo Mây has more stories', 'Mèo Mây còn nhiều chuyện lắm'), sub: T('Ask again as the island grows.', 'Hỏi lại khi hòn đảo lớn dần nhé.'), icon: 'notebook' });
+      } else await say('meo', choice(MEO_LINES), { tilt: 0.15 });
+    }
     else if (p === 2) { await say('meo', Math.random() < 0.6 ? meoJoke() : randomJoke(), { emo: 'happy', tilt: 0.2 }); meoAntic(m); }
     else if (p === 3) await playRPS(m, 'meo');
     else { m.setAct('wave'); await say('meo', T('See you around!', 'Hẹn gặp lại nha!'), { emo: 'happy' }); m.setAct(null); }
