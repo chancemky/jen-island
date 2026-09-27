@@ -42,7 +42,7 @@ import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, MATERIALS, bizN
 import { applyStaticText, bootText } from './ui/statictext.js';
 import { MERCHANTS, RESIDENTS, playerLook } from './data/looks.js';
 import { tapAnimals, react as reactAnimal } from './systems/animals.js';
-import { nearestSeat, sitDown, standUp, updateSeat, clearSeat } from './systems/seats.js';
+import { nearestSeat, sitDown, standUp, updateSeat, clearSeat, inSeat } from './systems/seats.js';
 import { feedDucks, nearPond } from './systems/npc.js';
 import { meoAntic } from './systems/fun.js';
 import { initLedger } from './systems/ledger.js';
@@ -621,7 +621,7 @@ function updateBizButton() {
 }
 function statueSheet() {
   const c = STATUE_COST;
-  if (!statueReady()) { say('meo', T('Not yet! We need 400 reputation and at least one fully upgraded shop. Then we build the statue!', 'Chưa được đâu! Cần 400 danh tiếng và ít nhất một quán nâng cấp tối đa. Rồi mình dựng tượng!')); return; }
+  if (!statueReady()) { say('meo', T('Not yet! We need 400 reputation and one shop upgraded to level 3. Then we build the statue!', 'Chưa được đâu! Cần 400 danh tiếng và một quán nâng lên cấp 3. Rồi mình dựng tượng!')); return; }
   openRequirement({ title: T('The Founder Statue', 'Tượng Người Sáng Lập'), cost: c.cost, mats: c.mats, action: () => buildStatue(), actionLabel: T('Unveil it!', 'Khánh thành!'), who: 'meo' });
 }
 async function homeSnack() {
@@ -721,7 +721,7 @@ bus.on('enter', id => { if (id === 'supermarket' && G.player) { G.player.basket 
 bus.on('leave', id => { if (id === 'supermarket' && G.player) { G.player.basket = false; } });
 bus.on('scene', id => { if (id !== 'supermarket' && G.player) G.player.basket = false; });
 bus.on('bought', kind => { if (kind === 'ingredients' && G.player?.basket) G.player.basketItems = (G.player.basketItems || 0) + 1; });
-bus.on('scene', () => { const pl = G.player; if (pl?.seat || pl?.lie) clearSeat(pl); });
+bus.on('scene', () => { if (inSeat()) clearSeat(); });
 
 // ---------------------------------------------------------------- visiting neighbours
 // The owner is sometimes home to greet you; at night they're asleep in bed.

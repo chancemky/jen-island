@@ -632,6 +632,27 @@ if (only === 'all' || only === 'stability') {
     if (bad.length) bad.forEach(b => fail('stability', b)); else pass('stability', 'real taps work on "Yay!", reward cards and dialogue — even when the phone drops the click');
     await clean('after the tap checks');
   }
+  // a scene that starts while you lie in a hammock (or are still settling into it) stands you up
+  {
+    const r = await p.evaluate(async () => {
+      const J = window.__jen, G = J.G, pl = G.player, wait = ms => new Promise(r => setTimeout(r, ms)), m = await import('/js/systems/seats.js');
+      if (G.scene !== G.scenes.island) J.setScene('island');
+      const out = [];
+      for (const early of [false, true]) {
+        pl.x = 980; pl.y = 2352; await wait(300);
+        const s = m.nearestSeat(G.scene, pl.x, pl.y, 40); if (!s) return ['no hammock seat found'];
+        m.sitDown(s); await wait(early ? 520 : 1600);                  // (early: still hopping in / settling back)
+        if (!early && !pl.lie) out.push('never lay down in the hammock');
+        J.cs.run('hammock-test' + early, async () => { await wait(400); });
+        await wait(1200);
+        if (pl.lie || pl.seat || pl.sit) out.push(`still ${pl.lie ? 'lying' : 'seated'} after a scene started${early ? ' mid-lie-down' : ''}`);
+        if ((await import('/js/gfx/hammock.js')).hammockLoad(s.prop)) out.push('the hammock still sags with nobody in it');
+      }
+      return out;
+    });
+    if (r.length) r.forEach(x => fail('stability', x)); else pass('stability', 'a scene starting while you lie in a hammock (or settle into it) stands you up cleanly');
+    await clean('after the hammock scene');
+  }
 
   const real = errors.filter(e => !/\[watchdog\]|\[cutscene\]|\[input\]/.test(e));
   if (real.length) fail('stability', 'errors: ' + real.slice(0, 3).join(' | ')); else pass('stability', 'no errors');

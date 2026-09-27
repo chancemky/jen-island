@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.1.4';
+export const APP_VERSION = '5.1.5';
 
 export const CHANGELOG = [
+  {
+    v: '5.1.5', date: '2026-09-27T13:01:53Z',
+    title: ['Up You Get', 'Dậy Thôi'],
+    items: [
+      ['Fixed staying drawn lying in a hammock when a story scene started or you changed place — you now always stand up first, even if the scene starts while you are still settling in', 'Sửa lỗi vẫn nằm trên võng khi cảnh truyện bắt đầu hoặc khi chuyển nơi — giờ bạn luôn đứng dậy trước, kể cả khi cảnh bắt đầu lúc bạn đang nằm xuống'],
+      ['Mèo Mây now gives the right goal for the statue: 400 reputation and one shop at level 3', 'Mèo Mây giờ nói đúng điều kiện dựng tượng: 400 danh tiếng và một quán cấp 3'],
+    ],
+  },
   {
     v: '5.1.4', date: '2026-09-27T10:42:12Z',
     title: ['Swing Low', 'Đưa Võng'],

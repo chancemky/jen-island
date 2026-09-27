@@ -79,21 +79,27 @@ export async function hopOff(a, s) {
 // ---- the player
 let busy = false;
 export const isSeated = () => !!G.player?.seat;
+// seated, lying, or still on the way into / out of a seat
+export const inSeat = (pl = G.player) => !!(pl && (pl.seat || pl.lie || busy));
 export async function sitDown(s) {
   const pl = G.player; if (busy || pl.seat) return;
   busy = true;
   try {
     lockInput('seat');
+    const g = gen;                                        // (a scene starting before you're settled cancels sitting down)
     // stand in front of the seat, face it, then turn around and hop up
     await pl.walkTo([[s.x, s.y + 12]], { speed: 80 });
+    if (g !== gen) return;
     pl.face('up'); await sleep(120);
     pl.face('down'); await sleep(90);
+    if (g !== gen) return;
     await hopOnto(pl, s);
+    if (g !== gen) { pl.sit = false; pl.seatH = undefined; return; }   // a scene started mid-hop and stood you up
     pl.seat = s; pl.setEmo('happy', 1.2);
     if (s.lie) {                                          // settle back into the hammock
-      pl.lie = { h: s.h, k: 0, kind: s.kind, rot: s.rot, dx: s.dx, dy: s.dy, prop: s.prop };
-      for (let i = 0; i <= 12; i++) { pl.lie.k = i / 12; await sleep(22); }
-      sfx('pop');
+      const lie = pl.lie = { h: s.h, k: 0, kind: s.kind, rot: s.rot, dx: s.dx, dy: s.dy, prop: s.prop };
+      for (let i = 0; i <= 12 && pl.lie === lie; i++) { lie.k = i / 12; await sleep(22); }
+      if (pl.lie === lie) sfx('pop');
     }
   } finally { busy = false; if (!pl.seat) releaseInput('seat'); }     // didn't make it onto the seat: give control back
 }
@@ -101,14 +107,20 @@ export async function standUp() {
   const pl = G.player; if (busy || !pl.seat) return;
   busy = true;
   try {
-    const s = pl.seat; pl.seat = null;
-    if (pl.lie) { for (let i = 12; i >= 0; i--) { pl.lie.k = i / 12; await sleep(18); } clearLoad(pl.lie.prop); pl.lie = null; }
+    const s = pl.seat, g = gen; pl.seat = null;
+    const lie = pl.lie;
+    if (lie) { for (let i = 12; i >= 0 && pl.lie === lie; i--) { lie.k = i / 12; await sleep(18); } clearLoad(lie.prop); if (pl.lie === lie) pl.lie = null; }
+    if (g !== gen) return;                                // a scene already stood you up
     await hopOff(pl, s);
   } finally { releaseInput('seat'); busy = false; }
 }
 // Force-clear seat/lie (cutscenes, scene changes). No hop animation.
+// (bumps `gen`, so a sit-down or stand-up that's still animating stops where it is)
+let gen = 0;
 export function clearSeat(pl = G.player, { release = true } = {}) {
   if (!pl) return;
+  gen++;
+  if (busy && pl.path) pl.stop();                         // on the way to a seat: stop walking there
   if (pl.lie) { clearLoad(pl.lie.prop); pl.lie = null; }
   pl.seat = null; pl.sit = false; pl.seatH = undefined;
   if (release) releaseInput('seat');
