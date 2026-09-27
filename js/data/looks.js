@@ -102,5 +102,6 @@ export function employeeLook(seed, role) {
   if (L.age === 'kid' || L.age === 'teen') L.age = 'peer'; else if (L.age === 'elder') L.age = 'middle';   // staff are grown-ups of working age
   L.top = role === 'cook' ? '#fff6e6' : '#f28f7c'; L.topStyle = 'tee'; L.apron = role === 'cook' ? '#f7d6c0' : '#fff6e6';
   if (role === 'cook') { L.hat = 'chef'; } else if (role === 'cleaner') { L.hat = 'bandana'; L.hatColor = '#8fb7e0'; } else { L.hat = null; }
+  if (role === 'manager') { L.top = '#3f6f8f'; L.topStyle = 'shirt'; L.apron = null; }
   return L;
 }

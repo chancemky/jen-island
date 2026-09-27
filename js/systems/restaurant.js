@@ -16,7 +16,9 @@ import { visitorLook, employeeLook } from '../data/looks.js';
 import { addXP } from './progress.js';
 import { rand, randi, choice, chance, dist, bus, clamp, rng } from '../core/util.js';
 import { canMake, takeStock, recipeUses, bizRecipes, recipePrice } from './business.js';
-import { PREPPED, INGREDIENTS } from '../data/game.js';
+import { PREPPED, INGREDIENTS, recipeCost } from '../data/game.js';
+import { recordSale, recordCost } from './ledger.js';
+import { recordUse } from './economy.js';
 import { sfx } from '../core/audio.js';
 import { fx } from '../world/render.js';
 
@@ -91,6 +93,36 @@ export function restRT() {
 const scene = () => G.scenes.restaurant;
 
 // ---------------------------------------------------------------- hiring
+// Wages follow the job (a cook earns more than a cleaner) and the person's skill.
+// Hiring costs two days' wages up front — the same rule as shopkeepers.
+export const STAFF_ROLES = ['cook', 'server', 'prep', 'cleaner', 'cashier', 'manager'];
+export const ROLE_PAY = { cook: 1.2, server: 1, prep: 0.85, cleaner: 0.8, cashier: 0.9, manager: 1.7 };
+const KEY_STAT = { cook: 'cooking', server: 'service', prep: 'speed', cleaner: 'speed', cashier: 'reliability', manager: 'reliability' };
+const statTotal = e => e.stats.speed + e.stats.cooking + e.stats.service + e.stats.reliability;
+export const wageOf = (e, role = e.role) => Math.round((18 + statTotal(e) * 4) * (ROLE_PAY[role] || 1));
+export const feeOf = (e, role = e.role) => wageOf(e, role) * 2;
+export const roleAvailable = (role, e = null) => role !== 'manager' || e?.role === 'manager' || (G.state.story.chapter >= 19 && !bizOf('restaurant').employees.some(x => x.role === 'manager'));
+export const hasManager = () => staffByRole('manager').length > 0;
+// experience: every job done counts; now and then the skill that matters for their role improves
+const WORK = { pickup: 'served', order: 'orders', cook: 'cooked', clean: 'cleaned', prep: 'prepped', deposit: 'deposits', manage: 'helped' };
+const growAt = e => 40 + (e.grown || 0) * 45;
+function workDone(a, name) {
+  const e = a.data.emp, what = WORK[name]; if (!what) return;
+  (e.today ||= {})[what] = (e.today[what] || 0) + 1;
+  e.work = (e.work || 0) + 1; e.xp = (e.xp || 0) + 1;
+  const key = KEY_STAT[e.role];
+  if (key && e.xp >= growAt(e) && e.stats[key] < 5) {
+    e.xp = 0; e.grown = (e.grown || 0) + 1; e.stats[key]++; e.wage = wageOf(e);
+    bus.emit('toast', { text: T(`${e.name} is getting better!`, `${e.name} ngày càng giỏi!`), sub: T(`+1 ${key} · wage now ${e.wage}k/day`, `+1 ${({ cooking: 'nấu ăn', service: 'phục vụ', speed: 'tốc độ', reliability: 'chăm chỉ' })[key]} · lương ${e.wage}k/ngày`), icon: 'person' });
+  }
+  markDirty();
+}
+// what each employee did today, for the evening summary ("Hạnh served 34 guests today")
+export function staffReport() {
+  const out = [];
+  for (const e of bizOf('restaurant').employees) { out.push({ name: e.name, role: e.role, did: { ...(e.today || {}) }, wage: wageOf(e) }); e.today = {}; }
+  return out;
+}
 export function candidates() {
   const s = G.state, r = restRT();
   if (r.candDay !== s.day) {
@@ -100,16 +132,18 @@ export function candidates() {
       const seed = Math.floor(R() * 1e6);
       const st = { speed: 1 + Math.floor(R() * 5), cooking: 1 + Math.floor(R() * 5), service: 1 + Math.floor(R() * 5), reliability: 1 + Math.floor(R() * 5) };
       const total = st.speed + st.cooking + st.service + st.reliability;
-      return { id: 'e' + seed, seed, name: EMPLOYEE_NAMES[Math.floor(R() * EMPLOYEE_NAMES.length)], stats: st, trait: TRAITS[Math.floor(R() * TRAITS.length)].id, wage: 20 + total * 4, fee: 60 + total * 12, role: null };
+      void total;
+      return { id: 'e' + seed, seed, name: EMPLOYEE_NAMES[Math.floor(R() * EMPLOYEE_NAMES.length)], stats: st, trait: TRAITS[Math.floor(R() * TRAITS.length)].id, role: null };
     });
   }
   return r.cands.filter(c => !bizOf('restaurant').employees.some(e => e.id === c.id));
 }
 export function hire(cand, role) {
   const b = bizOf('restaurant');
-  const e = { ...cand, role, hiredDay: G.state.day };
+  const e = { ...cand, role, hiredDay: G.state.day, today: {}, work: 0, xp: 0 };
+  const fee = feeOf(e, role); e.wage = wageOf(e, role);
   b.employees.push(e);
-  addMoney(-cand.fee, 'hire');
+  addMoney(-fee, 'hire'); recordCost('restaurant', 'wages', fee);
   spawnStaff(e);
   unlockAchievement('first_hire');
   const roles = new Set(b.employees.map(x => x.role));
@@ -126,7 +160,7 @@ export function fire(id) {
   if (a) { scene().remove(a); restRT().staff.delete(id); }
   markDirty(true);
 }
-export function setRole(id, role) { const e = bizOf('restaurant').employees.find(x => x.id === id); if (e) { e.role = role; const a = restRT().staff.get(id); if (a) { a.look = employeeLook(e.seed, role); a.data.task = null; a.data.busy = false; } markDirty(true); } }
+export function setRole(id, role) { const e = bizOf('restaurant').employees.find(x => x.id === id); if (e) { e.role = role; e.wage = wageOf(e); const a = restRT().staff.get(id); if (a) { a.look = employeeLook(e.seed, role); a.data.task = null; a.data.busy = false; } markDirty(true); } }
 
 function spawnStaff(e) {
   const r = restRT(), sc = scene();
@@ -198,13 +232,15 @@ function pay(g) {
   const svc = servers.length ? servers.reduce((m, a) => Math.max(m, a.data.emp.stats.service), 0) : 3;
   const cheerful = [...restRT().staff.values()].some(a => a.data.emp.trait === 'cheerful' || a.data.emp.trait === 'dreamy');
   const quality = g.perfect ? 1 : 0.6;
-  const tip = Math.round(g.price * (0.05 + 0.04 * svc + (cheerful ? 0.05 : 0)) * P.tip * (lv?.tip || 1) * quality * (0.5 + g.patience / g.patienceMax * 0.5));
+  const cashierK = staffByRole('cashier')[0] ? 1.05 + staffByRole('cashier')[0].data.emp.stats.reliability * 0.01 : 1;
+  const tip = Math.round(g.price * (0.05 + 0.04 * svc + (cheerful ? 0.05 : 0)) * P.tip * (lv?.tip || 1) * quality * cashierK * (0.5 + g.patience / g.patienceMax * 0.5));
   const total = g.price + tip;
   s.stats.served++; s.today.served++; if (g.perfect) { s.stats.perfect++; s.today.perfect++; }
   addXP(g.perfect ? 10 : 6, 'serve');
   const tb = (s.today.biz.restaurant ||= { served: 0, revenue: 0, perfect: 0 }); tb.served++; tb.revenue += total; if (g.perfect) tb.perfect++;
   b.stats.served++; b.stats.revenue += total;
   s.today.revenue += total; s.today.tips += tip; s.stats.tipsTotal += tip;
+  recordSale('restaurant', g.price, tip, recipeCost(g.recipe)); recordUse('restaurant', g.recipe);
   addRep(g.perfect ? 2 : 1);
   const cashier = staffByRole('cashier')[0];
   b.register += total;
@@ -272,10 +308,10 @@ function assign(a) {
   // breaks: less reliable (and dreamy) staff rest more often
   d.breakT -= 1;
   if (d.breakT <= 0) {
-    d.breakT = (e.trait === 'steady' ? 400 : 120) + e.stats.reliability * 60 + rand(0, 80);
+    d.breakT = ((e.trait === 'steady' ? 400 : 120) + e.stats.reliability * 60 + rand(0, 80)) * (hasManager() ? 1.5 : 1);
     if (chance(e.trait === 'dreamy' ? 0.7 : 0.5 - e.stats.reliability * 0.07)) return task(a, 'break', BREAK, async () => { a.face('down'); a.sit = true; a.seatH = 9; if (chance(0.5)) { a.setAct('drink', 'cup'); a.showEmote('note', 3); } else { a.setAct('sleep'); a.showEmote('zzz', 20); } await wait(rand(14, 26)); a.sit = false; a.setAct(null); a.emote = null; });
   }
-  const role = e.role, speedK = 1.4 - e.stats.speed * 0.12;
+  const role = e.role, speedK = (1.4 - e.stats.speed * 0.12) * (hasManager() ? 0.88 : 1);
   if (role === 'server') {
     // 1) deliver ready dishes
     const dish = r.pass.find(p => !p.claimed);
@@ -325,6 +361,15 @@ function assign(a) {
     if (bizOf('restaurant').register > 0 && dist(a.x, a.y, REGISTER[0], REGISTER[1] - 18) > 6) return task(a, 'register', [REGISTER[0], REGISTER[1] - 20], async () => { a.face('down'); });
     return idleNear(a, [REGISTER[0], REGISTER[1] - 20], 4);
   }
+  if (role === 'manager') {
+    // covers whatever is missing: the register, a dirty table, an order nobody has taken
+    if (!staffByRole('cashier').length && bizOf('restaurant').register > 0) return task(a, 'deposit', [REGISTER[0], REGISTER[1] - 20], async () => { a.face('down'); await wait(0.8); collectRegister(true); });
+    if (!staffByRole('cleaner').length) { const t = sc.tables.find(t => t.active && t.dirty && !t.claimed); if (t) return cleanTask(a, t, speedK); }
+    const g = r.guests.find(g => g.state === 'ordering' && !g.claimed);
+    if (g && !staffByRole('server').some(s => !s.data.busy)) { g.claimed = a; return task(a, 'manage', [g.seat.x + (g.seat.dir === 'right' ? 14 : -14), g.seat.y + 14], async () => { a.face(g.actor); a.setAct('write'); await wait(1.4); a.setAct(null); if (g.state !== 'ordering') return; g.state = 'waiting-food'; g.claimed = null; r.tickets.push({ guest: g, recipe: g.recipe }); }); }
+    if (chance(0.15)) return task(a, 'idle', [rand(80, 340), rand(200, 300)], async () => { a.setAct('write'); await wait(1.5); a.setAct(null); });
+    return idleNear(a, [300, 190]);
+  }
   if (role === 'prep') {
     const need = neededPrep();
     if (need) return task(a, 'prep', [PREP[0], PREP[1] + 16], async () => { a.face('up'); a.setAct('chop'); sfx('chop'); await wait(4 * speedK); a.setAct(null); const b = bizOf('restaurant'); const n = Math.min(4, G.state.pantry[need] || 0); if (n > 0) { G.state.pantry[need] -= n; const to = INGREDIENTS[need].prep.to; b.prepped[to] = (b.prepped[to] || 0) + n; markDirty(); } });
@@ -348,7 +393,7 @@ function idleNear(a, [x, y], r = 16) {
 }
 async function task(a, name, [x, y], fn) {
   const d = a.data; d.busy = true; d.task = name;
-  try { await walkGrid(a, x, y); await fn(); }
+  try { await walkGrid(a, x, y); await fn(); workDone(a, name); }
   catch (e) { console.warn('staff task', e); }
   finally { d.busy = false; d.task = null; }
 }
@@ -395,7 +440,7 @@ export function updateRestaurant(dt, gameMin) {
   if (r.depositT <= 0) {
     r.depositT = 20;
     const cashier = staffByRole('cashier')[0];
-    if (cashier && b.register > 0) { const k = Math.round(b.register); b.register = 0; addMoney(k, 'deposit'); cashier.showEmote('coin', 1.4); bus.emit('toast', { text: T(`${cashier.name} deposited ${k}k`, `${cashier.name} đã nộp ${k}k`), sub: T('The restaurant\'s takings', 'Tiền bán hàng của nhà hàng'), icon: 'coin', ms: 1800 }); }
+    if (cashier && b.register > 0) { const k = Math.round(b.register); b.register = 0; addMoney(k, 'deposit'); workDone(cashier, 'deposit'); cashier.showEmote('coin', 1.4); bus.emit('toast', { text: T(`${cashier.name} deposited ${k}k`, `${cashier.name} đã nộp ${k}k`), sub: T('The restaurant\'s takings', 'Tiền bán hàng của nhà hàng'), icon: 'coin', ms: 1800 }); }
   }
 }
 export function collectRegister() {
@@ -406,7 +451,7 @@ export function collectRegister() {
   return k;
 }
 export function restaurantAutomated() { return ['cook', 'server'].every(r => staffByRole(r).length); }
-export function dailyWages() { return bizOf('restaurant').employees.reduce((s, e) => s + e.wage, 0); }
+export function dailyWages() { return bizOf('restaurant').employees.reduce((s, e) => s + wageOf(e), 0); }
 export function resetRestaurantDay() {
   const r = restRT(), sc = scene();
   for (const g of r.guests) sc?.remove(g.actor);

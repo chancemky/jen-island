@@ -1,7 +1,9 @@
 // JEN Island — boot, main loop and the glue between systems.
 
 import { Renderer, cam, fx, lightingFor } from './world/render.js';
-import { Island, areaAt, BUILDINGS } from './world/island.js';
+import { Island, areaAt, areaIdAt, AREAS, BUILDINGS } from './world/island.js';
+import { COUNTS } from './systems/progress.js';
+import { unlockAchievement } from './systems/state.js';
 import { buildInteriors } from './world/interiors.js';
 import { buildRestaurant, updateRestaurant, initRestaurantRuntime, restRT, guestNeedingOrder, playerTakeOrder, playerServed, playerCookFailed, nextTicketForPlayer, ticketCooked, playerDeliver, collectRegister } from './systems/restaurant.js';
 import { Player } from './systems/player.js';
@@ -41,7 +43,8 @@ import { tapAnimals, react as reactAnimal } from './systems/animals.js';
 import { nearestSeat, sitDown, standUp, updateSeat } from './systems/seats.js';
 import { feedDucks, nearPond } from './systems/npc.js';
 import { meoAntic } from './systems/fun.js';
-import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones } from './systems/progress.js';
+import { initLedger } from './systems/ledger.js';
+import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones, TRACKS, trackState } from './systems/progress.js';
 import { BRIDGE_REPAIR, FESTIVAL_REQ, KEEPER_REQ } from './data/game.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { showWhatsNew } from './ui/whatsnew.js';
@@ -82,12 +85,13 @@ async function boot() {
   scenes.island = new Island();
   progress(0.55, bootText('decor'));
   Object.assign(scenes, buildInteriors());
+  COUNTS.homes = Object.keys(scenes).filter(k => k.startsWith('home_')).length; COUNTS.areas = AREAS.length;
   scenes.restaurant = buildRestaurant();
   G.scenes = scenes;
   progress(0.7, bootText('meo'));
   // pre-warm the ground chunks near the dock
   scenes.island.cache.get(2, 6, Math.min(2, renderer.dpr * cam.baseZoom * 1.15));
-  initHud(); initSaveHooks();
+  initHud(); initSaveHooks(); initLedger();
   progress(0.85, bootText('net'));
   let user = null;
   const dev = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).has('dev');
@@ -170,8 +174,16 @@ function updateInteriorLife(dt) {
     const gr = (sc._grid ||= new Grid(sc, 10, 6)), gi = gr.nearestFree(gr.idx(p[0], p[1])), tx = (gi % gr.cols) * gr.cell + gr.cell / 2, ty = Math.floor(gi / gr.cols) * gr.cell + gr.cell / 2;
     sh.walkTo(gr.path(sh.x, sh.y, tx, ty)).then(() => sh.face('up')); } }
 }
+// exploration & little secrets (milestones and hidden achievements)
+function noteArea(id) {
+  const s = G.state;
+  if (id && !(s.explored ||= {})[id]) { s.explored[id] = true; markDirty(); }
+  if (id === 'Lighthouse Point' && s.time >= 5 * 60 && s.time < 7 * 60) unlockAchievement('sunrise');
+  const n = (s.home?.furniture || []).length; if (n > (s.stats.furnMax || 0)) s.stats.furnMax = n;
+}
 bus.on('enter', id => {
   const sc = scenes[id];
+  if (id.startsWith('home_')) { const s = G.state; (s.homesVisited ||= {})[id.slice(5)] = true; markDirty(); if (Object.keys(s.homesVisited).length >= COUNTS.homes) unlockAchievement('all_homes'); }
   if (id.startsWith('home_')) { const rid = id.slice(5); const nm = RESIDENTS[rid]?.name || ''; showArea(rid === 'chi_mai' ? T('Doctor An\'s Clinic', 'Phòng khám Bác sĩ An') : T(`${nm}'s Home`, `Nhà ${nm}`), ''); } else showArea(T({ house: 'Your Home', supermarket: 'Binh Minh Supermarket', materials: 'Ben Vung Materials', furniture: 'Anh Khoa\'s Furniture', boutique: 'Cô Ba\'s Boutique', salon: 'Chị Tiên\'s Hair Salon', petshop: 'Cô Bông\'s Pet Shop', meo: 'Mèo Mây\'s Home', shed1: 'Your Drink Stand', shed2: 'Your Bánh Mì Shed', truck: 'Your Food Truck', restaurant: 'Your Restaurant' }[id] || '', { house: 'Nhà của bạn', supermarket: 'Siêu thị Bình Minh', materials: 'VLXD Bền Vững', furniture: 'Nhà đẹp Anh Khoa', boutique: 'Tiệm thời trang cô Ba', salon: 'Salon Tóc Xinh', petshop: 'Tiệm Thú Cưng Bé Bông', meo: 'Nhà Mèo Mây', shed1: 'Quán Nước', shed2: 'Bánh Mì Góc Phố', truck: 'Xe Cuốn', restaurant: 'Nhà hàng' }[id] || ''), '');
   if (sc.merchant) { sc.merchant.face('down'); sc.merchant.setAct('wave'); sc.merchant.showEmote('happy', 1.4); setTimeout(() => sc.merchant.setAct(null), 1300); }
   if (id === 'meo' && !sc.actors.includes(G.meo)) setTimeout(() => toast({ text: T('Mèo Mây is out for a walk', 'Mèo Mây đang đi dạo'), sub: T('It\'s usually home for a nap at noon and at night.', 'Mèo Mây thường về nhà ngủ trưa và ngủ tối.'), icon: 'notebook' }), 400);
@@ -268,7 +280,7 @@ function loop(now) {
   updatePointer(G.renderer);
   // area names on the island
   areaT -= dt;
-  if (areaT <= 0 && sc === scenes.island && flag('freeRoam') && !cs.active) { areaT = 0.5; const a = areaAt(pl.x, pl.y); showArea(a.name, a.en); }
+  if (areaT <= 0 && sc === scenes.island && flag('freeRoam') && !cs.active) { areaT = 0.5; const a = areaAt(pl.x, pl.y); showArea(a.name, a.en); noteArea(areaIdAt(pl.x, pl.y)); }
   storyT -= dt;
   if (storyT <= 0) { storyT = 1; checkStory(); refreshQuest(); }
   tickSave();
@@ -428,13 +440,14 @@ function kioskAction(id) {
   if (z.owned) return setAction(T('Your shop', 'Quán của bạn'), () => stallSheet(id), KIOSK_ICON[def.biz] || 'coin');
   if (def.stall && !G.state.nightMarket.restored) return setAction(T('Look', 'Xem'), () => say(null, T('An abandoned stall with torn lanterns.', 'Quầy hàng bỏ hoang, lồng đèn rách nát.')), 'talk');
   if (G.state.story.chapter < def.chapter) return setAction(T('Look', 'Xem'), () => say(null, def.stall ? T(`A family runs this stall. Maybe they'd sell it one day (Chapter ${def.chapter}).`, `Một gia đình đang bán ở sạp này. Biết đâu sau này họ bán lại (Chương ${def.chapter}).`) : T(`A shuttered kiosk with a FOR SALE board. The owner will sell from Chapter ${def.chapter}.`, `Một ki-ốt đóng cửa, treo bảng CẦN BÁN. Chủ sẽ bán từ Chương ${def.chapter}.`)), 'talk');
-  return setAction(T(`Buy · ${money(def.buy)}`, `Mua · ${money(def.buy)}`), () => openRequirement({ title: T(`Buy ${bizName(id)}`, `Mua ${bizName(id)}`), cost: def.buy, note: def.stall ? T('The family is ready to retire and will hand over their stall. It sells your Night Market menu.', 'Gia đình sẵn sàng nghỉ hưu và giao lại sạp. Sạp sẽ bán thực đơn Chợ Đêm của bạn.') : T('Includes the counter, the grill or coffee machine, and a starter menu.', 'Gồm quầy, bếp nướng hoặc máy pha cà phê, và thực đơn khởi đầu.'), action: () => buyKiosk(id), actionLabel: T('Buy it!', 'Mua luôn!') }), 'coin');
+  return setAction(T(`Buy · ${money(def.buy)}`, `Mua · ${money(def.buy)}`), () => openRequirement({ title: T(`Buy ${bizName(id)}`, `Mua ${bizName(id)}`), cost: def.buy, note: def.stall ? T(`The family is ready to retire and will hand over their stall — and their speciality: ${(def.menu || []).map(r => recipeName(r)).join(', ')}.`, `Gia đình sẵn sàng nghỉ hưu và giao lại sạp — cùng món tủ: ${(def.menu || []).map(r => recipeName(r)).join(', ')}.`) : T('Includes the counter, the grill or coffee machine, and a starter menu.', 'Gồm quầy, bếp nướng hoặc máy pha cà phê, và thực đơn khởi đầu.'), action: () => buyKiosk(id), actionLabel: T('Buy it!', 'Mua luôn!') }), 'coin');
 }
 async function buyKiosk(id) {
   const def = BUSINESSES[id], z = bizOf(id);
   if (z.owned || !canAfford(def.buy)) { sfx('error'); return; }
-  addMoney(-def.buy, 'buy'); z.owned = true; z.unlocked = true; z.repair = 1; G.state.keys[id] = true;
+  addMoney(-def.buy, 'business'); z.owned = true; z.unlocked = true; z.repair = 1; G.state.keys[id] = true;
   for (const [rid, r] of Object.entries(RECIPES)) if (r.biz === def.biz && r.starter && !G.state.recipes.includes(rid)) learnRecipe(rid);
+  for (const rid of def.menu || []) if (!G.state.recipes.includes(rid)) learnRecipe(rid);      // the family's speciality comes with the stall
   markDirty(true); sfx('fanfare'); addXP(150, 'buy');
   fx.burst('confetti', G.player.x, G.player.y - 30, 30, { up: 80, speed: 70, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 60, life: 1.6 });
   await showReward({ icon: KIOSK_ICON[def.biz] || 'key', kicker: T('New shop!', 'Quán mới!'), title: bizName(id), text: T('Open it from the counter. You can hire a shopkeeper for it in the Business tab.', 'Mở cửa ở quầy. Có thể thuê người trông quán trong mục Kinh doanh.') });
@@ -659,7 +672,20 @@ bus.on('sfx', k => sfx(k));
 bus.on('recipe', () => addXP(30, 'recipe'));
 bus.on('achievement', () => addXP(40, 'achievement'));
 let msSeen = 0;
-bus.on('xp', () => { const n = readyMilestones(); if (n > msSeen) toast({ text: T('Milestone reached!', 'Đạt cột mốc mới!'), sub: T('Claim your reward in Menu → Milestones', 'Nhận thưởng ở Menu → Cột mốc'), icon: 'trophy', ms: 3200 }); msSeen = n; });
+// tell the player the moment a milestone is ready, and which one
+const msAnnounced = {};
+function checkMilestonesReady() {
+  if (!G.state?.player?.name || !G.state.story.flags.freeRoam || G.runtime.inCutscene || cs.active) return;
+  const ready = TRACKS.filter(t => trackState(t).ready);
+  for (const t of ready) {
+    const key = t.id + ':' + (G.state.milestones?.[t.id] || 0);
+    if (msAnnounced[key]) continue; msAnnounced[key] = true;
+    if (msSeen++ > 40) continue;
+    toast({ text: T(`Milestone ready: ${t.en}!`, `Cột mốc sẵn sàng: ${t.vi}!`), sub: T('Claim it in Menu → Milestones ★', 'Nhận thưởng ở Menu → Cột mốc ★'), icon: t.icon || 'trophy', ms: 3400 });
+    break;                                   // one at a time; the rest follow on the next check
+  }
+}
+setInterval(checkMilestonesReady, 4000);
 
 // ---------------------------------------------------------------- pause
 function setPaused(on) {
@@ -692,8 +718,13 @@ document.addEventListener('visibilitychange', () => suspendAudio(document.hidden
 
 // Test hooks on localhost only.
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__jen = { G, scenes, cam, cs, setStep, checkStory, openBiz, bizRT, npcs, restRT, sleepFlow, doSleep, toggleBiz, discoverRecipe, triggerAction, setScene, STEPS, FESTIVAL_REQ, KEEPER_REQ, restoreNightMarket, buildStatue, NIGHT_MARKET_RESTORE, STATUE_COST };
+if (window.__jen) {
+  window.__jen.endDay = endDay; window.__jen.openMenu = openMenu; window.__jen.openJournal = openJournal; window.__jen.openStaffBoard = openStaffBoard;
+  Promise.all([import('./data/game.js'), import('./systems/economy.js'), import('./systems/business.js'), import('./systems/ledger.js'), import('./systems/progress.js')])
+    .then(([g, e, b, l, pr]) => { Object.assign(window.__jen, { spawnCustomer: b.spawnCustomer, bizRecipes: b.bizRecipes }); window.__jen.econ = { ...g, ...e, ...b, ...l, GATES: pr.GATES, levelReward: pr.levelReward, milestoneReward: pr.milestoneReward }; });
+}
 // localhost only: check the game's content for broken references at boot
-if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) import('./dev/validate.js').then(m => { const issues = m.validateContent(scenes); window.__jen.validate = () => m.validateContent(scenes); if (issues.length) console.warn(`[validate] ${issues.length} content issue(s):\n` + issues.join('\n')); else console.info('[validate] content OK'); });
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) import('./dev/validate.js').then(async m => { while (!scenes.island || !scenes.shed1) await new Promise(r => setTimeout(r, 250)); const issues = m.validateContent(scenes); window.__jen.validate = () => m.validateContent(scenes); if (issues.length) console.warn(`[validate] ${issues.length} content issue(s):\n` + issues.join('\n')); else console.info('[validate] content OK'); });
 
 boot().catch(e => { console.error(e); $('bootMsg').textContent = bootText('err'); });
 

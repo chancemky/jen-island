@@ -12,7 +12,7 @@ import { say, ask } from '../ui/dialogue.js';
 import { sfx } from '../core/audio.js';
 import { rand, choice, dist, sleep, TAU } from '../core/util.js';
 import { fx } from '../world/render.js';
-import { addXP } from './progress.js';
+import { addXP, COUNTS } from './progress.js';
 
 export const PETS = {
   shiba:   { kind: 'dog', col: '#e3a86a', price: 900,  en: 'Shiba puppy', vi: 'Chó Shiba con', sfx: 'woof' },
@@ -25,9 +25,11 @@ export const PETS = {
   cocoa:   { kind: 'bunny', col: '#b98a5a', price: 500, en: 'Cocoa bunny', vi: 'Thỏ nâu', sfx: 'pop' },
   duckling:{ kind: 'duck', col: '#ffe27a', price: 350, en: 'Duckling', vi: 'Vịt con', sfx: 'quack' },
 };
-export const PET_FOOD = { price: 40, n: 5 };
+COUNTS.pets = Object.keys(PETS).length;
+export const PET_FOOD = { price: 20, n: 5 };
 // v4.3: pets cost more
-for (const v of Object.values(PETS)) if (v.price) v.price = Math.round(v.price * 3);
+// pets are a big, happy goal; their food is cheap so caring for them never hurts
+for (const v of Object.values(PETS)) if (v.price) v.price = Math.round(v.price * 2.5 / 10) * 10;
 const S = () => { const s = G.state; s.pets ||= []; s.petFood ??= 0; return s; };
 export const myPets = () => S().pets;
 export const followerUid = () => S().petFollow || null;

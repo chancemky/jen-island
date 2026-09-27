@@ -61,4 +61,4 @@ export const HAIR_COLORS = ['#4a322b', '#2f2a30', '#6e4430', '#9a6443', '#c9895b
 export const hairName = id => HAIRCUTS[id] || HAIRCUTS.bob;
 
 // v4.3: salon visits cost more
-for (const v of Object.values(HAIRCUTS)) if (v.price) v.price = Math.round(v.price * 3);
+// v5: a haircut is an everyday treat — list price

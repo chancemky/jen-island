@@ -168,7 +168,19 @@ export const ICONS = {
 };
 
 // ---------------------------------------------------------------- dishes
+// Night Market specialities
+const snailShell = (c, x, y, s = 1, col = '#b98a5a') => { c.save(); c.translate(x, y); c.scale(s, s); ell(c, 0, 0, 6, 5, col, INK, 0.9); c.beginPath(); for (let a = 0; a < Math.PI * 3.2; a += 0.3) { const r = 5 - a * 0.45; c.lineTo(Math.cos(a) * r, Math.sin(a) * r * 0.85); } c.strokeStyle = shade(col, -45); c.lineWidth = 0.9; c.stroke(); ell(c, 5, 3, 2.4, 1.4, '#e8cfa6', INK, 0.6); c.restore(); };
+const skewer = (c, x, y, rot, meat = '#b5603a') => { c.save(); c.translate(x, y); c.rotate(rot); line(c, 0, -14, 0, 13, '#d9b27a', 1.6); for (let k = 0; k < 3; k++) { box(c, -4, -11 + k * 7, 8, 6, 2.5, meat, INK, 0.8); line(c, -3, -9 + k * 7, 3, -9 + k * 7, shade(meat, -45), 0.8); } c.restore(); };
+Object.assign(ICONS, {
+  snails: c => { snailShell(c, -5, 3, 1.1); snailShell(c, 6, -2, 0.95, '#9a7a5c'); snailShell(c, 3, 8, 0.8, '#c29a6a'); },
+  snails_cooked: c => { ell(c, 0, 5, 13, 6, '#fffaf0', INK, 1); snailShell(c, -5, 0, 0.9); snailShell(c, 5, 1, 0.85, '#9a7a5c'); snailShell(c, 0, -4, 0.8, '#c29a6a'); leafy(c, 9, -3, 2.6, '#8fcf5a', 0.8); },
+  cane: c => { for (const [x, r] of [[-6, -0.2], [0, 0.05], [6, 0.25]]) { c.save(); c.translate(x, 2); c.rotate(r); box(c, -2.4, -13, 4.8, 26, 2, '#c7d96a', INK, 0.9); for (let k = -8; k <= 8; k += 8) line(c, -2.4, k, 2.4, k, '#8a9a3a', 1); c.restore(); } leafy(c, 7, -13, 4, '#6fbf4a', 0.6); },
+  cane_juice: c => ICONS.sugarcane(c),
+  skewers: c => { skewer(c, -5, 0, -0.25, '#d88a6a'); skewer(c, 5, 0, 0.25, '#e59a78'); },
+});
 export const DISHES = {
+  oc_luoc: c => { ell(c, 0, 3, 15, 7.5, '#fffdf5', INK, 1); snailShell(c, -6, 1, 0.9); snailShell(c, 1, 3, 0.85, '#9a7a5c'); snailShell(c, -2, -3, 0.8, '#c29a6a'); c.save(); c.translate(9, 1); c.beginPath(); c.arc(0, 0, 4, Math.PI, 0); c.closePath(); c.fillStyle = '#b8e06a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); c.restore(); leafy(c, 7, -5, 2.4, '#6fbf4a', 0.9); },
+  xien_nuong: c => { ell(c, 0, 5, 15, 6, '#fffdf5', INK, 1); skewer(c, -4, 0, -1.2, '#a8522f'); skewer(c, 4, 2, -1.35, '#b9643c'); for (let i = 0; i < 4; i++) circ(c, -8 + i * 5, -3 + (i % 2) * 2, 0.9, '#6fbf4a', null); },
   banh_mi_thit: c => { c.save(); c.rotate(-0.25); ell(c, 0, 1.6, 15, 6.4, '#e0a052'); ell(c, 0, -1.4, 13.5, 3, '#fff1d0', INK, 0.7); for (let i = -3; i <= 3; i++) { circ(c, i * 3.6, -2.8, 1.6, i % 2 ? '#d7784f' : '#f39a48', INK, 0.4); } for (let i = -2; i <= 2; i++) leafy(c, i * 5 + 1, -4.4, 2, '#6fbf4a', 0.5 + i); ell(c, 0, 4.6, 12, 1.4, 'rgba(0,0,0,.08)', null); c.restore(); },
   banh_mi_trung: c => { c.save(); c.rotate(-0.25); ell(c, 0, 1.6, 15, 6.4, '#e0a052'); ell(c, 0, -1.4, 13.5, 3, '#fff1d0', INK, 0.7); ell(c, -2, -3, 6, 2.6, '#fffdf6', INK, 0.5); circ(c, -2, -3.2, 1.8, '#ffc93e', null); for (let i = 0; i <= 2; i++) leafy(c, 3 + i * 3.5, -4, 2, '#6fbf4a', i); c.restore(); },
   goi_cuon: c => { for (const [x, y, r] of [[-6, 3, -0.3], [6, 0, 0.35]]) { c.save(); c.translate(x, y); c.rotate(r); box(c, -5, -11, 10, 22, 5, 'rgba(255,250,238,.92)'); ell(c, 0, -2, 3.6, 2, '#ff9a7a', null); ell(c, 0, 4, 3.2, 3, '#86c86a', null); box(c, -5, -11, 10, 22, 5, null, INK, 1); c.restore(); } },
@@ -278,6 +290,7 @@ export const DRINK_PREVIEW = {
   bac_xiu: { size: 'M', layers: [{ color: '#f2e6cc', h: 0.3 }, { color: '#e9d8bd', h: 0.45 }, { color: '#a8764e', h: 0.25 }], ice: 2, straw: true },
   ca_phe_trung: { size: 'S', layers: [{ color: '#5e3a28', h: 0.55 }, { color: '#f6d98a', h: 0.45 }] },
   nuoc_cam: { size: 'M', layers: [{ color: '#ffae3a', h: 1 }], ice: 2, straw: true, strawColor: '#6fbf73' },
+  nuoc_mia: { size: 'M', layers: [{ color: '#e4ec9a', h: 1 }], ice: 2, bits: [{ kind: 'lime', float: 1 }], straw: true, strawColor: '#6fbf73' },
 };
 // can this id be drawn as an icon? (used by the content validator)
 export const hasIcon = id => !!(ICONS[id] || DISHES[id] || (id?.startsWith('drink:') && DRINK_PREVIEW[id.slice(6)]));

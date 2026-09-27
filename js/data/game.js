@@ -5,8 +5,8 @@
 // Supermarket aisles.
 export const AISLES = [
   { id: 'all', en: 'All', vi: 'Tất cả', icon: 'bag' },
-  { id: 'produce', en: 'Fruit & Veg', vi: 'Rau củ quả', icon: 'kumquat', items: ['kumquat', 'peach', 'avocado', 'lime', 'orange', 'cucumber', 'cilantro', 'herbs', 'sprouts', 'scallion', 'chili'] },
-  { id: 'meat', en: 'Meat, Seafood & Eggs', vi: 'Thịt, hải sản & trứng', icon: 'pork', items: ['pork', 'beef', 'shrimp', 'squid', 'scallop', 'egg', 'egg_yolk'] },
+  { id: 'produce', en: 'Fruit & Veg', vi: 'Rau củ quả', icon: 'kumquat', items: ['kumquat', 'peach', 'avocado', 'lime', 'orange', 'cane', 'cucumber', 'cilantro', 'herbs', 'sprouts', 'scallion', 'chili'] },
+  { id: 'meat', en: 'Meat, Seafood & Eggs', vi: 'Thịt, hải sản & trứng', icon: 'pork', items: ['pork', 'beef', 'shrimp', 'squid', 'scallop', 'snails', 'skewers', 'egg', 'egg_yolk'] },
   { id: 'bakery', en: 'Bakery & Grains', vi: 'Bánh & ngũ cốc', icon: 'bread', items: ['bread', 'rice', 'noodles', 'rice_paper', 'batter'] },
   { id: 'dairy', en: 'Dairy & Drinks', vi: 'Sữa & đồ uống', icon: 'milk', items: ['milk', 'condensed_milk', 'cream', 'coconut_milk', 'cheese_foam', 'tea', 'coffee', 'peach_syrup'] },
   { id: 'sweets', en: 'Sweets & Toppings', vi: 'Đồ ngọt & topping', icon: 'sugar', items: ['sugar', 'tapioca', 'jelly', 'beans'] },
@@ -14,55 +14,60 @@ export const AISLES = [
   { id: 'frozen', en: 'Frozen', vi: 'Đồ đông lạnh', icon: 'ice', items: ['ice'] },
 ];
 export const INGREDIENTS = {
-  tea:            { vi: 'Trà',           en: 'Tea leaves',      price: 10, pack: 8 },
-  kumquat:        { vi: 'Tắc',           en: 'Kumquats',        price: 12, pack: 6, prep: { to: 'kumquat_cut', method: 'chop', verb: 'Slice' } },
-  sugar:          { vi: 'Đường',         en: 'Sugar syrup',     price: 6,  pack: 12 },
-  ice:            { vi: 'Đá',            en: 'Ice',             price: 5,  pack: 12 },
-  coffee:         { vi: 'Cà phê',        en: 'Phin coffee',     price: 18, pack: 8 },
-  cream:          { vi: 'Kem tươi',      en: 'Whipping cream',  price: 16, pack: 8, prep: { to: 'salt_cream', method: 'whip', verb: 'Whip' } },
-  sea_salt:       { vi: 'Muối biển',     en: 'Sea salt',        price: 4,  pack: 12 },
-  egg_yolk:       { vi: 'Trứng gà ta',   en: 'Free-range eggs', price: 14, pack: 6, prep: { to: 'egg_cream', method: 'whip', verb: 'Whisk' } },
-  orange:         { vi: 'Cam sành',      en: 'Green oranges',   price: 12, pack: 6, prep: { to: 'orange_cut', method: 'chop', verb: 'Squeeze' } },
-  squid:          { vi: 'Mực',           en: 'Squid',           price: 26, pack: 6, prep: { to: 'squid_cut', method: 'chop', verb: 'Clean' } },
-  scallop:        { vi: 'Sò điệp',       en: 'Scallops',        price: 24, pack: 8 },
-  peanuts:        { vi: 'Đậu phộng',     en: 'Crushed peanuts', price: 6,  pack: 12 },
-  condensed_milk: { vi: 'Sữa đặc',       en: 'Condensed milk',  price: 15, pack: 8 },
-  milk:           { vi: 'Sữa tươi',      en: 'Fresh milk',      price: 12, pack: 8 },
-  peach:          { vi: 'Đào',           en: 'Peaches',         price: 20, pack: 6, prep: { to: 'peach_cut', method: 'chop', verb: 'Slice' } },
-  peach_syrup:    { vi: 'Siro đào',      en: 'Peach syrup',     price: 14, pack: 8 },
-  avocado:        { vi: 'Bơ',            en: 'Avocados',        price: 24, pack: 4, prep: { to: 'avocado_cut', method: 'scoop', verb: 'Scoop' } },
-  tapioca:        { vi: 'Trân châu',     en: 'Tapioca pearls',  price: 12, pack: 8 },
-  jelly:          { vi: 'Thạch',         en: 'Grass jelly',     price: 10, pack: 8 },
-  cheese_foam:    { vi: 'Kem cheese',    en: 'Cheese foam',     price: 18, pack: 8 },
-  bread:          { vi: 'Bánh mì',       en: 'Baguettes',       price: 15, pack: 6, prep: { to: 'bread_split', method: 'split', verb: 'Split' } },
-  pate:           { vi: 'Pa tê',         en: 'Pâté',            price: 15, pack: 8 },
-  pork:           { vi: 'Thịt heo',      en: 'Pork',            price: 30, pack: 6, prep: { to: 'pork_grilled', method: 'grill', verb: 'Grill' } },
-  pickles:        { vi: 'Đồ chua',       en: 'Pickled carrot & daikon', price: 10, pack: 8 },
-  cucumber:       { vi: 'Dưa leo',       en: 'Cucumber',        price: 8,  pack: 6, prep: { to: 'cucumber_cut', method: 'chop', verb: 'Slice' } },
-  cilantro:       { vi: 'Ngò',           en: 'Cilantro',        price: 6,  pack: 8 },
-  egg:            { vi: 'Trứng',         en: 'Eggs',            price: 12, pack: 6, prep: { to: 'egg_fried', method: 'fry', verb: 'Fry' } },
-  chili:          { vi: 'Ớt',            en: 'Chili',           price: 5,  pack: 10 },
-  rice_paper:     { vi: 'Bánh tráng',    en: 'Rice paper',      price: 10, pack: 10 },
-  shrimp:         { vi: 'Tôm',           en: 'Shrimp',          price: 36, pack: 6, prep: { to: 'shrimp_cooked', method: 'boil', verb: 'Boil' } },
-  noodles:        { vi: 'Bún / Bánh phở',en: 'Rice noodles',    price: 10, pack: 8 },
-  herbs:          { vi: 'Rau thơm',      en: 'Fresh herbs',     price: 8,  pack: 8 },
-  batter:         { vi: 'Bột bánh xèo',  en: 'Bánh xèo batter', price: 12, pack: 6 },
-  sprouts:        { vi: 'Giá',           en: 'Bean sprouts',    price: 6,  pack: 8 },
-  fish_sauce:     { vi: 'Nước mắm',      en: 'Fish sauce',      price: 12, pack: 12 },
-  rice:           { vi: 'Cơm tấm',       en: 'Broken rice',     price: 10, pack: 8 },
-  broth:          { vi: 'Nước dùng phở', en: 'Phở broth',       price: 30, pack: 8 },
-  broth_spicy:    { vi: 'Nước dùng Huế', en: 'Spicy Huế broth', price: 34, pack: 8 },
-  beef:           { vi: 'Thịt bò',       en: 'Beef',            price: 45, pack: 6, prep: { to: 'beef_sliced', method: 'chop', verb: 'Slice' } },
-  lime:           { vi: 'Chanh',         en: 'Limes',           price: 8,  pack: 8, prep: { to: 'lime_cut', method: 'chop', verb: 'Cut' } },
-  scallion:       { vi: 'Hành lá',       en: 'Scallions',       price: 5,  pack: 10, prep: { to: 'scallion_oil', method: 'fry', verb: 'Fry' } },
-  beans:          { vi: 'Đậu',           en: 'Sweet beans',     price: 10, pack: 8 },
-  coconut_milk:   { vi: 'Nước cốt dừa',  en: 'Coconut cream',   price: 12, pack: 8 },
+  tea:            { vi: 'Trà',           en: 'Tea leaves',      cost: 3, pack: 8 },
+  kumquat:        { vi: 'Tắc',           en: 'Kumquats',        cost: 5, pack: 6, prep: { to: 'kumquat_cut', method: 'chop', verb: 'Slice' } },
+  sugar:          { vi: 'Đường',         en: 'Sugar syrup',     cost: 0.5,  pack: 12 },
+  ice:            { vi: 'Đá',            en: 'Ice',             cost: 0.4,  pack: 12 },
+  coffee:         { vi: 'Cà phê',        en: 'Phin coffee',     cost: 7, pack: 8 },
+  cream:          { vi: 'Kem tươi',      en: 'Whipping cream',  cost: 6, pack: 8, prep: { to: 'salt_cream', method: 'whip', verb: 'Whip' } },
+  sea_salt:       { vi: 'Muối biển',     en: 'Sea salt',        cost: 0.5,  pack: 12 },
+  egg_yolk:       { vi: 'Trứng gà ta',   en: 'Free-range eggs', cost: 12, pack: 6, prep: { to: 'egg_cream', method: 'whip', verb: 'Whisk' } },
+  orange:         { vi: 'Cam sành',      en: 'Green oranges',   cost: 12, pack: 6, prep: { to: 'orange_cut', method: 'chop', verb: 'Squeeze' } },
+  squid:          { vi: 'Mực',           en: 'Squid',           cost: 34, pack: 6, prep: { to: 'squid_cut', method: 'chop', verb: 'Clean' } },
+  scallop:        { vi: 'Sò điệp',       en: 'Scallops',        cost: 32, pack: 8 },
+  peanuts:        { vi: 'Đậu phộng',     en: 'Crushed peanuts', cost: 1,  pack: 12 },
+  condensed_milk: { vi: 'Sữa đặc',       en: 'Condensed milk',  cost: 4.5, pack: 8 },
+  milk:           { vi: 'Sữa tươi',      en: 'Fresh milk',      cost: 7, pack: 8 },
+  peach:          { vi: 'Đào',           en: 'Peaches',         cost: 7, pack: 6, prep: { to: 'peach_cut', method: 'chop', verb: 'Slice' } },
+  peach_syrup:    { vi: 'Siro đào',      en: 'Peach syrup',     cost: 4, pack: 8 },
+  avocado:        { vi: 'Bơ',            en: 'Avocados',        cost: 12, pack: 4, prep: { to: 'avocado_cut', method: 'scoop', verb: 'Scoop' } },
+  tapioca:        { vi: 'Trân châu',     en: 'Tapioca pearls',  cost: 3.5, pack: 8 },
+  jelly:          { vi: 'Thạch',         en: 'Grass jelly',     cost: 3, pack: 8 },
+  cheese_foam:    { vi: 'Kem cheese',    en: 'Cheese foam',     cost: 5, pack: 8 },
+  bread:          { vi: 'Bánh mì',       en: 'Baguettes',       cost: 5, pack: 6, prep: { to: 'bread_split', method: 'split', verb: 'Split' } },
+  pate:           { vi: 'Pa tê',         en: 'Pâté',            cost: 4, pack: 8 },
+  pork:           { vi: 'Thịt heo',      en: 'Pork',            cost: 9, pack: 6, prep: { to: 'pork_grilled', method: 'grill', verb: 'Grill' } },
+  pickles:        { vi: 'Đồ chua',       en: 'Pickled carrot & daikon', cost: 1.5, pack: 8 },
+  cucumber:       { vi: 'Dưa leo',       en: 'Cucumber',        cost: 1.5,  pack: 6, prep: { to: 'cucumber_cut', method: 'chop', verb: 'Slice' } },
+  cilantro:       { vi: 'Ngò',           en: 'Cilantro',        cost: 1,  pack: 8 },
+  egg:            { vi: 'Trứng',         en: 'Eggs',            cost: 6, pack: 6, prep: { to: 'egg_fried', method: 'fry', verb: 'Fry' } },
+  chili:          { vi: 'Ớt',            en: 'Chili',           cost: 0.5,  pack: 10 },
+  rice_paper:     { vi: 'Bánh tráng',    en: 'Rice paper',      cost: 2, pack: 10 },
+  shrimp:         { vi: 'Tôm',           en: 'Shrimp',          cost: 11, pack: 6, prep: { to: 'shrimp_cooked', method: 'boil', verb: 'Boil' } },
+  noodles:        { vi: 'Bún / Bánh phở',en: 'Rice noodles',    cost: 3, pack: 8 },
+  herbs:          { vi: 'Rau thơm',      en: 'Fresh herbs',     cost: 2,  pack: 8 },
+  batter:         { vi: 'Bột bánh xèo',  en: 'Bánh xèo batter', cost: 5, pack: 6 },
+  sprouts:        { vi: 'Giá',           en: 'Bean sprouts',    cost: 1.5,  pack: 8 },
+  fish_sauce:     { vi: 'Nước mắm',      en: 'Fish sauce',      cost: 1.5, pack: 12 },
+  rice:           { vi: 'Cơm tấm',       en: 'Broken rice',     cost: 3, pack: 8 },
+  broth:          { vi: 'Nước dùng phở', en: 'Phở broth',       cost: 7, pack: 8 },
+  broth_spicy:    { vi: 'Nước dùng Huế', en: 'Spicy Huế broth', cost: 9, pack: 8 },
+  beef:           { vi: 'Thịt bò',       en: 'Beef',            cost: 16, pack: 6, prep: { to: 'beef_sliced', method: 'chop', verb: 'Slice' } },
+  lime:           { vi: 'Chanh',         en: 'Limes',           cost: 1,  pack: 8, prep: { to: 'lime_cut', method: 'chop', verb: 'Cut' } },
+  scallion:       { vi: 'Hành lá',       en: 'Scallions',       cost: 3,  pack: 10, prep: { to: 'scallion_oil', method: 'fry', verb: 'Fry' } },
+  beans:          { vi: 'Đậu',           en: 'Sweet beans',     cost: 3, pack: 8 },
+  coconut_milk:   { vi: 'Nước cốt dừa',  en: 'Coconut cream',   cost: 4, pack: 8 },
+  snails:         { vi: 'Ốc',            en: 'Sea snails',      cost: 14, pack: 6, prep: { to: 'snails_cooked', method: 'boil', verb: 'Boil' } },
+  cane:           { vi: 'Mía cây',       en: 'Sugarcane',       cost: 4, pack: 8, prep: { to: 'cane_juice', method: 'press', verb: 'Press' } },
+  skewers:        { vi: 'Xiên que',      en: 'Meat skewers',    cost: 7, pack: 8 },
 };
+// The price on the shelf is per pack: portion cost × portions.
+for (const g of Object.values(INGREDIENTS)) g.price = Math.max(1, Math.round(g.cost * g.pack));
 export const PREPPED = {};
-const CUT_EN = { salt_cream: 'Salted cream', egg_cream: 'Egg cream', orange_cut: 'Fresh orange juice', squid_cut: 'Cleaned squid', kumquat_cut: 'Sliced kumquat', peach_cut: 'Sliced peach', avocado_cut: 'Scooped avocado', bread_split: 'Split baguette', pork_grilled: 'Grilled pork', cucumber_cut: 'Sliced cucumber', egg_fried: 'Fried egg', shrimp_cooked: 'Cooked shrimp', beef_sliced: 'Sliced beef', lime_cut: 'Lime wedges', scallion_oil: 'Scallion oil' };
-const CUT_VI = { salt_cream: 'Kem muối', egg_cream: 'Kem trứng', orange_cut: 'Nước cam vắt', squid_cut: 'Mực làm sạch', kumquat_cut: 'Tắc cắt', peach_cut: 'Đào cắt', avocado_cut: 'Bơ nạo', bread_split: 'Bánh mì xẻ', pork_grilled: 'Thịt nướng', cucumber_cut: 'Dưa leo cắt', egg_fried: 'Trứng chiên', shrimp_cooked: 'Tôm luộc', beef_sliced: 'Bò thái', lime_cut: 'Chanh cắt', scallion_oil: 'Mỡ hành' };
+const CUT_EN = { salt_cream: 'Salted cream', egg_cream: 'Egg cream', orange_cut: 'Fresh orange juice', squid_cut: 'Cleaned squid', kumquat_cut: 'Sliced kumquat', peach_cut: 'Sliced peach', avocado_cut: 'Scooped avocado', bread_split: 'Split baguette', pork_grilled: 'Grilled pork', cucumber_cut: 'Sliced cucumber', egg_fried: 'Fried egg', shrimp_cooked: 'Cooked shrimp', beef_sliced: 'Sliced beef', snails_cooked: 'Boiled snails', cane_juice: 'Pressed cane juice', lime_cut: 'Lime wedges', scallion_oil: 'Scallion oil' };
+const CUT_VI = { salt_cream: 'Kem muối', egg_cream: 'Kem trứng', orange_cut: 'Nước cam vắt', squid_cut: 'Mực làm sạch', kumquat_cut: 'Tắc cắt', peach_cut: 'Đào cắt', avocado_cut: 'Bơ nạo', bread_split: 'Bánh mì xẻ', pork_grilled: 'Thịt nướng', cucumber_cut: 'Dưa leo cắt', egg_fried: 'Trứng chiên', shrimp_cooked: 'Tôm luộc', beef_sliced: 'Bò thái', snails_cooked: 'Ốc luộc', cane_juice: 'Nước mía ép', lime_cut: 'Chanh cắt', scallion_oil: 'Mỡ hành' };
 for (const [id, g] of Object.entries(INGREDIENTS)) if (g.prep) PREPPED[g.prep.to] = { from: id, vi: CUT_VI[g.prep.to] || g.vi, en: g.en + ' (prepped)', enCut: CUT_EN[g.prep.to] || g.en, method: g.prep.method };
-export const PREP_VERB = { whip: ['Whip', 'Đánh bông'], chop: ['Slice', 'Cắt'], split: ['Split', 'Xẻ'], scoop: ['Scoop', 'Nạo'], grill: ['Grill', 'Nướng'], fry: ['Fry', 'Chiên'], boil: ['Boil', 'Luộc'] };
+export const PREP_VERB = { whip: ['Whip', 'Đánh bông'], chop: ['Slice', 'Cắt'], split: ['Split', 'Xẻ'], scoop: ['Scoop', 'Nạo'], grill: ['Grill', 'Nướng'], fry: ['Fry', 'Chiên'], boil: ['Boil', 'Luộc'], press: ['Press', 'Ép'] };
 export const PREP_BATCH = 4;
 import { T } from '../systems/state.js';
 export function ingName(id) { const g = INGREDIENTS[id] || PREPPED[id]; if (!g) return id; return PREPPED[id] ? T(g.enCut, g.vi) : T(g.en, g.vi); }
@@ -74,12 +79,12 @@ export const furnName = id => T(FURNITURE[id].en, FURNITURE[id].vi);
 
 // ---------------------------------------------------------------- materials
 export const MATERIALS = {
-  wood:    { vi: 'Gỗ',      en: 'Wood planks',    price: 8 },
-  metal:   { vi: 'Tôn',     en: 'Metal sheets',   price: 14 },
-  paint:   { vi: 'Sơn',     en: 'Paint',          price: 18 },
-  tile:    { vi: 'Ngói',    en: 'Roof tiles',     price: 12, unlock: 7 },
-  lantern: { vi: 'Lồng đèn',en: 'Silk lanterns',  price: 16, unlock: 8 },
-  cable:   { vi: 'Dây đèn', en: 'Light strings',  price: 40, unlock: 8 },
+  wood:    { vi: 'Gỗ',      en: 'Wood planks',    price: 11 },
+  metal:   { vi: 'Tôn',     en: 'Metal sheets',   price: 23 },
+  paint:   { vi: 'Sơn',     en: 'Paint',          price: 15 },
+  tile:    { vi: 'Ngói',    en: 'Roof tiles',     price: 26, unlock: 7 },
+  lantern: { vi: 'Lồng đèn',en: 'Silk lanterns',  price: 30, unlock: 8 },
+  cable:   { vi: 'Dây đèn', en: 'Light strings',  price: 55, unlock: 8 },
 };
 
 // ---------------------------------------------------------------- recipes
@@ -134,89 +139,120 @@ export const STATION = {
   squid_cut:      { label: 'Mực', en: 'Squid',            icon: 'squid',          uses: 'squid_cut' },
   scallop:        { label: 'Sò điệp', en: 'Scallops',     icon: 'scallop',        uses: 'scallop' },
   peanuts:        { label: 'Đậu phộng', en: 'Peanuts',    icon: 'peanuts',        uses: 'peanuts' },
+  // night market specialities
+  snails_cooked:  { label: 'Ốc', en: 'Snails',            icon: 'snails_cooked',  uses: 'snails_cooked' },
+  cane_juice:     { label: 'Nước mía', en: 'Cane juice',  icon: 'cane_juice',     uses: 'cane_juice',     layer: { color: '#e4ec9a', h: 0.7 } },
+  skewers:        { label: 'Xiên', en: 'Skewers',         icon: 'skewers',        uses: 'skewers' },
 };
 // Order options that live outside the step sequence (tap anytime).
 export const OPTIONS = {
-  size:    { label: 'Size', en: 'Size', values: ['S', 'M', 'L'], price: { S: 0.85, M: 1, L: 1.25 } },
+  size:    { label: 'Size', en: 'Size', values: ['S', 'M', 'L'], price: { S: 0.9, M: 1, L: 1.12 } },
   sugar:   { label: 'Đường', en: 'Sugar', values: [30, 50, 70, 100], uses: 'sugar' },
   ice:     { label: 'Đá', en: 'Ice', values: ['không đá', 'ít đá', 'đá bình thường'], short: ['none', 'less', 'normal'], uses: 'ice',
              btn: { 'không đá': ['None', 'Không'], 'ít đá': ['Less', 'Ít'], 'đá bình thường': ['Normal', 'Thường'] },
              say: { 'không đá': ['no ice', 'không đá'], 'ít đá': ['less ice', 'ít đá'], 'đá bình thường': ['normal ice', 'đá bình thường'] } },
-  topping: { label: 'Topping', en: 'Topping', values: ['none', 'tapioca', 'jelly', 'cheese_foam'], names: { none: 'không topping', tapioca: 'trân châu', jelly: 'thạch', cheese_foam: 'foam cheese' },
+  topping: { label: 'Topping', en: 'Topping', values: ['none', 'tapioca', 'jelly', 'cheese_foam'], names: { none: 'không topping', tapioca: 'trân châu', jelly: 'thạch', cheese_foam: 'foam cheese' }, surcharge: { tapioca: 4, jelly: 3, cheese_foam: 6 },
              btn: { none: ['None', 'Không'], tapioca: ['Tapioca', 'Trân châu'], jelly: ['Jelly', 'Thạch'], cheese_foam: ['Foam', 'Foam'] },
              say: { none: ['no topping', 'không topping'], tapioca: ['tapioca pearls', 'trân châu'], jelly: ['grass jelly', 'thạch'], cheese_foam: ['cheese foam', 'foam cheese'] } },
   chili:   { label: 'Ớt', en: 'Chili', values: ['không ớt', 'có ớt'], uses: 'chili', btn: { 'không ớt': ['No', 'Không'], 'có ớt': ['Yes', 'Có ớt'] }, say: { 'không ớt': ['no chili', 'không ớt'], 'có ớt': ['with chili', 'có ớt'] } },
 };
 
 export const RECIPES = {
-  tra_tac:        { vi: 'Trà tắc', en: 'Kumquat Iced Tea', blurbVi: 'Trà tắc chua ngọt mát lạnh. Góc phố nào ở Việt Nam cũng có.', biz: 'drinks', price: 15, vessel: 'cup', steps: ['tea', 'kumquat_cut'], options: ['size', 'sugar', 'ice'], icon: 'drink:tra_tac', chapter: 2,
+  tra_tac:        { vi: 'Trà tắc', en: 'Kumquat Iced Tea', blurbVi: 'Trà tắc chua ngọt mát lạnh. Góc phố nào ở Việt Nam cũng có.', biz: 'drinks', price: 16, vessel: 'cup', steps: ['tea', 'kumquat_cut'], options: ['size', 'sugar', 'ice'], icon: 'drink:tra_tac', chapter: 2,
                     blurb: 'Sweet-tart kumquat tea over ice. Every street corner in Việt Nam has one.' },
-  ca_phe_sua_da:  { vi: 'Cà phê sữa đá', en: 'Iced Milk Coffee', blurbVi: 'Sữa đặc trước, rồi cà phê phin nhỏ giọt. Đủ đậm để đánh thức cả hòn đảo buồn ngủ.', biz: 'drinks', price: 20, vessel: 'cup', steps: ['condensed_milk', 'coffee'], options: ['size', 'ice'], icon: 'drink:ca_phe_sua_da', chapter: 3,
+  ca_phe_sua_da:  { vi: 'Cà phê sữa đá', en: 'Iced Milk Coffee', blurbVi: 'Sữa đặc trước, rồi cà phê phin nhỏ giọt. Đủ đậm để đánh thức cả hòn đảo buồn ngủ.', biz: 'drinks', price: 22, vessel: 'cup', steps: ['condensed_milk', 'coffee'], options: ['size', 'ice'], icon: 'drink:ca_phe_sua_da', chapter: 3,
                     blurb: 'Condensed milk first, then slow-dripped phin coffee. Strong enough to wake a sleepy island.' },
-  tra_dao:        { vi: 'Trà đào', en: 'Peach Tea', blurbVi: 'Trà với siro đào và những miếng đào mềm. Du khách mê lắm.', biz: 'drinks', price: 25, vessel: 'cup', steps: ['tea', 'peach_syrup', 'peach_cut'], options: ['size', 'sugar', 'ice'], icon: 'drink:tra_dao', chapter: 2, needRep: 18,
+  tra_dao:        { vi: 'Trà đào', en: 'Peach Tea', blurbVi: 'Trà với siro đào và những miếng đào mềm. Du khách mê lắm.', biz: 'drinks', price: 28, vessel: 'cup', steps: ['tea', 'peach_syrup', 'peach_cut'], options: ['size', 'sugar', 'ice'], icon: 'drink:tra_dao', chapter: 2, needRep: 18,
                     blurb: 'Tea with peach syrup and soft peach slices. Tourists love it.' },
-  tra_sua:        { vi: 'Trà sữa', en: 'Milk Tea', blurbVi: 'Trà sữa béo ngậy với topping tùy khách chọn.', biz: 'drinks', price: 28, vessel: 'cup', steps: ['tea', 'milk'], options: ['size', 'sugar', 'ice', 'topping'], icon: 'drink:tra_sua', chapter: 7,
+  tra_sua:        { vi: 'Trà sữa', en: 'Milk Tea', blurbVi: 'Trà sữa béo ngậy với topping tùy khách chọn.', biz: 'drinks', price: 24, vessel: 'cup', steps: ['tea', 'milk'], options: ['size', 'sugar', 'ice', 'topping'], icon: 'drink:tra_sua', chapter: 7,
                     blurb: 'Creamy milk tea with a topping of your customer\'s choice.' },
-  sinh_to_bo:     { vi: 'Sinh tố bơ', en: 'Avocado Smoothie', blurbVi: 'Bơ xay với sữa đặc và đá. Món tráng miệng giả làm đồ uống.', biz: 'drinks', price: 30, vessel: 'cup', steps: ['avocado_cut', 'condensed_milk', 'blend'], options: ['size', 'ice'], icon: 'drink:sinh_to_bo', chapter: 7, needRep: 70,
+  sinh_to_bo:     { vi: 'Sinh tố bơ', en: 'Avocado Smoothie', blurbVi: 'Bơ xay với sữa đặc và đá. Món tráng miệng giả làm đồ uống.', biz: 'drinks', price: 35, vessel: 'cup', steps: ['avocado_cut', 'condensed_milk', 'blend'], options: ['size', 'ice'], icon: 'drink:sinh_to_bo', chapter: 7, needRep: 70,
                     blurb: 'Avocado blended with condensed milk and ice. Dessert pretending to be a drink.' },
-  banh_mi_thit:   { vi: 'Bánh mì thịt', en: 'Grilled Pork Bánh Mì', blurbVi: 'Bánh mì giòn rụm, pa tê, thịt nướng, đồ chua, dưa leo và ngò.', biz: 'banhmi', price: 25, vessel: 'bread', steps: ['bread_split', 'pate', 'pork_grilled', 'pickles', 'cucumber_cut', 'cilantro'], options: ['chili'], icon: 'banh_mi_thit', chapter: 3,
+  banh_mi_thit:   { vi: 'Bánh mì thịt', en: 'Grilled Pork Bánh Mì', blurbVi: 'Bánh mì giòn rụm, pa tê, thịt nướng, đồ chua, dưa leo và ngò.', biz: 'banhmi', price: 38, vessel: 'bread', steps: ['bread_split', 'pate', 'pork_grilled', 'pickles', 'cucumber_cut', 'cilantro'], options: ['chili'], icon: 'banh_mi_thit', chapter: 3,
                     blurb: 'Crackly baguette, pâté, grilled pork, pickles, cucumber and cilantro.' },
-  banh_mi_trung:  { vi: 'Bánh mì trứng', en: 'Egg Bánh Mì', blurbVi: 'Trứng chiên kẹp trong ổ bánh mì nóng. Bữa sáng của cả đảo.', biz: 'banhmi', price: 20, vessel: 'bread', steps: ['bread_split', 'egg_fried', 'pickles', 'cucumber_cut', 'cilantro'], options: ['chili'], icon: 'banh_mi_trung', chapter: 3, needRep: 40,
+  banh_mi_trung:  { vi: 'Bánh mì trứng', en: 'Egg Bánh Mì', blurbVi: 'Trứng chiên kẹp trong ổ bánh mì nóng. Bữa sáng của cả đảo.', biz: 'banhmi', price: 26, vessel: 'bread', steps: ['bread_split', 'egg_fried', 'pickles', 'cucumber_cut', 'cilantro'], options: ['chili'], icon: 'banh_mi_trung', chapter: 3, needRep: 40,
                     blurb: 'A fried egg tucked in warm bread. The island breakfast.' },
-  goi_cuon:       { vi: 'Gỏi cuốn', en: 'Fresh Spring Rolls', blurbVi: 'Bánh tráng cuốn bún, rau thơm và tôm hồng.', biz: 'truck', price: 30, vessel: 'plate', steps: ['rice_paper', 'noodles', 'herbs', 'shrimp_cooked', 'roll'], options: [], icon: 'goi_cuon', chapter: 7,
+  goi_cuon:       { vi: 'Gỏi cuốn', en: 'Fresh Spring Rolls', blurbVi: 'Bánh tráng cuốn bún, rau thơm và tôm hồng.', biz: 'truck', price: 36, vessel: 'plate', steps: ['rice_paper', 'noodles', 'herbs', 'shrimp_cooked', 'roll'], options: [], icon: 'goi_cuon', chapter: 7,
                     blurb: 'Rice paper rolled around noodles, herbs and pink shrimp.' },
-  banh_xeo:       { vi: 'Bánh xèo', en: 'Sizzling Crêpe', blurbVi: 'Tên món lấy từ tiếng “xèo!” khi bột chạm chảo.', biz: 'truck', price: 35, vessel: 'pan', steps: ['batter', 'shrimp_cooked', 'sprouts', 'fold', 'herbs'], options: [], icon: 'banh_xeo', chapter: 7, needRep: 90,
+  banh_xeo:       { vi: 'Bánh xèo', en: 'Sizzling Crêpe', blurbVi: 'Tên món lấy từ tiếng “xèo!” khi bột chạm chảo.', biz: 'truck', price: 40, vessel: 'pan', steps: ['batter', 'shrimp_cooked', 'sprouts', 'fold', 'herbs'], options: [], icon: 'banh_xeo', chapter: 7, needRep: 90,
                     blurb: 'Named for the sizzle ("xèo!") the batter makes when it hits the pan.' },
-  banh_trang_nuong:{ vi: 'Bánh tráng nướng', en: 'Grilled Rice Paper', blurbVi: '“Pizza Việt Nam” — bánh tráng nướng than với trứng và mỡ hành.', biz: 'night', price: 25, vessel: 'grill', steps: ['rice_paper', 'egg_fried', 'scallion_oil', 'grill'], options: ['chili'], icon: 'banh_trang_nuong', chapter: 8,
+  banh_trang_nuong:{ vi: 'Bánh tráng nướng', en: 'Grilled Rice Paper', blurbVi: '“Pizza Việt Nam” — bánh tráng nướng than với trứng và mỡ hành.', biz: 'night', price: 22, vessel: 'grill', steps: ['rice_paper', 'egg_fried', 'scallion_oil', 'grill'], options: ['chili'], icon: 'banh_trang_nuong', chapter: 8,
                     blurb: '"Vietnamese pizza" — rice paper grilled over charcoal with egg and scallion oil.' },
   che_ba_mau:     { vi: 'Chè ba màu', en: 'Three-Colour Sweet Soup', blurbVi: 'Từng lớp đậu, thạch và nước cốt dừa trên đá bào.', biz: 'night', price: 20, vessel: 'glass', steps: ['beans', 'jelly', 'coconut_milk'], options: ['ice'], icon: 'che', chapter: 8,
                     blurb: 'Layers of beans, jelly and coconut cream over crushed ice.' },
-  pho_bo:         { vi: 'Phở bò', en: 'Beef Phở', blurbVi: 'Bánh phở mềm, thịt bò thái mỏng và nước dùng ninh cả đêm.', biz: 'restaurant', price: 50, vessel: 'bowl', steps: ['noodles', 'beef_sliced', 'broth', 'herbs', 'lime_wedge'], options: [], icon: 'pho_bo', chapter: 10,
+  pho_bo:         { vi: 'Phở bò', en: 'Beef Phở', blurbVi: 'Bánh phở mềm, thịt bò thái mỏng và nước dùng ninh cả đêm.', biz: 'restaurant', price: 60, vessel: 'bowl', steps: ['noodles', 'beef_sliced', 'broth', 'herbs', 'lime_wedge'], options: [], icon: 'pho_bo', chapter: 10,
                     blurb: 'Silky noodles, thin beef and a broth that simmered all night.' },
-  bun_bo_hue:     { vi: 'Bún bò Huế', en: 'Spicy Huế Noodle Soup', blurbVi: 'Sả, ớt và nước dùng đỏ tự hào từ cố đô.', biz: 'restaurant', price: 55, vessel: 'bowl', steps: ['noodles', 'beef_sliced', 'broth_spicy', 'herbs', 'lime_wedge'], options: [], icon: 'bun_bo_hue', chapter: 10, needRep: 200,
+  bun_bo_hue:     { vi: 'Bún bò Huế', en: 'Spicy Huế Noodle Soup', blurbVi: 'Sả, ớt và nước dùng đỏ tự hào từ cố đô.', biz: 'restaurant', price: 65, vessel: 'bowl', steps: ['noodles', 'beef_sliced', 'broth_spicy', 'herbs', 'lime_wedge'], options: [], icon: 'bun_bo_hue', chapter: 10, needRep: 200,
                     blurb: 'Lemongrass, chili and a proud red broth from the old capital.' },
   com_tam:        { vi: 'Cơm tấm', en: 'Broken Rice Plate', blurbVi: 'Cơm tấm, sườn nướng, trứng chiên và nước mắm chua ngọt.', biz: 'restaurant', price: 45, vessel: 'plate', steps: ['rice', 'pork_grilled', 'egg_fried', 'pickles', 'fish_sauce'], options: [], icon: 'com_tam', chapter: 10,
                     blurb: 'Broken rice, grilled pork chop, a fried egg and sweet fish sauce.' },
-  bun_thit_nuong: { vi: 'Bún thịt nướng', en: 'Grilled Pork Vermicelli', blurbVi: 'Bún mát, thịt nướng thơm và rau, chan nước chấm.', biz: 'restaurant', price: 45, vessel: 'bowl', steps: ['noodles', 'pork_grilled', 'herbs', 'pickles', 'fish_sauce'], options: [], icon: 'bun_thit_nuong', chapter: 10, needRep: 240,
+  bun_thit_nuong: { vi: 'Bún thịt nướng', en: 'Grilled Pork Vermicelli', blurbVi: 'Bún mát, thịt nướng thơm và rau, chan nước chấm.', biz: 'restaurant', price: 38, vessel: 'bowl', steps: ['noodles', 'pork_grilled', 'herbs', 'pickles', 'fish_sauce'], options: [], icon: 'bun_thit_nuong', chapter: 10, needRep: 240,
                     blurb: 'Cool noodles, smoky pork and herbs, dressed with sweet dipping sauce.' },
 };
 // Harbour Café and Coconut Cove Grill (no overlap with the grandmas' carts)
 Object.assign(RECIPES, {
-  ca_phe_muoi:  { vi: 'Cà phê muối', en: 'Salted Cream Coffee', blurbVi: 'Cà phê đậm, sữa đặc và lớp kem muối mằn mặn. Đặc sản Huế.', blurb: 'Strong coffee, condensed milk and a salty cream cap. A Huế favourite.', biz: 'cafe', price: 32, vessel: 'cup', steps: ['coffee', 'condensed_milk', 'salt_cream'], options: ['size', 'ice'], icon: 'drink:ca_phe_muoi', chapter: 13, starter: true },
-  bac_xiu:      { vi: 'Bạc xỉu', en: 'Bạc Xỉu (Milky Coffee)', blurbVi: 'Nhiều sữa, ít cà phê. Cà phê cho người không uống được cà phê.', blurb: 'Lots of milk, a little coffee. Coffee for people who don\'t drink coffee.', biz: 'cafe', price: 28, vessel: 'cup', steps: ['condensed_milk', 'milk', 'coffee'], options: ['size', 'sugar', 'ice'], icon: 'drink:bac_xiu', chapter: 13, starter: true },
-  ca_phe_trung: { vi: 'Cà phê trứng', en: 'Egg Coffee', blurbVi: 'Kem trứng đánh bông béo như bánh flan trên cà phê nóng. Hà Nội mang ra đảo.', blurb: 'Whipped egg cream as rich as flan over hot coffee. Hà Nội, now on the island.', biz: 'cafe', price: 38, vessel: 'cup', steps: ['coffee', 'egg_cream'], options: ['size'], icon: 'drink:ca_phe_trung', chapter: 13, needRep: 480 },
-  nuoc_cam:     { vi: 'Nước cam vắt', en: 'Fresh Orange Juice', blurbVi: 'Cam sành vắt tươi với chút muối. Ngọt, chua và mát.', blurb: 'Freshly squeezed green oranges with a pinch of salt. Sweet, tangy, cold.', biz: 'cafe', price: 26, vessel: 'cup', steps: ['orange_cut', 'sea_salt'], options: ['size', 'sugar', 'ice'], icon: 'drink:nuoc_cam', chapter: 13, needRep: 800 },
-  muc_nuong:    { vi: 'Mực nướng', en: 'Grilled Squid', blurbVi: 'Mực tươi nướng than, chấm muối ớt chanh. Mùi thơm kéo khách cả bãi biển.', blurb: 'Fresh squid over charcoal with chili-lime salt. The smell pulls in the whole beach.', biz: 'grill', price: 55, vessel: 'grill', steps: ['squid_cut', 'grill'], options: ['chili'], icon: 'squid', chapter: 17, starter: true },
-  so_diep_nuong:{ vi: 'Sò điệp nướng mỡ hành', en: 'Scallops with Scallion Oil', blurbVi: 'Sò điệp nướng mỡ hành, rắc đậu phộng. Món nhậu của biển.', blurb: 'Scallops grilled with scallion oil and crushed peanuts. The sea\'s favourite snack.', biz: 'grill', price: 60, vessel: 'grill', steps: ['scallop', 'scallion_oil', 'peanuts', 'grill'], options: ['chili'], icon: 'scallop', chapter: 17, starter: true },
+  ca_phe_muoi:  { vi: 'Cà phê muối', en: 'Salted Cream Coffee', blurbVi: 'Cà phê đậm, sữa đặc và lớp kem muối mằn mặn. Đặc sản Huế.', blurb: 'Strong coffee, condensed milk and a salty cream cap. A Huế favourite.', biz: 'cafe', price: 42, vessel: 'cup', steps: ['coffee', 'condensed_milk', 'salt_cream'], options: ['size', 'ice'], icon: 'drink:ca_phe_muoi', chapter: 13, starter: true },
+  bac_xiu:      { vi: 'Bạc xỉu', en: 'Bạc Xỉu (Milky Coffee)', blurbVi: 'Nhiều sữa, ít cà phê. Cà phê cho người không uống được cà phê.', blurb: 'Lots of milk, a little coffee. Coffee for people who don\'t drink coffee.', biz: 'cafe', price: 40, vessel: 'cup', steps: ['condensed_milk', 'milk', 'coffee'], options: ['size', 'sugar', 'ice'], icon: 'drink:bac_xiu', chapter: 13, starter: true },
+  ca_phe_trung: { vi: 'Cà phê trứng', en: 'Egg Coffee', blurbVi: 'Kem trứng đánh bông béo như bánh flan trên cà phê nóng. Hà Nội mang ra đảo.', blurb: 'Whipped egg cream as rich as flan over hot coffee. Hà Nội, now on the island.', biz: 'cafe', price: 44, vessel: 'cup', steps: ['coffee', 'egg_cream'], options: ['size'], icon: 'drink:ca_phe_trung', chapter: 13, needRep: 480 },
+  nuoc_cam:     { vi: 'Nước cam vắt', en: 'Fresh Orange Juice', blurbVi: 'Cam sành vắt tươi với chút muối. Ngọt, chua và mát.', blurb: 'Freshly squeezed green oranges with a pinch of salt. Sweet, tangy, cold.', biz: 'cafe', price: 30, vessel: 'cup', steps: ['orange_cut', 'sea_salt'], options: ['size', 'sugar', 'ice'], icon: 'drink:nuoc_cam', chapter: 13, needRep: 800 },
+  muc_nuong:    { vi: 'Mực nướng', en: 'Grilled Squid', blurbVi: 'Mực tươi nướng than, chấm muối ớt chanh. Mùi thơm kéo khách cả bãi biển.', blurb: 'Fresh squid over charcoal with chili-lime salt. The smell pulls in the whole beach.', biz: 'grill', price: 78, vessel: 'grill', steps: ['squid_cut', 'grill'], options: ['chili'], icon: 'squid', chapter: 17, starter: true },
+  so_diep_nuong:{ vi: 'Sò điệp nướng mỡ hành', en: 'Scallops with Scallion Oil', blurbVi: 'Sò điệp nướng mỡ hành, rắc đậu phộng. Món nhậu của biển.', blurb: 'Scallops grilled with scallion oil and crushed peanuts. The sea\'s favourite snack.', biz: 'grill', price: 82, vessel: 'grill', steps: ['scallop', 'scallion_oil', 'peanuts', 'grill'], options: ['chili'], icon: 'scallop', chapter: 17, starter: true },
 });
+// The Night Market stalls each have their own speciality (handed over by the owner when you buy the stall)
+Object.assign(RECIPES, {
+  oc_luoc:    { vi: 'Ốc luộc sả', en: 'Lemongrass Snails', blurbVi: 'Ốc luộc sả, chấm muối tiêu chanh. Ăn chậm, nói chuyện nhiều.', blurb: 'Snails boiled with lemongrass, dipped in salt, pepper and lime. You eat slowly and talk a lot.', biz: 'night', price: 38, vessel: 'plate', steps: ['snails_cooked', 'herbs', 'lime_wedge'], options: ['chili'], icon: 'oc_luoc', chapter: 9, stallOnly: true },
+  nuoc_mia:   { vi: 'Nước mía', en: 'Sugarcane Juice', blurbVi: 'Mía ép tươi với chút tắc. Rẻ, nhanh, mát lạnh.', blurb: 'Fresh-pressed sugarcane with a squeeze of lime. Cheap, quick and ice cold.', biz: 'night', price: 12, vessel: 'cup', steps: ['cane_juice', 'lime_wedge'], options: ['size', 'ice'], icon: 'drink:nuoc_mia', chapter: 18, stallOnly: true },
+  xien_nuong: { vi: 'Xiên nướng', en: 'Grilled Skewers', blurbVi: 'Xiên que nướng than, quét mỡ hành. Càng khuya càng đông.', blurb: 'Charcoal-grilled skewers brushed with scallion oil. The later it gets, the longer the line.', biz: 'night', price: 22, vessel: 'grill', steps: ['skewers', 'scallion_oil', 'grill'], options: ['chili'], icon: 'xien_nuong', chapter: 18, stallOnly: true },
+});
+// ---------------------------------------------------------------- pricing philosophy
+// Every base price comes from what goes into the dish (cost of goods, from the
+// per-portion ingredient costs above) and a target margin that grows with the
+// dish's tier: early street food keeps 35–45%, mid-game dishes 45–55%, premium
+// café drinks and Cove seafood 50–60%. Premium seafood is expensive to buy, so it
+// is expensive to eat — but no dish is a money printer.
+export function recipeCost(id, opts = {}) {
+  const R = RECIPES[id]; if (!R) return 0;
+  let c = 0;
+  for (const st of R.steps) { const u = STATION[st]?.uses; if (!u) continue; const raw = PREPPED[u] ? PREPPED[u].from : u; c += INGREDIENTS[raw]?.cost || 0; }
+  if (R.options.includes('sugar') && opts.sugar !== 0) c += INGREDIENTS.sugar.cost;
+  if (R.options.includes('ice') && opts.ice !== 'không đá') c += INGREDIENTS.ice.cost;
+  if (opts.topping && opts.topping !== 'none') c += INGREDIENTS[opts.topping]?.cost || 0;
+  if (opts.chili === 'có ớt') c += INGREDIENTS.chili.cost;
+  return c;
+}
 export const RECIPE_UPGRADES = [
   null,
   { cost: 0 },
-  { cost: 80, price: 1.15, patience: 1.1, tip: 1.1, label: 'Better ingredients', labelVi: 'Nguyên liệu tốt hơn' },
-  { cost: 220, price: 1.3, patience: 1.2, tip: 1.25, label: 'Signature presentation', labelVi: 'Trình bày đặc sắc' },
+  { mul: 14, price: 1.15, patience: 1.1, tip: 1.1, label: 'Better ingredients', labelVi: 'Nguyên liệu tốt hơn' },
+  { mul: 40, price: 1.3, patience: 1.2, tip: 1.25, label: 'Signature presentation', labelVi: 'Trình bày đặc sắc' },
 ];
+// a recipe upgrade costs more the more valuable the dish is
+export const recipeUpgradeCost = (id, lv) => Math.round(RECIPES[id].price * (RECIPE_UPGRADES[lv]?.mul || 0) / 10) * 10;
 
 // ---------------------------------------------------------------- businesses
 export const BUSINESSES = {
   shed1: { kind: 'shed', biz: 'drinks', name: 'Quán Nước', en: 'Drink Stand', interior: 'shed1',
            repair: { wood: 12, metal: 3, paint: 2 }, queueMax: 3,
            upgrades: [null, null, { cost: 180, mats: { wood: 8, paint: 2 }, label: 'Striped awning & lanterns', labelVi: 'Mái hiên sọc & lồng đèn', queue: 4, attract: 1.25 }, { cost: 420, mats: { tile: 10, wood: 6 }, label: 'Tiled roof & string lights', labelVi: 'Mái ngói & dây đèn', queue: 5, attract: 1.5, price: 1.1 }] },
-  shed2: { kind: 'shed', biz: 'banhmi', name: 'Bánh Mì Góc Phố', en: 'Bánh Mì Corner', interior: 'shed2', chapter: 4,
+  shed2: { kind: 'shed', biz: 'banhmi', name: 'Bánh Mì Góc Phố', en: 'Bánh Mì Corner', interior: 'shed2', chapter: 4, buy: 900,
            repair: { wood: 16, metal: 4, paint: 3 }, queueMax: 3,
            upgrades: [null, null, { cost: 220, mats: { wood: 8, paint: 2 }, label: 'Striped awning & lanterns', labelVi: 'Mái hiên sọc & lồng đèn', queue: 4, attract: 1.25 }, { cost: 480, mats: { tile: 10, wood: 6 }, label: 'Tiled roof & string lights', labelVi: 'Mái ngói & dây đèn', queue: 5, attract: 1.5, price: 1.1 }] },
-  truck: { kind: 'truck', biz: 'truck', name: 'Xe Cuốn', en: 'Roll Truck', interior: 'truck', chapter: 7, buy: 600, queueMax: 4,
+  truck: { kind: 'truck', biz: 'truck', name: 'Xe Cuốn', en: 'Roll Truck', interior: 'truck', chapter: 7, buy: 3000, queueMax: 4, tolerance: 1.05,
            upgrades: [null, null, { cost: 350, mats: { paint: 4, metal: 4 }, label: 'Fresh paint & awning', labelVi: 'Sơn mới & mái hiên', queue: 5, attract: 1.3 }, { cost: 700, mats: { cable: 1, metal: 6 }, label: 'Night lights & speakers', labelVi: 'Đèn đêm & loa nhạc', queue: 6, attract: 1.6, price: 1.1 }] },
-  night: { kind: 'stall', biz: 'night', name: 'Sạp Đêm', en: 'Night Stall', interior: 'night', chapter: 8, queueMax: 5, hours: [17 * 60, 24 * 60] },
+  night: { kind: 'stall', biz: 'night', name: 'Sạp Đêm', en: 'Night Stall', interior: 'night', chapter: 8, buy: 2000, queueMax: 5, hours: [17 * 60, 24 * 60], menu: ['banh_trang_nuong', 'che_ba_mau'], tolerance: 1.05 },
   // outdoor kiosks: bought (no repair), run from the counter
-  cafe: { kind: 'stall', biz: 'cafe', name: 'Cà Phê Bến Cảng', en: 'Harbour Café', chapter: 13, buy: 6000, queueMax: 5, hours: [6 * 60, 22 * 60] },
-  grill: { kind: 'stall', biz: 'grill', name: 'Quán Nướng Vịnh Dừa', en: 'Coconut Cove Grill', chapter: 17, buy: 14000, queueMax: 5, hours: [10 * 60, 24 * 60] },
+  cafe: { kind: 'stall', biz: 'cafe', name: 'Cà Phê Bến Cảng', en: 'Harbour Café', chapter: 13, buy: 5000, queueMax: 5, hours: [6 * 60, 22 * 60], tolerance: 1.12 },
+  grill: { kind: 'stall', biz: 'grill', name: 'Quán Nướng Vịnh Dừa', en: 'Coconut Cove Grill', chapter: 17, buy: 9000, queueMax: 5, hours: [10 * 60, 24 * 60], tolerance: 1.12 },
   // the other Night Market stalls, bought one by one from their owners
-  nm2: { kind: 'stall', biz: 'night', name: 'Sạp Chè', en: 'Sweet Soup Stall', chapter: 9, buy: 2600, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true },
-  nm3: { kind: 'stall', biz: 'night', name: 'Sạp Ốc', en: 'Snail Stall', chapter: 9, buy: 3200, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true },
-  nm5: { kind: 'stall', biz: 'night', name: 'Sạp Nước Mía', en: 'Sugarcane Stall', chapter: 18, buy: 4200, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true },
-  nm6: { kind: 'stall', biz: 'night', name: 'Sạp Xiên Que', en: 'Skewer Stall', chapter: 18, buy: 5200, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true },
-  nm1: { kind: 'stall', biz: 'night', name: 'Sạp Bà Sáu', en: 'Grandma Sáu\'s Stall', chapter: 18, buy: 6500, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true },
-  restaurant: { kind: 'restaurant', biz: 'restaurant', name: 'Nhà Hàng', en: 'Restaurant', interior: 'restaurant', chapter: 10, buy: 1500,
+  // Each has its own menu and personality (pace: customers per hour; serve: time per order; tolerance: how
+  // much a pricier menu is forgiven). Chè is quick and cheap; sugarcane is quicker and cheaper still; snails are
+  // slow but pricey; skewers fill up late in the evening; Bà Sáu's stall is famous for her bánh tráng.
+  nm2: { kind: 'stall', biz: 'night', name: 'Sạp Chè', en: 'Sweet Soup Stall', chapter: 9, buy: 2600, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true, menu: ['che_ba_mau'], pace: 1.25, serve: 0.75 },
+  nm3: { kind: 'stall', biz: 'night', name: 'Sạp Ốc', en: 'Snail Stall', chapter: 9, buy: 3200, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true, menu: ['oc_luoc'], pace: 0.8, serve: 1.4, tolerance: 1.1 },
+  nm5: { kind: 'stall', biz: 'night', name: 'Sạp Nước Mía', en: 'Sugarcane Stall', chapter: 18, buy: 4200, queueMax: 5, hours: [17 * 60, 24 * 60], stall: true, menu: ['nuoc_mia'], pace: 1.6, serve: 0.55 },
+  nm6: { kind: 'stall', biz: 'night', name: 'Sạp Xiên Que', en: 'Skewer Stall', chapter: 18, buy: 5200, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true, menu: ['xien_nuong'], serve: 0.9, late: true },
+  nm1: { kind: 'stall', biz: 'night', name: 'Sạp Bà Sáu', en: 'Grandma Sáu\'s Stall', chapter: 18, buy: 6500, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true, menu: ['banh_trang_nuong', 'xien_nuong'], pace: 1.15, tolerance: 1.15 },
+  restaurant: { kind: 'restaurant', biz: 'restaurant', name: 'Nhà Hàng', en: 'Restaurant', interior: 'restaurant', chapter: 10, buy: 10000,
            repair: { wood: 30, metal: 12, paint: 8, tile: 20 }, tables: 4,
            upgrades: [null, null, { cost: 900, mats: { wood: 12, paint: 4 }, label: 'Balcony flowers & two more tables', labelVi: 'Hoa ban công & thêm hai bàn', tables: 6, attract: 1.3 }, { cost: 1800, mats: { cable: 2, lantern: 6 }, label: 'Lantern terrace & string lights', labelVi: 'Sân lồng đèn & dây đèn', tables: 8, attract: 1.6, price: 1.1 }] },
 };
@@ -242,13 +278,13 @@ export const SHOP_LEVEL_REQ = [0, 0, 1, 3, 10, 15];
 
 // Equipment: small buys per shop (island level gated).
 export const EQUIPMENT = [
-  { id: 'tipjar', icon: 'coin', lv: 6, cost: 180, en: 'Tip jar', vi: 'Hũ tiền boa', fx: '+15% tips', fxVi: '+15% tiền boa', tip: 1.15 },
-  { id: 'fan', icon: 'star', lv: 6, cost: 240, en: 'Standing fan', vi: 'Quạt đứng', fx: 'Customers wait 15% longer', fxVi: 'Khách chờ lâu hơn 15%', patience: 1.15 },
-  { id: 'chalkboard', icon: 'menu', lv: 7, cost: 320, en: 'Chalk menu board', vi: 'Bảng phấn thực đơn', fx: '+10% customers', fxVi: '+10% khách', attract: 1.1 },
-  { id: 'radio', icon: 'talk', lv: 9, cost: 450, en: 'Little radio', vi: 'Radio nhỏ', fx: 'Wait 10% longer · tips +5%', fxVi: 'Chờ lâu hơn 10% · boa +5%', patience: 1.1, tip: 1.05 },
-  { id: 'stampcard', icon: 'heart', lv: 11, cost: 650, en: 'Loyalty stamp cards', vi: 'Thẻ tích điểm', fx: 'Regulars tip +15%', fxVi: 'Khách quen boa +15%', regTip: 1.15 },
-  { id: 'lightbox', icon: 'lantern', lv: 13, cost: 900, en: 'Lit roadside sign', vi: 'Biển đèn ven đường', fx: '+20% customers after 6pm', fxVi: '+20% khách sau 18:00', night: 1.2 },
-  { id: 'register', icon: 'coin', lv: 16, cost: 1400, en: 'Shiny cash register', vi: 'Máy tính tiền mới', fx: 'Prices +5% without scaring anyone', fxVi: 'Giá +5% mà khách không phàn nàn', price: 1.05 },
+  { id: 'tipjar', icon: 'coin', lv: 6, cost: 270, en: 'Tip jar', vi: 'Hũ tiền boa', fx: '+15% tips', fxVi: '+15% tiền boa', tip: 1.15 },
+  { id: 'fan', icon: 'star', lv: 6, cost: 360, en: 'Standing fan', vi: 'Quạt đứng', fx: 'Customers wait 15% longer', fxVi: 'Khách chờ lâu hơn 15%', patience: 1.15 },
+  { id: 'chalkboard', icon: 'menu', lv: 7, cost: 480, en: 'Chalk menu board', vi: 'Bảng phấn thực đơn', fx: '+10% customers', fxVi: '+10% khách', attract: 1.1 },
+  { id: 'radio', icon: 'talk', lv: 9, cost: 680, en: 'Little radio', vi: 'Radio nhỏ', fx: 'Wait 10% longer · tips +5%', fxVi: 'Chờ lâu hơn 10% · boa +5%', patience: 1.1, tip: 1.05 },
+  { id: 'stampcard', icon: 'heart', lv: 11, cost: 980, en: 'Loyalty stamp cards', vi: 'Thẻ tích điểm', fx: 'Regulars tip +15%', fxVi: 'Khách quen boa +15%', regTip: 1.15 },
+  { id: 'lightbox', icon: 'lantern', lv: 13, cost: 1350, en: 'Lit roadside sign', vi: 'Biển đèn ven đường', fx: '+20% customers after 6pm', fxVi: '+20% khách sau 18:00', night: 1.2 },
+  { id: 'register', icon: 'coin', lv: 16, cost: 2100, en: 'Shiny cash register', vi: 'Máy tính tiền mới', fx: 'Prices +5% without scaring anyone', fxVi: 'Giá +5% mà khách không phàn nàn', price: 1.05 },
 ];
 // price the player sets for a recipe: multiplier of the base price
 export const PRICE_RANGE = [0.7, 1.6];
@@ -262,7 +298,8 @@ export const ROLES = {
   prep:    { vi: 'Sơ chế',  en: 'Prep',    desc: 'Keeps prepared ingredients stocked.', descVi: 'Luôn chuẩn bị sẵn nguyên liệu.' },
   cleaner: { vi: 'Dọn dẹp', en: 'Cleaner', desc: 'Clears and wipes tables.', descVi: 'Dọn và lau bàn.' },
   keeper:  { vi: 'Người trông quán', en: 'Shopkeeper', desc: 'Runs a small shop for you.', descVi: 'Trông quán nhỏ giúp bạn.' },
-  cashier: { vi: 'Thu ngân',en: 'Cashier', desc: 'Takes payments and deposits earnings to you.', descVi: 'Thu tiền và nộp lại cho bạn.' },
+  cashier: { vi: 'Thu ngân',en: 'Cashier', desc: 'Takes payments, deposits earnings to you, and guests tip a little more at a tidy counter.', descVi: 'Thu tiền, nộp lại cho bạn, và khách boa nhiều hơn chút ở quầy gọn gàng.' },
+  manager: { vi: 'Quản lý', en: 'Manager', desc: 'From Chapter 19: keeps the whole team quicker and steadier, and covers whatever job is missing.', descVi: 'Từ Chương 19: giúp cả đội nhanh và đều tay hơn, và làm thay việc còn thiếu người.' },
 };
 export const TRAITS = [
   { id: 'cheerful', vi: 'Vui vẻ', en: 'Cheerful', fx: 'Guests tip a little more.', fxVi: 'Khách boa nhiều hơn một chút.' },
@@ -341,8 +378,8 @@ export const CHAPTERS = [
   { n: 19, title: 'The Island Runs Itself', vi: 'Hòn Đảo Tự Vận Hành' },
   { n: 20, title: 'Keeper of the Island', vi: 'Người Giữ Đảo' },
 ];
-export const HARBOUR_BRIDGE = { cost: 5000, mats: { wood: 40, metal: 16, paint: 8 } };
-export const COVE_BRIDGE = { cost: 9000, mats: { wood: 50, metal: 20, paint: 10, tile: 10 } };
+export const HARBOUR_BRIDGE = { cost: 4000, mats: { wood: 40, metal: 16, paint: 8 } };
+export const COVE_BRIDGE = { cost: 6000, mats: { wood: 50, metal: 20, paint: 10, tile: 10 } };
 export const BRIDGE_REPAIR = { cost: 1500, mats: { wood: 40, metal: 12, paint: 6 } };
 export const VY_VIEWS = [
   { id: 'lookout', x: 2470, y: 1440, en: 'the lookout tower', vi: 'tháp canh' },
@@ -375,23 +412,23 @@ export const ACHIEVEMENTS = {
   tip_big:        { en: 'Big Tipper', desc: 'Receive a tip of 20k or more.', vi: 'Khách sộp', descVi: 'Nhận tiền boa từ 20k trở lên.' },
   first_keeper:   { en: 'A Helping Hand', desc: 'Hire your first shopkeeper.', vi: 'Có người phụ giúp', descVi: 'Thuê người trông quán đầu tiên.' },
   lantern_festival: { en: 'Festival of Lights', desc: 'Light up the Lantern Festival.', vi: 'Đêm hội đèn lồng', descVi: 'Thắp sáng Lễ Hội Đèn Lồng.' },
+  // hidden: shown as ??? until you stumble on them
+  sunrise:        { hidden: true, en: 'First Light', desc: 'Watch the sunrise from Lighthouse Point.', vi: 'Tia nắng đầu tiên', descVi: 'Ngắm bình minh ở Ngọn Hải Đăng.', hint: ['Early birds see the lighthouse at its best.', 'Người dậy sớm mới thấy hải đăng đẹp nhất.'] },
+  social_day:     { hidden: true, en: 'Social Butterfly', desc: 'Talk to every resident in a single day.', vi: 'Con bướm xã giao', descVi: 'Trò chuyện với mọi cư dân trong một ngày.', hint: ['Some days, say hello to everyone.', 'Có hôm, hãy chào hỏi tất cả mọi người.'] },
+  all_homes:      { hidden: true, en: 'Welcome Everywhere', desc: 'Visit every resident\'s home.', vi: 'Ở đâu cũng được đón', descVi: 'Ghé thăm nhà của mọi cư dân.', hint: ['Every door on the island has a story.', 'Cánh cửa nào trên đảo cũng có một câu chuyện.'] },
+  meo_naps:       { hidden: true, en: 'Nap Spotter', desc: 'Find Mèo Mây napping in four different places.', vi: 'Thợ săn giấc ngủ', descVi: 'Bắt gặp Mèo Mây ngủ trưa ở bốn nơi khác nhau.', hint: ['Afternoons are sleepy for some of us.', 'Buổi chiều, có ai đó hay buồn ngủ lắm.'] },
+  duck_friend:    { hidden: true, en: 'Friend of Ducks', desc: 'Feed the lotus-pond ducks on five different days.', vi: 'Bạn của lũ vịt', descVi: 'Cho vịt ở hồ sen ăn vào năm ngày khác nhau.', hint: ['The pond has regulars too.', 'Hồ sen cũng có khách quen.'] },
   keeper_island:  { en: 'Keeper of the Island', desc: 'Complete all 20 chapters of the story.', vi: 'Người Giữ Đảo', descVi: 'Hoàn thành cả 20 chương của câu chuyện.' },
 };
 // ---------------------------------------------------------------- story requirements (one source of truth)
 // Dialogue, objective text, completion checks and what the event consumes all read these.
 export const FESTIVAL_REQ = { level: 20, lanterns: 16, served: 40 };     // Chapter 16: the Lantern Festival
 export const KEEPER_REQ = { level: 30, regulars: 15 };                     // Chapter 20: Keeper of the Island (and every business owned)
-export const STATUE_COST = { cost: 3000, mats: { paint: 10, tile: 10 } };
+export const STATUE_COST = { cost: 3500, mats: { paint: 10, tile: 10 } };
 
-// ---------------------------------------------------------------- economy tuning (v4.3: a real grind)
-// Everything you buy costs more; money comes in slower (see nextSpawnDelay and tips).
-export const ECON = { ingredients: 2.2, materials: 2, furniture: 6, equipment: 2.5, upgrades: 2, buy: 2 };
-for (const v of Object.values(INGREDIENTS)) v.price = Math.round(v.price * ECON.ingredients);
-for (const v of Object.values(MATERIALS)) if (v.price) v.price = Math.round(v.price * ECON.materials);
-for (const v of Object.values(FURNITURE)) v.price = Math.round(v.price * ECON.furniture / 10) * 10;
-for (const e of EQUIPMENT) if (e.price) e.price = Math.round(e.price * ECON.equipment / 10) * 10;
-for (const b of Object.values(BUSINESSES)) {
-  if (b.buy) b.buy = Math.round(b.buy * ECON.buy);
-  for (const u of b.upgrades || []) if (u?.cost) u.cost = Math.round(u.cost * ECON.upgrades);
-}
-STATUE_COST.cost *= 2;
+// ---------------------------------------------------------------- economy tuning (v5)
+// Prices above are the real ones (no blanket multipliers). Furniture is priced as
+// a cosy reward, not a wall; shop upgrades cost a little more than their list price.
+export const ECON = { furniture: 2.5, upgrades: 1.5 };
+for (const v of Object.values(FURNITURE)) v.price = Math.round(v.price * ECON.furniture / 5) * 5;
+for (const b of Object.values(BUSINESSES)) for (const u of b.upgrades || []) if (u?.cost) u.cost = Math.round(u.cost * ECON.upgrades / 10) * 10;

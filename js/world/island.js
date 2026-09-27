@@ -914,6 +914,8 @@ export function bizSign(id) {
 // Named areas for the HUD location toast.
 export const AREAS = [
   { name: 'Cầu Gỗ Dài', en: 'The Long Bridge', test: (x, y) => x > 1700 && x < 1950 && Math.abs(y - 1519) < 60 },
+  { name: 'Phố Cảng', en: 'Harbour Town', test: (x, y) => x > 2350 && y < 1150 },
+  { name: 'Vịnh Dừa', en: 'Coconut Cove', test: (x, y) => x > 1950 && y > 2000 },
   { name: 'Cù Lao Đom Đóm', en: 'Firefly Islet', test: (x, y) => x > 1930 },
   { name: 'Bến Tàu', en: 'Ferry Dock', test: (x, y) => y > 2380 },
   { name: 'Bãi Biển', en: 'Sunny Beach', test: (x, y) => y > 2150 || (x > 1450 && y > 1900) },
@@ -927,4 +929,5 @@ export const AREAS = [
   { name: 'Ngọn Hải Đăng', en: 'Lighthouse Point', test: (x, y) => y < 420 },
   { name: 'Hồ Sen', en: 'Lotus Spring', test: (x, y) => dist(x, y, POND.x, POND.y) < 170 },
 ];
+export const areaIdAt = (x, y) => (AREAS.find(a => a.test(x, y)) || { en: '' }).en;
 export function areaAt(x, y) { const a = AREAS.find(a => a.test(x, y)) || { name: 'Đảo', en: 'The Island' }; return { name: T(a.en, a.name), en: '' }; }

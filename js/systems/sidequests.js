@@ -14,8 +14,10 @@ import { ANIMAL_DRAW } from './animals.js';
 import * as P from '../gfx/props.js';
 import { ICONS } from '../gfx/food.js';
 import { INK } from '../gfx/draw.js';
-import { addXP } from './progress.js';
+import { addXP, COUNTS } from './progress.js';
 
+// rewards grow with the story, so helping a neighbour is still worth it later on
+export const questMoney = q => Math.round(q.reward.money * (1 + 0.12 * Math.max(0, (G.state.story.chapter || 1) - 1)) / 5) * 5;
 export const SIDE_QUESTS = [
   { id: 'net', giver: 'chu_hai', ch: 1, x: 1330, y: 2330, item: ['fishing net', 'tấm lưới'], ask: ['The tide stole my best net. It\'s somewhere on the east beach. Could you look?', 'Thủy triều cuốn mất tấm lưới tốt nhất của chú. Chắc nó ở bãi biển phía đông. Con tìm giúp chú nha?'], thanks: ['My net! Now the fish have no excuses.', 'Tấm lưới của chú! Giờ thì cá hết đường chối.'], reward: { money: 60, mat: ['wood', 4] } },
   { id: 'sandal', giver: 'ba_tu', ch: 1, x: 610, y: 1790, item: ['sandal', 'chiếc dép'], ask: ['A dog ran off with my good sandal! Somewhere south of West Village…', 'Có con chó tha mất chiếc dép đẹp của bà! Ở đâu đó phía nam Xóm Tây…'], thanks: ['Ah, my sandal! Only a little chewed. Take this, dear.', 'A, chiếc dép của bà! Chỉ bị gặm chút xíu. Cầm lấy nè con.'], reward: { money: 50, ing: ['kumquat', 8] } },
@@ -27,6 +29,7 @@ export const SIDE_QUESTS = [
   { id: 'notebook', giver: 'linh', ch: 3, x: 300, y: 1880, item: ['study notebook', 'cuốn vở'], ask: ['My exam notes! I studied on the west beach and forgot them. Please!', 'Vở ôn thi của mình! Mình học ở bãi biển phía tây rồi bỏ quên. Làm ơn!'], thanks: ['You saved my grades! And maybe my life.', 'Bạn cứu điểm của mình! Và chắc cứu cả cuộc đời mình.'], reward: { money: 55 } },
   { id: 'shell', giver: 'vy', ch: 14, x: 2420, y: 1800, item: ['pink conch shell', 'vỏ ốc hồng'], ask: ['I need a pink conch to mix a new colour. There\'s one on the islet\'s south beach!', 'Mình cần một vỏ ốc hồng để pha màu mới. Có một cái ở bãi nam của cù lao!'], thanks: ['So pink! I\'ll call the colour “Your Name Pink”.', 'Hồng quá! Mình sẽ đặt tên màu là “Hồng Tên Bạn”.'], reward: { money: 120, mat: ['paint', 4] } },
 ];
+COUNTS.quests = SIDE_QUESTS.length;
 const Q = () => (G.state.sideQuests ||= {}); // id → 'active' | 'found' | 'done'
 
 export function questFor(rid) {
@@ -49,11 +52,11 @@ export async function questTalk(a, rid) {
   if (st === 'found') {
     await say(a, tr(q.thanks), { emo: 'happy' });
     Q()[q.id] = 'done'; refreshGuide();
-    const r = q.reward; addMoney(r.money, 'quest'); addXP(60, 'quest');
+    const r = q.reward, cash = questMoney(q); addMoney(cash, 'quest'); addXP(60, 'quest');
     if (r.mat) addMat(r.mat[0], r.mat[1]); if (r.ing) addPantry(r.ing[0], r.ing[1]);
     G.state.friends[rid] = (G.state.friends[rid] || 0) + 3;
     markDirty(true); sfx('fanfare');
-    await showReward({ icon: r.mat?.[0] || r.ing?.[0] || 'coin', kicker: T('Side quest complete!', 'Hoàn thành nhiệm vụ phụ!'), title: `+${r.money}k · +60 XP`, text: T(`${a.name} is really grateful.`, `${a.name} biết ơn bạn lắm.`) });
+    await showReward({ icon: r.mat?.[0] || r.ing?.[0] || 'coin', kicker: T('Side quest complete!', 'Hoàn thành nhiệm vụ phụ!'), title: `+${cash}k · +60 XP`, text: T(`${a.name} is really grateful.`, `${a.name} biết ơn bạn lắm.`) });
     return true;
   }
   return false;

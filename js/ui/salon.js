@@ -15,7 +15,7 @@ import { fx } from '../world/render.js';
 import { camTo, camFollow } from '../systems/cutscene.js';
 import { baseLook, refreshPlayerLook } from './clothes.js';
 
-const DYE_PRICE = 180;
+const DYE_PRICE = 80;
 const COLOR_NAMES = [['Dark brown', 'Nâu đậm'], ['Soft black', 'Đen tuyền'], ['Chestnut', 'Hạt dẻ'], ['Caramel', 'Nâu caramel'], ['Honey', 'Mật ong'], ['Blonde', 'Vàng hoe'], ['Ash grey', 'Xám tro'], ['Sakura pink', 'Hồng anh đào'], ['Ocean blue', 'Xanh biển'], ['Mint', 'Xanh bạc hà'], ['Plum', 'Tím mận'], ['Silver', 'Bạch kim']];
 
 function head(cv, look) {

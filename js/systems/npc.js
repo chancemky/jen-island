@@ -2,7 +2,7 @@
 // by ferry, scooters on the streets, gulls and butterflies, and Mèo Mây's own
 // wandering routine once the tutorial is over.
 
-import { G, T } from './state.js';
+import { G, T, unlockAchievement } from './state.js';
 import { Actor } from '../world/actor.js';
 import { RESIDENTS, MERCHANTS, visitorLook } from '../data/looks.js';
 import { initAnimals, updateAnimals, animalDrawables, reactHop, drawReact, tickReact, react } from './animals.js';
@@ -451,7 +451,7 @@ export function feedDucks() {
     crumbs.push({ x: pl.x, y: pl.y - 2, vx: (tx - pl.x) / T, vy: (ty - pl.y) / T, z: 14, vz: 60 + rand(0, 40), life: 12, landed: 0 });
   }
   const s = G.state, key = 'ducksFed';
-  if (s.story.flags[key] !== s.day) { s.story.flags[key] = s.day; bus.emit('toast', { text: G.lang === 'vi' ? 'Lũ vịt thích lắm!' : 'The ducks love you!', sub: G.lang === 'vi' ? '+5 KN · quay lại mai nhé' : '+5 XP · come back tomorrow', icon: 'heart' }); bus.emit('xp:add', 5); }
+  if (s.story.flags[key] !== s.day) { s.story.flags[key] = s.day; s.stats.duckDays = (s.stats.duckDays || 0) + 1; if (s.stats.duckDays >= 5) unlockAchievement('duck_friend'); bus.emit('toast', { text: G.lang === 'vi' ? 'Lũ vịt thích lắm!' : 'The ducks love you!', sub: G.lang === 'vi' ? '+5 KN · quay lại mai nhé' : '+5 XP · come back tomorrow', icon: 'heart' }); bus.emit('xp:add', 5); }
 }
 
 // ---------------------------------------------------------------- per frame

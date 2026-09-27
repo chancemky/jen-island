@@ -3,7 +3,7 @@
 // The restaurant has its own simulation in restaurant.js.
 
 import { G, T, addMoney, addRep, markDirty, pantry, addPantry, unlockAchievement, bizOf } from './state.js';
-import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, recipeName, bizName } from '../data/game.js';
+import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, recipeName, bizName, recipeCost } from '../data/game.js';
 import { RESIDENTS, visitorLook } from '../data/looks.js';
 import { addXP } from './progress.js';
 import { Actor } from '../world/actor.js';
@@ -12,6 +12,8 @@ import { bus, rand, randi, choice, chance, clamp, dist } from '../core/util.js';
 import { sfx } from '../core/audio.js';
 import { applyPronouns, customerProfile } from './pronouns.js';
 import { fx } from '../world/render.js';
+import { recordSale } from './ledger.js';
+import { recordUse } from './economy.js';
 
 export const LOCAL_NAMES = ['Chị Thu', 'Anh Nam', 'Cô Ba', 'Bác Tâm', 'Em Bi', 'Chú Lộc', 'Chị Hằng', 'Anh Khôi', 'Cô Duyên', 'Bác Hòa', 'Em Tí', 'Chị Loan', 'Anh Phong', 'Cô Mận', 'Chú Tư', 'Chị Vân', 'Anh Hùng', 'Em Su', 'Cô Nga', 'Bác Sang', 'Chị Ánh', 'Anh Tín', 'Em Cốm', 'Cô Liên'];
 const TOURIST_NAMES = ['Emma', 'Kenji', 'Lucas', 'Aiko', 'Mia', 'Noah', 'Hana', 'Leo', 'Sofia', 'Min-jun', 'Ava', 'Oliver', 'Chloé', 'Mateo', 'Yuki', 'Sam'];
@@ -53,22 +55,50 @@ export function canMake(bizId, id, opts = {}) {
   for (const u of optionUses(r, opts)) need[u] = (need[u] || 0) + 1;
   return Object.entries(need).every(([k, n]) => stockOf(bizId, k) >= n);
 }
+// a shop sells the recipes you know for its kind — or, for a stall with its own menu, only that menu
 export function bizRecipes(bizId) {
-  const kind = BUSINESSES[bizId].biz;
-  return G.state.recipes.filter(r => RECIPES[r].biz === kind);
+  const def = BUSINESSES[bizId], kind = def.biz;
+  if (def.menu) return def.menu.filter(r => G.state.recipes.includes(r));
+  return G.state.recipes.filter(r => RECIPES[r].biz === kind && !RECIPES[r].stallOnly);
 }
 export function makeableRecipes(bizId) { return bizRecipes(bizId).filter(r => canMake(bizId, r)); }
-export function recipePrice(bizId, id, size = 'M') {
+// What a customer pays. opts may be an order's options, or just a size letter.
+// The bonuses the game gives (better recipe, shop level, daily special, cash register)
+// stack, but never past +45% — only your own price setting goes beyond that.
+export const BONUS_CAP = 1.45;
+export function priceBonus(bizId, id) {
   const lv = RECIPE_UPGRADES[G.state.recipeLevels[id] || 1];
   const up = BUSINESSES[bizId].upgrades?.[bizOf(bizId).level];
   const special = bizOf(bizId).special === id ? 1.1 : 1;
-  const sz = RECIPES[id].options.includes('size') ? OPTIONS.size.price[size] : 1;
-  return Math.round(RECIPES[id].price * sz * (lv?.price || 1) * (up?.price || 1) * special * priceMul(id) * eq(bizId, 'price'));
+  return Math.min(BONUS_CAP, (lv?.price || 1) * (up?.price || 1) * special * eq(bizId, 'price'));
 }
+export function recipePrice(bizId, id, opts = 'M') {
+  if (typeof opts === 'string') opts = { size: opts };
+  const R = RECIPES[id];
+  const sz = R.options.includes('size') ? OPTIONS.size.price[opts.size || 'M'] : 1;
+  const extra = opts.topping ? OPTIONS.topping.surcharge[opts.topping] || 0 : 0;     // toppings are paid for
+  return Math.round(R.price * sz * priceBonus(bizId, id) * priceMul(id) + extra);
+}
+// cost of goods for one order (ingredients at supermarket price)
+export const orderCost = order => recipeCost(order.recipe, order.opts);
 // the price the player set (1 = the fair price)
 export const priceMul = id => G.state.prices?.[id] || 1;
-// how customers feel about a price: <1 means fewer people want it
-export const priceAppeal = id => Math.pow(priceMul(id), -2.8);   // at 160% only about a quarter as many people come
+// Better food feels worth more: an upgraded recipe in a nicer shop can charge more
+// before anyone minds.
+export function perceivedValue(bizId, id) {
+  const rl = G.state.recipeLevels?.[id] || 1, sl = bizId ? bizOf(bizId)?.level || 1 : 1;
+  return 1 + 0.06 * (rl - 1) + 0.04 * (sl - 1);
+}
+// how a kind of customer feels about price (tourists shrug, picky ones notice)
+export const PRICE_TOLERANCE = { tourist: 1.35, regular: 1.15, picky: 0.9, rushed: 1.05, excited: 1.05, patient: 1 };
+export function tolerance(bizId, personality, perfectShop = false) {
+  let t = PRICE_TOLERANCE[personality] ?? 1;
+  if (personality === 'picky' && perfectShop) t = 1.1;           // picky people pay for quality
+  return t * (BUSINESSES[bizId]?.tolerance || 1);
+}
+// how customers feel about a price: <1 means fewer people want it. A gentle curve —
+// cheap, fair and pricey menus are all workable; they just attract different crowds.
+export const priceAppeal = (id, bizId = null, tol = 1) => Math.pow(priceMul(id) / (perceivedValue(bizId, id) * tol), -1.3);
 // equipment effect multiplier for a shop
 export function eq(bizId, key) {
   const own = bizOf(bizId)?.equip; if (!own) return 1;
@@ -166,6 +196,7 @@ export function spawnCustomer(bizId, opts = {}) {
   const base = 52 * P.patience * (G.state.story.chapter <= 2 ? 1.4 : 1) * recipeLv * eq(bizId, 'patience');
   const c = new Customer({ bizId, actor, key, name, personality, resident: !!resident, patience: base, patienceMax: base });
   c.order = makeOrder(bizId, c);
+  if (c.order?.walk) { G.state.today.priceWalk = (G.state.today.priceWalk || 0) + 1; bus.emit('customer:pricey', bizId); if (!resident) { actor.showEmote?.('sweat', 1.2); setTimeout(() => { actor.fadeOut = true; }, 900); } else G.npcs.returnResident(resident); return null; }
   if (!c.order) { if (!resident) island.remove(actor); else G.npcs.returnResident(resident); return null; }
   r.queue.push(c);
   c.slot = r.queue.length - 1;
@@ -219,7 +250,7 @@ export function makeOrder(bizId, cust) {
   const reg = G.state.regulars[cust.key];
   if (reg?.fav && pool.includes(reg.fav) && chance(0.6)) id = reg.fav;
   else if (b.special && pool.includes(b.special) && chance(0.5)) id = b.special;
-  else id = wpick(pool.map(r => [r, priceAppeal(r)])); // cheaper items get picked more often
+  else id = wpick(pool.map(r => [r, priceAppeal(r, bizId, tolerance(bizId, cust.personality))])); // cheaper items get picked more often
   const R = RECIPES[id], opts = {};
   if (R.options.includes('size')) opts.size = wpick(SIZE_W);
   if (R.options.includes('sugar')) opts.sugar = choice([30, 50, 70, 70, 100]);
@@ -228,8 +259,11 @@ export function makeOrder(bizId, cust) {
   if (R.options.includes('chili')) opts.chili = chance(0.55) ? 'có ớt' : 'không ớt';
   // make sure the options can be made with current stock; relax if not
   if (!canMake(bizId, id, opts)) { if (opts.topping) opts.topping = 'none'; if (opts.chili) opts.chili = 'không ớt'; if (!canMake(bizId, id, opts) && opts.ice) opts.ice = 'không đá'; }
-  const price = recipePrice(bizId, id, opts.size);
-  return { recipe: id, opts, price, special: b.special === id };
+  const price = recipePrice(bizId, id, opts);
+  // someone who finds it far too expensive for them looks at the board and walks on
+  const over = priceMul(id) / (perceivedValue(bizId, id) * tolerance(bizId, cust.personality, (b.stats?.perfectRate || 0) > 0.8));
+  const walk = over > 1.2 && chance(Math.min(0.7, (over - 1.2) * 1.6));
+  return { recipe: id, opts, price, special: b.special === id, walk };
 }
 // Order lines are built in the current language whenever they're shown.
 export function orderText(order, cust) {
@@ -316,12 +350,13 @@ export function completeOrder(c, quality) {
   let tipRate = quality === 'perfect' ? 0.05 + speed * 0.12 : 0.01 + speed * 0.04;
   tipRate *= P.tip * (lv?.tip || 1) * (order.special ? 1.25 : 1);
   if (G.state.regulars[c.key]?.visits >= 3) tipRate *= 1.15 * eq(c.bizId, 'regTip');
-  tipRate *= eq(c.bizId, 'tip') * Math.min(1.5, Math.pow(priceMul(order.recipe), -1.5)); // pricey food, smaller tips
+  tipRate *= eq(c.bizId, 'tip') * Math.min(1.4, Math.pow(priceMul(order.recipe), -1.2)); // pricey food, smaller tips
   const tip = Math.round(price * tipRate);
   addXP(quality === 'perfect' ? 12 + (order.special ? 3 : 0) : 7, 'serve');
   addMoney(price, 'sale');
   if (tip > 0) { addMoney(tip, 'tip'); s.today.tips += tip; s.stats.tipsTotal += tip; }
-  const rep = quality === 'perfect' ? 2 + (order.special ? 1 : 0) : 1;
+  // a bargain gets talked about
+  const rep = (quality === 'perfect' ? 2 + (order.special ? 1 : 0) : 1) + (priceMul(order.recipe) < 0.95 && chance(0.5) ? 1 : 0);
   addRep(rep);
   s.stats.served++; s.today.served++;
   if (quality === 'perfect') { s.stats.perfect++; s.today.perfect++; }
@@ -329,11 +364,14 @@ export function completeOrder(c, quality) {
   b.stats.served++; b.stats.revenue += price + tip;
   const tb = (s.today.biz[c.bizId] ||= { served: 0, revenue: 0, perfect: 0 });
   tb.served++; tb.revenue += price + tip; if (quality === 'perfect') tb.perfect++;
+  recordSale(c.bizId, price, tip, orderCost(order)); recordUse(c.bizId, order.recipe, order.opts);
+  b.stats.perfectRate = ((b.stats.perfectRate || 0) * 0.95) + (quality === 'perfect' ? 0.05 : 0);
   // regular tracking
   if (!c.key.startsWith('tour:')) {
     const reg = (s.regulars[c.key] ||= { name: c.name, visits: 0, fav: order.recipe });
     reg.visits++; reg.name = c.name;
     if (quality === 'perfect') reg.fav = order.recipe;
+    if (priceMul(order.recipe) < 0.9 && reg.visits < 3 && chance(0.25)) reg.visits++;   // cheap and good: they come back sooner
     if (reg.visits === 3) { bus.emit('regular', c); unlockAchievement('first_regular'); if (Object.values(s.regulars).filter(r => r.visits >= 3).length >= 5) unlockAchievement('regulars_5'); }
   }
   if (c.resident) G.npcs?.befriend?.(c.key.slice(4), 2);
@@ -411,22 +449,36 @@ export function updateBusinesses(dt, gameMin) {
     if (a.fadeOut) { a.alpha = (a.alpha ?? 1) - dt * 2.5; if (a.alpha <= 0) island.remove(a); }
   }
 }
+// When people want what: each kind of business has its own day.
+const DEMAND = {
+  drinks:  [[6, 0.7], [8, 1.2], [11, 1.25], [13.5, 1.45], [17, 1.15], [19.5, 0.8], [21, 0.6]],   // hot afternoons
+  banhmi:  [[6, 1.55], [9, 1.0], [11, 1.4], [13.5, 0.8], [17, 1.1], [19.5, 0.7], [21, 0.5]],    // breakfast & lunch
+  truck:   [[6, 0.6], [9, 0.9], [11, 1.5], [14, 1.3], [17, 1.1], [19.5, 0.7], [21, 0.5]],     // beach lunch & afternoon
+  cafe:    [[6, 1.6], [10, 1.15], [12, 0.9], [14, 1.2], [17, 0.9], [20, 0.6]],                 // morning coffee
+  grill:   [[10, 0.6], [12, 0.9], [15, 0.8], [17, 1.55], [21, 1.2], [22.5, 0.8]],              // sunset seafood
+  night:   [[17, 0.9], [19, 1.5], [22, 1.0]],
+};
+export function demandAt(id, h = G.state.time / 60) {
+  const def = BUSINESSES[id], curve = DEMAND[def.biz] || [[0, 1]];
+  let k = curve[0][1]; for (const [from, v] of curve) if (h >= from) k = v;
+  if (def.late) k = h >= 20 ? 1.7 : h >= 19 ? 1.2 : 0.8;          // skewers: the later the busier
+  return k * (def.pace || 1);
+}
 function nextSpawnDelay(id) {
   const s = G.state, def = BUSINESSES[id], b = s.biz[id];
   const attract = def.upgrades?.[b.level]?.attract || 1;
   const rep = 1 + Math.min(1.6, s.reputation / 90);
   const h = s.time / 60;
-  let tf = 1;
-  if (h < 8) tf = 0.7; else if (h >= 11 && h < 13.5) tf = 1.45; else if (h >= 17 && h < 19.5) tf = 1.3; else if (h >= 21) tf = 0.6;
-  if (id === 'night') tf = h >= 19 && h < 22 ? 1.5 : 1;
+  const tf = demandAt(id, h);
   const boat = G.runtime.boatBoost > 0 ? 1.5 : 1;
   const special = b.special ? 1.12 : 1;
   const early = s.story.chapter <= 2 ? 1.35 : 1;
+  const owned = s.property?.[id] ? 1.05 : 1;                      // your own place: you can put a sign out front
   const recs = bizRecipes(id);
-  const appeal = recs.length ? recs.reduce((a, r) => a + priceAppeal(r), 0) / recs.length : 1;
+  const appeal = recs.length ? recs.reduce((a, r) => a + priceAppeal(r, id), 0) / recs.length : 1;
   const gear = eq(id, 'attract') * (h >= 18 ? eq(id, 'night') : 1);
-  const rate = attract * rep * tf * boat * special * early * appeal * gear; // customers per ~34 game-minutes baseline
-  return clamp(rand(26, 44) / rate, 7, 60);   // v4.3: fewer customers — business is a grind
+  const rate = attract * rep * tf * boat * special * early * appeal * gear * owned; // customers per ~34 game-minutes baseline
+  return clamp(rand(26, 44) / rate, 6, 60);
 }
 
 export function stationStock(bizId, key) { return stockOf(bizId, key); }

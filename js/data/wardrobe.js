@@ -110,5 +110,5 @@ export function applyOutfit(base, wardrobe) {
   return L;
 }
 
-// v4.3: clothes are a luxury now
-for (const v of Object.values(CLOTHES)) if (v.price) v.price = Math.round(v.price * 6 / 10) * 10;
+// v5: everyday clothes are affordable; the rare, premium pieces are the luxury goal
+for (const v of Object.values(CLOTHES)) if (v.price) { v.luxury = v.price >= 250; v.price = Math.round(v.price * (v.luxury ? 5 : 2) / 10) * 10; }

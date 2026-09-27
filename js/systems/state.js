@@ -31,6 +31,8 @@ export function defaultState() {
     stats: { served: 0, perfect: 0, tipsTotal: 0, daysPlayed: 0 },
     today: freshDay(),
     history: [],             // last few daily summaries
+    books: { in: {}, out: {}, cogs: 0 }, // lifetime money by category (systems/ledger.js)
+    usage: {},               // shop → ingredient → portions used per day (running average)
     nightMarket: { restored: false },
     statue: false,
     settings: { music: true, sfx: true, arrow: true, lang: null, smooth: false },
@@ -44,7 +46,7 @@ export function defaultState() {
     lastSeenVersion: APP_VERSION,
   };
 }
-export function freshDay() { return { revenue: 0, served: 0, perfect: 0, tips: 0, repStart: null, lost: 0, spent: 0, milestones: [], biz: {} }; }
+export function freshDay() { return { revenue: 0, served: 0, perfect: 0, tips: 0, repStart: null, lost: 0, spent: 0, milestones: [], biz: {}, money: { in: {}, out: {} }, pnl: {}, used: {} }; }
 
 export function migrate(raw) {
   const d = defaultState();

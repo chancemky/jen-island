@@ -47,6 +47,30 @@ async function openGame(tag) {
   return { p, errors, ctx };
 }
 
+// click through dialogue, cutscenes, rewards and prompts like a very patient player
+function makePump(p) {
+  return async ms => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      await p.evaluate(() => {
+        const m = document.querySelector('.modal'); if (m) { const i = m.querySelector('input'); if (i && !i.value) i.value = 'Test'; m.querySelector('.btn')?.click(); }
+        document.querySelector('#skipBtn:not(.hidden)')?.click();
+        const r = document.querySelector('.reward button'); if (r) r.click();
+        for (const b of document.querySelectorAll('button')) if (/^(Yay!|Tuyệt!|Next day ☀|Ngày mới ☀|Let.s play!?|Chơi thôi!?)$/.test(b.textContent.trim())) b.click();
+        document.querySelector('.cs-continue')?.click();
+      }).catch(() => {});
+      const dlg = await p.evaluate(() => { const d = document.getElementById('dialog'); return d && !d.classList.contains('hidden') && !d.classList.contains('out') ? (document.querySelector('.dlg-choices button') ? 'choice' : 'text') : ''; }).catch(() => '');
+      if (dlg === 'text') await p.keyboard.press('e');
+      if (dlg === 'choice') await p.click('.dlg-choices button', { timeout: 500 }).catch(() => {});
+      await p.waitForTimeout(220);
+    }
+  };
+}
+async function reachFreeRoam(p, pump = makePump(p)) {
+  for (let i = 0; i < 60; i++) { await pump(2000); if (await p.evaluate(() => window.__jen?.G?.state?.story?.flags?.freeRoam)) return true; }
+  return false;
+}
+
 // ---------------------------------------------------------------- content
 if (only === 'all' || only === 'content') {
   console.log('content');
@@ -110,22 +134,7 @@ if (only === 'all' || only === 'story') {
     const el = document.getElementById('caption');
     new MutationObserver(() => { const m = el.textContent.match(/(?:Chapter|Chương) (\d+)/); if (m && el.classList.contains('on')) { const k = m[1] + '|' + el.textContent; if (window.__lastCard !== k) { window.__lastCard = k; window.__cards[m[1]] = (window.__cards[m[1]] || 0) + 1; } } }).observe(el, { childList: true, subtree: true, attributes: true });
   });
-  const pump = async ms => {
-    const t0 = Date.now();
-    while (Date.now() - t0 < ms) {
-      await p.evaluate(() => {
-        const m = document.querySelector('.modal'); if (m) { const i = m.querySelector('input'); if (i && !i.value) i.value = 'Test'; m.querySelector('.btn')?.click(); }
-        document.querySelector('#skipBtn:not(.hidden)')?.click();
-        const r = document.querySelector('.reward button'); if (r) r.click();
-        for (const b of document.querySelectorAll('button')) if (/^(Yay!|Tuyệt!|Next day ☀|Ngày mới ☀|Let.s play!?|Chơi thôi!?)$/.test(b.textContent.trim())) b.click();
-        document.querySelector('.cs-continue')?.click();
-      }).catch(() => {});
-      const dlg = await p.evaluate(() => { const d = document.getElementById('dialog'); return d && !d.classList.contains('hidden') && !d.classList.contains('out') ? (document.querySelector('.dlg-choices button') ? 'choice' : 'text') : ''; }).catch(() => '');
-      if (dlg === 'text') await p.keyboard.press('e');
-      if (dlg === 'choice') await p.click('.dlg-choices button', { timeout: 500 }).catch(() => {});
-      await p.waitForTimeout(220);
-    }
-  };
+  const pump = makePump(p);
   // reach free roam (arrival + tour)
   for (let i = 0; i < 60; i++) { await pump(2000); if (await p.evaluate(() => window.__jen?.G?.state?.story?.flags?.freeRoam)) break; }
   if (!(await p.evaluate(() => window.__jen.G.state.story.flags.freeRoam))) fail('story', 'never reached free roam after the tour');
@@ -205,6 +214,106 @@ if (only === 'all' || only === 'story') {
     for (const [k, v] of Object.entries(flags)) if (!v) fail('story', `flag ${k} missing at the end`);
   }
   if (errors.length) errors.slice(0, 10).forEach(e => fail('story', e)); else pass('story', 'no errors');
+  await ctx.close();
+}
+
+// ---------------------------------------------------------------- economy
+// The rules the economy promises, checked against the real data and a real day of trade.
+if (only === 'all' || only === 'economy') {
+  console.log('economy');
+  const { p, errors, ctx } = await openGame('econ');
+  await p.waitForFunction(() => window.__jen?.econ, null, { timeout: 20000 });
+  if (!(await reachFreeRoam(p))) fail('economy', 'never reached free roam');
+  const r = await p.evaluate(async () => {
+    const J = window.__jen, E = J.econ, G = J.G, s = G.state, out = { bad: [], info: {} };
+    const bad = m => out.bad.push(m);
+    // Chapter 1: the first repair is 230–260k and leaves enough for the first ingredients
+    const rep = Object.entries(E.BUSINESSES.shed1.repair).reduce((a, [k, n]) => a + E.MATERIALS[k].price * n, 0);
+    const firstStock = ['tea', 'kumquat', 'sugar', 'ice'].reduce((a, k) => a + E.INGREDIENTS[k].price, 0);
+    out.info.repair = rep; out.info.firstStock = firstStock;
+    if (rep < 230 || rep > 260) bad(`first repair costs ${rep}k (want 230–260k)`);
+    if (300 - rep < firstStock) bad(`after the repair ${300 - rep}k is left, the first ingredients cost ${firstStock}k`);
+    // margins by tier: early ≤ ch 3, mid ch 4–12, premium café/grill
+    for (const [id, R] of Object.entries(E.RECIPES)) {
+      const m = 1 - E.recipeCost(id) / R.price, tier = ['cafe', 'grill'].includes(R.biz) ? [0.5, 0.6] : R.chapter <= 3 ? [0.35, 0.47] : [0.44, 0.58];
+      if (m < tier[0] - 0.005 || m > tier[1] + 0.005) bad(`${id} margin ${(m * 100).toFixed(0)}% outside ${tier[0] * 100}–${tier[1] * 100}%`);
+    }
+    // property pays back in 40–70 days of rent
+    for (const [id, P] of Object.entries(E.PLACES)) { const d = E.propertyPrice(id) / P.rent; if (d < 40 || d > 70) bad(`${id} pays back in ${d.toFixed(0)} days`); }
+    // one price per business: Mèo Mây's key costs what the business costs
+    for (const [id, g] of Object.entries(E.GATES)) if (g.cost !== E.BUSINESSES[id].buy) bad(`${id} key ${g.cost} ≠ business price ${E.BUSINESSES[id].buy}`);
+    // price bonuses never stack past the cap
+    s.recipes = ['tra_tac', 'tra_dao']; s.recipeLevels.tra_tac = 3; s.biz.shed1.level = 5; s.biz.shed1.special = 'tra_tac'; s.biz.shed1.equip = { register: true };
+    if (E.priceBonus('shed1', 'tra_tac') > E.BONUS_CAP + 1e-9) bad('price bonuses stack past the cap');
+    s.recipeLevels = {}; s.biz.shed1.level = 1; s.biz.shed1.equip = {};
+    // toppings are charged; size L is a little more
+    s.recipes.push('tra_sua');
+    const plain = E.recipePrice('drinks' in s.biz ? 'shed1' : 'shed1', 'tra_sua', { size: 'M', topping: 'none' }), topped = E.recipePrice('shed1', 'tra_sua', { size: 'M', topping: 'cheese_foam' });
+    if (topped <= plain) bad('toppings add nothing to the price');
+    // demand curve is gentle: 130% price keeps at least 60% of the custom, 80% brings at most +40%
+    const a13 = Math.pow(1.3, -1.3), a08 = Math.pow(0.8, -1.3);
+    if (a13 < 0.6 || a08 > 1.4) bad('demand curve too steep');
+    // a real day of trade: a shopkeeper serves the drink stand; the books must add up
+    s.biz.shed1.owned = true; s.biz.shed1.repair = 1; s.recipes = ['tra_tac'];
+    for (const k of ['tea', 'kumquat', 'sugar', 'ice']) s.pantry[k] = 60;
+    s.story.chapter = Math.max(s.story.chapter, 6); s.time = 10 * 60; s.money = 5000;
+    s.keepers = { shed1: { name: 'Test', seed: 3, trait: 'careful', skill: 2, served: 0, today: 0 } };
+    J.openBiz('shed1');
+    const t0 = performance.now();
+    while (performance.now() - t0 < 25000 && (s.today.pnl.shed1?.sales || 0) < 60) { J.spawnCustomer('shed1'); await new Promise(r => setTimeout(r, 300)); }
+    const p0 = s.today.pnl.shed1 || {};
+    out.info.pnl = { ...p0 };
+    if (!(p0.sales > 0)) bad('no sales were recorded for the shop');
+    if (!(p0.cogs > 0) || p0.cogs >= p0.sales) bad(`cost of goods looks wrong: ${p0.cogs} for ${p0.sales} of sales`);
+    const sum = J.endDay();
+    out.info.sum = { net: sum.net, sales: sum.sales, tips: sum.tips, staff: sum.staff, spending: sum.books.spending };
+    if (!sum.books || typeof sum.net !== 'number') bad('the day summary has no books');
+    if (!sum.staff?.some(x => x.name === 'Test' && x.served > 0)) bad('the shopkeeper\'s contribution is missing from the summary');
+    if (!(sum.books.spending.wages > 0)) bad('shopkeeper wages were not filed under wages');
+    if (!s.usage?.shed1?.tea) bad('ingredient usage was not remembered for the supply runner');
+    const nw = E.netWorth(E.propertyPrice);
+    if (!(nw.total > nw.cash)) bad('net worth does not count what you own');
+    // stalls sell their own speciality only
+    s.recipes.push('banh_trang_nuong', 'che_ba_mau', 'oc_luoc');
+    const menu = id => J.bizRecipes(id).join(',');
+    if (menu('nm3') !== 'oc_luoc') bad('the snail stall sells ' + menu('nm3'));
+    if (menu('night').includes('oc_luoc')) bad('your first stall sells the snail family\'s speciality');
+    return out;
+  });
+  r.bad.forEach(m => fail('economy', m));
+  if (!r.bad.length) pass('economy', `first repair ${r.info.repair}k, first stock ${r.info.firstStock}k; a keeper's day: sales ${r.info.pnl.sales}k, food ${Math.round(r.info.pnl.cogs)}k, net today ${r.info.sum.net}k`);
+  if (errors.length) fail('economy', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('economy', 'no errors during a day of trade');
+  await ctx.close();
+}
+
+// ---------------------------------------------------------------- screens
+// Open every screen the economy and milestones feed, on a well-developed island, and make sure they draw.
+if (only === 'all' || only === 'ui') {
+  console.log('screens');
+  const { p, errors, ctx } = await openGame('ui');
+  if (!(await reachFreeRoam(p))) fail('ui', 'never reached free roam');
+  const out = await p.evaluate(async () => {
+    const J = window.__jen, s = J.G.state, res = {};
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    for (const id of ['shed1', 'shed2', 'truck', 'nm3', 'restaurant']) { s.biz[id].owned = true; s.biz[id].unlocked = true; s.biz[id].repair = 1; }
+    s.recipes = ['tra_tac', 'banh_mi_thit', 'goi_cuon', 'oc_luoc', 'pho_bo']; s.recipeLevels = { tra_tac: 3 };
+    s.keepers = { shed2: { name: 'Hạnh', seed: 5, trait: 'quick', skill: 3, served: 420, today: 34 } };
+    s.biz.restaurant.employees = [{ id: 'e1', seed: 9, name: 'Phúc', role: 'cook', trait: 'steady', stats: { speed: 3, cooking: 4, service: 2, reliability: 3 }, today: { cooked: 12 }, work: 40 }];
+    s.property = { house: true }; s.stats.served = 300; s.stats.perfect = 90; s.lifetime = 20000; s.story.chapter = Math.max(s.story.chapter, 12); s.money = 4000;
+    s.explored = { 'Wind Plaza': true, 'Sunny Beach': true }; s.pets = [];
+    const txt = () => [...document.querySelectorAll('.sheet-wrap:not(.out) .sheet')].pop()?.innerText || '';
+    const close = async () => { [...document.querySelectorAll('.sheet-wrap:not(.out) .x')].pop()?.click(); await wait(400); };
+    J.openMenu({ tab: 1 }); await wait(700); res.office = txt(); await close();
+    J.openMenu({ tab: 2 }); await wait(700); res.miles = txt(); await close();
+    J.openStaffBoard(); await wait(600); res.staff = txt(); await close();
+    const sum = J.endDay(); res.sum = { net: sum.net, staff: sum.staff.length };
+    return res;
+  });
+  const need = [['office', /Net worth|Tổng tài sản/], ['office', /The books|Sổ sách/], ['office', /Hạnh/], ['office', /pays back in|hoàn vốn/], ['miles', /tier \d+ of \d+|bậc \d+\/\d+/], ['miles', /Island secrets|Bí mật/], ['staff', /Phúc/], ['staff', /cooked|nấu/]];
+  for (const [k, re] of need) if (!re.test(out[k])) fail('ui', `${k} screen is missing ${re}`);
+  if (out.sum.staff < 2) fail('ui', 'the day summary lost the team report');
+  if (!need.some(([k, re]) => !re.test(out[k]))) pass('ui', 'business, milestones and staff screens draw their new content');
+  if (errors.length) fail('ui', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('ui', 'no errors on the screens');
   await ctx.close();
 }
 

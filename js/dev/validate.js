@@ -2,13 +2,14 @@
 // and in the automated test suite (tests/run.mjs), so broken data never ships.
 // Each check returns human-readable problems; an empty list means all good.
 
-import { INGREDIENTS, PREPPED, PREP_VERB, STATION, RECIPES, BUSINESSES, MATERIALS, OPTIONS, ACHIEVEMENTS, CHAPTERS, FURNITURE, VY_VIEWS } from '../data/game.js';
+import { INGREDIENTS, PREPPED, PREP_VERB, STATION, RECIPES, BUSINESSES, MATERIALS, OPTIONS, ACHIEVEMENTS, CHAPTERS, FURNITURE, VY_VIEWS, recipeCost } from '../data/game.js';
 import { RESIDENTS, MERCHANTS } from '../data/looks.js';
 import { hasIcon } from '../gfx/food.js';
 import { STEPS } from '../systems/story.js';
 import { SIDE_QUESTS } from '../systems/sidequests.js';
 import { PLACES } from '../systems/economy.js';
 import { TRACKS } from '../systems/progress.js';
+import { CLOTHES } from '../data/wardrobe.js';
 import { BUILDINGS } from '../world/island.js';
 
 export function validateContent(scenes = null) {
@@ -48,6 +49,10 @@ export function validateContent(scenes = null) {
     if (b.chapter && (b.chapter < 1 || b.chapter > 20)) bad('business', `${id} opens in impossible chapter ${b.chapter}`);
     if (!BUILDINGS.some(x => x.id === id || x.biz === id) && !['nm1', 'nm2', 'nm3', 'nm5', 'nm6', 'night'].includes(id)) bad('business', `${id} has no building on the island`);
   }
+  for (const [id, b] of Object.entries(BUSINESSES)) for (const r of b.menu || []) { if (!RECIPES[r]) bad('business', `${id} menu has unknown recipe ${r}`); else if (RECIPES[r].biz !== b.biz) bad('business', `${id} menu recipe ${r} belongs to ${RECIPES[r].biz}`); }
+  for (const [id, r] of Object.entries(RECIPES)) if (r.stallOnly && !Object.values(BUSINESSES).some(b => b.menu?.includes(id))) bad('recipe', `${id} is stall-only but no stall sells it`);
+  // economy sanity: every dish earns more than its ingredients cost
+  for (const [id, r] of Object.entries(RECIPES)) { const c = recipeCost(id); if (c >= r.price * 0.7) bad('economy', `${id} costs ${c.toFixed(1)}k to make but sells for ${r.price}k`); }
   for (const b of BUILDINGS) if (b.biz && !BUSINESSES[b.biz]) bad('building', `${b.id} points at missing business ${b.biz}`);
   if (scenes) for (const b of BUILDINGS) if (b.interior && !scenes[b.interior]) bad('building', `${b.id} opens into missing interior ${b.interior}`);
   // ---- properties
@@ -83,9 +88,13 @@ export function validateContent(scenes = null) {
   for (const [id, f] of Object.entries(FURNITURE)) if (!(f.price > 0)) bad('furniture', `${id} has no price`);
   // ---- milestones: a finite track may never ask for more than exists
   for (const tr of TRACKS) {
-    if (!tr.max) continue;
-    const maxNeed = tr.tier(99);
-    if (tr.finite && maxNeed !== Infinity && maxNeed > tr.max()) bad('milestone', `${tr.id} can ask for ${maxNeed} but only ${tr.max()} exist`);
+    if (!tr.finite) continue;
+    const tiers = tr.tiers(), top = tiers[tiers.length - 1];
+    if (top > tr.max()) bad('milestone', `${tr.id} can ask for ${top} but only ${tr.max()} exist`);
+    if (tr.tier(tiers.length) !== Infinity) bad('milestone', `${tr.id} keeps going after its last tier`);
+    for (let i = 1; i < tiers.length; i++) if (tiers[i] <= tiers[i - 1]) bad('milestone', `${tr.id} tiers are not increasing`);
   }
+  for (const tr of TRACKS) for (const g of Object.values(tr.gifts || {})) { if (g.furniture && !FURNITURE[g.furniture]) bad('milestone', `${tr.id} gives unknown furniture ${g.furniture}`); if (g.clothes && !CLOTHES[g.clothes]) bad('milestone', `${tr.id} gives unknown clothes ${g.clothes}`); }
+  for (const [id, a] of Object.entries(ACHIEVEMENTS)) if (a.hidden && !a.hint) bad('achievement', `secret ${id} has no hint`);
   return out;
 }

@@ -10,7 +10,9 @@ import { escapeHtml, clock, TAU } from '../core/util.js';
 import { openJournal } from './shops.js';
 import { currentStep } from '../systems/story.js';
 import { CHAPTERS, BUSINESSES } from '../data/game.js';
-import { TRACKS, trackState, claimMilestone, xpNeed } from '../systems/progress.js';
+import { TRACKS, trackState, claimMilestone, xpNeed, trackGift } from '../systems/progress.js';
+import { FURNITURE } from '../data/game.js';
+import { CLOTHES } from '../data/wardrobe.js';
 import { renderChangelog } from './whatsnew.js';
 import { iconURL } from '../gfx/food.js';
 import { mountMap } from './worldmap.js';
@@ -24,14 +26,35 @@ function renderMilestones(pane, api) {
   const lv = s.level || 1;
   const head = h('div', 'ms-row', `<img src="${iconURL('trophy', 48)}" alt=""><div class="ms-info"><b>${T(`Level ${lv}`, `Cấp ${lv}`)}</b><small>${T(`${Math.floor(s.xp || 0)} / ${xpNeed(lv)} XP to level ${lv + 1}`, `${Math.floor(s.xp || 0)} / ${xpNeed(lv)} KN để lên cấp ${lv + 1}`)}</small><div class="ms-bar"><i style="width:${Math.min(100, (s.xp || 0) / xpNeed(lv) * 100)}%"></i></div></div>`);
   pane.appendChild(head);
-  const list = TRACKS.map(tr => ({ tr, st: trackState(tr) })).sort((a, b) => b.st.ready - a.st.ready);
+  const list = TRACKS.map(tr => ({ tr, st: trackState(tr) })).sort((a, b) => b.st.ready - a.st.ready || a.st.completed - b.st.completed);
+  const done = list.filter(x => x.st.completed).length;
+  if (done) pane.appendChild(h('div', 'empty-note', T(`${done} milestone${done > 1 ? 's' : ''} completed ✓`, `Đã hoàn thành ${done} cột mốc ✓`)));
   for (const { tr, st } of list) {
     const fmt = v => tr.money ? money(v) : v;
+    const gift = st.completed ? null : trackGift(tr, st.claimed);
+    const giftName = gift?.furniture ? T(FURNITURE[gift.furniture]?.en, FURNITURE[gift.furniture]?.vi) : gift?.clothes ? T(CLOTHES[gift.clothes]?.en, CLOTHES[gift.clothes]?.vi) : '';
+    if (st.completed) {
+      pane.appendChild(h('div', 'ms-row done', `<img src="${iconURL(tr.icon, 48)}" alt=""><div class="ms-info"><b>${escapeHtml(T(tr.en, tr.vi))} <span class="ms-badge">✓ ${T('COMPLETED', 'HOÀN THÀNH')}</span></b><small>${fmt(st.val)} · ${T(`all ${st.total} tiers`, `cả ${st.total} bậc`)}</small><div class="ms-bar"><i style="width:100%"></i></div></div>`));
+      continue;
+    }
     const k = Math.min(1, (st.val - st.prev) / Math.max(1, st.target - st.prev));
-    const row = h('div', 'ms-row' + (st.ready ? ' ready' : ''), `<img src="${iconURL(tr.icon, 48)}" alt=""><div class="ms-info"><b>${escapeHtml(T(tr.en, tr.vi))} · ${T('tier', 'bậc')} ${st.claimed + 1}</b><small>${fmt(Math.min(st.val, st.target))} / ${fmt(st.target)}</small><div class="ms-bar"><i style="width:${(Math.max(0, k) * 100).toFixed(1)}%"></i></div></div>`);
-    if (st.ready) row.appendChild(btn(T('Claim', 'Nhận'), () => { const r = claimMilestone(tr.id); if (!r) return; sfx('fanfare'); showReward({ icon: tr.icon, title: T('Milestone!', 'Cột mốc!'), text: T(`${tr.en}: ${fmt(st.target)}`, `${tr.vi}: ${fmt(st.target)}`), sub: `+${money(r.money)} · +${r.xp} XP` }).then(() => api.rebuild()); }, 'buy pink'));
+    const tierTxt = st.total ? T(`tier ${st.claimed + 1} of ${st.total}`, `bậc ${st.claimed + 1}/${st.total}`) : T(`tier ${st.claimed + 1}`, `bậc ${st.claimed + 1}`);
+    const row = h('div', 'ms-row' + (st.ready ? ' ready' : ''), `<img src="${iconURL(tr.icon, 48)}" alt=""><div class="ms-info"><b>${escapeHtml(T(tr.en, tr.vi))} · ${tierTxt}</b><small>${fmt(Math.min(st.val, st.target))} / ${fmt(st.target)}${giftName ? ` · 🎁 ${escapeHtml(giftName)}` : ''}</small><div class="ms-bar"><i style="width:${(Math.max(0, k) * 100).toFixed(1)}%"></i></div></div>`);
+    if (st.ready) row.appendChild(btn(T('Claim', 'Nhận'), () => {
+      const r = claimMilestone(tr.id); if (!r) return; sfx('fanfare');
+      const extra = [r.gift ? T(`🎁 ${r.gift}`, `🎁 ${r.gift}`) : '', r.completed ? T('✓ Completed!', '✓ Hoàn thành!') : ''].filter(Boolean).join(' · ');
+      showReward({ icon: tr.icon, kicker: meoCheer(r.completed), title: r.completed ? T('Milestone completed!', 'Hoàn thành cột mốc!') : T('Milestone!', 'Cột mốc!'), text: T(`${tr.en}: ${fmt(st.target)}`, `${tr.vi}: ${fmt(st.target)}`) + (extra ? '\n' + extra : ''), sub: `+${money(r.money)} · +${r.xp} XP` }).then(() => api.rebuild());
+    }, 'buy pink'));
     pane.appendChild(row);
   }
+}
+// Mèo Mây has an opinion about every milestone
+function meoCheer(completed) {
+  const L = completed
+    ? [['Mèo Mây: "All of them?! I\'m writing this in my notebook. In gold ink."', 'Mèo Mây: "Hết luôn rồi á?! Mình ghi vào sổ tay. Bằng mực vàng."'], ['Mèo Mây: "Completed! I\'m doing my victory spin. You can\'t see it, but it\'s beautiful."', 'Mèo Mây: "Hoàn thành! Mình đang xoay vòng chiến thắng. Bạn không thấy, nhưng đẹp lắm."']]
+    : [['Mèo Mây: "Another one! My tail is doing the happy thing."', 'Mèo Mây: "Thêm một cái nữa! Đuôi mình đang vẫy vui nè."'], ['Mèo Mây: "I knew you could. I said so to a seagull this morning."', 'Mèo Mây: "Mình biết bạn làm được mà. Sáng nay mình còn kể với con hải âu."'], ['Mèo Mây: "Proud of you. Also, is that fish I smell? No? Still proud."', 'Mèo Mây: "Tự hào về bạn. Mà có mùi cá không? Không à? Vẫn tự hào."']];
+  const p = L[Math.floor(Math.random() * L.length)];
+  return T(p[0], p[1]);
 }
 
 function renderLeaderboard(pane) {

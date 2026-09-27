@@ -2,7 +2,7 @@
 // with friendship and story progress; talking once a day builds friendship.
 // Every line exists in English and Vietnamese: [en, vi].
 
-import { G, T, markDirty } from './state.js';
+import { G, T, markDirty, unlockAchievement } from './state.js';
 import { recipeName, ROLES } from '../data/game.js';
 import { say } from '../ui/dialogue.js';
 import { choice } from '../core/util.js';
@@ -88,6 +88,10 @@ export async function talkToResident(a) {
   await residentMenu(a, rid, () => say(a, line));
   const key = 'talk:' + rid;
   if (s.story.flags[key] !== s.day) { s.story.flags[key] = s.day; s.friends[rid] = f + 1; markDirty(); }
+  // said hello to everyone on the island today?
+  const talked = (s.today.talked ||= {}); talked[rid] = 1;
+  const here = (G.npcs?.residents || []).map(r => r.data.rid).filter(Boolean);
+  if (here.length >= 6 && here.every(r => talked[r])) unlockAchievement('social_day');
   a.data.until = Math.max(a.data.until || 0, s.time + 3);
 }
 export async function talkToMerchant(a) {

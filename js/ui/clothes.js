@@ -56,7 +56,7 @@ export function openBoutique() {
       const ids = Object.keys(CLOTHES).filter(k => CLOTHES[k].slot === slot && !FREE_CLOTHES.includes(k)).sort((a, b) => (CLOTHES[a].lv || 0) - (CLOTHES[b].lv || 0) || CLOTHES[a].price - CLOTHES[b].price);
       for (const id of ids) {
         const it = CLOTHES[id], own = w.owned.includes(id), locked = level() < (it.lv || 0);
-        const note = own ? T('In your wardrobe ✓', 'Đã có trong tủ ✓') : locked ? T(`Unlocks at level ${it.lv}`, `Mở ở cấp ${it.lv}`) : money(it.price);
+        const note = own ? T('In your wardrobe ✓', 'Đã có trong tủ ✓') : locked ? T(`Unlocks at level ${it.lv}`, `Mở ở cấp ${it.lv}`) : money(it.price) + (it.luxury ? T(' · ✦ Rare piece', ' · ✦ Hàng hiếm') : '');
         const b = own ? null : btn(money(it.price), (el) => {
           if (!canAfford(it.price)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
           addMoney(-it.price, 'clothes'); w.owned.push(id); w[slot] = id; addXP(10, 'clothes');

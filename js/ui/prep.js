@@ -15,7 +15,7 @@ import { toast } from './hud.js';
 import { releaseJoystick } from '../core/input.js';
 
 let P = null;
-const METHOD = { chop: 'board', split: 'board', scoop: 'board', grill: 'grill', fry: 'pan', boil: 'pot', whip: 'pot' };
+const METHOD = { chop: 'board', split: 'board', scoop: 'board', grill: 'grill', fry: 'pan', boil: 'pot', whip: 'pot', press: 'board' };
 
 export function isPrepOpen() { return !!P; }
 export function openPrep(bizId, { onClose } = {}) {
@@ -103,7 +103,7 @@ function tapStation() {
   const m = INGREDIENTS[P.item].prep.method;
   P.stage = 'done'; P.anim = 0; P.chopT = 0.35;
   sfx(m === 'grill' || m === 'fry' ? 'sizzle' : m === 'boil' ? 'splash' : m === 'whip' ? 'blend' : 'chop');
-  if (m === 'chop' || m === 'split' || m === 'scoop') { setTimeout(() => sfx('chop'), 90); setTimeout(() => sfx('chop'), 180); }
+  if (m === 'chop' || m === 'split' || m === 'scoop' || m === 'press') { setTimeout(() => sfx('chop'), 90); setTimeout(() => sfx('chop'), 180); }
   for (let i = 0; i < 14; i++) P.parts.push({ x: 0, y: 0, vx: (Math.random() - 0.5) * 220, vy: -80 - Math.random() * 140, life: 0, col: m === 'grill' || m === 'fry' ? '#ffffff' : ['#ffe07a', '#b9e08a', '#fff'][i % 3], smoke: m === 'grill' || m === 'fry' });
   hint();
 }
@@ -161,7 +161,7 @@ export function updatePrep(dt, t) {
     ICONS[id]?.(c, P.t);
     c.setTransform(1, 0, 0, 1, 0, 0); c.translate(cv.width / 2, cv.height / 2);
     // knife flash while chopping
-    if (P.chopT > 0 && (g.prep.method === 'chop' || g.prep.method === 'split' || g.prep.method === 'scoop')) {
+    if (P.chopT > 0 && (g.prep.method === 'chop' || g.prep.method === 'split' || g.prep.method === 'scoop' || g.prep.method === 'press')) {
       const a = Math.floor(P.chopT * 30) % 2;
       c.save(); c.rotate(-0.5); c.translate(40, -40 - a * 16); c.scale(3, 3); ICONS.knife(c); c.restore();
     }

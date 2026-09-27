@@ -7,7 +7,7 @@
 import { G, T, flag, setFlag, hasMats, spendMats, addMoney, canAfford, learnRecipe, unlockAchievement, markDirty, bizOf, pantry, mats, addRep } from './state.js';
 import { ingName, matName, bizName, recipeName } from '../data/game.js';
 import { BUSINESSES, RECIPES, CHAPTERS, NIGHT_MARKET_RESTORE, STATUE_COST, STATION, BRIDGE_REPAIR, VY_VIEWS, HARBOUR_BRIDGE, COVE_BRIDGE, FESTIVAL_REQ, KEEPER_REQ } from '../data/game.js';
-import { keeperOf, keeperActor, staffedCount, PLACES, propertyPrice } from './economy.js';
+import { keeperOf, keeperActor, staffedCount, PLACES, propertyPrice, upgradeCost } from './economy.js';
 import { cs, wait, say, ask, camTo, camFollow, walk, face, emote, hop, startFollow, stopFollow, caption } from './cutscene.js';
 import { scenes, setScene, fadeOut, fadeIn } from './scenes.js';
 import { cam, fx } from '../world/render.js';
@@ -544,7 +544,7 @@ export async function upgradeScene(bizId, lv) {
   const inside = G.scene.id !== 'island';
   await cs.run('upgrade', async () => {
     G.runtime.inCutscene = true;
-    addMoney(-u.cost, 'upgrade'); spendMats(u.mats);
+    addMoney(-upgradeCost(bizId, lv), 'upgrade'); spendMats(u.mats);
     if (inside) { await fadeOut(300); }
     const bld = B(bizId), pl = G.player;
     const back = inside ? { id: G.scene.id, x: pl.x, y: pl.y } : null;
@@ -733,7 +733,7 @@ export async function buyScene(bizId) {
   const def = BUSINESSES[bizId], b = bizOf(bizId), bld = B(bizId);
   await cs.run('buy:' + bizId, async () => {
     G.runtime.inCutscene = true;
-    addMoney(-def.buy, 'buy');
+    addMoney(-def.buy, 'business');
     b.owned = true; b.unlocked = true; if (!def.repair) b.repair = 1;
     markDirty(true);
     await camTo(bld.x, bld.y - 50, { zoom: bizId === 'restaurant' ? 0.95 : 1.3, rate: 2.4 });
@@ -1190,6 +1190,9 @@ export function updateMeo(dt) {
   if (st.time < (m.data.until || 0)) {
     // idle: look at the player when near, occasionally hop or sit
     const pd = G.scene === island() ? dist(m.x, m.y, G.player.x, G.player.y) : 999;
+    // found her napping somewhere new?
+    if (m.data.outNap && pd < 60) { const naps = (st.meoNaps ||= {}); if (!naps[m.data.outNap]) { naps[m.data.outNap] = true; markDirty(); if (Object.keys(naps).length >= 4) unlockAchievement('meo_naps'); } }
+    if (m.data.outNap) return;
     if (pd < 70) { if (!m.act) m.face(G.player); if (!m.data.waved) { m.data.waved = true; m.setAct('wave'); setTimeout(() => m.act === 'wave' && m.setAct(null), 1200); } }
     else m.data.waved = false;
     // silly antics when you're around to see them
@@ -1205,6 +1208,7 @@ export function updateMeo(dt) {
   else if (st.nightMarket.restored && h >= 17.5) spot = choice(MEO_SPOTS.nightmarket);
   else spot = choice([...MEO_SPOTS.plaza, ...MEO_SPOTS.beach, ...MEO_SPOTS.market]);
   m.sit = false;
+  if (m.data.outNap) { m.data.outNap = null; m.setAct(null); m.emote = null; }
   m.data.goal = 'walk';
   if (spot !== MEO_SPOTS.dock[0]) m.data.lastSpot = null;
   // stay a while wherever she ends up, even if the walk was interrupted, so she never paces
@@ -1213,6 +1217,9 @@ export function updateMeo(dt) {
     m.data.until = G.state.time + (ok ? rand(25, 60) : rand(8, 15));
     if (!ok) return;
     m.face('down');
+    // lazy afternoons: a nap wherever she happens to be (can you find all her favourite spots?)
+    const hh = G.state.time / 60;
+    if (hh >= 13.5 && hh < 16.5 && Math.random() < 0.45) { m.sit = true; m.setAct('sleep'); m.showEmote('zzz', 60); m.data.outNap = `${Math.round(spot[0] / 150)},${Math.round(spot[1] / 150)}`; m.data.until = G.state.time + rand(40, 70); return; }
     if (Math.random() < 0.5) m.sit = true;
   });
 }
