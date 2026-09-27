@@ -7,6 +7,7 @@ import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
 import { G } from './state.js';
 import { dist, sleep } from '../core/util.js';
 import { sfx } from '../core/audio.js';
+import { clearLoad } from '../gfx/hammock.js';
 
 // seat spots per prop kind: offset from the prop's base, and the seat height
 const KINDS = {
@@ -35,7 +36,7 @@ export function seatsIn(scene) {
     const k = kindOf(p), defs = KINDS[k];
     if (!defs || p.noBack || p.hidden?.()) continue;
     const x = p.homeFurn ? p.homeFurn.x : p.x, y = p.homeFurn ? p.homeFurn.y : p.y;
-    for (const d of defs) out.push({ x: x + d.dx, y: y + d.dy, h: d.h, lie: !!d.lie, prop: p });
+    for (const d of defs) out.push({ x: x + d.dx, y: y + d.dy, h: d.h, lie: !!d.lie, dx: d.dx, dy: d.dy, kind: k, rot: p.homeFurn?.rot || 0, prop: p });
   }
   return out;
 }
@@ -90,7 +91,7 @@ export async function sitDown(s) {
     await hopOnto(pl, s);
     pl.seat = s; pl.setEmo('happy', 1.2);
     if (s.lie) {                                          // settle back into the hammock
-      pl.lie = { h: s.h, k: 0 };
+      pl.lie = { h: s.h, k: 0, kind: s.kind, rot: s.rot, dx: s.dx, dy: s.dy, prop: s.prop };
       for (let i = 0; i <= 12; i++) { pl.lie.k = i / 12; await sleep(22); }
       sfx('pop');
     }
@@ -101,7 +102,7 @@ export async function standUp() {
   busy = true;
   try {
     const s = pl.seat; pl.seat = null;
-    if (pl.lie) { for (let i = 12; i >= 0; i--) { pl.lie.k = i / 12; await sleep(18); } pl.lie = null; }
+    if (pl.lie) { for (let i = 12; i >= 0; i--) { pl.lie.k = i / 12; await sleep(18); } clearLoad(pl.lie.prop); pl.lie = null; }
     await hopOff(pl, s);
   } finally { releaseInput('seat'); busy = false; }
 }

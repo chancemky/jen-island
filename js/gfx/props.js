@@ -5,6 +5,7 @@
 import { TAU, shade, rng } from '../core/util.js';
 import { T, tr } from '../systems/state.js';
 import { INK, ell, circ, box, poly, line, limb, shadow, glow, text, stext, flower } from './draw.js';
+import { drawHammock } from './hammock.js';
 
 // Shared night-light factor (0 day … 1 night), set by the time system each frame.
 export const LIGHT = { night: 0, dusk: 0, wind: 1 };
@@ -659,15 +660,7 @@ export function sandcastle(c, t, p) {
   box(c, -4.5, -20, 9, 14, 1, '#efd8a6'); poly(c, [0, -30, 0, -24, 5, -27], '#f28f7c', INK, 0.6); line(c, 0, -30, 0, -20, INK, 0.7);
   box(c, 16, -9, 7, 9, 1.5, '#6fbfb0'); c.beginPath(); c.arc(19.5, -9, 3.5, Math.PI, TAU); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
 }
-export function beachHammock(c, t, p) {
-  const sw = Math.sin(t * 1.2 + p.x) * 3 + wind(p.x, t) * 2;
-  const w = p.w || 64;
-  for (const x of [-w / 2, w / 2]) { shadow(c, x, 1, 4, 1.6, 0.16); limb(c, [x, 0, x, -38], 3, '#a8764a'); }
-  c.beginPath(); c.moveTo(-w / 2, -30); c.quadraticCurveTo(sw, -6, w / 2, -30); c.quadraticCurveTo(sw, -16, -w / 2, -30);
-  c.fillStyle = '#f28f7c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
-  c.strokeStyle = '#fff5df'; c.lineWidth = 1.2; for (let i = 1; i < 6; i++) { const x = -w / 2 + i * w / 6; c.beginPath(); c.moveTo(x, -28 + Math.sin(i / 6 * Math.PI) * 14 - 2); c.lineTo(x + sw * 0.2, -26 + Math.sin(i / 6 * Math.PI) * 14 + 4); c.stroke(); }
-  shadow(c, sw * 0.5, 4, 24, 5, 0.12);
-}
+export function beachHammock(c, t, p) { drawHammock(c, t, p, 'beachHammock'); }
 export function boatShore(c, t, p) {
   shadow(c, 0, 2, 34, 7, 0.16);
   c.save(); c.rotate(-0.08); c.scale(p.flip ? -1 : 1, 1);

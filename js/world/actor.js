@@ -4,6 +4,7 @@
 import { clamp, rand, TAU } from '../core/util.js';
 import { drawHuman, drawEmote } from '../gfx/character.js';
 import { drawCat } from '../gfx/cat.js';
+import { drawLying } from '../gfx/hammock.js';
 
 let nextId = 1;
 
@@ -126,13 +127,7 @@ export class Actor {
     if (this.alpha !== undefined) c.globalAlpha = this.alpha;
     if (this.kind === 'cat') drawCat(c, this, t);
     else if (this.kind === 'pet') this.petDraw?.(c, this, t);
-    else if (this.lie) {
-      // lying back in a hammock: rotate the whole body a quarter turn, rocking with the hammock
-      const k = this.lie.k, e = k * k * (3 - 2 * k), rock = Math.sin(t * 1.2 + this.x) * 3 * e;
-      c.translate(rock + 18 * e, -this.lie.h * e - (1 - e) * this.lie.h * 0.6);
-      c.rotate(-Math.PI / 2 * e + Math.sin(t * 1.2) * 0.03 * e);
-      drawHuman(c, { ...this, sit: false, seatH: undefined, moving: 0, dir: 'down', yawOverride: 0, emo: e > 0.8 ? 'happy' : this.emo, blinkAmt: e > 0.9 ? 1 : this.blinkAmt, act: null }, t);
-    }
+    else if (this.lie?.prop) drawLying(c, this, t);        // lying in a hammock (gfx/hammock.js)
     else drawHuman(c, this, t);
     c.restore();
   }

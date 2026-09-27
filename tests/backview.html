@@ -1,0 +1,26 @@
+<!doctype html><body style="margin:0;background:#a3d68a"><canvas id=c></canvas><script type=module>
+// Back-view sheet: every haircut, hat and accessory from behind, the back three-quarters
+// and the side — to catch hair, hats or gear cutting through the head or neck.
+// ?set=hair|hats|gear  &z=zoom  &ids=a,b  &hair=style (for hats/gear)
+import '../js/systems/state.js';
+import { drawHuman } from '../js/gfx/character.js';
+import { playerLook } from '../js/data/looks.js';
+import { HAIRCUTS } from '../js/data/hair.js';
+import { CLOTHES } from '../js/data/wardrobe.js';
+const q = new URLSearchParams(location.search), set = q.get('set') || 'hair', Z = +(q.get('z') || 3);
+let items;
+if (set === 'hair') items = Object.keys(HAIRCUTS).map(id => [id, { hairStyle: id }]);
+else { const slot = set === 'hats' ? 'hat' : 'extra'; items = Object.entries(CLOTHES).filter(([, v]) => v.slot === slot && Object.keys(v.look).length).map(([id, v]) => [id, { hairStyle: q.get('hair') || 'long', ...v.look }]); }
+if (q.get('ids')) { const want = q.get('ids').split(','); items = items.filter(([id]) => want.includes(id)); }
+const yaws = (q.get('yaws') || 'pi,0.75pi,-0.75pi,0.5pi,0').split(',').map(s => s.includes('pi') ? (parseFloat(s) || (s[0] === '-' ? -1 : 1)) * Math.PI : +s);
+const cols = +(q.get('cols') || 4), CW = 30, RH = 56, per = yaws.length;
+const cv = document.getElementById('c'); cv.width = cols * per * CW * Z; cv.height = Math.ceil(items.length / cols) * RH * Z; const c = cv.getContext('2d'); c.lineJoin = 'round'; c.lineCap = 'round';
+items.forEach(([id, o], i) => yaws.forEach((yw, j) => {
+  const L = { ...playerLook({ hairStyle: o.hairStyle, hair: '#6e4430' }), ...o }; delete L._v;
+  const x = ((i % cols) * per + j) * CW + CW / 2, y = Math.floor(i / cols) * RH + 50;
+  c.save(); c.setTransform(Z, 0, 0, Z, x * Z, y * Z); drawHuman(c, { look: L, dir: 'up', yawOverride: yw, moving: 0, seed: 1, actT: 0.3 }, 0.3); c.restore();
+}));
+c.fillStyle = '#000'; c.font = `${Math.round(3.4 * Z)}px sans-serif`;
+items.forEach(([id], i) => c.fillText(id, ((i % cols) * per) * CW * Z + 4, (Math.floor(i / cols) * RH + 5) * Z));
+window.done = 1;
+</script>

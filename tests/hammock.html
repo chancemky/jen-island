@@ -1,0 +1,28 @@
+<!doctype html><body style="margin:0;background:#e9d9b8"><canvas id=c></canvas><script type=module>
+// Lying in a hammock: the home hammock, a beach hammock and a turned one, for a few looks,
+// fully settled and halfway in. ?z=zoom
+import '../js/systems/state.js';
+import { drawLying } from '../js/gfx/hammock.js';
+import { F } from '../js/gfx/furniture.js';
+import { beachHammock } from '../js/gfx/props.js';
+import { drawSide } from '../js/gfx/furniture.js';
+import { playerLook, RESIDENTS } from '../js/data/looks.js';
+const q = new URLSearchParams(location.search), Z = +(q.get('z') || 3);
+const looks = [playerLook({ hairStyle: 'long' }), playerLook({ hairStyle: 'pony', gender: 'f' }), { ...playerLook({ hairStyle: 'short' }), hat: 'cap', hatColor: '#6f9fc8', shoeStyle: 'sandal', shoe: '#f28f7c' }, RESIDENTS.chu_hai.look];
+const setups = [['hammock', 0, 1], ['beachHammock', 0, 1], ['hammock', 0, 0.5], ['hammock', 1, 1]];
+const CW = 90, RH = 70, cv = document.getElementById('c'); cv.width = setups.length * CW * Z; cv.height = looks.length * RH * Z;
+const c = cv.getContext('2d'); c.lineJoin = 'round'; c.lineCap = 'round';
+const t = 1.3;
+function frame() {
+  c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#e9d9b8'; c.fillRect(0, 0, cv.width, cv.height);
+  looks.forEach((L, li) => setups.forEach(([kind, rot, k], si) => {
+    const px = si * CW + CW / 2, py = li * RH + 60, prop = { kind, x: 500 + si * 100 + li, y: 300 + li * 50, w: kind === 'beachHammock' ? 64 : undefined };
+    c.setTransform(Z, 0, 0, Z, px * Z, py * Z);
+    if (rot % 2) drawSide(c, 'hammock', t); else if (kind === 'beachHammock') beachHammock(c, t, prop); else F.hammock(c, t, prop);
+    const a = { look: L, x: 0, y: 0, seed: 3, emo: 'neutral', blinkAmt: 0, lie: { k, h: 15, kind, rot, dx: 0, dy: 1.5, prop } };
+    c.translate(0, 1.5); drawLying(c, a, t);
+  }));
+}
+frame(); frame();
+window.done = 1;
+</script>

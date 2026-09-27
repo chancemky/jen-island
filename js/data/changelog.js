@@ -3,9 +3,22 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.1.3';
+export const APP_VERSION = '5.1.4';
 
 export const CHANGELOG = [
+  {
+    v: '5.1.4', date: '2026-09-27T10:42:12Z',
+    title: ['Swing Low', 'Đưa Võng'],
+    items: [
+      ['Lying in a hammock looks real now: you lie back in a gentle curve with your head propped up, hands folded on your tummy and feet up — sinking into the fabric, which sags under you and sways with you', 'Nằm võng giờ trông thật hơn: bạn ngả lưng theo đường cong võng, đầu hơi kê cao, tay đặt trên bụng, chân duỗi ra — lún vào tấm võng, võng võng xuống và đung đưa theo bạn'],
+      ['A hammock turned sideways in your house wraps round you like a cocoon, with just your head and shoulders peeking out', 'Võng đặt xoay ngang trong nhà sẽ ôm lấy bạn như cái kén, chỉ ló đầu và vai ra'],
+      ['Ponytails, braids and twin tails hang properly down your back when you walk away — no more ponytail hidden under your head', 'Tóc đuôi ngựa, bím tóc và tóc buộc hai bên giờ buông xuống lưng đúng cách khi bạn quay lưng — không còn đuôi tóc bị giấu dưới đầu'],
+      ['Buns, space buns, the half-up bun and afro puffs sit on top of your hair from behind; spiky hair is spiky from every side', 'Búi tóc, búi hai bên, búi nửa đầu và búi xù giờ nằm trên tóc khi nhìn từ phía sau; tóc dựng thì dựng từ mọi phía'],
+      ['From behind and three-quarters behind you now see the back of the head (hair and ears), not a face peeking over the edge', 'Nhìn từ phía sau và chéo phía sau giờ thấy gáy (tóc và tai), không còn khuôn mặt ló ra ở mép đầu'],
+      ['Long hair flows out from under hats instead of stopping at the neck; cat ears show over your head from behind; the chef hat sits on your head', 'Tóc dài giờ xõa ra từ dưới mũ thay vì dừng ở cổ; tai mèo ló lên trên đầu khi nhìn từ sau; mũ đầu bếp đội vừa khít trên đầu'],
+      ['Backpacks and guitars sit over long hair when seen from behind, and the guitar stays on the same shoulder from every side', 'Ba lô và đàn ghi-ta nằm trên mái tóc dài khi nhìn từ phía sau, và cây đàn luôn ở cùng một bên vai dù nhìn từ phía nào'],
+    ],
+  },
   {
     v: '5.1.3', date: '2026-09-27T09:56:19Z',
     title: ['Every Tap Counts', 'Chạm Là Ăn Ngay'],

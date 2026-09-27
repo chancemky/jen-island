@@ -38,7 +38,7 @@ On `localhost` only:
 | chaos (`npm run test:chaos`, not in `npm test`) | Chapters 1→20 with an impatient player: random taps, mashing the action key, opening/closing the menu around transitions |
 | render | every look × pose × direction draws pixels, and every figure keeps its big head |
 
-`tests/cast.html` is a contact sheet of the whole cast for art checks against `docs/reference/`.
+`tests/cast.html` is a contact sheet of the whole cast for art checks against `docs/reference/`. `tests/backview.html` shows every haircut, hat and accessory from behind, three-quarters behind and the side (`?set=hair|hats|gear&hair=pony`), and `tests/hammock.html` shows lying in each kind of hammock.
 
 ## Deploy (Cloudflare Workers static assets)
 

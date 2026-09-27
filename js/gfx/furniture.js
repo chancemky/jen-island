@@ -6,6 +6,7 @@ import { INK, ell, circ, box, poly, line, limb, shadow, text, heart, flower, ste
 import { LIGHT, glows, lanternShape } from './props.js';
 import { ICONS, drawIcon } from './food.js';
 import { drawHuman } from './character.js';
+import { drawHammock } from './hammock.js';
 
 const g = (p, x, y, r, col) => { if (!p.off) glows.push([p.x + x, p.y + y, r, col]); };   // lamps you switched off don't glow
 
@@ -57,7 +58,7 @@ export const F = {
   fan(c, t, p) { shadow(c, 0, 1, 7, 2, 0.16); limb(c, [0, 0, 0, -26], 1.6, '#9fd8c8'); ell(c, 0, 0, 7, 2.4, '#9fd8c8'); circ(c, 0, -30, 9, 'rgba(255,255,255,.55)', INK, 1); const a = t * 18; for (let i = 0; i < 3; i++) { c.save(); c.translate(0, -30); c.rotate(a + i * TAU / 3); ell(c, 0, -4.5, 2.4, 4.4, 'rgba(159,216,200,.8)', null); c.restore(); } circ(c, 0, -30, 1.8, '#5a4a48', null); },
   fishtank(c, t, p) { shadow(c, 0, 1, 18, 4, 0.18); box(c, -16, -16, 32, 16, 2, '#8a5f3e'); box(c, -16, -40, 32, 24, 3, 'rgba(150,215,240,.75)'); for (let i = 0; i < 2; i++) { const x = Math.sin(t * 0.9 + i * 2) * 10, y = -28 + i * 6; c.save(); c.translate(x, y); c.scale(Math.cos(t * 0.9 + i * 2) > 0 ? 1 : -1, 1); ell(c, 0, 0, 3.4, 2, i ? '#ff9a4a' : '#f36d86', INK, 0.5); poly(c, [-3, 0, -6, -2, -6, 2], i ? '#ff9a4a' : '#f36d86', INK, 0.4); c.restore(); } for (let i = 0; i < 3; i++) { const k = (t * 0.5 + i / 3) % 1; circ(c, 10, -18 - k * 20, 1, 'rgba(255,255,255,.8)', null); } limb(c, [-10, -17, -10, -26], 1.2, '#6fb356'); },
   tv(c, t, p) { shadow(c, 0, 1, 16, 3, 0.16); box(c, -14, -8, 28, 8, 2, '#8a5f3e'); box(c, -14, -30, 28, 22, 4, '#6e6a70'); const on = true; box(c, -11, -27, 19, 16, 3, on ? `hsl(${(t * 40) % 360},55%,75%)` : '#3d3a42'); circ(c, 11, -24, 1.4, '#e8584e', null); circ(c, 11, -19, 1.4, '#f2c14e', null); limb(c, [-4, -30, -9, -38], 0.8, INK); limb(c, [4, -30, 9, -38], 0.8, INK); },
-  hammock(c, t, p) { const sw = Math.sin(t * 1.4) * 2; for (const x of [-28, 28]) limb(c, [x, 0, x, -30], 2.4, '#8a5f3e'); c.beginPath(); c.moveTo(-28, -24); c.quadraticCurveTo(sw, -2, 28, -24); c.quadraticCurveTo(sw, -12, -28, -24); c.fillStyle = '#f28f7c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); c.strokeStyle = '#fff5df'; for (let i = 1; i < 5; i++) { c.beginPath(); c.moveTo(-28 + i * 11, -22 + Math.abs(i - 2.5) * 2); c.lineTo(-26 + i * 11 + sw * 0.3, -9 + Math.abs(i - 2.5) * 2); c.stroke(); } },
+  hammock(c, t, p) { drawHammock(c, t, p, 'hammock'); },
   painting(c, t, p) { box(c, -13, -62, 26, 20, 2, '#b77a4f'); box(c, -11, -60, 22, 16, 1, '#fff5df', null); circ(c, -3, -53, 4, '#f28f7c', INK, 0.6); ell(c, 4, -50, 5, 3, '#9fd8c8', INK, 0.6); line(c, -9, -46, 9, -46, '#6fb356', 1.2); },
   clock(c, t, p) { circ(c, 0, -58, 7, '#fff8ea', INK, 1.2); const m = (LIGHT.minutes || 0); line(c, 0, -58, Math.sin(m / 720 * TAU) * 3.6, -58 - Math.cos(m / 720 * TAU) * 3.6, INK, 1.2); line(c, 0, -58, Math.sin(m / 60 * TAU) * 5.4, -58 - Math.cos(m / 60 * TAU) * 5.4, INK, 0.8); },
   radio(c, t, p) { shadow(c, 0, 1, 10, 3, 0.16); box(c, -10, -14, 20, 14, 3, '#f28f7c'); circ(c, -4, -7, 4, '#5a4a48', INK, 0.7); box(c, 2, -11, 6, 3, 1, '#fff5df', null); limb(c, [6, -14, 10, -24], 0.8, INK); if (Math.sin(t * 3) > 0) { c.fillStyle = '#7a5cc8'; c.font = '900 7px Nunito'; c.fillText('♪', 8 + Math.sin(t) * 3, -20 - (t * 8) % 8); } },
