@@ -88,6 +88,7 @@ function spawnKeeperActor(id) {
   a.talkable = true; a.face('down'); a.noCollide = true;
   G.scenes.island.add(a); actors[id] = a;
 }
+export const keeperActor = id => actors[id] || null;
 export function spawnKeepers() { for (const id of Object.keys(G.state.keepers || {})) spawnKeeperActor(id); }
 
 // every frame: keepers open their shop, prep, and serve the customer at the counter

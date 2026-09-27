@@ -6,6 +6,12 @@
   "scripts": {
     "dev": "python3 -m http.server 8765",
     "check": "for f in $(find js -name '*.js'); do node --check $f || exit 1; done",
-    "deploy": "npx wrangler deploy"
+    "deploy": "npx wrangler deploy",
+    "test": "node tests/run.mjs",
+    "test:story": "node tests/run.mjs story",
+    "test:render": "node tests/run.mjs render"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
   }
 }

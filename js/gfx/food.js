@@ -279,6 +279,8 @@ export const DRINK_PREVIEW = {
   ca_phe_trung: { size: 'S', layers: [{ color: '#5e3a28', h: 0.55 }, { color: '#f6d98a', h: 0.45 }] },
   nuoc_cam: { size: 'M', layers: [{ color: '#ffae3a', h: 1 }], ice: 2, straw: true, strawColor: '#6fbf73' },
 };
+// can this id be drawn as an icon? (used by the content validator)
+export const hasIcon = id => !!(ICONS[id] || DISHES[id] || (id?.startsWith('drink:') && DRINK_PREVIEW[id.slice(6)]));
 export function drawIcon(c, id, t = 0) {
   const fn = ICONS[id] || DISHES[id];
   if (fn) fn(c, t);

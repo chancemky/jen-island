@@ -28,7 +28,7 @@ import { showAuth } from './ui/auth.js';
 import { updateBusinesses, openBiz, closeBiz, rt as bizRT } from './systems/business.js';
 import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs } from './systems/npc.js';
 import { updateClock, endDay, specialsInit, timePaused } from './systems/time.js';
-import { repairBridge } from './systems/story.js';
+import { repairBridge, STEPS } from './systems/story.js';
 import { buildSeaBridge } from './systems/story.js';
 import { runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, buyScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
 import { talkToResident, talkToMerchant, talkToStaff, talkToVisitor } from './systems/talk.js';
@@ -42,7 +42,7 @@ import { nearestSeat, sitDown, standUp, updateSeat } from './systems/seats.js';
 import { feedDucks, nearPond } from './systems/npc.js';
 import { meoAntic } from './systems/fun.js';
 import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones } from './systems/progress.js';
-import { BRIDGE_REPAIR } from './data/game.js';
+import { BRIDGE_REPAIR, FESTIVAL_REQ, KEEPER_REQ } from './data/game.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { showWhatsNew } from './ui/whatsnew.js';
 import { openBoutique, openWardrobe, currentLook, refreshPlayerLook } from './ui/clothes.js';
@@ -419,7 +419,7 @@ function stallSheet(id = 'night') {
     row(T('Serve', 'Bán hàng'), () => openService(id), 'btn big pink');
     row(T('Prep', 'Sơ chế'), () => openPrep(id), 'btn big ghost');
     row(T('Menu', 'Thực đơn'), () => openBizMenu(id), 'btn big ghost');
-    row(T('Staff, supplies & rent', 'Nhân viên, hàng & tiền thuê'), () => openMenu({ tab: 1, onLogout: logout }), 'btn big ghost');
+    row(T('Shopkeepers, supplies & rent', 'Người trông quán, hàng & tiền thuê'), () => openMenu({ tab: 1, onLogout: logout }), 'btn big ghost');
   } });
 }
 // a kiosk or market stall you don't own yet: look, or buy it once the story allows
@@ -437,7 +437,7 @@ async function buyKiosk(id) {
   for (const [rid, r] of Object.entries(RECIPES)) if (r.biz === def.biz && r.starter && !G.state.recipes.includes(rid)) learnRecipe(rid);
   markDirty(true); sfx('fanfare'); addXP(150, 'buy');
   fx.burst('confetti', G.player.x, G.player.y - 30, 30, { up: 80, speed: 70, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 60, life: 1.6 });
-  await showReward({ icon: KIOSK_ICON[def.biz] || 'key', kicker: T('New shop!', 'Quán mới!'), title: bizName(id), text: T('Open it from the counter. You can hire staff for it in the Business tab.', 'Mở cửa ở quầy. Có thể thuê nhân viên trông quán trong mục Kinh doanh.') });
+  await showReward({ icon: KIOSK_ICON[def.biz] || 'key', kicker: T('New shop!', 'Quán mới!'), title: bizName(id), text: T('Open it from the counter. You can hire a shopkeeper for it in the Business tab.', 'Mở cửa ở quầy. Có thể thuê người trông quán trong mục Kinh doanh.') });
   bus.emit('bought', 'shop', id);
   checkStory();
 }
@@ -691,7 +691,9 @@ async function logout() {
 document.addEventListener('visibilitychange', () => suspendAudio(document.hidden));
 
 // Test hooks on localhost only.
-if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__jen = { G, scenes, cam, cs, setStep, checkStory, openBiz, bizRT, npcs, restRT, sleepFlow, doSleep, toggleBiz, discoverRecipe, triggerAction, setScene };
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__jen = { G, scenes, cam, cs, setStep, checkStory, openBiz, bizRT, npcs, restRT, sleepFlow, doSleep, toggleBiz, discoverRecipe, triggerAction, setScene, STEPS, FESTIVAL_REQ, KEEPER_REQ, restoreNightMarket, buildStatue, NIGHT_MARKET_RESTORE, STATUE_COST };
+// localhost only: check the game's content for broken references at boot
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) import('./dev/validate.js').then(m => { const issues = m.validateContent(scenes); window.__jen.validate = () => m.validateContent(scenes); if (issues.length) console.warn(`[validate] ${issues.length} content issue(s):\n` + issues.join('\n')); else console.info('[validate] content OK'); });
 
 boot().catch(e => { console.error(e); $('bootMsg').textContent = bootText('err'); });
 

@@ -69,6 +69,18 @@ export async function saveCloud(state, { keepalive = false } = {}) {
   const body = { user_id: uid, save_version: state.v || 1, game_day: state.day, coins: Math.round(state.money), reputation: Math.round(state.reputation), save_data: state, updated_at: new Date().toISOString() };
   await api('/rest/v1/jen_island_saves?on_conflict=user_id', { method: 'POST', keepalive, headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(body) });
 }
+// Daily snapshots (the last 7 are kept) so a damaged save can be recovered.
+export async function saveSnapshot(state) {
+  const uid = session.user.id;
+  await api('/rest/v1/jen_island_save_snapshots', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ user_id: uid, game_day: state.day, save_version: state.v || 1, save_data: state }) });
+  const old = await api('/rest/v1/jen_island_save_snapshots?select=id&user_id=eq.' + encodeURIComponent(uid) + '&order=created_at.desc&offset=7');
+  if (old?.length) await api('/rest/v1/jen_island_save_snapshots?id=in.(' + old.map(r => r.id).join(',') + ')', { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+}
+export async function loadSnapshots() {
+  const uid = session.user.id;
+  const rows = await api('/rest/v1/jen_island_save_snapshots?select=save_data,created_at&user_id=eq.' + encodeURIComponent(uid) + '&order=created_at.desc&limit=7');
+  return (rows || []).map(r => r.save_data).filter(Boolean);
+}
 export async function saveProfile(playerName, islandName) {
   const uid = session.user.id;
   await api('/rest/v1/jen_island_profiles?on_conflict=user_id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ user_id: uid, player_name: playerName.slice(0, 40), island_name: islandName.slice(0, 40), updated_at: new Date().toISOString() }) });

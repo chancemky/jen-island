@@ -261,7 +261,7 @@ export const ROLES = {
   server:  { vi: 'Phục vụ', en: 'Server',  desc: 'Takes orders and carries dishes.', descVi: 'Nhận order và bưng món.' },
   prep:    { vi: 'Sơ chế',  en: 'Prep',    desc: 'Keeps prepared ingredients stocked.', descVi: 'Luôn chuẩn bị sẵn nguyên liệu.' },
   cleaner: { vi: 'Dọn dẹp', en: 'Cleaner', desc: 'Clears and wipes tables.', descVi: 'Dọn và lau bàn.' },
-  keeper:  { vi: 'Nhân viên trông quán', en: 'Shop staff', desc: 'Runs a small shop for you.', descVi: 'Trông quán nhỏ giúp bạn.' },
+  keeper:  { vi: 'Người trông quán', en: 'Shopkeeper', desc: 'Runs a small shop for you.', descVi: 'Trông quán nhỏ giúp bạn.' },
   cashier: { vi: 'Thu ngân',en: 'Cashier', desc: 'Takes payments and deposits earnings to you.', descVi: 'Thu tiền và nộp lại cho bạn.' },
 };
 export const TRAITS = [
@@ -366,14 +366,21 @@ export const ACHIEVEMENTS = {
   truck:          { en: 'On Wheels', desc: 'Buy the food truck.', vi: 'Lăn bánh', descVi: 'Mua xe bán đồ ăn.' },
   night_market:   { en: 'Lanterns Lit', desc: 'Restore the Night Market.', vi: 'Lồng đèn sáng rực', descVi: 'Khôi phục Chợ Đêm.' },
   restaurant:     { en: 'Grand Opening', desc: 'Open your restaurant.', vi: 'Khai trương hoành tráng', descVi: 'Mở nhà hàng.' },
-  first_hire:     { en: 'Team Player', desc: 'Hire your first employee.', vi: 'Tinh thần đồng đội', descVi: 'Thuê nhân viên đầu tiên.' },
+  first_hire:     { en: 'Team Player', desc: 'Hire your first restaurant employee.', vi: 'Tinh thần đồng đội', descVi: 'Thuê nhân viên nhà hàng đầu tiên.' },
   full_team:      { en: 'Well-Oiled Kitchen', desc: 'Staff every restaurant role.', vi: 'Bếp vận hành trơn tru', descVi: 'Có đủ mọi vị trí trong nhà hàng.' },
   cozy_home:      { en: 'Home Sweet Home', desc: 'Place 5 pieces of furniture.', vi: 'Tổ ấm', descVi: 'Đặt 5 món nội thất.' },
   day_7:          { en: 'One Week In', desc: 'Reach day 7.', vi: 'Một tuần trên đảo', descVi: 'Đến ngày thứ 7.' },
   statue:         { en: 'Founder', desc: 'Unveil the founder statue.', vi: 'Người sáng lập', descVi: 'Khánh thành tượng người sáng lập.' },
   max_level:      { en: 'Master Builder', desc: 'Upgrade a business to level 3.', vi: 'Bậc thầy xây dựng', descVi: 'Nâng cấp một quán lên cấp 3.' },
   tip_big:        { en: 'Big Tipper', desc: 'Receive a tip of 20k or more.', vi: 'Khách sộp', descVi: 'Nhận tiền boa từ 20k trở lên.' },
+  first_keeper:   { en: 'A Helping Hand', desc: 'Hire your first shopkeeper.', vi: 'Có người phụ giúp', descVi: 'Thuê người trông quán đầu tiên.' },
+  lantern_festival: { en: 'Festival of Lights', desc: 'Light up the Lantern Festival.', vi: 'Đêm hội đèn lồng', descVi: 'Thắp sáng Lễ Hội Đèn Lồng.' },
+  keeper_island:  { en: 'Keeper of the Island', desc: 'Complete all 20 chapters of the story.', vi: 'Người Giữ Đảo', descVi: 'Hoàn thành cả 20 chương của câu chuyện.' },
 };
+// ---------------------------------------------------------------- story requirements (one source of truth)
+// Dialogue, objective text, completion checks and what the event consumes all read these.
+export const FESTIVAL_REQ = { level: 20, lanterns: 16, served: 40 };     // Chapter 16: the Lantern Festival
+export const KEEPER_REQ = { level: 30, regulars: 15 };                     // Chapter 20: Keeper of the Island (and every business owned)
 export const STATUE_COST = { cost: 3000, mats: { paint: 10, tile: 10 } };
 
 // ---------------------------------------------------------------- economy tuning (v4.3: a real grind)

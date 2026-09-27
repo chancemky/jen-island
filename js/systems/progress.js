@@ -87,7 +87,7 @@ export const TRACKS = [
   { id: 'outfits', icon: 'shirt', en: 'Outfits collected', vi: 'Trang phục sưu tầm', get: s => (s.wardrobe?.owned || []).length, tier: doubleOn([2, 5, 10, 15, 25, 40]) },
   { id: 'chapters', icon: 'notebook', en: 'Chapters reached', vi: 'Chương đã đạt', get: s => s.story.chapter, tier: doubleOn([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]) },
   { id: 'shops', icon: 'sign_open', en: 'Shops you own', vi: 'Quán sở hữu', get: s => Object.values(s.biz).filter(b => b.owned).length, tier: doubleOn([2, 3, 5, 7, 9, 11, 13]) },
-  { id: 'keepers', icon: 'person', en: 'Staff hired', vi: 'Nhân viên đã thuê', get: s => Object.keys(s.keepers || {}).length, tier: doubleOn([1, 2, 4, 6, 9, 12]) },
+  { id: 'keepers', icon: 'person', en: 'Shopkeepers employed', vi: 'Người trông quán đã thuê', get: s => Object.keys(s.keepers || {}).length, tier: doubleOn([1, 2, 4, 6, 9, 12]) },
   { id: 'property', icon: 'key', en: 'Properties owned', vi: 'Bất động sản', get: s => Object.keys(s.property || {}).length, tier: doubleOn([1, 3, 5, 8, 11, 14]) },
   { id: 'stalls', icon: 'lantern', en: 'Night Market stalls', vi: 'Sạp Chợ Đêm', get: s => ['night', 'nm1', 'nm2', 'nm3', 'nm5', 'nm6'].filter(id => s.biz[id]?.owned).length, tier: doubleOn([1, 2, 4, 6]) },
   { id: 'pets', icon: 'paw', en: 'Pets adopted', vi: 'Thú cưng nhận nuôi', get: s => (s.pets || []).length, tier: doubleOn([1, 2, 4, 6, 9]) },

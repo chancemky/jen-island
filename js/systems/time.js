@@ -62,6 +62,7 @@ export function endDay() {
   resetFerryForNewDay();
   for (const r of Object.values(G.runtime.biz || {})) r.first = false;
   markDirty(true);
+  bus.emit('dayEnd', sum);                             // (save.js takes a backup snapshot)
   return sum;
 }
 function meoNightLine(t) {

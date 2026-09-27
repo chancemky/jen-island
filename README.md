@@ -1,6 +1,6 @@
 # JEN Island
 
-A cozy Vietnamese island business-life game for portrait mobile Safari. You arrive on a quiet island by boat, meet **Mèo Mây** (the island's cloud cat), repair a broken tea shed, and slowly grow sheds, a food truck, the Night Market and a restaurant with a visible staff — until the island is a destination and there's a statue of you in the plaza.
+A cozy Vietnamese island business-life game for portrait mobile Safari. You arrive on a quiet island by boat, meet **Mèo Mây** (the island's cloud cat), repair a broken tea shed, and over **20 chapters** grow sheds, a food truck, the Night Market, a restaurant with a visible staff, Harbour Town's café, Firefly Islet and Coconut Cove's grill — until the island runs itself and you become its Keeper. Free play continues after the story.
 
 ## Run locally
 
@@ -47,13 +47,13 @@ No build step, no framework. Canvas 2D for the world, DOM for UI.
 | `js/gfx/cat.js` | Mèo Mây: ears, tail, head tilt, mouth-sync while talking, hops |
 | `js/gfx/props.js`, `buildings.js`, `furniture.js`, `food.js` | Scenery, buildings with broken → repaired → upgraded states and animated doors, interior furniture, ingredients/dishes/layered drinks |
 | `js/world/` | `actor` (animation state, path following), `scene` (collision, triggers, nav graph + grid A*), `island` (terrain, chunk-cached ground, animated water, layout), `interiors`, `render` (depth sort, lighting, glows, camera, particles) |
-| `js/systems/` | `state` (save shape + migration), `save`/`cloud`, `scenes` (door transitions), `cutscene` (scripted camera/walk/say), `story` (7 chapters), `business` (customers, orders, results), `restaurant` (guests + employees), `npc` (residents, ferry tourists, scooters, vendors), `time` (clock, day end), `talk`, `cinematic` (opening), `player` |
+| `js/systems/` | `state` (save shape + migration), `save`/`cloud`, `scenes` (door transitions), `cutscene` (scripted camera/walk/say), `story` (20 chapters + free play; one step table drives objectives, completion checks and scenes), `business` (customers, orders, results), `restaurant` (guests + employees), `npc` (residents, ferry tourists, scooters, vendors), `time` (clock, day end), `talk`, `cinematic` (opening), `player` |
 | `js/ui/` | `hud`, `dialogue` (typewriter + portraits), `service` (order counter), `prep`, `shops`, `staff`, `decorate`, `summary`, `menu` (map/settings/account), `naming`, `auth` |
 | `js/data/` | Ingredients, recipes, stations, businesses, upgrades, chapters, achievements, character looks |
 
 ### Design rules
 
-- **Employees exist only in the restaurant.** Sheds, the food truck and the night stall are run in person.
+- **Two kinds of help.** Small businesses (sheds, the food truck, café, grill, Night Market stalls) can hire a *shopkeeper / stall keeper* who opens, preps and serves (`economy.js`, `state.keepers`). Only the restaurant has *employees* with roles — cook, server, prep, cleaner, cashier, manager (`restaurant.js`, `biz.restaurant.employees`). They are separate systems on purpose.
 - **Everything is physical.** Customers walk to queues; restaurant staff walk to stoves, tables, the register and the break chair; nothing is a hidden timer.
 - **Cutscenes never teleport important moments.** Mèo Mây walks you around, turns toward what it's talking about, and walks away afterwards (it has its own daily routine and home).
-- **Time runs at 1 game minute per second** and pauses in menus, dialogue and cutscenes. Shops close at 22:00; the night stall runs 17:00–24:00; sleeping ends the day.
+- **Time runs at 1 game minute per second** and pauses in menus, dialogue and cutscenes. Your shops close at 23:00 (customers already in line can still be served if you're at the counter); Night Market stalls open at 17:00; you get sleepy after midnight; sleeping ends the day.
