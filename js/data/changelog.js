@@ -3,9 +3,18 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.1.0';
+export const APP_VERSION = '5.1.1';
 
 export const CHANGELOG = [
+  {
+    v: '5.1.1', date: '2026-09-27T08:33:07Z',
+    title: ['No Naps at the Start', 'Không Ngủ Gật Lúc Đầu'],
+    items: [
+      ['Fixed getting stuck on the pause menu before the boat ride: typing a "p" while signing in or naming yourself no longer pauses the game', 'Sửa lỗi kẹt ở màn hình tạm dừng trước chuyến tàu: gõ chữ “p” khi đăng nhập hoặc đặt tên không còn làm game tạm dừng nữa'],
+      ['You can only pause while you are free to walk around — never during sign-in, the boat ride or a scene', 'Chỉ có thể tạm dừng khi bạn đang tự do đi lại — không bao giờ trong lúc đăng nhập, đi tàu hay xem cảnh phim'],
+      ['A scene that starts always takes over from the pause menu, and tapping outside the pause card resumes', 'Cảnh phim bắt đầu sẽ luôn thay cho màn hình tạm dừng, và chạm ra ngoài thẻ tạm dừng là chơi tiếp'],
+    ],
+  },
   {
     v: '5.1.0', date: '2026-09-27T05:47:17Z',
     title: ['Smooth Sailing', 'Thuận Buồm Xuôi Gió'],

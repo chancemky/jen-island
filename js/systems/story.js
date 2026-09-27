@@ -338,6 +338,7 @@ export async function buildSeaBridge(which) {
 // ---------------------------------------------------------------- Chapter 1: arrival
 export async function runArrival() {
   const pl = G.player, sc = island();
+  if (G.runtime.paused) { G.runtime.paused = false; document.getElementById('pauseCard')?.remove(); }
   G.runtime.introBoat = true;
   G.runtime.inCutscene = true;
   showHud(false);

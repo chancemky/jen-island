@@ -124,6 +124,7 @@ async function boot() {
 
 function startGame() {
   const s = G.state;
+  if (G.runtime.paused) { G.runtime.paused = false; document.getElementById('pauseCard')?.remove(); }   // a new start is never paused
   setAudio({ music: s.settings.music, sfx: s.settings.sfx });
   const look = currentLook(); // base look + clothes from the wardrobe
   G.player = new Player(look);
@@ -253,6 +254,8 @@ function watchdog(dt) {
       if (!legit && lockAge(name) > 8000) { console.warn(`[watchdog] input lock "${name}" held for ${Math.round(lockAge(name) / 1000)} s with nothing going on; released`); releaseInput(name); }
     }
   }
+  // a pause with no pause card to resume from, or a pause outside free roam, is released
+  if (G.runtime.paused && (!document.getElementById('pauseCard') || !G.state?.story?.flags?.freeRoam || cs.active || G.runtime.cinematic)) { console.warn('[watchdog] the game was paused with no way to resume; resumed'); G.runtime.paused = false; document.getElementById('pauseCard')?.remove(); }
   // a black screen with nothing behind it
   if (fadeEl()?.classList.contains('on') && !cs.active && !isTransitioning() && !G.runtime.sleeping && !G.runtime.cinematic) { fadeIdle += step; if (fadeIdle > 3) { console.warn('[watchdog] the screen stayed faded out; faded back in'); fadeIn(250); fadeIdle = 0; } } else fadeIdle = 0;
 }
@@ -272,6 +275,7 @@ function loop(now) {
   G.t += dt;
   const t = G.t;
   musicTick();
+  if (G.player) watchdog(dt);        // (runs even while paused or during the boat ride)
   if (G.runtime.cinematic) return; // the opening cinematic owns the canvas
   if (!G.scene) return;
   if (G.runtime.paused) { // frozen world: just keep drawing it under the pause card
@@ -311,7 +315,6 @@ function loop(now) {
     worldExtra: sc === scenes.island ? npcDrawables() : null,
     overlay: (c, tt) => { drawSkyLife(c, tt); G.runtime.decoOverlay?.(c, tt); },
   });
-  watchdog(dt);
   updateHud(dt);
   tickCelebrations(() => !cs.active && !isUiOpen() && !isPresenting() && !isServiceOpen() && !isPrepOpen() && !dialogue.active && !isDecorating() && !G.runtime.paused);
   updateDialogue(dt, t);
@@ -758,7 +761,12 @@ function checkMilestonesReady() {
 setInterval(checkMilestonesReady, 4000);
 
 // ---------------------------------------------------------------- pause
+// Pausing is only for free roam: never before the story has handed you the island
+// (sign-in, naming, the boat), never during a scene, and never from keys typed into a field.
+const canPause = () => !!G.state?.story?.flags?.freeRoam && !!G.player && !cs.active && !G.runtime.cinematic && !G.runtime.introBoat && !isUiOpen() && !isPresenting() && !isServiceOpen() && !isPrepOpen() && !dialogue.active && !document.querySelector('.modal, #auth:not(.hidden), .summary, .reward, .levelup');
+const typing = e => { const t = e.target; return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable); };
 function setPaused(on) {
+  if (on && !canPause()) return;
   if (!!G.runtime.paused === on) return;
   G.runtime.paused = on;
   document.getElementById('pauseCard')?.remove();
@@ -769,13 +777,19 @@ function setPaused(on) {
   el.innerHTML = `<div class="pc-in"><div class="pc-cat"></div><h2>${T('Paused', 'Tạm dừng')}</h2><p>${T('Mèo Mây is taking a little nap too.', 'Mèo Mây cũng đang chợp mắt.')}</p><button class="btn big pink" type="button" data-a="go">${T('Resume', 'Tiếp tục')}</button><button class="btn ghost" type="button" data-a="menu">${T('Settings', 'Cài đặt')}</button></div>`;
   el.addEventListener('click', e => {
     const a = e.target.closest('button')?.dataset.a;
-    if (a === 'go') setPaused(false);
+    if (a === 'go' || e.target === el) setPaused(false);             // Resume, or a tap outside the card
     else if (a === 'menu') { setPaused(false); openMenu({ onLogout: logout }); }
   });
   document.getElementById('app').appendChild(el);
 }
-$('pauseBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen()) return; setPaused(true); });
-window.addEventListener('keydown', e => { if ((e.key === 'p' || e.key === 'Escape') && G.runtime.paused) setPaused(false); else if (e.key === 'p' && !cs.active && !isUiOpen()) setPaused(true); });
+$('pauseBtn').addEventListener('click', () => setPaused(true));
+window.addEventListener('keydown', e => {
+  if (typing(e)) return;                                            // letters typed into a name or password are just letters
+  if ((e.key === 'p' || e.key === 'Escape') && G.runtime.paused) setPaused(false);
+  else if (e.key === 'p') setPaused(true);
+});
+// a scene that starts (or the boat ride) always takes over from the pause card
+bus.on('cutscene', on => { if (on) setPaused(false); });
 
 async function logout() {
   saveLocal(); await saveCloudNow();

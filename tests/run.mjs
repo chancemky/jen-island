@@ -456,6 +456,23 @@ if (only === 'all' || only === 'world') {
 // once — and then: is the island exactly as free as before?
 if (only === 'all' || only === 'stability') {
   console.log('stability');
+  // 0) the pause menu before the boat: typing names with a "p" in them must never pause the game
+  {
+    const g = await openGame('stabpause'), q = g.p;
+    let named = 0;
+    for (let i = 0; i < 120 && named < 2; i++) {
+      const inp = await q.$('.modal input');
+      if (inp) { await inp.click(); await q.keyboard.type(named ? 'Pine Point' : 'Pippa P', { delay: 30 }); await q.keyboard.press('Escape'); await q.keyboard.press('p');
+        const bad = await q.evaluate(() => window.__jen.G.runtime.paused || !!document.getElementById('pauseCard'));
+        if (bad) fail('stability', `typing into the ${named ? 'island' : 'player'} name prompt paused the game`);
+        await q.evaluate(() => document.querySelector('.modal .btn')?.click()); named++; }
+      else { await q.evaluate(() => { document.querySelector('#skipBtn:not(.hidden)')?.click(); const d = document.getElementById('dialog'); if (d && !d.classList.contains('hidden')) d.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); document.querySelector('.dlg-choices button')?.click(); }); await q.keyboard.press('p'); }
+      await q.waitForTimeout(250);
+    }
+    const hp = await q.evaluate(() => ({ paused: !!window.__jen.G.runtime.paused, card: !!document.getElementById('pauseCard'), name: window.__jen.G.state.player.name }));
+    if (hp.paused || hp.card) fail('stability', 'the game ended up paused during the opening'); else pass('stability', `no pause during sign-in, naming and the boat, even pressing P (named "${hp.name}")`);
+    await g.ctx.close();
+  }
   const { p, errors, ctx } = await openGame('stab');
   if (!(await reachFreeRoam(p))) fail('stability', 'never reached free roam');
   const pump = makePump(p);
@@ -553,6 +570,24 @@ if (only === 'all' || only === 'stability') {
   if (outside !== 'island') fail('stability', `leaving the house went to "${outside}"`); else if (inside === 'house') pass('stability', 'doors work right after a cutscene (in and out)');
   void door;
   await clean('after doors');
+
+  // 6b) pause in free roam: freezes, resumes from a tap outside the card; a scene takes over from it; a card-less pause is released
+  await settle(5000);
+  await p.evaluate(() => { const J = window.__jen; J.setScene('island', 900, 1700, 'up'); });
+  await p.waitForTimeout(400);
+  await p.keyboard.press('p');
+  const paused1 = await p.evaluate(() => [window.__jen.G.runtime.paused, !!document.getElementById('pauseCard')]);
+  await p.mouse.click(20, 400);
+  await p.waitForTimeout(300);
+  const paused2 = await p.evaluate(() => window.__jen.G.runtime.paused);
+  if (!paused1[0] || !paused1[1]) fail('stability', 'P did not pause in free roam'); else if (paused2) fail('stability', 'tapping outside the pause card did not resume'); else pass('stability', 'pause and resume work in free roam');
+  await p.keyboard.press('p');
+  await p.evaluate(() => window.__jen.cs.run('after-pause', () => new Promise(r => setTimeout(r, 300))));
+  if (await p.evaluate(() => window.__jen.G.runtime.paused)) fail('stability', 'a scene started while paused and stayed frozen'); else pass('stability', 'a scene starting while paused takes over from the pause card');
+  await p.evaluate(() => { window.__jen.G.runtime.paused = true; });
+  await p.waitForTimeout(1500);
+  if (await p.evaluate(() => window.__jen.G.runtime.paused)) fail('stability', 'a pause with no pause card stayed stuck'); else pass('stability', 'a pause with no way to resume is released');
+  await clean('after pausing');
 
   // 7) fail-safes (defensive only): a scene that never finishes, a leaked pause, a leaked lock
   await p.evaluate(() => { const J = window.__jen; J.cs.run('never-ends', () => new Promise(() => {})); });
