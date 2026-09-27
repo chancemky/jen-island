@@ -115,8 +115,25 @@ export function flyCoins(from, to, n = 6) {
 }
 function pointOf(p) { if (Array.isArray(p)) return p; const r = p.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }
 
+// ---------------------------------------------------------------- one blocking card at a time
+// Rewards, level-ups, the day summary and "what's new" go through this queue, so two
+// never open on top of each other: the next one appears when the last is dismissed.
+let chain = Promise.resolve(), presenting = 0;
+export const isPresenting = () => presenting > 0;
+export function present(show) {
+  const run = chain.then(async () => {
+    presenting++;
+    // never show a card underneath the black fade
+    const fade = document.getElementById('fade'); if (fade?.classList.contains('on')) { fade.style.transitionDuration = '200ms'; fade.classList.remove('on'); }
+    try { return await show(); } catch (e) { console.error('[present]', e); } finally { presenting--; }
+  });
+  chain = run.catch(() => {});
+  return run;
+}
+
 // Big celebratory card (recipe discovered, business opened…)
-export function showReward({ kicker = '', title, sub = '', icon = null, text = '', steps = null, button = null }) {
+export function showReward(opts) { return present(() => rewardCard(opts)); }
+function rewardCard({ kicker = '', title, sub = '', icon = null, text = '', steps = null, button = null }) {
   button ||= T('Wonderful!', 'Tuyệt vời!');
   return new Promise(res => {
     releaseJoystick();
@@ -125,6 +142,7 @@ export function showReward({ kicker = '', title, sub = '', icon = null, text = '
     el.innerHTML = `<div class="reward-card"><div class="reward-inner"><div class="rays"></div><div class="kicker">${escapeHtml(kicker)}</div><h2>${escapeHtml(title)}</h2>${sub ? `<h3>${escapeHtml(sub)}</h3>` : ''}${icon ? `<div class="art"><img src="${iconURL(icon, 110)}" alt=""></div>` : ''}${steps ? `<div class="steps-mini">${steps.map(s => `<img src="${iconURL(s, 30)}" alt="">`).join('<span style="align-self:center;font-weight:900;opacity:.4">›</span>')}</div>` : ''}${text ? `<p>${escapeHtml(text)}</p>` : ''}<button class="btn big pink" type="button">${escapeHtml(button)}</button></div></div>`;
     document.getElementById('app').appendChild(el);
     sfx('sparkle'); setTimeout(() => sfx('success'), 250);
-    el.querySelector('button').onclick = () => { sfx('ui'); el.classList.add('out'); G.runtime.pause--; ui.open--; setTimeout(() => { el.remove(); res(); }, 250); };
+    let done = false;
+    el.querySelector('button').onclick = () => { if (done) return; done = true; sfx('ui'); el.classList.add('out'); el.style.pointerEvents = 'none'; G.runtime.pause--; ui.open--; setTimeout(() => { el.remove(); res(); }, 250); };
   });
 }

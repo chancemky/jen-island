@@ -2,6 +2,7 @@
 // one cheap treat. Buying it doesn't go in any bag: you eat or drink it right
 // there with a happy little animation.
 
+import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
 import { G, T, addMoney, canAfford } from './state.js';
 import { Actor } from '../world/actor.js';
 import { say, ask } from '../ui/dialogue.js';
@@ -89,7 +90,7 @@ export function updateVendors(dt) {
 // a treat, eaten on the spot: a few bites over ~3 seconds
 async function consume(v, item) {
   const pl = G.player;
-  pl.control = false;
+  lockInput('snack');
   try {
     pl.face('down'); pl.bites = 0;
     pl.setAct(v.act, item.id);
@@ -104,7 +105,7 @@ async function consume(v, item) {
     pl.setEmo('happy', 2); pl.showEmote('heart', 1.4); pl.doHop(60);
     sfx('pop'); addXP(2, 'snack'); G.state.stats.treats = (G.state.stats.treats || 0) + 1;
     await say(pl, tt(choice(v.done)), { emo: 'happy' });
-  } finally { pl.control = true; pl.bites = 0; }
+  } finally { releaseInput('snack'); pl.bites = 0; }
 }
 
 export async function talkToVendor(a) {

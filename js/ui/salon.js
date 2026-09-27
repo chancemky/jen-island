@@ -2,6 +2,7 @@
 // Every row previews the cut on *your* head. After paying you hop into the
 // chair, Chị Tiên snips away, and you pop out with the new look.
 
+import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
 import { G, T, markDirty, addMoney, canAfford } from '../systems/state.js';
 import { HAIRCUTS, HAIR_COLORS } from '../data/hair.js';
 import { MERCHANTS, playerLook } from '../data/looks.js';
@@ -47,7 +48,7 @@ function applyHair(patch) {
 async function haircut(patch, label) {
   const pl = G.player, sc = G.scene, st = sc?.merchant;
   const chair = sc?.props?.find(p => p.kind === 'salonChair');
-  pl.control = false;
+  lockInput('salon');
   try {
     if (chair) { await pl.walkTo([[chair.x, chair.y + 12]], { speed: 90 }); pl.face('up'); await sleep(100); pl.face('down'); pl.sit = true; pl.seatH = 11; pl.x = chair.x; pl.y = chair.y + 1.5; pl.squash = 0.8; sfx('pop'); }
     if (chair) camTo(chair.x + 10, chair.y - 26, { zoom: 1.9, rate: 3 });
@@ -75,7 +76,7 @@ async function haircut(patch, label) {
     camFollow(pl, 1);
     toast({ text: T(`New look: ${label[0]}!`, `Kiểu mới: ${label[1]}!`), sub: T('Chị Tiên: "Gorgeous! Come back any time."', 'Chị Tiên: "Xinh quá trời! Ghé lại nha."'), icon: 'scissors' });
     if (st && st._home) { st.walkTo([[st._home.x, st._home.y]], { speed: 70 }).then(() => st.face('down')); }
-  } finally { pl.control = true; if (pl.look?.cape) refreshPlayerLook(); camFollow(pl, 1); }
+  } finally { releaseInput('salon'); if (pl.look?.cape) refreshPlayerLook(); camFollow(pl, 1); }
 }
 
 export function openSalon() {

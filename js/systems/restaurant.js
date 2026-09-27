@@ -4,6 +4,7 @@
 // Without staff the player does those jobs (take orders, collect the register,
 // clear tables). With a full team it runs while you're elsewhere.
 
+import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
 import { G, T, bizOf, addMoney, addRep, markDirty, unlockAchievement } from './state.js';
 import { Interior } from '../world/interiors.js';
 import { Grid } from '../world/scene.js';
@@ -291,14 +292,14 @@ export async function playerDeliver() {
   if (!dish) return;
   dish.claimed = 'player';
   const pl = G.player, g = dish.guest;
-  pl.control = false;
+  lockInput('restaurant');
   try {
     await walkGrid(pl, dish.slot[0], dish.slot[1] + 22); pl.face('up');
     r.pass.splice(r.pass.indexOf(dish), 1);
     pl.setAct('carry', 'plate');
     if (g.state === 'waiting-food') { await walkGrid(pl, g.seat.x + (g.seat.dir === 'right' ? 12 : -12), g.seat.y + 14); pl.face(g.actor); deliverToTable(g); }
     pl.setAct(null);
-  } finally { pl.control = true; }
+  } finally { releaseInput('restaurant'); }
 }
 export function playerCookFailed(g) { if (g.state === 'player-cooking') { g.state = 'ordering'; g.patience -= g.patienceMax * 0.25; g.actor.showEmote('sweat', 1.2); } }
 

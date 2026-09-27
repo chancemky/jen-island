@@ -124,7 +124,16 @@ export function setAction(label, handler, icon = null) {
   actBtn.classList.toggle('ready', !!handler);
   if (icon !== actIcon.dataset.icon) { actIcon.dataset.icon = icon || ''; actIcon.style.backgroundImage = icon ? `url(${iconURL(icon, 40)})` : ''; actIcon.style.display = icon ? '' : 'none'; }
 }
-export function triggerAction() { if (actHandler) { sfx('tap'); actHandler(); } }
+// one press, one action: a burst of taps (or a tap while the last action is still starting)
+// can't run the same thing twice
+let actBusyUntil = 0;
+export function triggerAction() {
+  const now = performance.now();
+  if (!actHandler || now < actBusyUntil) return;
+  actBusyUntil = now + 450;
+  sfx('tap');
+  try { const r = actHandler(); if (r?.catch) r.catch(e => console.error('[action]', e)); } catch (e) { console.error('[action]', e); }
+}
 actBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); triggerAction(); });
 
 const bizBtn = $('bizBtn');

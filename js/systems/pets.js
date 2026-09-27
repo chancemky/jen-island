@@ -3,6 +3,7 @@
 // and feed them. Pets that are following you can't be petted (so tapping around
 // the island still talks to people, not your dog).
 
+import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
 import { G, T, markDirty, addMoney, canAfford } from './state.js';
 import { Actor } from '../world/actor.js';
 import { ANIMAL_DRAW } from './animals.js';
@@ -12,7 +13,8 @@ import { say, ask } from '../ui/dialogue.js';
 import { sfx } from '../core/audio.js';
 import { rand, choice, dist, sleep, TAU } from '../core/util.js';
 import { fx } from '../world/render.js';
-import { addXP, COUNTS } from './progress.js';
+import {addXP } from './progress.js';
+import { COUNTS } from '../core/counts.js';
 
 export const PETS = {
   shiba:   { kind: 'dog', col: '#e3a86a', price: 900,  en: 'Shiba puppy', vi: 'Chó Shiba con', sfx: 'woof' },
@@ -157,11 +159,11 @@ export async function petMenu(a) {
     const opts = [T('Pet ❤', 'Vuốt ve ❤'), T(`Feed (${s.petFood} food)`, `Cho ăn (${s.petFood} phần)`), T('Take on walks', 'Dắt đi dạo'), T('Do a trick!', 'Làm xiếc nào!'), T('Bye!', 'Tạm biệt!')];
     const pick = await ask(null, T(`${p.name} looks up at you.`, `${p.name} ngước nhìn bạn.`), opts);
     if (pick === 0) {
-      pl.control = false; pl.face(a.x < pl.x ? 'left' : 'right');
+      lockInput('pet'); pl.face(a.x < pl.x ? 'left' : 'right');
       if (dist(pl.x, pl.y, a.x, a.y) > 22) await pl.walkTo([[a.x + (a.x < pl.x ? 16 : -16), a.y + 2]], { speed: 60 });
       pl.setAct('work');
       for (let i = 0; i < 4; i++) { a.data.happy = 1.5; a.doHop?.(40); fx.burst('heart', a.x, a.y - 16, 2, { up: 30, col: '#f28fa3', size: 3 }); sfx(i % 2 ? def.sfx : 'pop'); await sleep(420); }
-      pl.setAct(null); pl.control = true;
+      pl.setAct(null); releaseInput('pet');
       p.love = (p.love || 0) + 1; markDirty(); a.showEmote('heart', 1.6);
       if (p.love === 10) { addXP(50, 'pet'); await say(null, T(`${p.name} adores you now! 💕`, `${p.name} quý bạn lắm rồi! 💕`)); }
     } else if (pick === 1) {
@@ -178,7 +180,7 @@ export async function petMenu(a) {
       setFollower(p.uid); sfx('success');
       await say(null, T(`${p.name} will follow you everywhere now!`, `Giờ ${p.name} sẽ theo bạn khắp nơi!`));
     } else if (pick === 3) await trick(a, p, def);
-  } finally { a.data.busy = false; pl.control = true; }
+  } finally { a.data.busy = false; releaseInput('pet'); }
 }
 // tricks come with trust: the more love, the more they know
 const TRICKS = [

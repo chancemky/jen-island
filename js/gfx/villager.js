@@ -738,7 +738,10 @@ export function drawVillager(c, a, t) {
   parts.sort((p, q) => (p.overHead ? 2 : p.head ? 1 : 0) - (q.overHead ? 2 : q.head ? 1 : 0) || p.z - q.z);
   for (const p of parts) p.draw();
   // held item in the right hand (or both hands)
-  if (P.held && P.hR) {
+  // seen from behind, things held in front of the body (a plate, a cup, a snack, a notebook) are
+  // hidden by it; only tools swung out to the side (hammer, broom, ladle, knife) still show
+  const tool = ['hammer', 'broom', 'ladle', 'knife'].includes(P.held);
+  if (P.held && P.hR && (facing >= -0.3 || tool)) {
     if (P.heldHand === 'both' && P.hL) drawHeld(c, P.held, (P.hL[0] + P.hR[0]) / 2, (P.hL[1] + P.hR[1]) / 2 - 1.5, t, 'front');
     else {
       let [hx, hy] = P.hR;

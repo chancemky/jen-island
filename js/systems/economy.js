@@ -11,7 +11,8 @@ import { LOCAL_NAMES } from './business.js';
 import { visitorLook } from '../data/looks.js';
 import { Actor } from '../world/actor.js';
 import { bus, rand, choice, chance, money } from '../core/util.js';
-import { addXP, COUNTS } from './progress.js';
+import {addXP } from './progress.js';
+import { COUNTS } from '../core/counts.js';
 import { fx } from '../world/render.js';
 import { recordCost } from './ledger.js';
 

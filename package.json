@@ -12,7 +12,9 @@
     "test:render": "node tests/run.mjs render",
     "test:economy": "node tests/run.mjs economy",
     "test:quests": "node tests/run.mjs quests",
-    "test:world": "node tests/run.mjs world"
+    "test:world": "node tests/run.mjs world",
+    "test:stability": "node tests/run.mjs stability",
+    "test:chaos": "node tests/run.mjs chaos"
   },
   "devDependencies": {
     "playwright": "1.63.0"

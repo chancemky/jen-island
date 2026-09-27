@@ -14,12 +14,18 @@ for (let s = 1; s <= 40; s++) looks.push(['tourist/' + s, visitorLook(s * 131, s
 for (const role of ['cook', 'server', 'cleaner', 'cashier', 'prep', 'manager']) looks.push(['employee/' + role, employeeLook(7, role)]);
 for (const [id, it] of Object.entries(CLOTHES)) looks.push(['outfit/' + id, applyOutfit(playerLook({ hairStyle: 'bob' }), { [it.slot]: id })]);
 const yaws = [0, Math.PI / 4, Math.PI / 2, Math.PI * 3 / 4, Math.PI, -Math.PI * 3 / 4, -Math.PI / 2, -Math.PI / 4];
-const poses = [{}, { moving: 1, walkPh: 1.3 }, { sit: true, seatH: 8 }, { emo: 'happy' }, { emo: 'sad' }, { emo: 'surprised' }, { act: 'wave' }, { act: 'cheer' }, { act: 'hammer' }, { act: 'drink', held: 'cup' }, { act: 'photo' }, { act: 'sweep' }];
-const blank = [], thin = []; let count = 0;
-function coverage() { const d = c.getImageData(0, 0, cv.width, cv.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 20) n++; return n; }
+const poses = [{}, { moving: 1, walkPh: 1.3 }, { sit: true, seatH: 8 }, { emo: 'happy' }, { emo: 'sad' }, { emo: 'surprised' }, { act: 'wave' }, { act: 'cheer' }, { act: 'hammer' }, { act: 'drink', held: 'cup' }, { act: 'photo' }, { act: 'sweep' },
+  { talking: true }, { act: 'work' }, { act: 'eat', held: 'bread_split' }, { act: 'hold', held: 'teacup' }, { act: 'carry', held: 'plate' }, { sit: true, seatH: 8, talking: true }, { act: 'write' }, { act: 'stir' }];
+const blank = [], thin = [], headless = [], faceless = []; let count = 0;
+const hexRGB = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+// where the pixels are: the head should hold a fair share of the figure, and from the front the face (skin) must show
+let lastData = null;
+function anatomy(skin) { const d = lastData, W = cv.width; let y0 = 1e9, y1 = -1; for (let i = 3; i < d.length; i += 4) if (d[i] > 20) { const y = ((i - 3) / 4 / W) | 0; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (y1 < 0) return { head: 0, skin: 0 }; const band = y0 + (y1 - y0) * 0.45, sk = skin ? hexRGB(skin) : null; let head = 0, all = 0, skinPx = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 20) { const y = ((i - 3) / 4 / W) | 0; all++; if (y <= band) { head++; if (sk && Math.abs(d[i - 3] - sk[0]) < 22 && Math.abs(d[i - 2] - sk[1]) < 22 && Math.abs(d[i - 1] - sk[2]) < 22) skinPx++; } } return { head: head / all, skin: skinPx }; }
+function coverage() { const d = lastData = c.getImageData(0, 0, cv.width, cv.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 20) n++; return n; }
 for (const [name, L] of looks) {
-  let base = null;
+  let base = null, front = null;
   for (const [pi, pose] of poses.entries()) for (const [yi, yw] of yaws.entries()) {
+    if (yi === 0) front = null;
     if (pi > 2 && yi % 2) continue;                       // emotions/actions: 4 directions are enough
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height);
     c.setTransform(1, 0, 0, 1, 32, 70); c.lineJoin = 'round'; c.lineCap = 'round';
@@ -27,9 +33,10 @@ for (const [name, L] of looks) {
     count++;
     const n = coverage();
     if (n < 150) blank.push(`${name} pose ${pi} yaw ${yi} (${n}px)`);
-    else { if (base === null) base = n; else if (n < base * 0.35) thin.push(`${name} pose ${pi} yaw ${yi} (${n}px vs ${base}px)`); }
+    else { const an = anatomy(L.skin); if (an.head < 0.28) headless.push(`${name} pose ${pi} yaw ${yi} (head ${(an.head * 100).toFixed(0)}%)`); }
+    if (n >= 150) { if (base === null) base = n; else if (n < base * 0.35) thin.push(`${name} pose ${pi} yaw ${yi} (${n}px vs ${base}px)`); }
   }
 }
-window.result = { count, blank, thin };
+window.result = { count, blank, thin, headless, faceless };
 window.done = 1;
 </script>

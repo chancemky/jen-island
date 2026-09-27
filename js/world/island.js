@@ -799,7 +799,7 @@ export class Island extends Scene {
     const s = G.state, rt = G.runtime?.biz?.[b.biz || b.id] || {};
     if (b.biz) {
       const bz = s.biz[b.biz];
-      const base = { repair: rt.repairAnim ?? bz.repair, level: bz.level, open: bz.open, owned: bz.owned, sign: bizSign(b.biz), flapOpen: rt.flap, signFlip: rt.signFlip, color: b.biz === 'shed2' ? '#fde2c4' : '#f7e3c0', roof: b.biz === 'shed2' ? '#f28f7c' : '#6fbfb0', signCol: b.biz === 'shed2' ? '#e8a24a' : '#e8584e', awning: b.biz === 'shed2' ? ['#fff5df', '#e8a24a'] : ['#fff5df', '#f28f7c'] };
+      const base = { repair: rt.repairAnim ?? bz.repair, level: bz.level, open: bz.open || !!G.runtime?.showOpen?.has(b.biz), owned: bz.owned, sign: bizSign(b.biz), flapOpen: rt.flap, signFlip: rt.signFlip, color: b.biz === 'shed2' ? '#fde2c4' : '#f7e3c0', roof: b.biz === 'shed2' ? '#f28f7c' : '#6fbfb0', signCol: b.biz === 'shed2' ? '#e8a24a' : '#e8584e', awning: b.biz === 'shed2' ? ['#fff5df', '#e8a24a'] : ['#fff5df', '#f28f7c'] };
       const br = s.brand?.[b.biz], pal = br?.colour && BRAND_COLOURS[br.colour];
       if (pal?.awning) Object.assign(base, { awning: pal.awning, signCol: pal.sign, roof: pal.roof, color: pal.wall, branded: true });
       if (br?.sign) base.signStyle = br.sign;
@@ -811,9 +811,11 @@ export class Island extends Scene {
     const nm = G.state.nightMarket, rt = G.runtime?.nm || {};
     const k = rt.restoreAnim ?? (nm.restored ? 1 : 0);
     const night = (G.state.time >= 17 * 60);
-    if (s.biz === 'night') { const bz = G.state.biz[s.biz]; return { repair: k, open: bz.open }; }
+    const brand = stallBrand(s.biz);
+    const shown = !!G.runtime?.showOpen?.has(s.biz);
+    if (s.biz === 'night') { const bz = G.state.biz[s.biz]; return { repair: k, open: bz.open || shown, ...brand }; }
     const bz = s.biz && G.state.biz[s.biz];
-    if (bz?.owned) return { repair: k, open: bz.open, label: ['YOUR STALL', 'SẠP CỦA BẠN'], owned: true };   // bought from its old owner
+    if (bz?.owned) return { repair: k, open: bz.open || shown, label: ['YOUR STALL', 'SẠP CỦA BẠN'], owned: true, ...brand };   // bought from its old owner
     return { repair: k, open: k >= 1 && night };
   }
 
@@ -932,6 +934,15 @@ function drawFounderStatue(c, t) {
   const k = (t * 0.4) % 1; if (k < 0.12) { c.globalAlpha = 1 - k / 0.12; star(c, 14, -110, 3 + k * 20, '#fff8d8', null, 0, 4, 0.3); c.globalAlpha = 1; }
 }
 
+// a Night Market stall's own name, colours and sign (Menu → Branding)
+function stallBrand(id) {
+  const br = id && G.state.brand?.[id]; if (!br) return {};
+  const out = {}, pal = br.colour && BRAND_COLOURS[br.colour];
+  if (br.name) { const n = br.name.toUpperCase(); out.label = [n, n]; out.owned = true; }
+  if (pal?.awning) { out.awning = pal.awning; out.signCol = pal.sign; }
+  if (br.sign) out.signStyle = br.sign;
+  return out;
+}
 export function bizSign(id) {
   const s = G.state;
   const own = s.brand?.[id]?.name; if (own) return own.toUpperCase();

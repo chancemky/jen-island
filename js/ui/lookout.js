@@ -3,6 +3,7 @@
 // across the fields, gulls wheel past the railing, and at night the lamp's beam
 // sweeps the sea. One button takes you back down.
 
+import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
 import { G, T } from '../systems/state.js';
 import { cam } from '../world/render.js';
 import { LIGHT } from '../gfx/props.js';
@@ -24,7 +25,7 @@ export async function enterLighthouse() {
   const pl = G.player;
   L = { t: 0, from: { x: pl.x, y: pl.y }, clouds: [], gulls: [] };
   G.runtime.lookout = true;
-  pl.visible = false; pl.control = false;
+  pl.visible = false; lockInput('lookout');
   document.body.classList.add('lookout', 'hide-controls');
   // start up close to the lighthouse, then slowly pull back until the whole island is in view
   const full = fullZoom();
@@ -44,7 +45,7 @@ export async function leaveLighthouse() {
   await fadeOut(400);
   cancelAnimationFrame(L.raf); L.el.remove();
   const pl = G.player;
-  pl.x = DOOR.x; pl.y = DOOR.y; pl.visible = true; pl.control = true; pl.face('down');
+  pl.x = DOOR.x; pl.y = DOOR.y; pl.visible = true; releaseInput('lookout'); pl.face('down');
   cam.override = null; cam.follow = pl; cam.zoomMul = 1; cam.snap(pl.x, pl.y - 18);
   document.body.classList.remove('lookout', 'hide-controls');
   G.runtime.lookout = false; input.enabled = true;

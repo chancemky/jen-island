@@ -195,7 +195,7 @@ export function spawnCustomer(bizId, opts = {}) {
   const P = PERSONALITIES[personality];
   const recipeLv = 1;
   const base = 52 * P.patience * (G.state.story.chapter <= 2 ? 1.4 : 1) * recipeLv * eq(bizId, 'patience');
-  const c = new Customer({ bizId, actor, key, name, personality, resident: !!resident, patience: base, patienceMax: base });
+  const c = new Customer({ bizId, actor, key, name, personality, resident: !!resident, patience: base, patienceMax: base, friendOf: opts.friendOf || null });
   c.order = makeOrder(bizId, c);
   if (c.order?.walk) { G.state.today.priceWalk = (G.state.today.priceWalk || 0) + 1; bus.emit('customer:pricey', bizId); if (!resident) { actor.showEmote?.('sweat', 1.2); setTimeout(() => { actor.fadeOut = true; }, 900); } else G.npcs.returnResident(resident); return null; }
   if (!c.order) { if (!resident) island.remove(actor); else G.npcs.returnResident(resident); return null; }
@@ -203,6 +203,8 @@ export function spawnCustomer(bizId, opts = {}) {
   c.slot = r.queue.length - 1;
   walkToSlot(c);
   bus.emit('customer:new', c);
+  // now and then a regular brings someone along
+  if (!opts.friendOf && G.state.regulars[key]?.visits >= 4 && chance(0.15)) setTimeout(() => { const f = spawnCustomer(bizId, { friendOf: name, from: { x: actor.x + 14, y: actor.y + 6 } }); if (f) f.actor.showEmote?.('happy', 1.2); }, 700);
   return c;
 }
 export function bizMaxQueue(bizId) {
@@ -270,7 +272,11 @@ export function makeOrder(bizId, cust) {
 export function orderText(order, cust) {
   const id = order.recipe, o = order.opts, R = RECIPES[id];
   const pn = G.state.player.name || T('friend', 'bạn');
-  const reg = G.state.regulars[cust.key]?.visits >= 3;
+  const regRec = G.state.regulars[cust.key], reg = regRec?.visits >= 3;
+  // regulars sound like people who come back: the longer they've been coming, the warmer;
+  // now and then they notice the shop, the island, or order "the usual"
+  if (reg) { const line = regularLine(order, cust, regRec, pn); if (line) return line; }
+  if (cust.friendOf) return cust.friendOf && T(`${cust.friendOf} brought me! They said to order the ${R.en}.`, applyPronouns(`${cust.friendOf} dẫn {me} tới đó! Bảo phải gọi ${R.vi}.`, customerProfile(cust)));
   if (G.lang === 'vi') {
     const prof = customerProfile(cust), P = x => applyPronouns(x, prof);
     const name = `*${R.vi}*`, parts = [];
@@ -311,6 +317,25 @@ export function orderText(order, cust) {
   return [`Can I get ${art} ${item}${tail}, please?`, `One ${item}${tail}, please!`, `I'd like ${art} ${item}${tail}.`][k];
 }
 const cap = w => w[0].toUpperCase() + w.slice(1);
+// what a regular says, by how well you know each other and what they notice
+function regularLine(order, cust, rec, pn) {
+  const R = RECIPES[order.recipe], s = G.state, v = rec.visits, k = pickLine(cust, 7);
+  const lvl = bizOf(cust.bizId)?.level || 1, ch = s.story.chapter, usual = rec.fav === order.recipe;
+  const vi = x => applyPronouns(x, customerProfile(cust));
+  const lines = [];
+  if (usual && v >= 6) lines.push([`${pn}! The usual — you know how I like it.`, vi(`${pn} ơi! Như cũ nha — {you} biết {me} thích sao mà.`)]);
+  if (v >= 12) lines.push([`Visit number ${v}! I should have a stool with my name on it.`, vi(`Lần thứ ${v} rồi đó! Chắc phải có cái ghế khắc tên {me}.`)]);
+  else if (v >= 6) lines.push([`Morning, ${pn}! I told my whole street about your ${R.en}.`, vi(`Chào ${pn}! {Me} kể cả xóm nghe về ${R.vi} của {you} rồi.`)]);
+  else lines.push([`Hi ${pn}! I'm starting to feel like a regular. ${R.en}, please!`, vi(`Chào ${pn}! {Me} bắt đầu thấy mình là khách quen rồi. Cho {me} ${R.vi} nha!`)]);
+  if (lvl >= 3) lines.push([`Look at this place now! Lanterns and everything. One ${R.en}, please.`, vi(`Nhìn quán giờ đẹp ghê! Có cả lồng đèn nữa. Cho {me} một ${R.vi} nha.`)]);
+  if (ch >= 8) lines.push([`Did you see the Night Market last night? The island feels alive again. ${R.en} for me!`, vi(`Tối qua {you} thấy Chợ Đêm chưa? Hòn đảo sống lại rồi. Cho {me} ${R.vi}!`)]);
+  if (ch >= 12) lines.push([`More boats at the harbour every week. And still, I come here. ${R.en}, please.`, vi(`Tuần nào bến cảng cũng thêm thuyền. Vậy mà {me} vẫn ghé đây. Cho {me} ${R.vi} nha.`)]);
+  if (cust.personality === 'rushed') return T(`${pn}, the usual, quick! I'm late again!`, vi(`${pn} ơi, như cũ, nhanh nha! {Me} lại trễ rồi!`));
+  if (cust.personality === 'picky' && usual) return T(`Exactly like last time, ${pn}. It was perfect.`, vi(`Y như lần trước nha ${pn}. Lần đó hoàn hảo.`));
+  if (k >= lines.length + 2) return null;                       // sometimes they just order normally
+  const [en, viLine] = lines[k % lines.length];
+  return T(en, viLine);
+}
 function pickLine(cust, n) { return (cust._line ??= Math.floor(Math.random() * n)) % n; }
 export function orderChips(order) {
   const id = order.recipe, o = order.opts, R = RECIPES[id], chips = [recipeName(id)];
@@ -413,8 +438,9 @@ export function updateBusinesses(dt, gameMin) {
   for (const [id, def] of Object.entries(BUSINESSES)) {
     if (def.kind === 'restaurant') continue;
     const b = s.biz[id], r = rt(id);
-    r.flap += ((b.open ? 1 : 0) - r.flap) * Math.min(1, dt * 5);
-    r.signFlip += ((b.open ? 1 : 0) - r.signFlip) * Math.min(1, dt * 4);
+    const shown = b.open || !!G.runtime.showOpen?.has(id);        // (a cutscene can show a shop open)
+    r.flap += ((shown ? 1 : 0) - r.flap) * Math.min(1, dt * 5);
+    r.signFlip += ((shown ? 1 : 0) - r.signFlip) * Math.min(1, dt * 4);
     if (!b.open) continue;
     // closing time: no one new joins the line. If you're behind the counter you can
     // finish serving whoever is still waiting; otherwise they leave right away.

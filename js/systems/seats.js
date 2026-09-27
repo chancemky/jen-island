@@ -3,6 +3,7 @@
 // hop and lands butt-first with a squash. Move the joystick (or tap Stand) to
 // hop back off.
 
+import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
 import { G } from './state.js';
 import { dist, sleep } from '../core/util.js';
 import { sfx } from '../core/audio.js';
@@ -81,7 +82,7 @@ export async function sitDown(s) {
   const pl = G.player; if (busy || pl.seat) return;
   busy = true;
   try {
-    pl.control = false;
+    lockInput('seat');
     // stand in front of the seat, face it, then turn around and hop up
     await pl.walkTo([[s.x, s.y + 12]], { speed: 80 });
     pl.face('up'); await sleep(120);
@@ -93,7 +94,7 @@ export async function sitDown(s) {
       for (let i = 0; i <= 12; i++) { pl.lie.k = i / 12; await sleep(22); }
       sfx('pop');
     }
-  } finally { busy = false; }
+  } finally { busy = false; if (!pl.seat) releaseInput('seat'); }     // didn't make it onto the seat: give control back
 }
 export async function standUp() {
   const pl = G.player; if (busy || !pl.seat) return;
@@ -102,7 +103,7 @@ export async function standUp() {
     const s = pl.seat; pl.seat = null;
     if (pl.lie) { for (let i = 12; i >= 0; i--) { pl.lie.k = i / 12; await sleep(18); } pl.lie = null; }
     await hopOff(pl, s);
-  } finally { pl.control = true; busy = false; }
+  } finally { releaseInput('seat'); busy = false; }
 }
 // while seated: any real joystick push gets you up
 export function updateSeat(mag) { if (isSeated() && !busy && mag > 0.5) standUp(); }

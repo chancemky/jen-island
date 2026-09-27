@@ -1,6 +1,7 @@
 // Side quests: neighbours lose things (a kite, a net, a sandal…). Ask them if
 // they need help, find the sparkle on the island, bring it back for a reward.
 
+import { lockInput, unlockInput, releaseInput } from '../core/locks.js';
 import { applyPlayerPronouns, profileOf } from './pronouns.js';
 import { G, T, tr, markDirty, addMoney, addMat, addPantry } from './state.js';
 import { MORE_QUESTS } from '../data/quests.js';
@@ -19,7 +20,8 @@ import { ANIMAL_DRAW } from './animals.js';
 import * as P from '../gfx/props.js';
 import { ICONS } from '../gfx/food.js';
 import { INK } from '../gfx/draw.js';
-import { addXP, COUNTS } from './progress.js';
+import {addXP } from './progress.js';
+import { COUNTS } from '../core/counts.js';
 
 // rewards grow with the story, so helping a neighbour is still worth it later on
 export const questMoney = q => Math.round(q.reward.money * (1 + 0.12 * Math.max(0, (G.state.story.chapter || 1) - 1)) / 5) * 5;
@@ -46,7 +48,9 @@ const regionOpen = q => !q.region || (q.region === 'nmRestored' ? G.state.nightM
 export function eligible(q) {
   const s = G.state;
   return s.story.chapter >= q.ch && regionOpen(q) && (!q.after || done(q.after)) && (!q.friend || friendLevel(q.giver) >= q.friend || q.giver === 'meo')
-    && (!q.pet || (s.pets || []).length > 0) && (!q.postgame || s.story.flags.keeper);
+    && (!q.pet || (s.pets || []).length > 0) && (!q.postgame || s.story.flags.keeper)
+    // life after the story unfolds slowly: each Keeper event waits a few days after the last one
+    && (!q.gap || s.day >= (s.story.flags.lastPostDay || s.story.flags.keeperDay || 0) + q.gap);
 }
 // the people a found item goes to, in order (deliver: one person, route: several)
 const routeOf = q => q.route || [q.deliver || q.giver];
@@ -115,6 +119,7 @@ async function finishQuest(q, a, rid) {
   if (r.recipeLv && s.recipes.includes(r.recipeLv[0])) s.recipeLevels[r.recipeLv[0]] = Math.max(s.recipeLevels[r.recipeLv[0]] || 1, r.recipeLv[1]);
   if (r.keepsake) (s.keepsakes ||= {})[q.id] = { day: s.day };
   if (q.world) s.story.flags[q.world] = true;
+  if (q.postgame) s.story.flags.lastPostDay = s.day;
   const lv = rid !== 'meo' ? befriend(q.giver, 3) : 0; if (rid !== q.giver && rid !== 'meo') befriend(rid, 2);
   markDirty(true); sfx('fanfare');
   const extra = [r.keepsake ? T(`Keepsake: ${r.keepsake[0]}`, `Kỷ vật: ${r.keepsake[1]}`) : '', r.furniture ? T('A gift for your home', 'Quà cho ngôi nhà') : '', lv ? T(`${nameOf(q.giver)} is now your ${FRIEND_LEVELS[lv].en.toLowerCase()}!`, `${nameOf(q.giver)} giờ là ${FRIEND_LEVELS[lv].vi.toLowerCase()} của bạn!`) : ''].filter(Boolean).join(' · ');
@@ -176,13 +181,28 @@ async function meetScene(q) {
       for (const v of visitors) { v.fadeOut = true; }
       if (giver?.data && rid !== 'meo') G.npcs?.returnResident?.(giver);
       Q()[q.id] = 'found';
-      await finishQuest({ ...q, thanks: null, choice: null }, giver, rid);
+      await finishQuest({ ...q, thanks: q.after_thanks || null }, giver, rid);
     });
   } finally { G.runtime.inCutscene = false; busy = false; }
 }
 async function sceneFx(q, kind, giver) {
   if (kind === 'photo') { giver?.setAct?.('photo'); await sleep(700); sfx('click'); flash(); await sleep(500); giver?.setAct?.(null); return; }
   if (kind === 'paint') { giver?.setAct?.('work'); for (let i = 0; i < 4; i++) { sfx('pop'); fx.burst('spark', (giver?.x || q.x) + 10, (giver?.y || q.y) - 30, 4, { up: 10, col: ['#f08ca0', '#9fd8c8', '#ffd35a'] }); await sleep(350); } giver?.setAct?.(null); return; }
+  if (kind === 'lanterns') { for (let i = 0; i < 6; i++) { fx.burst('spark', q.x + (Math.random() - 0.5) * 160, q.y - 40 - Math.random() * 40, 14, { up: 30, speed: 90, col: ['#ffd35a', '#f08ca0', '#ff9a4a'], life: 1.4 }); sfx('pop'); await sleep(260); } return; }
+  if (kind === 'gather') {
+    // the neighbours come and stand around you
+    const rs = (G.npcs?.residents || []).filter(a => G.scenes.island.actors.includes(a)).slice(0, 8);
+    rs.forEach((a, i) => { a.stop?.(); a.sit = false; a.data.state = 'busy'; a.visible = true; const an = Math.PI * (0.15 + 0.7 * i / Math.max(1, rs.length - 1)); a.x = q.x + Math.cos(an) * 70; a.y = q.y + 30 - Math.sin(an) * 34; a.face(G.player); });
+    await sleep(500); for (const a of rs) a.setAct('cheer'); sfx('fanfare'); await sleep(1400); for (const a of rs) a.setAct(null);
+    setTimeout(() => { for (const a of rs) G.npcs?.returnResident?.(a); }, 6000);
+    return;
+  }
+  if (kind === 'visitor1') {
+    const v = G.npcs?.spawnVisitorAt?.(q.x + 40, q.y + 40, 'market');
+    if (v) { v.data = { ...(v.data || {}), busy: true }; v.stop?.(); v.x = q.x + 32; v.y = q.y + 8; v.alpha = 1; v.fadeIn = false; v.face(G.player); }
+    await sleep(400);
+    return v ? [v] : [];
+  }
   if (kind === 'visitors') {
     // a family steps off the ferry
     const out = [];
@@ -236,7 +256,7 @@ export function updateSideQuests(dt = 0.016) {
 
 async function play(q) {
   const pl = G.player, r = rtq(q), kind = kindOf(q);
-  busy = true; pl.control = false; pl.stop?.();
+  busy = true; lockInput('quest'); pl.stop?.();
   const faceIt = () => pl.face(Math.abs(q.x - pl.x) > Math.abs(q.y - pl.y) ? (q.x > pl.x ? 'right' : 'left') : (q.y > pl.y ? 'down' : 'up'));
   try {
     faceIt();
@@ -279,7 +299,7 @@ async function play(q) {
     const who = ownerName(q);
     toast({ text: T(`Found the ${q.item[0]}!`, `Tìm thấy ${q.item[1]}!`), sub: T(`Bring it back to ${who} — follow the arrow (look for the ❗ over their head).`, `Mang trả cho ${who} — đi theo mũi tên (tìm dấu ❗ trên đầu).`), icon: 'star', ms: 4200 });
     refreshGuide();
-  } finally { pl.control = true; busy = false; }
+  } finally { releaseInput('quest'); busy = false; }
 }
 
 // ---------------------------------------------------------------- returning it: an arrow to the owner

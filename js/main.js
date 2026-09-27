@@ -1,8 +1,9 @@
 // JEN Island — boot, main loop and the glue between systems.
 
+import { lockInput, unlockInput, releaseInput } from './core/locks.js';
 import { Renderer, cam, fx, lightingFor } from './world/render.js';
 import { Island, areaAt, areaIdAt, AREAS, BUILDINGS, TRUCK_SPOTS } from './world/island.js';
-import { COUNTS } from './systems/progress.js';
+import { COUNTS } from './core/counts.js';
 import { unlockAchievement } from './systems/state.js';
 import { buildInteriors } from './world/interiors.js';
 import { buildRestaurant, updateRestaurant, initRestaurantRuntime, restRT, guestNeedingOrder, playerTakeOrder, playerServed, playerCookFailed, nextTicketForPlayer, ticketCooked, playerDeliver, collectRegister } from './systems/restaurant.js';
@@ -13,12 +14,13 @@ import { unlockAudio, sfx, musicTick, setAudio, suspendAudio, setMood } from './
 import { G, T, setLang, defaultState, bizOf, markDirty, flag, setFlag, hasMats, canAfford, addMoney, learnRecipe } from './systems/state.js';
 import { showReward } from './ui/sheets.js';
 import { scenes, setScene, enterBuilding, exitBuilding, updateDoors, isTransitioning, fadeOut, fadeIn } from './systems/scenes.js';
-import { cs, updateFollow, say, ask, wait, camTo } from './systems/cutscene.js';
+import { cs, updateFollow, say, ask, wait, camTo, activity as csActivity } from './systems/cutscene.js';
+import { inputLocked, lockNames, lockAge } from './core/locks.js';
 import { Grid } from './world/scene.js';
 import { enterLighthouse } from './ui/lookout.js';
 import { updateDialogue, dialogue, closeDialog } from './ui/dialogue.js';
 import { initHud, updateHud, showHud, setAction, setBizButton, triggerAction, toast, updatePointer, showArea, resetArea, renderStars } from './ui/hud.js';
-import { isUiOpen, openSheet, h, btn } from './ui/sheets.js';
+import { isUiOpen, isPresenting, openSheet, h, btn } from './ui/sheets.js';
 import { openIngredientShop, openMaterialShop, openFurnitureShop, openBag, openBizMenu, openRequirement, openRecipeBook, openJournal, availableRecipes } from './ui/shops.js';
 import { openService, updateService, isServiceOpen, closeService } from './ui/service.js';
 import { openPrep, updatePrep, isPrepOpen } from './ui/prep.js';
@@ -46,9 +48,10 @@ import { meoAntic } from './systems/fun.js';
 import { initLedger } from './systems/ledger.js';
 import { initAlbum } from './systems/album.js';
 import { nearbyThing, outdoorAction, morningEvent, updateWorldEvents, lookText } from './systems/interact.js';
+import { updateSeasonal } from './systems/growth.js';
 import { fishingAction } from './systems/fishing.js';
 import { gardenAction, plaqueAction } from './systems/garden.js';
-import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones, TRACKS, trackState } from './systems/progress.js';
+import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones, TRACKS, trackState, claimMilestone } from './systems/progress.js';
 import { BRIDGE_REPAIR, FESTIVAL_REQ, KEEPER_REQ } from './data/game.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { showWhatsNew } from './ui/whatsnew.js';
@@ -66,6 +69,12 @@ const bootBar = $('bootBar'), bootMsg = $('bootMsg');
 const progress = (k, m) => { bootBar.style.width = Math.round(k * 100) + '%'; if (m) bootMsg.textContent = m; };
 
 G.runtime = { pause: 0, biz: {}, boatBoost: 0, timeScale: 1 };
+// "In a cutscene" is simply "a scene is running" — scripts that still set the old flag by hand
+// are only listened to before free roam (the boat ride), so it can never get stuck on.
+{ let introHold = false;
+  Object.defineProperty(G.runtime, 'inCutscene', { get: () => cs.active || (introHold && !G.state?.story?.flags?.freeRoam), set: v => { introHold = !!v; }, enumerable: true }); }
+// pause is a count of open blocking things; it can never go below zero
+{ let pause = 0; Object.defineProperty(G.runtime, 'pause', { get: () => pause, set: v => { pause = Math.max(0, v | 0); }, enumerable: true }); }
 G.markDirty = markDirty;
 
 // ---------------------------------------------------------------- boot
@@ -205,23 +214,47 @@ bus.on('achievement', () => { if (Math.random() < 0.5) setTimeout(() => toast({ 
 bus.on('biz:open', id => { if (currentStep()) checkStory(); });
 bus.on('biz:close', (id, why) => { if (why === 'hours') toast({ text: T(`${bizName(id)} is closed`, `${bizName(id)} đã đóng cửa`), sub: T('Closing time!', 'Hết giờ bán rồi!') }); });
 
-// ---------------------------------------------------------------- cutscene safety net
-// Overdue walks snap to their end, and if a cutscene shows no dialog for a long
-// while, a Continue button appears (and it moves on by itself soon after).
-let wdT = 0, wdIdle = 0, wdBtn = null;
-function finishAllWalks() { for (const sc of Object.values(scenes)) for (const a of sc?.actors || []) if (a.path) a.finishWalk?.(); cam.override = null; }
-function cutsceneWatchdog(dt) {
-  wdT += dt;
-  if (wdT > 1) { wdT = 0; const now = performance.now(); for (const sc of Object.values(scenes)) for (const a of sc?.actors || []) if (a.path && a._walkDeadline && now > a._walkDeadline) a.finishWalk(); }
-  const stuck = cs.active && !dialogue.active && !isUiOpen() && !G.runtime.paused && !document.querySelector('.levelup, .reward, .modal, .summary');
-  wdIdle = stuck ? wdIdle + dt : 0;
-  if (wdIdle > 12 && !wdBtn) {
-    wdBtn = document.createElement('button'); wdBtn.className = 'btn big pink cs-continue'; wdBtn.type = 'button'; wdBtn.textContent = T('Continue ▶', 'Tiếp tục ▶');
-    wdBtn.onclick = () => { finishAllWalks(); wdIdle = 0; wdBtn?.remove(); wdBtn = null; };
-    document.getElementById('app').appendChild(wdBtn);
+// ---------------------------------------------------------------- safety net
+// Defensive recovery only — each rescue logs a warning so the real bug can be found.
+//  • a scripted walk that runs past its deadline arrives instantly
+//  • a cutscene that shows nothing (no line, card, camera move, caption or walk) for a
+//    long while hands control back
+//  • a pause count, input lock or black fade with nothing on screen to justify it is cleared
+let wdT = 0, wdBusy = 0, pauseIdle = 0, fadeIdle = 0;
+const wdPos = new WeakMap();
+const fadeEl = () => document.getElementById('fade');
+const blockingOpen = () => isUiOpen() || isPresenting() || dialogue.active || isServiceOpen() || isPrepOpen() || isDecorating() || !!document.querySelector('.levelup:not(.out), .reward:not(.out), .modal, .summary, .wn-wrap:not(.out), .fishing, .album-view, .lookout-ui');
+function finishAllWalks() { let n = 0; for (const sc of Object.values(scenes)) for (const a of sc?.actors || []) if (a.path) { a.finishWalk?.(); n++; } cam.override = null; return n; }
+function watchdog(dt) {
+  wdT += dt; if (wdT < 0.5) return;
+  const step = wdT; wdT = 0;
+  const now = performance.now();
+  for (const sc of Object.values(scenes)) for (const a of sc?.actors || []) if (a.path && a._walkDeadline && now > a._walkDeadline) a.finishWalk();
+  const blocking = blockingOpen();
+  if (blocking || !cs.active) wdBusy = now;
+  // a walk that is still getting somewhere is activity, not a stall
+  if (cs.active && csActivity.walks > 0) {
+    let moving = false;
+    for (const sc of Object.values(scenes)) for (const a of sc?.actors || []) if (a.path) { const k = wdPos.get(a); if (!k || Math.hypot(k[0] - a.x, k[1] - a.y) > 2) moving = true; wdPos.set(a, [a.x, a.y]); }
+    if (moving) wdBusy = now;
   }
-  if (wdIdle > 20) { finishAllWalks(); wdIdle = 0; }
-  if (!stuck && wdBtn) { wdBtn.remove(); wdBtn = null; }
+  if (cs.active) {
+    const idle = now - Math.max(wdBusy, csActivity.at, csActivity.busyUntil);
+    if (idle > 4000 && csActivity.walks > 0) { console.warn(`[watchdog] "${cs.name}" was waiting on a walk; finished it`); finishAllWalks(); csActivity.at = now; }
+    else if (idle > 15000) { cs.forceEnd('nothing happened for 15 s'); fadeIn(250); }
+  }
+  // a pause count with nothing open
+  if (G.runtime.pause > 0 && !blocking && !cs.active) { pauseIdle += step; if (pauseIdle > 3) { console.warn(`[watchdog] pause count ${G.runtime.pause} with nothing open; reset`); G.runtime.pause = 0; pauseIdle = 0; } } else pauseIdle = 0;
+  // input locks nobody is using any more
+  const pl = G.player;
+  if (pl && inputLocked() && !cs.active && !blocking && !isTransitioning() && !pl.path) {
+    for (const name of lockNames()) {
+      const legit = (name === 'seat' && pl.seat) || (name === 'lookout' && G.runtime.lookout) || (name === 'fitting' && isUiOpen());
+      if (!legit && lockAge(name) > 8000) { console.warn(`[watchdog] input lock "${name}" held for ${Math.round(lockAge(name) / 1000)} s with nothing going on; released`); releaseInput(name); }
+    }
+  }
+  // a black screen with nothing behind it
+  if (fadeEl()?.classList.contains('on') && !cs.active && !isTransitioning() && !G.runtime.sleeping && !G.runtime.cinematic) { fadeIdle += step; if (fadeIdle > 3) { console.warn('[watchdog] the screen stayed faded out; faded back in'); fadeIn(250); fadeIdle = 0; } } else fadeIdle = 0;
 }
 // ---------------------------------------------------------------- main loop
 let last = performance.now(), storyT = 0, areaT = 0;
@@ -258,6 +291,7 @@ function loop(now) {
   if (sc.kind === 'interior') updateInteriorLife(dt);
   updateNPCs(dt);
   updateWorldEvents(dt);
+  updateSeasonal(dt);
   if (G.scene === scenes.island) updateVendors(dt);
   updateBusinesses(dt, gm);
   updateKeepers(dt);
@@ -277,9 +311,9 @@ function loop(now) {
     worldExtra: sc === scenes.island ? npcDrawables() : null,
     overlay: (c, tt) => { drawSkyLife(c, tt); G.runtime.decoOverlay?.(c, tt); },
   });
-  cutsceneWatchdog(dt);
+  watchdog(dt);
   updateHud(dt);
-  tickCelebrations(() => !cs.active && !isUiOpen() && !isServiceOpen() && !isPrepOpen() && !dialogue.active && !isDecorating() && !G.runtime.paused);
+  tickCelebrations(() => !cs.active && !isUiOpen() && !isPresenting() && !isServiceOpen() && !isPrepOpen() && !dialogue.active && !isDecorating() && !G.runtime.paused);
   updateDialogue(dt, t);
   updateService(dt, t);
   updatePrep(dt, t);
@@ -521,9 +555,9 @@ function actAction(tr) {
 }
 async function serveAtCounter(bizId) {
   const pl = G.player, sc = G.scene;
-  pl.control = false;
-  await pl.walkTo([[sc.serveSpot.x, sc.serveSpot.y]], { speed: 90 });
-  pl.face('down'); pl.control = true;
+  lockInput('counter');
+  try { await pl.walkTo([[sc.serveSpot.x, sc.serveSpot.y]], { speed: 90 }); } finally { releaseInput('counter'); }
+  pl.face('down');
   if (!bizOf(bizId).open && !bizRT(bizId).queue.length) {
     const r = openBiz(bizId);
     if (!r.ok) { toast({ text: r.why.split('\n')[0], sub: r.why.split('\n')[1] || '', bad: true, ms: 3200 }); return; }
@@ -649,9 +683,9 @@ function specialLine() {
 }
 
 // ---------------------------------------------------------------- HUD buttons
-$('bagBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen()) return; sfx('ui'); openBag(); });
-$('mapBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen()) return; sfx('ui'); openMenu({ onLogout: logout }); });
-$('menuBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen()) return; sfx('ui'); openMenu({ onLogout: logout }); });
+$('bagBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen() || isPresenting()) return; sfx('ui'); openBag(); });
+$('mapBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen() || isPresenting()) return; sfx('ui'); openMenu({ onLogout: logout }); });
+$('menuBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen() || isPresenting()) return; sfx('ui'); openMenu({ onLogout: logout }); });
 $('questPill').addEventListener('click', () => { if (cs.active) return; const st = currentStep(); if (st?.text) toast({ text: T('Objective', 'Mục tiêu'), sub: st.text(), icon: 'star', ms: 4000 }); });
 $('repChip').addEventListener('click', () => { const s = G.state, need = Math.round(90 * Math.pow(s.level || 1, 1.5)); toast({ text: T(`Level ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} XP`, `Cấp ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} KN`), sub: T(`Reputation ${Math.floor(s.reputation)}. Serve customers, repair and upgrade to level up!`, `Danh tiếng ${Math.floor(s.reputation)}. Phục vụ khách, sửa và nâng cấp quán để lên cấp!`), icon: 'trophy' }); });
 $('clockChip').addEventListener('click', () => toast({ text: T(`Day ${G.state.day}`, `Ngày ${G.state.day}`), sub: T('Your shops close at 11 pm. Sleep in your bed to start a new day.', 'Các quán của bạn đóng cửa lúc 23 giờ. Ngủ trên giường để sang ngày mới.'), icon: 'sleep_moon' }));
@@ -672,7 +706,7 @@ bus.on('enter', id => { if (id === 'supermarket' && G.player) { G.player.basket 
 bus.on('leave', id => { if (id === 'supermarket' && G.player) { G.player.basket = false; } });
 bus.on('scene', id => { if (id !== 'supermarket' && G.player) G.player.basket = false; });
 bus.on('bought', kind => { if (kind === 'ingredients' && G.player?.basket) G.player.basketItems = (G.player.basketItems || 0) + 1; });
-bus.on('scene', () => { const pl = G.player; if (pl?.seat) { pl.seat = null; pl.sit = false; pl.seatH = undefined; pl.control = true; } });
+bus.on('scene', () => { const pl = G.player; if (pl?.seat) { pl.seat = null; pl.sit = false; pl.seatH = undefined; releaseInput('seat'); } });
 
 // ---------------------------------------------------------------- visiting neighbours
 // The owner is sometimes home to greet you; at night they're asleep in bed.
@@ -755,7 +789,14 @@ document.addEventListener('visibilitychange', () => suspendAudio(document.hidden
 // Test hooks on localhost only.
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__jen = { G, scenes, cam, cs, setStep, checkStory, openBiz, bizRT, npcs, restRT, sleepFlow, doSleep, toggleBiz, discoverRecipe, triggerAction, setScene, STEPS, FESTIVAL_REQ, KEEPER_REQ, restoreNightMarket, buildStatue, NIGHT_MARKET_RESTORE, STATUE_COST };
 if (window.__jen) {
-  window.__jen.endDay = endDay; window.__jen.openMenu = openMenu; window.__jen.openJournal = openJournal; window.__jen.openStaffBoard = openStaffBoard;
+  window.__jen.endDay = endDay;
+  // stability tests: everything that can hold the screen or the player
+  Object.assign(window.__jen, { say, showReward, triggerAction, dialogue, isUiOpen, isPresenting, inputLocked, lockNames, lockInput, unlockAchievement, claimMilestone, isTransitioning,
+    health: () => ({ cs: cs.active, csName: cs.name, queued: cs.queued, inCutscene: G.runtime.inCutscene, pause: G.runtime.pause, locks: lockNames(), dialog: dialogue.active, ui: isUiOpen(), presenting: isPresenting(),
+      dlgState: { typing: dialogue.typing, choices: !!dialogue.choices, resolve: !!dialogue.resolve, shown: dialogue.shown, len: dialogue.len, sinceShown: Math.round(performance.now() - (dialogue.shownAt || 0)) },
+      overlays: [...document.querySelectorAll('.reward, .levelup, .summary, .modal, .sheet-wrap, .wn-wrap, .fishing, .album-view, .cs-continue')].map(e => e.className),
+      fade: document.getElementById('fade').classList.contains('on'), transitioning: isTransitioning(),
+      topAtCentre: (() => { const e = document.elementFromPoint(innerWidth / 2, innerHeight / 2); return e ? (e.id || e.className || e.tagName) : ''; })() }) }); window.__jen.openMenu = openMenu; window.__jen.openJournal = openJournal; window.__jen.openStaffBoard = openStaffBoard;
   import('./systems/sidequests.js').then(m => { window.__jen.sq = m; }); import('./systems/story.js').then(m => { window.__jen.story = m; }); import('./systems/interact.js').then(m => { window.__jen.ix = m; }); import('./systems/garden.js').then(m => { window.__jen.garden = m; }); import('./systems/fishing.js').then(m => { window.__jen.fishing = m; }); import('./ui/decorate.js').then(m => { window.__jen.decorate = m; });
   Promise.all([import('./data/game.js'), import('./systems/economy.js'), import('./systems/business.js'), import('./systems/ledger.js'), import('./systems/progress.js')])
     .then(([g, e, b, l, pr]) => { Object.assign(window.__jen, { spawnCustomer: b.spawnCustomer, bizRecipes: b.bizRecipes }); window.__jen.econ = { ...g, ...e, ...b, ...l, GATES: pr.GATES, levelReward: pr.levelReward, milestoneReward: pr.milestoneReward }; });

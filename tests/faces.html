@@ -1,0 +1,12 @@
+<!doctype html><body style="margin:0;background:#f7efdc"><canvas id=c width=1400 height=560></canvas><script type=module>
+// Big front views of specific looks, for checking faces under hats and hair.
+import '../js/systems/state.js';
+import { drawHuman } from '../js/gfx/character.js';
+import { RESIDENTS, visitorLook, employeeLook, playerLook } from '../js/data/looks.js';
+import { CLOTHES, applyOutfit } from '../js/data/wardrobe.js';
+const cv = document.getElementById('c'), c = cv.getContext('2d');
+const looks = [['curly', playerLook({ hairStyle: 'curly' })], ['co_dua', RESIDENTS.co_dua.look], ['vy', RESIDENTS.vy.look], ['nonla', applyOutfit(playerLook({ hairStyle: 'bob' }), { hat: 'nonla' })], ['sunhat', applyOutfit(playerLook({ hairStyle: 'bob' }), { hat: 'sunhat' })], ['boater', applyOutfit(playerLook({ hairStyle: 'bob' }), { hat: 'boater' })], ['sunglasses', applyOutfit(playerLook({ hairStyle: 'bob' }), { extra: 'sunglasses' })], ['tourist1', visitorLook(131 + 7, 'tourist')], ['cook', employeeLook(7, 'cook')], ['server', employeeLook(7, 'server')], ['chef_hat', applyOutfit(playerLook({ hairStyle: 'bob' }), { hat: 'chef_hat' })], ['bob', playerLook({ hairStyle: 'bob' })]];
+c.font = '700 13px sans-serif'; c.textAlign = 'center';
+looks.forEach(([n, L], i) => { const x = 60 + (i % 6) * 225, y = 230 + Math.floor(i / 6) * 270; c.setTransform(5, 0, 0, 5, x + 50, y); c.lineJoin = 'round'; c.lineCap = 'round'; drawHuman(c, { look: L, dir: 'down', yawOverride: 0, moving: 0, seed: 1, actT: 0.3 }, 0.3); c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#5b3f36'; c.fillText(n, x + 50, y + 30); });
+window.done = 1;
+</script>

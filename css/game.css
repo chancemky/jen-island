@@ -597,7 +597,6 @@ body.hide-controls .pause-btn, body.cutscene .pause-btn { display: none; }
   background: radial-gradient(circle at 50% 100%, #8fcb73 0 15px, transparent 16px) 0 100%/46px 100% repeat-x, radial-gradient(circle at 50% 100%, #7cbc62 0 11px, transparent 12px) 23px 100%/46px 100% repeat-x; }
 .svc-outside.night .svc-sky::after { filter: brightness(.45) saturate(.6); }
 .svc-outside.dusk .svc-sky::after { filter: brightness(.85) sepia(.2); }
-.cs-continue { position: absolute; left: 50%; bottom: calc(40px + var(--sab)); transform: translateX(-50%); z-index: 60; pointer-events: auto; min-width: 180px; }
 
 /* decorating: nothing on the HUD may catch a tap meant for the furniture */
 body.decorating #mapBtn, body.decorating #bagBtn, body.decorating #menuBtn, body.decorating #pauseBtn, body.decorating .hud-top, body.decorating #questPill, body.decorating #actBtn { visibility: hidden; pointer-events: none; }
@@ -675,3 +674,5 @@ body.lookout #hud, body.lookout .hud-top, body.lookout #questPill, body.lookout 
 .album-view { position: fixed; inset: 0; z-index: 90; background: rgba(30,24,20,.8); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 20px; color: #fff8ea; }
 .album-view img { max-width: min(92vw, 420px); max-height: 70vh; border: 6px solid #fffaf0; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
 .album-view b { font-size: 16px; } .album-view small { opacity: .75; font-weight: 800; }
+/* cutscenes: no joystick or "touch & drag" hint on screen */
+body.hide-controls #joyBase, body.hide-controls #joyHint, body.cutscene #joyHint { opacity: 0 !important; transition: opacity .3s; }

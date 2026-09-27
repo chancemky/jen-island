@@ -10,11 +10,12 @@ import { BUSINESSES, RECIPES, CHAPTERS, NIGHT_MARKET_RESTORE, STATUE_COST, STATI
 import { MEO_MEMORIES } from '../data/lore.js';
 import { keeperOf, keeperActor, staffedCount, PLACES, propertyPrice, upgradeCost } from './economy.js';
 import { cs, wait, say, ask, camTo, camFollow, walk, face, emote, hop, startFollow, stopFollow, caption } from './cutscene.js';
-import { scenes, setScene, fadeOut, fadeIn } from './scenes.js';
+import { scenes, setScene, fadeOut, fadeIn, isTransitioning } from './scenes.js';
 import { cam, fx } from '../world/render.js';
-import { QUEUES } from '../world/island.js';
+import { QUEUES, TRUCK_SPOTS } from '../world/island.js';
 import { setQuest, toast, showHud } from '../ui/hud.js';
-import { showReward } from '../ui/sheets.js';
+import { showReward, isUiOpen, isPresenting } from '../ui/sheets.js';
+import { dialogue } from '../ui/dialogue.js';
 import { askText, chooseLook } from '../ui/naming.js';
 import { playerLook, RESIDENTS, MERCHANTS } from '../data/looks.js';
 import { addXP, GATES, gateText, gatePaid, payGate, level } from './progress.js';
@@ -22,7 +23,7 @@ import { meoJoke, randomJoke, meoAntic, playRPS } from './fun.js';
 import { Actor } from '../world/actor.js';
 import { sfx, setMood } from '../core/audio.js';
 import { bus, rand, choice, dist, sleep, clamp, money } from '../core/util.js';
-import { rt as bizRT, bizRecipes } from './business.js';
+import { rt as bizRT, bizRecipes, openBiz as openShop } from './business.js';
 import { availableRecipes } from '../ui/shops.js';
 import { questOption, questTalk } from './sidequests.js';
 import { morningEvent, birthdaysToday } from './interact.js';
@@ -223,6 +224,10 @@ export function refreshQuest() {
 }
 export async function checkStory() {
   if (checking || cs.active || !flag('freeRoam')) return;
+  // never start a story moment on top of something else: a menu, a reward card, a line of
+  // dialogue, a door, sleeping or the lighthouse. The story check runs every second, so it
+  // simply happens a moment later.
+  if (isUiOpen() || isPresenting() || dialogue.active || G.runtime.sleeping || isTransitioning() || G.runtime.lookout) return;
   if (G.runtime.cardQueue && !flag('card:' + G.runtime.cardQueue)) { const n = G.runtime.cardQueue; G.runtime.cardQueue = 0; checking = true; try { await newChapter(n); } finally { checking = false; } return; }
   const st = currentStep();
   if (!st?.done) return;
@@ -1087,7 +1092,7 @@ async function keeperCeremony() {
     const m = G.meo, pl = G.player, nReg = regularsCount();
     await say('meo', T(`${G.state.player.name}. Every shop is open. ${nReg} regulars know your name. The bridges are fixed and the lanterns are lit.`, `${G.state.player.name}. Mọi quán đều mở cửa. ${nReg} khách quen biết tên bạn. Những cây cầu đã sửa và lồng đèn đã sáng.`), { tilt: 0.12 });
     await say('meo', T('By the ancient law of cats — which I just made up — I name you Keeper of the Island!', 'Theo luật cổ của loài mèo — mà mình vừa mới nghĩ ra — mình phong bạn là Người Giữ Đảo!'), { emo: 'happy' });
-    setFlag('keeper'); sfx('fanfare'); addXP(500, 'keeper'); addMoney(2000, 'keeper'); unlockAchievement('keeper_island');
+    setFlag('keeper'); S().flags.keeperDay = G.state.day; sfx('fanfare'); addXP(500, 'keeper'); addMoney(2000, 'keeper'); unlockAchievement('keeper_island');
     fx.burst('confetti', pl.x, pl.y - 40, 50, { up: 120, speed: 110, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 70, life: 2 });
     await hop(m, 3);
     await showReward({ icon: 'trophy', kicker: T('The end… of the beginning', 'Kết thúc… của sự khởi đầu'), title: T('Keeper of the Island', 'Người Giữ Đảo'), text: T('+2,000k · +500 XP. The island will keep growing with you — levels have no cap!', '+2.000k · +500 KN. Hòn đảo sẽ tiếp tục lớn lên cùng bạn — cấp độ không giới hạn!') });
@@ -1205,29 +1210,54 @@ async function nightQueen() {
 }
 
 // ---------------------------------------------------------------- Chapter 19 → 20: the island runs itself
+// One day, told in grouped shots: the sheds open in the morning, the truck at its pitch,
+// the Harbour Café's first coffees, the grill at sunset, the Night Market families, the
+// restaurant team — then the camera pulls back over an island that works without you.
 async function automationMontage() {
-  const s = G.state, list = staffedCount().list;
+  const s = G.state, owned = id => s.biz[id]?.owned, keeperName = id => keeperOf(id)?.name;
+  const time0 = s.time;
+  const shots = [];
+  const shed = ['shed1', 'shed2'].filter(owned);
+  if (shed.length) shots.push({ h: 7.5, ids: shed, en: `Morning. ${shed.map(keeperName).filter(Boolean).join(' and ') || 'Your shopkeepers'} unlock the sheds.`, vi: `Buổi sáng. ${shed.map(keeperName).filter(Boolean).join(' và ') || 'Người trông quán'} mở cửa các quán.` });
+  if (owned('truck')) { const sp = TRUCK_SPOTS[s.truckSpot || 'beach']; shots.push({ h: 11, ids: ['truck'], en: `The truck opens at ${sp.en}${keeperName('truck') ? ` — ${keeperName('truck')} at the window` : ''}.`, vi: `Xe mở bán ở ${sp.vi}${keeperName('truck') ? ` — ${keeperName('truck')} đứng quầy` : ''}.` }); }
+  if (owned('cafe')) shots.push({ h: 9, ids: ['cafe'], en: 'Harbour Town. The first coffees of the day, served without you.', vi: 'Phố Cảng. Những ly cà phê đầu ngày, không cần bạn pha.' });
+  if (owned('grill')) shots.push({ h: 17.5, ids: ['grill'], en: 'Coconut Cove. The grill fires up for the sunset crowd.', vi: 'Vịnh Dừa. Bếp nướng đỏ lửa đón khách hoàng hôn.' });
+  const stalls = STALL_IDS.filter(owned);
+  if (stalls.length) shots.push({ h: 19.5, ids: stalls, x: 430, y: 650, zoom: 0.95, en: `The Night Market. ${stalls.length} stalls, every one staffed and lit.`, vi: `Chợ Đêm. ${stalls.length} sạp, sạp nào cũng có người trông, đèn sáng rực.` });
+  if (owned('restaurant')) shots.push({ h: 20, ids: ['restaurant'], zoom: 1.05, en: `The restaurant on the hill: ${s.biz.restaurant.employees.length} people prepping, cooking and serving.`, vi: `Nhà hàng trên đồi: ${s.biz.restaurant.employees.length} người sơ chế, nấu nướng và phục vụ.` });
   await cs.run('montage', async () => {
-    G.runtime.inCutscene = true;
     await fadeOut(500, true);
     caption(T('A day on the island — while you take a walk…', 'Một ngày trên đảo — trong lúc bạn đi dạo…'));
-    await wait(1.4); caption(null); await fadeIn(500);
-    for (const id of list.slice(0, 8)) {
-      const b = B(id) || island().buildings[id]; if (!b) continue;
-      const k = keeperOf(id), a = keeperActor(id);
-      if (a) { a.visible = true; a.setAct('work'); }
-      await camTo(b.x, b.y - 10, { zoom: 1.3, rate: 2.6 });
-      const who = id === 'restaurant' ? T(`a team of ${s.biz.restaurant.employees.length}`, `đội ${s.biz.restaurant.employees.length} người`) : k?.name || T('a shopkeeper', 'người trông quán');
-      caption(T(`${bizName(id)} — ${who} has it covered`, `${bizName(id)} — ${who} lo hết`));
-      await wait(1.5);
-      if (a) a.setAct(null);
-    }
-    caption(null);
+    await wait(1.6); caption(null);
+    try {
+      for (const shot of shots) {
+        s.time = Math.round(shot.h * 60);
+        setMood(shot.h >= 18.5 ? 'night' : 'day');
+        G.runtime.showOpen = new Set(shot.ids);                   // every shop in the shot looks open, stock or not
+        for (const id of shot.ids) { if (keeperOf(id)) { if (!bizOf(id).open) openShop(id); const a = keeperActor(id); if (a) { a.visible = true; a.setAct('work'); } } }
+        const b = B(shot.ids[0]) || island().buildings[shot.ids[0]];
+        const x = shot.x ?? (shot.ids.length > 1 ? shot.ids.reduce((a, id) => a + (B(id)?.x || 0), 0) / shot.ids.length : b?.x), y = shot.y ?? (b?.y || 1500) - 20;
+        await fadeIn(350);
+        await camTo(x, y, { zoom: shot.zoom || 1.2, rate: 9 });
+        caption(T(shot.en, shot.vi));
+        for (let k = 0; k < 2; k++) { const q = QUEUES[shot.ids[0]]; if (q) npcs.spawnVisitorAt?.(q[q.length - 1][0] + 40, q[q.length - 1][1] + 30, 'market'); }
+        await wait(2.3);
+        for (const id of shot.ids) keeperActor(id)?.setAct(null);
+        caption(null);
+        await fadeOut(300, true);
+      }
+      // pull back: the whole island at work
+      s.time = Math.max(time0, 17 * 60); setMood('day');
+      await fadeIn(400);
+      await camTo(1300, 1500, { zoom: 0.42, rate: 1.4 });
+      caption(T('Everywhere you look, someone is open for business.', 'Nhìn đâu cũng thấy quán xá mở cửa.'));
+      await wait(2.6); caption(null);
+    } finally { s.time = time0; G.runtime.showOpen = null; setMood(time0 >= 18.5 * 60 || time0 < 6 * 60 ? 'night' : 'day'); }
     await summonMeo();
     await say('meo', T('Every shop opened this morning without you. Nobody panicked. Well, I panicked a little, out of habit.', 'Sáng nay mọi quán tự mở cửa mà không cần bạn. Không ai hoảng. À, mình hoảng chút xíu, theo thói quen thôi.'), { emo: 'happy', tilt: 0.15 });
+    await say('meo', T('You don\'t have to stand behind every counter any more. You built something that can live without you. That\'s the whole trick.', 'Bạn không cần đứng sau mọi quầy nữa. Bạn đã xây một thứ có thể tự sống mà không cần bạn. Bí quyết là vậy đó.'), { tilt: 0.1 });
     releaseMeo('plaza');
   });
-  G.runtime.inCutscene = false;
 }
 
 // ---------------------------------------------------------------- Chapter 20: what the island became

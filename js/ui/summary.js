@@ -1,7 +1,7 @@
 // End-of-day summary shown after sleeping: animated counters, per-business
 // performance, milestones and achievements, then "Ngày mới" (new day).
 
-import { h } from './sheets.js';
+import { h, present } from './sheets.js';
 import { T, tr } from '../systems/state.js';
 import { bizName } from '../data/game.js';
 import { sfx } from '../core/audio.js';
@@ -9,7 +9,8 @@ import { money, escapeHtml } from '../core/util.js';
 import { BUSINESSES, ACHIEVEMENTS, CHAPTERS, ROLES } from '../data/game.js';
 import { catName } from '../systems/ledger.js';
 
-export function showSummary(sum) {
+export function showSummary(sum) { return present(() => summaryCard(sum)); }
+function summaryCard(sum) {
   return new Promise(res => {
     const el = h('div', 'summary');
     const biz = Object.entries(sum.biz || {}).filter(([, v]) => v.served);
@@ -52,7 +53,8 @@ export function showSummary(sum) {
       };
       requestAnimationFrame(step);
     }, 350 + i * 220));
-    el.querySelector('button').onclick = () => { sfx('bell'); el.style.transition = 'opacity .5s'; el.style.opacity = 0; setTimeout(() => { el.remove(); res(); }, 450); };
+    let done = false;
+    el.querySelector('button').onclick = () => { if (done) return; done = true; el.style.pointerEvents = 'none'; sfx('bell'); el.style.transition = 'opacity .5s'; el.style.opacity = 0; setTimeout(() => { el.remove(); res(); }, 450); };
   });
 }
 export { ACHIEVEMENTS };

@@ -4,7 +4,7 @@
 
 import { G, T, tr, markDirty } from '../systems/state.js';
 import { CHANGELOG, APP_VERSION, newerThan } from '../data/changelog.js';
-import { h } from './sheets.js';
+import { h , present } from './sheets.js';
 import { escapeHtml } from '../core/util.js';
 import { sfx } from '../core/audio.js';
 
@@ -23,7 +23,7 @@ export function showWhatsNew() {
   const s = G.state;
   const list = unseenUpdates(s);
   if (!list.length) { if (s.lastSeenVersion !== APP_VERSION) { s.lastSeenVersion = APP_VERSION; markDirty(true); } return Promise.resolve(); }
-  return new Promise(res => {
+  return present(() => new Promise(res => {
     G.runtime.pause++;
     sfx('fanfare');
     const el = h('div', 'wn-wrap');
@@ -31,11 +31,13 @@ export function showWhatsNew() {
       <div class="wn-body scroll">${list.map((e, i) => entryHtml(e, i === 0)).join('')}</div>
       <button class="btn big pink" type="button">${T("Let's play!", 'Chơi thôi!')}</button></div>`;
     document.getElementById('app').appendChild(el);
+    let done = false;
     el.querySelector('button').onclick = () => {
+      if (done) return; done = true;
       sfx('success'); s.lastSeenVersion = APP_VERSION; markDirty(true);
-      G.runtime.pause--; el.classList.add('out'); setTimeout(() => { el.remove(); res(); }, 250);
+      G.runtime.pause--; el.classList.add('out'); el.style.pointerEvents = 'none'; setTimeout(() => { el.remove(); res(); }, 250);
     };
-  });
+  }));
 }
 
 // Settings: the last 20 updates (only those since the account was created).

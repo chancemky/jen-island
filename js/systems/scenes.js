@@ -2,6 +2,7 @@
 //   approach door → door swings open → step into doorway → fade to black →
 //   swap scene → fade in with the player just inside → door closes behind.
 
+import { lockInput, releaseInput } from '../core/locks.js';
 import { G } from './state.js';
 import { cam, fx } from '../world/render.js';
 import { sfx } from '../core/audio.js';
@@ -46,8 +47,9 @@ export async function enterBuilding(trigger) {
   if (transitioning) return;
   transitioning = true;
   const pl = G.player, island = scenes.island, bld = island.buildings[trigger.building];
+  let ok = false;
   try {
-    pl.control = false; releaseJoystick();
+    lockInput('door'); releaseJoystick();
     bld.doorTarget = 1; sfx('door');
     pl.face('up');
     await sleep(140);
@@ -62,8 +64,9 @@ export async function enterBuilding(trigger) {
     const fi = fadeIn(320);
     await pl.walkTo([[inner.entry.x, inner.entry.y - 16]], { speed: 64 });
     await fi;
-    inner.doorOpen = 0;
-  } finally { pl.control = true; transitioning = false; }
+    inner.doorOpen = 0; ok = true;
+  } catch (e) { console.error('[door] entering failed', e); }
+  finally { releaseInput('door'); transitioning = false; if (!ok) fadeIn(200); }     // never leave the screen black
 }
 
 export async function exitBuilding() {
@@ -72,8 +75,9 @@ export async function exitBuilding() {
   const pl = G.player, inner = G.scene, island = scenes.island;
   const bid = inner.building, bld = island.buildings[bid];
   const trig = island.triggers.find(t => t.kind === 'door' && t.building === bid);
+  let ok = false;
   try {
-    pl.control = false; releaseJoystick();
+    lockInput('door'); releaseJoystick();
     sfx('door'); pl.face('down');
     await pl.walkTo([[inner.door.x, inner.h + 10]], { speed: 70 });
     await fadeOut(300);
@@ -83,8 +87,9 @@ export async function exitBuilding() {
     await sleep(60);
     const fi = fadeIn(320);
     await pl.walkTo([[trig.doorX, trig.doorY + 16]], { speed: 64 });
-    await fi;
-  } finally { pl.control = true; transitioning = false; }
+    await fi; ok = true;
+  } catch (e) { console.error('[door] leaving failed', e); }
+  finally { releaseInput('door'); transitioning = false; if (!ok) fadeIn(200); }
 }
 
 // Animate door leaves every frame.

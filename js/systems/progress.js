@@ -2,6 +2,8 @@
 // chapter), a level-up celebration, tiered milestones with rewards, the
 // pay-Mèo-Mây store unlocks, and the global leaderboard sync.
 
+import { present } from '../ui/sheets.js';
+import { COUNTS } from '../core/counts.js';
 import { G, T, markDirty, addMoney } from './state.js';
 import { bus, money } from '../core/util.js';
 import { BUSINESSES, FURNITURE, RECIPES, ACHIEVEMENTS } from '../data/game.js';
@@ -90,7 +92,7 @@ export const LEVEL_UNLOCKS = [
 // runs out (recipes, chapters, stalls…) ends at exactly how many exist and then
 // shows COMPLETED instead of asking for the impossible.
 // Some tiers carry a unique keepsake (furniture or clothing) besides money and XP.
-export const COUNTS = {};                          // filled in by systems that own the lists (areas, quests, pets)
+export { COUNTS };
 const doubleOn = tiers => i => i < tiers.length ? tiers[i] : tiers[tiers.length - 1] * Math.pow(2, i - tiers.length + 1);
 const upTo = (tiers, max) => i => { const m = max(), t = [...tiers.filter(v => v < m), m]; return i < t.length ? t[i] : Infinity; };
 const finite = (tr, tiers, max) => ({ ...tr, finite: true, max, tiers: () => [...tiers.filter(v => v < max()), max()], tier: upTo(tiers, max) });
@@ -171,7 +173,7 @@ export function tickCelebrations(canShow) {
   if (showing || !queue.length || !canShow()) return;
   showing = true;
   const q = queue.shift();
-  celebrate(q).then(() => { showing = false; });
+  present(() => celebrate(q)).finally(() => { showing = false; });
 }
 function celebrate({ lv, reward, gift, unlocks }) {
   return new Promise(res => {
@@ -186,7 +188,8 @@ function celebrate({ lv, reward, gift, unlocks }) {
       ${unlocks.length ? `<ul>${unlocks.map(u => `<li>★ ${u}</li>`).join('')}</ul>` : ''}
       <button class="btn big pink" type="button">${T('Yay!', 'Tuyệt!')}</button></div>`;
     document.getElementById('app').appendChild(el);
-    const done = () => { G.runtime.pause--; el.classList.add('out'); setTimeout(() => { el.remove(); res(); }, 350); };
+    let closed = false;
+    const done = () => { if (closed) return; closed = true; G.runtime.pause--; el.classList.add('out'); el.style.pointerEvents = 'none'; setTimeout(() => { el.remove(); res(); }, 350); };
     el.querySelector('button').onclick = () => { bus.emit('sfx', 'success'); done(); };
   });
 }

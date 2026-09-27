@@ -5,6 +5,7 @@
 // wave at the ferry. Every kind of thing you try is remembered in your journal
 // ("Discoveries").
 
+import { lockInput, releaseInput } from '../core/locks.js';
 import { G, T, markDirty, addMoney, canAfford, unlockAchievement } from './state.js';
 import { say } from '../ui/dialogue.js';
 import { toast } from '../ui/hud.js';
@@ -14,7 +15,7 @@ import { fx } from '../world/render.js';
 import { choice, dist, rand, clock, bus } from '../core/util.js';
 import { PLAZA, PIER, PIER_END } from '../world/island.js';
 import { CHAPTERS } from '../data/game.js';
-import { COUNTS } from './progress.js';
+import { COUNTS } from '../core/counts.js';
 import { npcs } from './npc.js';
 
 // ---------------------------------------------------------------- discoveries
@@ -148,13 +149,14 @@ async function display(p) { discover('display'); await say(null, choice([T('Neat
 // the boutique's fitting room: step in, the curtain closes, change, step out
 async function fitting(p) {
   const pl = G.player; discover('fitting');
-  pl.control = false;
-  await pl.walkTo([[p.x, p.y + 2]], { speed: 60 });
-  pl.visible = false; p.occupied = true; sfx('whoosh');
-  const { openWardrobe } = await import('../ui/clothes.js'), { isUiOpen } = await import('../ui/sheets.js');
-  openWardrobe();
-  await new Promise(r => { const iv = setInterval(() => { if (!isUiOpen()) { clearInterval(iv); r(); } }, 200); });
-  sfx('whoosh'); p.occupied = false; pl.visible = true; pl.y = p.y + 16; pl.face('down'); pl.control = true;
+  lockInput('fitting');
+  try {
+    await pl.walkTo([[p.x, p.y + 2]], { speed: 60 });
+    pl.visible = false; p.occupied = true; sfx('whoosh');
+    const { openWardrobe } = await import('../ui/clothes.js'), { isUiOpen } = await import('../ui/sheets.js');
+    openWardrobe();
+    await new Promise(r => { const iv = setInterval(() => { if (!isUiOpen()) { clearInterval(iv); r(); } }, 200); });
+  } finally { sfx('whoosh'); p.occupied = false; pl.visible = true; pl.y = p.y + 16; pl.face('down'); releaseInput('fitting'); }
   pl.setEmo('happy', 2); fx.burst('spark', pl.x, pl.y - 30, 10, { up: 30, col: ['#f4a9b8', '#ffd35a', '#fff'] }); sfx('sparkle');
 }
 

@@ -515,9 +515,10 @@ export function drawNightStall(c, t, b) {
   if (!broken && s.open) { for (let i = 0; i < 4; i++) ell(c, -w / 2 + 10 + i * (w - 20) / 3, -h - 5, 6, 3, b.goods?.[i % b.goods.length] || '#f2c46b'); }
   // posts
   for (const x of [-w / 2 + 2, w / 2 - 2]) limb(c, [x, -h, x, -h - 34], 2.6, broken ? '#7a6a5e' : '#8a5f3e');
-  const cols = broken ? ['#9d8a80', '#b3a79a'] : b.cloth || ['#e8584e', '#fff5df'];
+  // your own colours on the cloth roof — still a striped Night Market canopy with its lantern
+  const cols = broken ? ['#9d8a80', '#b3a79a'] : s.awning ? [s.awning[1], s.awning[0]] : b.cloth || ['#e8584e', '#fff5df'];
   clothRoof(c, w, 18, h + 34, cols, { torn: broken });
-  if (!broken && (s.label || b.label)) signBoard(c, 0, -h - 30, w - 12, 10, tr(s.label || b.label), s.owned ? '#f08ca0' : '#fff5df', s.owned ? '#fff' : '#a8563f');
+  if (!broken && (s.label || b.label)) signBoard(c, 0, -h - 30, w - 12, 10, tr(s.label || b.label), s.signCol || (s.owned ? '#f08ca0' : '#fff5df'), s.owned ? '#fff' : '#a8563f', { style: s.signStyle });
   if (!broken && nightA() > 0.05) { lanternShape(c, w / 2 - 4, -h - 40, 0.7, '#ea5a4f', t, b.x); glow(b, 0, -h - 20, 50, 'rgba(255,190,110,.6)'); }   // hangs from the post, clear of the sign
   if (broken) { poly(c, [-w / 2 + 6, -h - 2, w / 2 - 10, -h - 2, w / 2 - 14, -h + 10, -w / 2 + 10, -h + 12], 'rgba(90,70,60,.35)', null); }
 }
@@ -546,7 +547,7 @@ export function drawDinh(c, t, b) {
 export function drawKiosk(c, t, b) {
   const s = b.state?.() || {}, w = b.w || 112, h = 46, own = s.owned, open = s.open;
   const cafe = b.style === 'cafe';
-  const wall = cafe ? '#f6ecdc' : '#e9d3ae', trim = cafe ? '#6b4431' : '#c9674a';
+  const wall = cafe ? '#f6ecdc' : '#e9d3ae', trim = s.branded ? s.signCol : cafe ? '#6b4431' : '#c9674a';
   shadow(c, 0, 2, w * 0.6, 10, 0.2);
   box(c, -w / 2, -h, w, h, 4, wall, INK, 1.2);
   if (!cafe) for (let x = -w / 2 + 6; x < w / 2; x += 8) line(c, x, -h + 2, x, -2, 'rgba(120,80,40,.25)', 1);   // bamboo slats
@@ -560,11 +561,11 @@ export function drawKiosk(c, t, b) {
   } else { for (let y = hy + 3; y < hy + hh; y += 4) line(c, hx - hw / 2 + 2, y, hx + hw / 2 - 2, y, 'rgba(255,255,255,.18)', 1); }
   box(c, hx - hw / 2 - 4, hy + hh - 1, hw + 8, 5, 2, shade(wall, -40));
   // roof: a café awning or a thatched palm roof
-  if (cafe) awning(c, 0, -h - 2, w + 12, ['#fff8ea', trim], 14);
+  if (cafe) awning(c, 0, -h - 2, w + 12, s.branded ? s.awning : ['#fff8ea', trim], 14);
   else { c.beginPath(); c.moveTo(-w / 2 - 10, -h + 2); c.quadraticCurveTo(0, -h - 36, w / 2 + 10, -h + 2); c.closePath(); c.fillStyle = '#d9b36a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.1; c.stroke(); c.strokeStyle = '#b98a4a'; c.lineWidth = 0.8; for (let i = -5; i <= 5; i++) { c.beginPath(); c.moveTo(i * 9, -h - 14 + Math.abs(i) * 2); c.lineTo(i * 11, -h + 1); c.stroke(); } }
   // sign
-  const label = cafe ? T('HARBOUR CAFÉ', 'CÀ PHÊ BẾN CẢNG') : T('COVE GRILL', 'QUÁN NƯỚNG VỊNH DỪA');
-  signBoard(c, 0, cafe ? -h - 26 : -h - 30, cafe ? 78 : 88, 13, label, trim, '#fff');
+  const label = s.sign || (cafe ? T('HARBOUR CAFÉ', 'CÀ PHÊ BẾN CẢNG') : T('COVE GRILL', 'QUÁN NƯỚNG VỊNH DỪA'));
+  signBoard(c, 0, cafe ? -h - 26 : -h - 30, cafe ? 78 : 88, 13, label, trim, '#fff', { style: s.signStyle });
   if (cafe) { // coffee cup icon and two little bistro tables
     for (const x of [-w / 2 - 20, w / 2 + 20]) { ell(c, x, -14, 9, 3, '#fff8ea', INK, 0.8); limb(c, [x, -13, x, 0], 1.4, '#6b4431'); }
   } else { // tiki torches

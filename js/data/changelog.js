@@ -3,9 +3,27 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.0.0';
+export const APP_VERSION = '5.1.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.1.0', date: '2026-09-27T05:47:17Z',
+    title: ['Smooth Sailing', 'Thuận Buồm Xuôi Gió'],
+    items: [
+      ['No more getting stuck: cutscenes, chapter cards, achievements, rewards and dialogue can no longer freeze the game or leave you unable to move', 'Không còn bị kẹt: cảnh phim, thẻ chương, thành tựu, phần thưởng và hội thoại không còn làm đứng game hay khiến bạn không đi được'],
+      ['Reward cards, level-ups and the day summary now appear one at a time, never on top of each other or hidden behind a black screen', 'Thẻ phần thưởng, lên cấp và tổng kết ngày giờ hiện lần lượt từng cái, không chồng lên nhau hay bị che sau màn hình đen'],
+      ['Story moments wait until you close a menu or finish a conversation instead of starting underneath it', 'Khoảnh khắc truyện sẽ chờ bạn đóng menu hoặc nói xong, không bắt đầu phía sau nữa'],
+      ['The "Continue" button at the end of cutscenes is gone — scenes simply play on', 'Nút “Tiếp tục” ở cuối cảnh phim đã được bỏ — cảnh cứ thế chạy tiếp'],
+      ['Tapping anywhere on the scene moves the conversation on, even during cutscenes', 'Chạm bất kỳ đâu trên màn hình để tiếp tục hội thoại, kể cả trong cảnh phim'],
+      ['Tapping fast can no longer start the same scene twice or open the menu several times', 'Chạm nhanh không còn làm một cảnh chạy hai lần hay mở menu nhiều lần'],
+      ['Every shop you own can carry your branding now: the Harbour Café, the Coconut Cove Grill and every Night Market stall (still with their lanterns)', 'Mọi quán bạn sở hữu giờ đều mang thương hiệu của bạn: Cà Phê Bến Cảng, Quán Nướng Vịnh Dừa và mọi sạp Chợ Đêm (vẫn giữ lồng đèn)'],
+      ['Regular customers greet you more warmly as their visits add up, notice your upgrades and the island changing, order "the usual" — and sometimes bring a friend', 'Khách quen chào bạn thân tình hơn khi ghé nhiều, để ý quán nâng cấp và hòn đảo đổi thay, gọi “như cũ” — và đôi khi dẫn bạn tới'],
+      ['Chapter 19 shows a whole day of the island running itself: the sheds in the morning, the truck, the café, the grill at sunset, the Night Market and the restaurant team', 'Chương 19 kể trọn một ngày hòn đảo tự vận hành: các quán buổi sáng, xe đồ ăn, quán cà phê, quán nướng lúc hoàng hôn, Chợ Đêm và đội nhà hàng'],
+      ['Life as Keeper of the Island goes on: a family comes home to its old stall, a community dinner, Harbour Day returns, the Night Market\'s anniversary, an old guestbook, and a quiet night with Mèo Mây', 'Cuộc sống của Người Giữ Đảo vẫn tiếp diễn: một gia đình về thăm sạp cũ, bữa cơm cả đảo, Ngày hội bến cảng trở lại, kỷ niệm Chợ Đêm, cuốn sổ lưu bút cũ, và một đêm yên tĩnh với Mèo Mây'],
+      ['You can see the seasons now: Tết in red and gold with apricot blossoms, Mid-Autumn star lanterns, beach umbrellas in summer and a packed Night Market on Saturdays', 'Giờ có thể thấy mùa lễ: Tết đỏ vàng với hoa mai, lồng đèn ông sao Trung Thu, dù che nắng mùa hè và Chợ Đêm đông nghịt tối thứ Bảy'],
+      ['Seen from behind, people no longer hold plates and snacks in front of their heads', 'Nhìn từ phía sau, mọi người không còn cầm đĩa và đồ ăn trước đầu nữa'],
+    ],
+  },
   {
     v: '5.0.0', date: '2026-09-27T03:54:53Z',
     title: ['The Island Remembers', 'Hòn Đảo Còn Nhớ'],

@@ -231,7 +231,7 @@ export function openBag() {
 export function openBizMenu(bizId, { onUpgrade } = {}) {
   const s = G.state, def = BUSINESSES[bizId], b = s.biz[bizId];
   openSheet({ title: bizName(bizId), sub: T(`Level ${b.level}`, `Cấp ${b.level}`), full: true, build: (body, api) => {
-    const brandable = ['shed1', 'shed2', 'truck', 'restaurant'].includes(bizId);
+    const brandable = !!BUSINESSES[bizId] && (b.owned || bizId === 'night');   // every shop you own can carry your name
     tabs(body, [T('Menu', 'Thực đơn'), T('Prices', 'Giá bán'), T('Daily special', 'Món đặc biệt'), T('Upgrades', 'Nâng cấp'), T('Equipment', 'Dụng cụ'), T('Stats', 'Thống kê'), ...(brandable ? [T('Branding', 'Thương hiệu')] : [])], (i, pane) => {
       if (i === 6) return brandPane(pane, bizId, api);
       if (i === 1) return pricesPane(pane, bizId, api);
@@ -319,7 +319,7 @@ function brandPane(pane, bizId, api) {
     list.appendChild(r);
   }
 }
-const bizSignDefault = id => ({ shed1: T('TEA & COFFEE', 'TRÀ & CÀ PHÊ'), shed2: 'BÁNH MÌ', truck: T('ROLL TRUCK', 'XE CUỐN'), restaurant: T('RESTAURANT', 'NHÀ HÀNG') })[id] || '';
+const bizSignDefault = id => ({ shed1: T('TEA & COFFEE', 'TRÀ & CÀ PHÊ'), shed2: 'BÁNH MÌ', truck: T('ROLL TRUCK', 'XE CUỐN'), restaurant: T('RESTAURANT', 'NHÀ HÀNG'), cafe: T('HARBOUR CAFÉ', 'CÀ PHÊ BẾN CẢNG'), grill: T('COVE GRILL', 'QUÁN NƯỚNG VỊNH DỪA') })[id] || (BUSINESSES[id]?.stall || id === 'night' ? T('YOUR STALL', 'SẠP CỦA BẠN') : '');
 function equipPane(pane, bizId, api) {
   const list = h('div', 'list'); pane.appendChild(list);
   const b = G.state.biz[bizId]; b.equip ||= {};

@@ -34,7 +34,9 @@ On `localhost` only:
 | screens | Business / Milestones / Staff screens draw |
 | quests | every side quest plays start to finish (find, meet, puzzle, deliver, routes) |
 | world | TV, radio, piano, lamp, fish, books, fountain, timetable, fishing and the garden all work |
-| render | every look × pose × direction draws pixels |
+| stability | stuck-screen regressions: stacked rewards/achievements/level-ups queue one at a time; cutscene + chapter card + achievements + quest + milestone rewards together (with rapid tapping); duplicate scene requests; overlapping dialogue; sleep with pending popups; doors after a cutscene; the watchdog recovering a hung scene, leaked pause and leaked lock — then controls, movement and the action button must work |
+| chaos (`npm run test:chaos`, not in `npm test`) | Chapters 1→20 with an impatient player: random taps, mashing the action key, opening/closing the menu around transitions |
+| render | every look × pose × direction draws pixels, and every figure keeps its big head |
 
 `tests/cast.html` is a contact sheet of the whole cast for art checks against `docs/reference/`.
 
@@ -80,6 +82,15 @@ No build step, no framework. Canvas 2D for the world, DOM for UI.
 - Game bonuses (recipe level, shop level, special, register) stack to at most +45 %; only the player's own price goes beyond.
 - One acquisition price per business (`BUSINESSES[id].buy`); Mèo Mây's keys read it.
 - Property pays back in 45–65 days of rent; owning adds +5 % custom and 10 % cheaper upgrades.
+
+### Reliability rules (never get stuck)
+
+- **Input locks are named** (`js/core/locks.js`): each system takes and releases control under its own name (`cutscene`, `door`, `seat`, `pet`, `quest`…); the player moves only when no lock is held, so one system finishing can't free the player while another still needs control. `player.control` is read-only in practice.
+- **One scene at a time**: `cs.run` queues scenes and ignores a request for a scene already running or waiting. `G.runtime.inCutscene` is derived from it (never set by hand).
+- **One blocking card at a time**: rewards, level-ups, the day summary and "what's new" go through `present()` (`ui/sheets.js`); a card never opens under the black fade.
+- **Dialogue lines queue** instead of replacing each other, and closing the dialogue always resolves whoever was waiting.
+- **Story checks wait** while a menu, card, dialogue, door transition, sleep or the lighthouse is open.
+- **Watchdog** (`main.js`, defensive only, every rescue logged with `[watchdog]`): scripted walks that overrun arrive, a scene with no activity for 15 s hands control back, and a pause count, input lock or black fade with nothing on screen is cleared.
 
 ### Design rules
 

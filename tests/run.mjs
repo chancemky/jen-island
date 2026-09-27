@@ -48,16 +48,26 @@ async function openGame(tag) {
 }
 
 // click through dialogue, cutscenes, rewards and prompts like a very patient player
-function makePump(p) {
+function makePump(p, chaos = false) {
   return async ms => {
     const t0 = Date.now();
     while (Date.now() - t0 < ms) {
+      if (chaos) {
+        // an impatient player: taps everywhere, mashes the action key, pokes the menu around transitions
+        const r = Math.random();
+        // (random taps only on the game itself — inside a menu they could hit Settings → Reset game)
+        const menuUp = await p.evaluate(() => !!document.querySelector('.sheet-wrap:not(.out)')).catch(() => true);
+        if (r < 0.35) { if (!menuUp) await p.mouse.click(40 + Math.random() * 310, 150 + Math.random() * 560).catch(() => {}); }
+        else if (r < 0.55) { for (let k = 0; k < 4; k++) await p.keyboard.press('e'); }
+        else if (r < 0.63) await p.evaluate(() => document.getElementById('menuBtn')?.click()).catch(() => {});
+        else if (r < 0.72) await p.evaluate(() => [...document.querySelectorAll('.sheet-wrap:not(.out) .x')].pop()?.click()).catch(() => {});
+        else if (r < 0.78) await p.evaluate(() => document.getElementById('actBtn')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))).catch(() => {});
+      }
       await p.evaluate(() => {
         const m = document.querySelector('.modal'); if (m) { const i = m.querySelector('input'); if (i && !i.value) i.value = 'Test'; m.querySelector('.btn')?.click(); }
         document.querySelector('#skipBtn:not(.hidden)')?.click();
         const r = document.querySelector('.reward button'); if (r) r.click();
         for (const b of document.querySelectorAll('button')) if (/^(Yay!|Tuyệt!|Next day ☀|Ngày mới ☀|Let.s play!?|Chơi thôi!?)$/.test(b.textContent.trim())) b.click();
-        document.querySelector('.cs-continue')?.click();
       }).catch(() => {});
       const dlg = await p.evaluate(() => { const d = document.getElementById('dialog'); return d && !d.classList.contains('hidden') && !d.classList.contains('out') ? (document.querySelector('.dlg-choices button') ? 'choice' : 'text') : ''; }).catch(() => '');
       if (dlg === 'text') await p.keyboard.press('e');
@@ -125,8 +135,9 @@ if (only === 'all' || only === 'save') {
 }
 
 // ---------------------------------------------------------------- story
-if (only === 'all' || only === 'story') {
-  console.log('story (Chapters 1–20)');
+if (only === 'all' || only === 'story' || only === 'chaos') {
+  const chaos = only === 'chaos';
+  console.log(chaos ? 'story with an impatient player (Chapters 1–20)' : 'story (Chapters 1–20)');
   const { p, errors, ctx } = await openGame('story');
   // count chapter title cards as they appear
   await p.evaluate(() => {
@@ -134,13 +145,13 @@ if (only === 'all' || only === 'story') {
     const el = document.getElementById('caption');
     new MutationObserver(() => { const m = el.textContent.match(/(?:Chapter|Chương) (\d+)/); if (m && el.classList.contains('on')) { const k = m[1] + '|' + el.textContent; if (window.__lastCard !== k) { window.__lastCard = k; window.__cards[m[1]] = (window.__cards[m[1]] || 0) + 1; } } }).observe(el, { childList: true, subtree: true, attributes: true });
   });
-  const pump = makePump(p);
+  const pump = makePump(p, chaos);
   // reach free roam (arrival + tour)
   for (let i = 0; i < 60; i++) { await pump(2000); if (await p.evaluate(() => window.__jen?.G?.state?.story?.flags?.freeRoam)) break; }
   if (!(await p.evaluate(() => window.__jen.G.state.story.flags.freeRoam))) fail('story', 'never reached free roam after the tour');
   const expected = await p.evaluate(() => { const S = window.__jen.STEPS; const out = []; let c = 'materials', g = 0; while (c && g++ < 100) { out.push(c); c = S[c].next; } return out; });
   const seen = [];
-  let lastCh = 1, soft = false;
+  let lastCh = 1, soft = false; const stuckAfter = [];
   for (let i = 0; i < 90; i++) {
     const before = await p.evaluate(() => window.__jen.G.state.story.step);
     seen.push(before);
@@ -187,7 +198,7 @@ if (only === 'all' || only === 'story') {
     if (res !== 'ok') { fail('story', `${before}: ${res}`); break; }
     await pump(6000);
     let after = await p.evaluate(() => window.__jen.G.state.story.step);
-    for (let k = 0; k < 12 && after === before; k++) { if (!(await p.evaluate(() => window.__jen.cs.active))) await p.evaluate(() => window.__jen.checkStory()); await pump(4000); after = await p.evaluate(() => window.__jen.G.state.story.step); }
+    for (let k = 0; k < 20 && after === before; k++) { if (!(await p.evaluate(() => window.__jen.cs.active))) await p.evaluate(() => window.__jen.checkStory()); await pump(4000); after = await p.evaluate(() => window.__jen.G.state.story.step); }
     if (after === before) { fail('story', `soft lock: step "${before}" never advanced`); soft = true; break; }
     let want = expected[expected.indexOf(before) + 1];
     if (['nightIntro', 'restoIntro'].includes(want)) want = expected[expected.indexOf(want) + 1];   // intro steps hand straight on from their cutscene
@@ -198,7 +209,17 @@ if (only === 'all' || only === 'story') {
     if (ch !== Math.max(lastCh, stepCh)) fail('story', `at ${after} the chapter is ${ch}, expected ${Math.max(lastCh, stepCh)}`);
     if (ch > lastCh) { const xp1 = await p.evaluate(() => window.__jen.G.state.xpTotal || 0); if (xp1 <= xp0) fail('story', `no XP reward when chapter ${ch} began`); }
     lastCh = Math.max(lastCh, ch);
+    // after every scene the island must be fully free again
+    let h = null;
+    for (let k = 0; k < 10; k++) { h = await p.evaluate(() => window.__jen.health()); if (!h.cs && !h.dialog && !h.overlays.length && !h.presenting) break; await pump(800); }
+    if (!h.cs && !h.dialog) {
+      // (in the impatient run, a menu the bot just opened is fine — but only if the pause count matches what's open)
+      const menus = h.overlays.filter(o => /sheet-wrap/.test(o) && !/out/.test(o)).length, others = h.overlays.filter(o => !/sheet-wrap/.test(o));
+      const bad = [h.inCutscene && 'inCutscene', h.pause > (chaos ? menus : 0) && `pause ${h.pause}`, h.locks.length && `locks ${h.locks}`, (chaos ? others.length : h.overlays.length) && `overlays ${chaos ? others : h.overlays}`, h.fade && 'fade'].filter(Boolean);
+      if (bad.length) stuckAfter.push(`${after}: ${bad.join(', ')}`);
+    }
   }
+  if (stuckAfter.length) fail('story', 'state not clean after scenes: ' + stuckAfter.slice(0, 5).join(' · ')); else pass('story', 'after every scene: controls back, no cutscene flag, no pause, no overlays');
   if (!soft) {
     const final = await p.evaluate(() => window.__jen.G.state.story.step);
     if (final === 'free') pass('story', `reached free play through ${seen.length} steps, chapters 1→${lastCh}`); else fail('story', `ended at "${final}", not free play`);
@@ -332,15 +353,15 @@ if (only === 'all' || only === 'quests') {
     for (const r of ['ba_tu', 'chu_hai', 'linh', 'minh', 'co_lan', 'be_na', 'anh_tuan', 'chi_mai', 'vy', 'ong_loc', 'chi_ngoc', 'co_dua']) s.friends[r] = 80;
     s.recipes = [...new Set([...s.recipes, 'banh_mi_thit'])];
     J.G.npcs.spawnIsletResidents();
-    window.__qStart = (id, who) => { const q = J.sq.SIDE_QUESTS.find(q => q.id === id); const rid = who || q.giver; const a = rid === 'meo' ? J.G.meo : J.G.npcs.byId(rid) || (J.G.npcs.vendors || []).find(v => v.data?.mid === rid); window.__qBusy = true; J.cs.run('qtest', () => J.sq.questTalk(a, rid)).finally(() => { window.__qBusy = false; }); };
+    window.__qStart = (id, who) => { const q = J.sq.SIDE_QUESTS.find(q => q.id === id); const rid = who || q.giver; const a = rid === 'meo' ? J.G.meo : J.G.npcs.byId(rid) || (J.G.npcs.vendors || []).find(v => v.data?.mid === rid); window.__qBusy = true; J.cs.run('qtest-' + id + '-' + (window.__qN = (window.__qN || 0) + 1), () => J.sq.questTalk(a, rid)).finally(() => { window.__qBusy = false; }); };
   });
   const ids = await p.evaluate(() => window.__jen.sq.SIDE_QUESTS.map(q => q.id));
   const state = id => p.evaluate(id => window.__jen.G.state.sideQuests?.[id] || '', id);
-  const settle = async (id, until, ms = 20000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { await pump(500); const st = await state(id); if (until.includes(st) && !(await p.evaluate(() => window.__qBusy || window.__jen.cs.active))) return st; } return state(id); };
+  const settle = async (id, until, ms = 45000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { await pump(500); const st = await state(id); if (until.includes(st) && !(await p.evaluate(() => window.__qBusy || window.__jen.cs.active))) return st; } return state(id); };
   let ok = 0;
   for (const id of ids) {
     // make sure what it needs is done first
-    const pre = await p.evaluate(id => { const q = window.__jen.sq.SIDE_QUESTS.find(q => q.id === id); return window.__jen.sq.eligible(q) ? '' : `not eligible (after ${q.after})`; }, id);
+    const pre = await p.evaluate(id => { window.__jen.G.state.story.flags.lastPostDay = -999; const q = window.__jen.sq.SIDE_QUESTS.find(q => q.id === id); return window.__jen.sq.eligible(q) ? '' : `not eligible (after ${q.after})`; }, id);
     if (pre) { fail('quests', `${id}: ${pre}`); continue; }
     await p.evaluate(id => window.__qStart(id), id);
     let st = await settle(id, ['active', 'found']);
@@ -368,9 +389,13 @@ if (only === 'all' || only === 'quests') {
       await pump(1500);
       st = await settle(id, ['found', 'done'], 20000);
     }
-    if (st !== 'done') fail('quests', `${id} got stuck at "${st || 'not started'}"`);
+    if (st !== 'done') { const dbg = await p.evaluate(() => [document.getElementById('dlgText')?.innerText, document.getElementById('dlgName')?.innerText, [...document.querySelectorAll('.dlg-choices button')].map(b => b.innerText).join('|'), JSON.stringify(window.__jen.health())]); fail('quests', `${id} got stuck at "${st || 'not started'}" — ${dbg.join(' / ')}`); }
     else ok++;
   }
+  await pump(3000);
+  const hq = await p.evaluate(() => window.__jen.health());
+  const badq = [hq.cs && `cutscene ${hq.csName}`, hq.inCutscene && 'inCutscene', hq.pause && `pause ${hq.pause}`, hq.locks.length && `locks ${hq.locks}`, hq.overlays.length && `overlays ${hq.overlays}`, hq.dialog && 'dialogue'].filter(Boolean);
+  if (badq.length) fail('quests', 'after all quests (incl. postgame scenes) the game is not free: ' + badq.join(', ')); else pass('quests', 'after every quest, reward and postgame scene the game is back to free roam');
   const scrap = await p.evaluate(() => Object.keys(window.__jen.G.state.keepsakes || {}).length);
   if (ok === ids.length) pass('quests', `all ${ids.length} side quests playable start to finish · ${scrap} keepsakes in the scrapbook`);
   if (errors.length) fail('quests', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('quests', 'no errors');
@@ -389,7 +414,8 @@ if (only === 'all' || only === 'world') {
     const label = await p.evaluate(([scene, x, y]) => { const J = window.__jen; if (J.G.scene.id !== scene) J.setScene(scene, x, y, 'up'); const pl = J.G.player; pl.x = x; pl.y = y; pl.face('up'); return new Promise(r => setTimeout(() => r(document.getElementById('actBtn')?.innerText || document.querySelector('.act-btn, #action')?.innerText || ''), 500)); }, [scene, x, y]);
     const act = await p.evaluate(([scene, x, y]) => { const J = window.__jen, sc = J.G.scene, pl = J.G.player; const a = J.ix.nearbyThing(sc, pl) || J.fishing.fishingAction(pl) || J.garden.gardenAction(pl) || J.ix.outdoorAction(pl) || J.garden.plaqueAction(pl); if (!a) return ''; window.__run = a.run(); return a.label; }, [scene, x, y]);
     if (!act) { fail('world', `nothing to do at ${scene} (${x}, ${y}) — wanted ${expect}`); return false; }
-    await pump(2500);
+    await pump(1500);
+    for (let k = 0; k < 12 && await p.evaluate(() => window.__jen.dialogue.active || window.__jen.isUiOpen()); k++) await pump(700);
     return true;
   };
   await p.evaluate(() => {
@@ -425,17 +451,137 @@ if (only === 'all' || only === 'world') {
   await ctx.close();
 }
 
+// ---------------------------------------------------------------- stability (stuck screens)
+// Everything that can hold the screen or the player, triggered on purpose — often all at
+// once — and then: is the island exactly as free as before?
+if (only === 'all' || only === 'stability') {
+  console.log('stability');
+  const { p, errors, ctx } = await openGame('stab');
+  if (!(await reachFreeRoam(p))) fail('stability', 'never reached free roam');
+  const pump = makePump(p);
+  const health = () => p.evaluate(() => window.__jen.health());
+  // play like a person until nothing is going on any more
+  const settle = async (ms = 60000) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      await pump(700);
+      const h = await health();
+      if (!h.cs && !h.dialog && !h.ui && !h.presenting && !h.overlays.length && !h.transitioning && !h.queued.length) { await pump(600); const h2 = await health(); if (!h2.cs && !h2.dialog && !h2.overlays.length) return h2; }
+    }
+    return health();
+  };
+  const clean = async (label) => {
+    const h = await settle();
+    const bad = [];
+    if (h.cs) bad.push(`cutscene "${h.csName}" still running`);
+    if (h.inCutscene) bad.push('inCutscene is still true');
+    if (h.pause) bad.push(`pause count is ${h.pause}`);
+    if (h.locks.length) bad.push('input locked by ' + h.locks.join(', '));
+    if (h.dialog) bad.push('dialogue still open');
+    if (h.overlays.length) bad.push('overlays left: ' + h.overlays.join(' | '));
+    if (h.fade) bad.push('screen still faded');
+    if (!/touch|joy|CANVAS/i.test(h.topAtCentre)) bad.push(`something blocks taps at the centre (${h.topAtCentre})`);
+    // can the player walk?
+    await p.evaluate(() => { const J = window.__jen; if (J.G.scene.id !== 'island') J.setScene('island', 900, 1700, 'up'); J.G.player.x = 900; J.G.player.y = 1700; });
+    const a = await p.evaluate(() => [window.__jen.G.player.x, window.__jen.G.player.y]);
+    await p.keyboard.down('ArrowUp'); await p.waitForTimeout(500); await p.keyboard.up('ArrowUp');
+    const b = await p.evaluate(() => [window.__jen.G.player.x, window.__jen.G.player.y]);
+    if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 5) bad.push('the player cannot move');
+    if (bad.length) fail('stability', `${label}: ${bad.join('; ')}`); else pass('stability', `${label}: back to free roam, controls work`);
+    return !bad.length;
+  };
+  const actionWorks = async (label) => {
+    const m0 = await p.evaluate(() => { const J = window.__jen; J.G.state.money = Math.max(50, J.G.state.money); J.setScene('island', 900, 1586, 'up'); J.G.player.x = 900; J.G.player.y = 1586; return J.G.state.money; });
+    await p.waitForTimeout(700);
+    const lab = await p.evaluate(() => [document.getElementById('actBtn').innerText, document.getElementById('actBtn').className, window.__jen.G.player.x, window.__jen.G.player.y, JSON.stringify(window.__jen.health())]);
+    const r = await p.evaluate(() => { const b = document.getElementById('actBtn').getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; });
+    await p.mouse.click(r[0], r[1]);
+    await p.waitForTimeout(700);
+    const ok = await p.evaluate(m0 => window.__jen.G.state.money < m0 || window.__jen.dialogue.active, m0);
+    await settle(8000);
+    if (!ok) fail('stability', `${label}: the action button did nothing (${lab.join(' / ')})`); else pass('stability', `${label}: the action button works`);
+  };
+
+  // 1) many rewards at once → one card at a time
+  await p.evaluate(() => { const J = window.__jen; window.__maxCards = 0; window.__cardWatch = setInterval(() => { window.__maxCards = Math.max(window.__maxCards, document.querySelectorAll('.reward:not(.out), .levelup:not(.out)').length); }, 50);
+    for (let i = 0; i < 3; i++) J.showReward({ title: 'Reward ' + i, text: 'test' }); for (const a of ['perfect_10', 'served_100', 'tip_big']) J.unlockAchievement(a); J.addXP?.(5000); });
+  await clean('three rewards + three achievements + a level-up');
+  const maxCards = await p.evaluate(() => { clearInterval(window.__cardWatch); return window.__maxCards; });
+  if (maxCards > 1) fail('stability', `${maxCards} blocking cards were open at the same time`); else pass('stability', 'blocking cards queued one at a time');
+
+  // 2) the big stress test: a chapter completes (two cutscenes + a title card) while achievements,
+  //    a quest reward and a milestone reward arrive, and the player taps like mad
+  await p.evaluate(() => {
+    const J = window.__jen, s = J.G.state;
+    s.nightMarket.restored = true; for (const id of ['night', 'nm1', 'nm2', 'nm3', 'nm5', 'nm6']) { s.biz[id].owned = true; s.biz[id].unlocked = true; }
+    s.story.chapter = 18; J.setStep('allStalls'); J.checkStory();
+    setTimeout(() => { J.unlockAchievement('regulars_5'); J.showReward({ title: 'Side quest complete!', text: 'test' }); }, 400);
+    setTimeout(() => { s.stats.served = Math.max(s.stats.served, 60); const r = J.claimMilestone('served'); if (r) J.showReward({ title: 'Milestone!', text: 'test' }); J.unlockAchievement('recipes_5'); }, 900);
+  });
+  for (let i = 0; i < 25; i++) { await p.mouse.click(195, 420).catch(() => {}); await p.keyboard.press('e'); await p.waitForTimeout(60); }
+  await clean('cutscene + chapter card + achievements + quest reward + milestone (with rapid tapping)');
+  if ((await p.evaluate(() => window.__jen.G.state.story.chapter)) < 19) fail('stability', 'the chapter did not advance during the stress test');
+  await actionWorks('after the stress test');
+
+  // 3) a scene asked for twice starts once
+  const runs = await p.evaluate(async () => { const J = window.__jen; let n = 0; const f = () => J.cs.run('dup-test', async () => { n++; await new Promise(r => setTimeout(r, 300)); }); await Promise.all([f(), f(), f()]); return n; });
+  if (runs !== 1) fail('stability', `the same scene ran ${runs} times`); else pass('stability', 'rapid duplicate scene requests start it once');
+
+  // 4) a line spoken while another is on screen waits its turn (nobody is left hanging)
+  const both = await p.evaluate(async () => { const J = window.__jen; const a = J.say(null, 'first line'); const b = J.cs.run('two-lines', () => J.say('meo', 'second line')); const t0 = performance.now(); let done = [false, false]; a.then(() => done[0] = true); b.then(() => done[1] = true);
+    while (performance.now() - t0 < 8000 && !(done[0] && done[1])) { document.getElementById('dialog').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); await new Promise(r => setTimeout(r, 250)); } return done; });
+  if (!both[0] || !both[1]) fail('stability', `overlapping dialogue left a script waiting (${both})`); else pass('stability', 'overlapping dialogue lines both finish');
+  await clean('after overlapping dialogue');
+
+  // 5) sleeping with an achievement pending
+  await p.evaluate(() => { const J = window.__jen; J.setScene('house', 120, 200, 'up'); J.unlockAchievement('day_7'); J.showReward({ title: 'Pending reward', text: 'test' }); J.doSleep(false); });
+  const day0 = await p.evaluate(() => window.__jen.G.state.day);
+  await clean('sleep + pending achievement + reward');
+  if ((await p.evaluate(() => window.__jen.G.state.day)) <= day0 - 1) fail('stability', 'the day did not advance');
+
+  // 6) doors right after a cutscene
+  await p.evaluate(() => { const J = window.__jen; J.cs.run('short', () => new Promise(r => setTimeout(r, 400))); });
+  await settle(5000);
+  const door = await p.evaluate(async () => { const J = window.__jen; J.setScene('island', 1260, 1790, 'up'); const t = J.scenes.island.triggers.find(t => t.kind === 'door' && t.building === 'house'); J.G.player.x = t.doorX; J.G.player.y = t.doorY + 20; return [t.doorX, t.doorY]; });
+  await p.keyboard.down('ArrowUp'); await p.waitForTimeout(1600); await p.keyboard.up('ArrowUp');
+  await settle(6000);
+  const inside = await p.evaluate(() => window.__jen.G.scene.id);
+  if (inside !== 'house') fail('stability', `walking into the door after a cutscene went to "${inside}"`);
+  await p.keyboard.down('ArrowDown'); await p.waitForTimeout(1800); await p.keyboard.up('ArrowDown');
+  await settle(6000);
+  const outside = await p.evaluate(() => window.__jen.G.scene.id);
+  if (outside !== 'island') fail('stability', `leaving the house went to "${outside}"`); else if (inside === 'house') pass('stability', 'doors work right after a cutscene (in and out)');
+  void door;
+  await clean('after doors');
+
+  // 7) fail-safes (defensive only): a scene that never finishes, a leaked pause, a leaked lock
+  await p.evaluate(() => { const J = window.__jen; J.cs.run('never-ends', () => new Promise(() => {})); });
+  await p.waitForTimeout(17500);
+  const h7 = await health();
+  if (h7.cs) fail('stability', 'a hung cutscene was never given up'); else pass('stability', 'a hung cutscene hands control back (and logs a warning)');
+  await p.evaluate(() => { const J = window.__jen; J.G.runtime.pause += 2; J.lockInput('door'); });
+  await p.waitForTimeout(9500);
+  const h8 = await health();
+  if (h8.pause || h8.locks.length) fail('stability', `leaked pause ${h8.pause} / locks ${h8.locks} were not recovered`); else pass('stability', 'a leaked pause count and input lock are recovered');
+  await clean('after the fail-safes');
+
+  const real = errors.filter(e => !/\[watchdog\]|\[cutscene\]/.test(e));
+  if (real.length) fail('stability', 'errors: ' + real.slice(0, 3).join(' | ')); else pass('stability', 'no errors');
+  await ctx.close();
+}
+
 // ---------------------------------------------------------------- render
 if (only === 'all' || only === 'render') {
   console.log('render');
   const ctx = await browser.newContext({ viewport: { width: 900, height: 700 } });
   const p = await ctx.newPage();
   const errors = []; p.on('pageerror', e => errors.push(e.message));
-  await p.goto(`${BASE}/tests/render.html`);
-  await p.waitForFunction(() => window.done, null, { timeout: 60000 });
+  await p.goto(`${BASE}/tests/render.html`, { timeout: 120000 });
+  await p.waitForFunction(() => window.done, null, { timeout: 240000 });
   const r = await p.evaluate(() => window.result);
   if (r.blank.length) r.blank.slice(0, 20).forEach(b => fail('render', 'nothing drawn for ' + b)); else pass('render', `${r.count} character renders all drew pixels`);
   if (r.thin.length) r.thin.slice(0, 10).forEach(b => fail('render', 'suspiciously little drawn for ' + b));
+  if (r.headless?.length) r.headless.slice(0, 10).forEach(b => fail('render', 'head missing or tiny: ' + b)); else pass('render', 'every figure has its big chibi head in every pose');
   if (errors.length) errors.forEach(e => fail('render', e)); else pass('render', 'no errors');
   await ctx.close();
 }

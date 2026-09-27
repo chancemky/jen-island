@@ -61,8 +61,24 @@ function visibleSlice(html, n) {
 function plainLen(html) { return html.replace(/<[^>]+>/g, '').replace(/&[^;]+;/g, 'x').length; }
 function plainAt(html, n) { return html.replace(/<[^>]+>/g, '').replace(/&[^;]+;/g, 'x')[n] || ''; }
 
+// Lines never overwrite each other: if something speaks while a line is still up, it waits
+// its turn (an overwritten line's promise would never resolve and its scene would hang).
+const pending = [];
+const fallback = choices => choices ? choices.length - 1 : 0;       // closing early = the last, safest choice ("Bye", "Maybe later")
 export function say(who, text, opt = {}) {
   return new Promise(resolve => {
+    if (D.active && D.resolve) { pending.push({ who, text, opt, resolve }); return; }
+    show(who, text, opt, resolve);
+  });
+}
+function nextOrClose() {
+  if (D.resolve) return;
+  const n = pending.shift();
+  if (n) { show(n.who, n.text, n.opt, n.resolve); return; }
+  setTimeout(() => { if (!D.resolve && !pending.length) closeDialog(); }, 60);
+}
+function show(who, text, opt, resolve) {
+  {
     releaseJoystick();
     const info = speakerInfo(who);
     D.active = true; D.resolve = resolve; D.choices = opt.choices || null;
@@ -75,10 +91,15 @@ export function say(who, text, opt = {}) {
     nameEl.textContent = info.name; nameEl.classList.toggle('hidden', !info.name); nameEl.classList.toggle('cat', !!info.cat);
     textEl.innerHTML = ''; choicesEl.innerHTML = ''; nextEl.classList.remove('on');
     document.body.classList.add('in-dialog');
-  });
+    D.shownAt = performance.now();
+  }
 }
 export async function ask(who, text, choices, opt = {}) { return say(who, text, { ...opt, choices }); }
 export function closeDialog() {
+  // anyone still waiting on a line gets an answer, so no script is left hanging
+  const r = D.resolve, ch = D.choices; D.resolve = null; D.choices = null;
+  if (r) r(fallback(ch));
+  while (pending.length) { const n = pending.shift(); n.resolve(fallback(n.opt.choices)); }
   if (!D.active && box.classList.contains('hidden')) return;
   D.active = false;
   if (D.speaker?.actor) { D.speaker.actor.talking = false; }
@@ -94,7 +115,7 @@ function afterTyped() {
     choicesEl.innerHTML = '';
     D.choices.forEach((ch, i) => {
       const b = document.createElement('button'); b.type = 'button'; b.innerHTML = markup(ch);
-      b.onclick = e => { e.stopPropagation(); sfx('ui'); const r = D.resolve; D.resolve = null; D.choices = null; choicesEl.innerHTML = ''; r?.(i); setTimeout(() => { if (!D.resolve) closeDialog(); }, 60); };
+      b.onclick = e => { e.stopPropagation(); if (!D.resolve) return; sfx('ui'); const r = D.resolve; D.resolve = null; D.choices = null; choicesEl.innerHTML = ''; r(i); nextOrClose(); };
       choicesEl.appendChild(b);
     });
   } else nextEl.classList.add('on');
@@ -104,16 +125,23 @@ function advance() {
   if (D.typing) { finishTyping(); return; }
   if (D.choices) return;
   sfx('tap');
+  if (performance.now() - (D.shownAt || 0) < 120) return;       // a very fast double tap doesn't skip a whole line
   const r = D.resolve; D.resolve = null;
   nextEl.classList.remove('on');
   r?.(0);
   // hide the box unless another line follows right away
-  setTimeout(() => { if (!D.resolve) closeDialog(); }, 60);
+  nextOrClose();
 }
 box.addEventListener('pointerdown', e => { e.preventDefault(); advance(); });
 window.addEventListener('keydown', e => { if (!D.active) return; if (e.key === ' ' || e.key === 'Enter' || e.key === 'e') { e.preventDefault(); e.stopImmediatePropagation(); advance(); } }, true);
-// Tapping anywhere on the game while dialogue is up advances it too.
-el('touch').addEventListener('pointerdown', e => { if (D.active) { e.stopImmediatePropagation(); advance(); } }, true);
+// Tapping anywhere on the game while dialogue is up advances it too — including during
+// cutscenes, when the joystick layer is switched off (a tap on the scene must never feel ignored).
+// Buttons, menus and cards keep their own taps.
+el('app').addEventListener('pointerdown', e => {
+  if (!D.active || e.target.closest('#dialog, button, .sheet-wrap, .reward, .levelup, .summary, .modal, .wn-wrap, .fishing, .album-view, #hud a, input')) return;
+  if (e.target.closest('#touch')) e.stopImmediatePropagation();
+  advance();
+}, true);
 
 export function updateDialogue(dt, t) {
   if (!D.active) return;
