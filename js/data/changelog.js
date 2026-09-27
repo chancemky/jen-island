@@ -3,9 +3,16 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.1.1';
+export const APP_VERSION = '5.1.2';
 
 export const CHANGELOG = [
+  {
+    v: '5.1.2', date: '2026-09-27T08:40:36Z',
+    title: ['A Rounder Question', 'Dấu Hỏi Tròn Trịa'],
+    items: [
+      ['The "?" button next to the materials you need (repairs, upgrades, bridges) is a proper round button again, not a tall thin pill', 'Nút “?” cạnh danh sách vật liệu cần có (sửa quán, nâng cấp, xây cầu) đã tròn trịa trở lại, không còn cao và mảnh'],
+    ],
+  },
   {
     v: '5.1.1', date: '2026-09-27T08:33:07Z',
     title: ['No Naps at the Start', 'Không Ngủ Gật Lúc Đầu'],

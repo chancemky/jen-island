@@ -627,7 +627,8 @@ body.lookout #hud, body.lookout .hud-top, body.lookout #questPill, body.lookout 
 
 .need .chip { font: inherit; font-weight: 900; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px 3px 4px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; }
 .need .chip.ok { background: #e6f5df; } .need .chip.no { background: #fde3dd; }
-.need .chip.help { width: 26px; justify-content: center; padding: 3px 0; background: #fff; border-color: var(--ink); }
+.need .chip { height: auto; min-height: 30px; }                     /* (not the 40px HUD chip height) */
+.need .chip.help { flex: none; align-self: center; width: 30px; height: 30px; min-height: 0; padding: 0; justify-content: center; border-radius: 50%; background: #fff; border-color: var(--ink); font-size: 15px; line-height: 1; }
 
 /* prep table step guide */
 .prep-guide { background: #fff8ea; border: 2.5px solid var(--ink); border-radius: 14px; padding: 6px 8px; margin: 4px 10px 6px; }
