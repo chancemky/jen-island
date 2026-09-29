@@ -3,9 +3,21 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.1.5';
+export const APP_VERSION = '5.2.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.2.0', date: '2026-09-28T18:33:51Z',
+    title: ['Room to Breathe', 'Thong Thả'],
+    items: [
+      ['The island has many more places to stop and look around: rings of spots round the plaza fountain and its edge, and little stops beside every path — so people roam the whole island instead of piling into the same few places', 'Hòn đảo có thêm rất nhiều chỗ để dừng chân ngắm cảnh: các vòng quanh đài phun nước và mép quảng trường, cùng những điểm dừng nhỏ bên mọi con đường — mọi người dạo khắp đảo thay vì dồn vào vài chỗ quen'],
+      ['Everyone has their own spot: nobody ever stands where someone else is standing, and if a place is full they go somewhere else', 'Ai cũng có chỗ đứng riêng: không ai đứng trùng chỗ người khác, chỗ nào đông thì họ đi chỗ khác'],
+      ['Visitors stepping off the ferry head straight to places of their own instead of bunching at the foot of the pier, and islanders take a bench to themselves (or sit on the grass beside it)', 'Khách xuống tàu đi thẳng tới chỗ riêng thay vì túm tụm ở chân cầu tàu, còn người trên đảo ngồi riêng một ghế băng (hoặc ngồi bãi cỏ bên cạnh)'],
+      ['People walk round each other (and round you) instead of through — meeting head on, both keep to their right', 'Mọi người đi vòng qua nhau (và qua bạn) thay vì xuyên qua — gặp nhau thì cả hai đi về bên phải'],
+      ['The ferry is now a shuttle: the next boat ties up 10 seconds after the last one leaves. Everyone in line gets on; once five or more are aboard it waits 3 more seconds and goes, and if nobody is waiting it just leaves', 'Tàu giờ chạy con thoi: chuyến sau cập bến 10 giây sau khi chuyến trước rời đi. Ai xếp hàng cũng được lên; đủ năm người trở lên thì tàu chờ thêm 3 giây rồi chạy, không có ai chờ thì tàu đi luôn'],
+      ['The line on the pier is two neat staggered files, so nobody stands on top of anyone; the big visitor boats of the timetable still bring the same number of visitors', 'Hàng chờ trên cầu tàu xếp thành hai hàng so le gọn gàng, không ai chồng lên ai; các chuyến tàu khách lớn theo lịch vẫn chở số khách như cũ'],
+    ],
+  },
   {
     v: '5.1.5', date: '2026-09-27T13:01:53Z',
     title: ['Up You Get', 'Dậy Thôi'],

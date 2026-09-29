@@ -9,7 +9,7 @@ import { initAnimals, updateAnimals, animalDrawables, reactHop, drawReact, tickR
 import { POND as POND_C, isOcean } from '../world/island.js';
 import { ell, circ } from '../gfx/draw.js';
 import { updateBarks, drawBarks } from './fun.js';
-import { nearestSeat, hopOnto } from './seats.js';
+import { seatsIn, hopOnto } from './seats.js';
 import { updateSideQuests, drawSideQuests, sideQuestDrawables } from './sidequests.js';
 import { gardenDrawables } from './garden.js';
 import { growthDrawables } from './growth.js';
@@ -39,7 +39,7 @@ export const npcs = {
     const q = QUEUES[bizId]?.[0]; const free = this.freeResidents().filter(a => !q || dist(a.x, a.y, q[0], q[1]) < 380);
     if (!free.length) return null;
     const a = choice(free);
-    a.stop(); a.data.state = 'busy'; a.setAct(null); a.sit = false;
+    a.stop(); releaseStand(a); a.data.state = 'busy'; a.setAct(null); a.sit = false;
     return a;
   },
   returnResident(a) { a.data.state = 'idle'; a.data.until = 0; },
@@ -62,11 +62,13 @@ npcs.spawnVisitorAt = (x, y, tag) => {
   const a = new Actor({ kind: 'human', look: visitorLook(seed, 'tourist'), x, y, speed: rand(46, 60), data: { tourist: true, state: 'walking', leaveAt: G.state.time + rand(90, 200) } });
   a.alpha = 0; a.fadeIn = true;
   island.add(a); npcs.tourists.push(a);
-  const nodes = island.nav.tagged(tag); const sp = nodes.length ? choice(nodes) : island.nav.nearest(x, y);
-  a.walkTo(island.nav.path(x, y, sp.x + rand(-14, 14), sp.y + rand(-8, 8))).then(() => { a.data.state = 'idle'; a.data.until = G.state.time + rand(20, 50); });
+  const sp = claimStand(island, a, tag) || claimStand(island, a, 'stroll');
+  if (sp) a.walkTo(island.nav.path(x, y, sp.x, sp.y).concat([[sp.x, sp.y]])).then(() => { a.data.state = 'idle'; a.data.until = G.state.time + rand(20, 50); });
+  else { a.data.state = 'idle'; a.data.until = G.state.time + rand(5, 15); }
   return a;
 };
 
+import { buildStands, claimStand, claimWeighted, releaseStand } from './crowd.js';
 const VENDORS = [['nm1', 'ba_sau'], ['nm2', 0], ['nm3', 1], ['nm5', 2], ['nm6', 3]];
 function updateVendors(island) {
   const s = G.state, open = s.nightMarket.restored && s.time >= 17 * 60 || (G.runtime.nm?.restoreAnim ?? 0) > 0.5;
@@ -98,14 +100,15 @@ export function initNPCs(island) {
     npcs.residents.push(a);
   }
   // spread residents around the island at start instead of all at home
-  for (const a of npcs.residents) { const sp = pickSpot(island, a); if (sp) { a.x = sp.x + rand(-10, 10); a.y = sp.y + rand(-6, 6); a.data.state = 'idle'; a.data.until = G.state.time + rand(10, 50); a.data.spot = sp; } }
+  buildStands(island);
+  for (const a of npcs.residents) { a.data.state = 'idle'; const sp = pickSpot(island, a); if (sp) { a.x = sp.x; a.y = sp.y; a.data.until = G.state.time + rand(10, 50); a.data.spot = sp; } }
   // scooters shuttle along the streets
   npcs.scooters = [
     makeScooter(PATHS.market, '#f28f7c', 0.1), makeScooter(PATHS.main.slice(1), '#9fd8c8', 0.5), makeScooter(PATHS.east, '#f7de8c', 0.3),
   ];
   npcs.gulls = Array.from({ length: 5 }, (_, i) => ({ cx: rand(200, 1600), cy: rand(300, 2500), r: rand(80, 200), a: rand(0, TAU), sp: rand(0.25, 0.5) * (i % 2 ? 1 : -1), seed: i * 3, h: rand(60, 110) }));
   npcs.butterflies = Array.from({ length: 26 }, (_, i) => ({ x: rand(300, 1500), y: rand(500, 2100), vx: 0, vy: 0, t: rand(0, 10), col: choice(['#fff4b8', '#ffc0d8', '#c9e8ff', '#ffe0a8']) }));
-  npcs.ferry = { state: 'away', x: BERTH.x, y: 2950, speed: 0, next: nextFerryTime(), unload: 0, dockUntil: 0 };
+  npcs.ferry = { state: 'away', x: BERTH.x, y: 2950, speed: 0, next: nextFerryTime(), gap: 10, pax: 0, t: 0, boarded: 0, sinceBoard: 0, unloadFor: 0 };
   initAnimals(island);
   npcs.ducks = [0, 1, 2, 3].map(i => ({ a: i * 1.6, r: 26 + i * 9, sp: 0.12 + i * 0.03, seed: i * 3, col: i === 3 ? '#f7de8c' : '#fffaf0', x: 0, y: 0 }));
 }
@@ -119,45 +122,35 @@ function nextFerryTime() {
   return times.find(x => x > t + 1) ?? 99999;
 }
 
-// is anyone (resident, visitor, the player) already standing near this point?
-function crowded(island, a, x, y, r = 26) { return island.actors.some(o => o !== a && o.visible !== false && (o.data?.rid || o.data?.tourist || o === G.player) && dist(o.x, o.y, x, y) < r) || [...npcs.residents, ...npcs.tourists].some(o => o !== a && o.data.target && dist(o.data.target[0], o.data.target[1], x, y) < r); }
-function freeNear(island, a, x, y) {
-  for (let ring = 0; ring < 4; ring++) for (let k = 0; k < 8; k++) {
-    const an = k / 8 * TAU + ring, rr = ring * 20, px = x + Math.cos(an) * rr, py = y + Math.sin(an) * rr * 0.6;
-    if (island.terrain(px, py) && !crowded(island, a, px, py)) return [px, py];
-  }
-  return [x + rand(-30, 30), y + rand(-16, 16)];
-}
+// Choose (and claim) where someone goes next: a free standing spot nobody else has
+// (see crowd.js). Null if everywhere they'd like to go is full for now.
 function pickSpot(island, a) {
-  for (let i = 0; i < 6; i++) { const sp = pickSpot1(island, a); if (!crowded(island, a, sp.x, sp.y, 30)) return sp; }
-  return pickSpot1(island, a);
-}
-function pickSpot1(island, a) {
   const h = G.state.time / 60, nm = G.state.nightMarket.restored, f = G.state.story.flags, rid = a.data?.rid;
   // habits that come from things you did together: Bà Tư and Chú Hải take their morning tea at the plaza benches
-  if (f.batu_tea && (rid === 'ba_tu' || rid === 'chu_hai') && h >= 6.5 && h < 9) { const n = island.nav.tagged('bench'); if (n.length) return n[rid === 'ba_tu' ? 0 : 1] || n[0]; }
+  if (f.batu_tea && (rid === 'ba_tu' || rid === 'chu_hai') && h >= 6.5 && h < 9) { const n = island.nav.tagged('bench'); const sp = n.length && claimStand(island, a, 'bench', n[rid === 'ba_tu' ? 0 : 1] || n[0]); if (sp) return sp; }
   // everyday routines: Chú Hải at the pier at dawn, Minh at the lighthouse for sunset,
   // Cô Lan at the market in the morning, Bé Na by the lotus pond after school
   const ROUTINE = { chu_hai: [5.5, 8, 'dock'], minh: [17, 19, 'view'], co_lan: [7, 10, 'market'], be_na: [14, 17, 'view'], chi_ngoc: [8, 11, 'harbour'], ong_loc: [6, 18, 'harbour'], co_dua: [9, 17, 'cove'] };
   const rt = ROUTINE[rid];
-  if (rt && h >= rt[0] && h < rt[1] && Math.random() < 0.7) { const n = island.nav.tagged(rt[2]); if (n.length) return rid === 'minh' ? n.find(x => x.y < 500) || choice(n) : rid === 'be_na' ? n.find(x => x.y < 700) || choice(n) : choice(n); }
+  if (rt && h >= rt[0] && h < rt[1] && Math.random() < 0.7) {
+    const n = island.nav.tagged(rt[2]), near = rid === 'minh' ? n.find(x => x.y < 500) : rid === 'be_na' ? n.find(x => x.y < 700) : null;
+    const sp = claimStand(island, a, rt[2], near); if (sp) return sp;
+  }
   // once the lanterns were lit, the evening plaza is where everyone meets
-  const opts = [['beach', 2], ['bench', 2.5], ['market', 3], ['view', 1], ['plaza', 1.5 + ((G.state.achievements || []).includes('lantern_festival') && h >= 18 ? 3 : 0)]];
+  const opts = [['beach', 2], ['bench', 2.5], ['market', 3], ['view', 1], ['stroll', 3], ['plaza', 1.5 + ((G.state.achievements || []).includes('lantern_festival') && h >= 18 ? 3 : 0)]];
   if (f.harbourBridge) opts.push(['harbour', RESIDENTS[rid]?.region === 'harbourBridge' ? 8 : 1]);
   if (f.coveBridge) opts.push(['cove', RESIDENTS[rid]?.region === 'coveBridge' ? 8 : 0.8]);
   if (f.bridgeFixed) opts.push(['islet', rid === 'vy' ? 6 : 0.6]);
   if (npcs.ferry && (npcs.ferry.state === 'arriving' || npcs.ferry.state === 'docked')) opts.push(['dock', 2]);
   if (nm && h >= 17) opts.push(['nightmarket', 6]);
-  const total = opts.reduce((s, o) => s + o[1], 0);
-  let r = Math.random() * total, tag = 'plaza';
-  for (const [k, w] of opts) { r -= w; if (r <= 0) { tag = k; break; } }
-  const nodes = island.nav.tagged(tag);
-  return nodes.length ? choice(nodes) : choice(island.nav.nodes);
+  return claimWeighted(island, a, opts);
 }
 
 // Sit on the nearest free bench/stool with the same little hop the player does.
+// (one person per bench: sitting shoulder to shoulder, the big heads would overlap)
 function sitNPC(island, a) {
-  const st = nearestSeat(island, a.x, a.y, 45);
+  const st = seatsIn(island).filter(s => dist(a.x, a.y, s.x, s.y) < 45 && !island.actors.some(o => o !== a && o.visible !== false && dist(o.x, o.y, s.x, s.y) < 24))
+    .sort((p, q) => dist(a.x, a.y, p.x, p.y) - dist(a.x, a.y, q.x, q.y))[0];
   if (st) { a.face('down'); hopOnto(a, st); } else { a.sit = true; a.seatH = 3; a.face('down'); } // no seat: sit on the grass
 }
 function goTo(island, a, x, y, then) {
@@ -165,7 +158,7 @@ function goTo(island, a, x, y, then) {
   a.setAct(null);
   if (a.sit) { a.sit = false; a.seatH = undefined; a.doHop(60); a.y += 10; }  // hop off the seat first
 
-  a.walkTo(island.nav.path(a.x, a.y, x, y)).then(ok => { if (ok) then?.(); });
+  a.walkTo(island.nav.path(a.x, a.y, x, y).concat([[x, y]])).then(ok => { if (ok) then?.(); });   // (and right onto the spot itself)
 }
 
 function updateResident(island, a, dt) {
@@ -188,7 +181,7 @@ function updateResident(island, a, dt) {
   }
   if ((h >= bedtime || h < 6.5) && d.state !== 'going-home') {
     const home = HOME_OF[d.rid];
-    d.state = 'going-home';
+    d.state = 'going-home'; releaseStand(a);
     if (a.sit) { a.sit = false; a.seatH = undefined; a.doHop(60); a.y += 10; }
     a.setAct(null);
     a.walkTo(island.nav.path(a.x, a.y, home.x, home.y + 10)).then(ok => { if (d.state === 'going-home') { a.visible = false; d.state = 'home'; } });
@@ -198,9 +191,9 @@ function updateResident(island, a, dt) {
   // idling at a spot
   if (s.time >= d.until) {
     const sp = pickSpot(island, a);
-    d.spot = sp;
-    const [tx, ty] = freeNear(island, a, sp.x + rand(-10, 10), sp.y + rand(-6, 6)); d.target = [tx, ty];
-    goTo(island, a, tx, ty, () => {
+    if (!sp) { d.until = s.time + rand(5, 12); return; }          // everywhere's full: stay put a bit longer
+    d.spot = sp; d.target = [sp.x, sp.y];
+    goTo(island, a, sp.x, sp.y, () => {
       d.state = 'idle'; d.until = s.time + rand(18, 60);
       if (sp.tags.has('sit')) sitNPC(island, a);
       else if (sp.tags.has('beach') || sp.tags.has('view')) a.face('down');
@@ -260,7 +253,11 @@ function spawnTourists(island, n) {
     npcs.tourists.push(a);
     setTimeout(() => {
       a.visible = true; a.doHop(110);
-      a.walkTo([[962, BERTH.y], [900, BERTH.y - 8], [900, 2440]]).then(() => { a.data.state = 'idle'; a.data.until = 0; });
+      // off the boat and straight to a place of their own (never all bunched at the foot of the pier)
+      const sp = claimWeighted(island, a, [['beach', 2], ['stroll', 2], ['market', 1], ['plaza', 1], ['view', 1]]);
+      const off = [[962, BERTH.y], [900, BERTH.y - 8], [900, 2440]];
+      a.data.state = 'walking';
+      a.walkTo(sp ? off.concat(island.nav.path(900, 2440, sp.x, sp.y), [[sp.x, sp.y]]) : off).then(() => { a.data.state = 'idle'; a.data.until = sp ? G.state.time + rand(15, 45) : 0; });
     }, 700 + i * 650);
   }
 }
@@ -275,64 +272,89 @@ function updateTourist(island, a, dt) {
     // head for the pier and wait in line; only the ferry takes visitors off the island
     if (a.sit) { a.sit = false; a.seatH = undefined; a.doHop(60); a.y += 10; }
     a.setAct(null);
-    d.state = 'to-pier';
-    const slot = pierSlot();
-    a.walkTo(island.nav.path(a.x, a.y, 900, 2440).concat([[900, slot[1]]])).then(() => { d.state = 'queue'; a.face('down'); });
+    d.state = 'to-pier'; releaseStand(a);
+    const slot = pierSlot(a);
+    a.walkTo(island.nav.path(a.x, a.y, 900, 2440).concat([[slot[0], slot[1]]])).then(() => { if (d.state === 'to-pier') { d.state = 'queue'; a.face('down'); } });
     return;
   }
   if (s.time >= (d.until || 0)) {
-    const tags = ['beach', 'beach', 'bench', 'market', 'view', 'plaza', ...(s.nightMarket.restored && s.time > 17 * 60 ? ['nightmarket', 'nightmarket'] : [])];
-    const nodes = island.nav.tagged(choice(tags));
-    const sp = nodes.length ? choice(nodes) : choice(island.nav.nodes);
-    const [tx, ty] = freeNear(island, a, sp.x + rand(-14, 14), sp.y + rand(-8, 8)); d.target = [tx, ty];
-    goTo(island, a, tx, ty, () => {
+    const sp = claimWeighted(island, a, [['beach', 2], ['bench', 1], ['market', 1], ['view', 1], ['plaza', 1], ['stroll', 2.5], ...(s.nightMarket.restored && s.time > 17 * 60 ? [['nightmarket', 2]] : [])]);
+    if (!sp) { d.until = s.time + rand(5, 12); return; }
+    d.target = [sp.x, sp.y];
+    goTo(island, a, sp.x, sp.y, () => {
       d.state = 'idle'; d.until = s.time + rand(15, 45);
       if (sp.tags.has('sit')) sitNPC(island, a);
       if (chance(0.45)) { a.setAct(a.look.camera || chance(0.5) ? 'photo' : 'phone'); setTimeout(() => a.setAct(null), 2600); }
     });
   }
 }
-// the line on the pier: the first spot is at the end, the rest step back towards the beach
-function pierSlot() {
-  const taken = npcs.tourists.filter(t => t.data.state === 'queue' || t.data.state === 'to-pier').length;
-  return [900, 2578 - Math.min(taken, 12) * 13];
+// the line on the pier: the first place is at the end, the rest step back towards the beach
+// (each waiting visitor keeps their own place in it — nobody is ever given a taken one)
+function pierSlot(a) {
+  const used = new Set(npcs.tourists.filter(t => t !== a && (t.data.state === 'queue' || t.data.state === 'to-pier')).map(t => t.data.slot));
+  let k = 0; while (used.has(k)) k++;
+  a.data.slot = k;
+  // two staggered files down the pier, far enough apart that nobody overlaps; a long line carries on up the beach path
+  const row = Math.floor(k / 2), col = k % 2;
+  return row < 6 ? [col ? 914 : 886, 2578 - row * 28 - col * 14] : [col ? 914 : 886, 2400 - (row - 6) * 28 - col * 14];
 }
 const waitingForBoat = () => npcs.tourists.some(t => t.data.state === 'queue' || t.data.state === 'to-pier' || t.data.state === 'boarding');
 function boardWaiting(island) {
   // everyone in line walks to the gangway in order and steps aboard
-  const line = npcs.tourists.filter(t => t.data.state === 'queue').sort((a, b) => b.y - a.y);
+  const f = npcs.ferry, line = npcs.tourists.filter(t => t.data.state === 'queue').sort((a, b) => a.data.slot - b.data.slot);
   line.forEach((a, i) => {
     a.data.state = 'boarding';
-    setTimeout(() => a.walkTo([[900, 2578], [962, BERTH.y], [BERTH.x - 12, BERTH.y]], { speed: 55 }).then(() => { a.fadeOut = true; const k = npcs.tourists.indexOf(a); if (k >= 0) npcs.tourists.splice(k, 1); }), i * 500);
+    setTimeout(() => a.walkTo([[900, 2578], [962, BERTH.y], [BERTH.x - 12, BERTH.y]], { speed: 55 }).then(() => {
+      a.fadeOut = true; const k = npcs.tourists.indexOf(a); if (k >= 0) npcs.tourists.splice(k, 1);
+      f.boarded++; f.sinceBoard = 0;
+    }), i * 500);
   });
 }
+// The ferry is a shuttle: the next boat pulls in 10 seconds after the last one leaves.
+// At the pier everyone waiting in line gets on. Once at least five are aboard it waits
+// three more seconds (anyone who joins the line in time gets on too) and goes; if nobody
+// is there to board, it simply leaves. Visitors still come on the big boats of the day
+// (the timetable): each one's visitors ride in on the next shuttle.
+const RUNS = { from: 5.5 * 60, to: 23.9 * 60 }, APPROACH = 5.3;   // seconds from appearing to tying up at the pier
 function updateFerry(island, dt) {
   const f = npcs.ferry, s = G.state;
+  // the timetable's visitor boats: their passengers come in on the next shuttle
+  if (s.time >= f.next) {
+    if (s.story.chapter >= 2 && !G.runtime.introBoat && s.time < 21 * 60) f.pax += clamp(1 + Math.floor(s.reputation / 25) + (s.story.chapter >= 3 ? 1 : 0) + (s.nightMarket.restored ? 2 : 0), 1, 9);
+    f.next = nextFerryTime();
+  }
+  const running = (s.time >= RUNS.from && s.time < RUNS.to) || waitingForBoat();
+  if (f.state === 'away' || f.state === 'leaving') f.gap -= dt;
   if (f.state === 'away') {
-    // visitors still waiting after the day's last ferry: a late boat comes for them (before the island sleeps)
-    if (f.next > 23 * 60 + 40 && s.time >= 21.5 * 60 && waitingForBoat()) f.next = Math.max(s.time + 8, Math.min(23 * 60 + 20, s.time + 30));
-    if (s.time >= f.next) { f.state = 'arriving'; f.x = BERTH.x; f.y = 2980; f.speed = 70; sfx('horn'); }
+    if (running && f.gap <= APPROACH) { f.state = 'arriving'; f.x = BERTH.x; f.y = 2980; f.speed = 110; sfx('horn'); }   // (sets off in time to tie up 10 s after the last one left)
   } else if (f.state === 'arriving') {
     const dy = f.y - BERTH.y;
-    f.speed = Math.max(8, Math.min(80, dy * 0.8));
+    f.speed = G.runtime.introBoat ? Math.max(8, Math.min(80, dy * 0.8)) : Math.max(14, Math.min(110, dy * 1.3));   // (your own arrival at the start glides in slowly)
     f.y -= f.speed * dt;
-    if (dy < 1) { f.y = BERTH.y; f.speed = 0; f.state = 'docked'; f.dockUntil = s.time + 28; f.unload = 1;
-      const n = clamp(1 + Math.floor(s.reputation / 25) + (s.story.chapter >= 3 ? 1 : 0) + (s.nightMarket.restored ? 2 : 0), 1, 9);
-      if (npcs.tourists.length < 16 && s.story.chapter >= 2 && !G.runtime.introBoat && s.time < 21 * 60) spawnTourists(island, n);
+    if (dy < 1) {
+      f.y = BERTH.y; f.speed = 0; f.state = 'docked'; f.t = 0; f.boarded = 0; f.sinceBoard = 0;
+      const n = Math.min(f.pax, Math.max(0, 16 - npcs.tourists.length)); f.pax = 0;
+      f.unloadFor = n ? 1.2 + n * 0.65 : 0.6;
+      if (n && !G.runtime.introBoat) { spawnTourists(island, n); G.runtime.boatBoost = 30; bus.emit('ferry', n); }
       boardWaiting(island);
-      G.runtime.boatBoost = 30;
-      bus.emit('ferry', n);
       fx.burst('splash', f.x - 20, f.y + 20, 8, { up: 50, life: 0.6 });
     }
   } else if (f.state === 'docked') {
-    // anyone who reaches the pier while the boat is in gets on too; it waits for the last one
+    f.t += dt; f.sinceBoard += dt;
+    // anyone who reaches the pier while the boat is in gets on too
     if (npcs.tourists.some(t => t.data.state === 'queue')) boardWaiting(island);
-    const stillComing = npcs.tourists.some(t => t.data.state === 'boarding' || (t.data.state === 'to-pier' && s.time > 22 * 60));
-    if (s.time >= f.dockUntil && !stillComing && !G.runtime.introBoat) { f.state = 'leaving'; sfx('horn'); }
+    const inLine = npcs.tourists.some(t => t.data.state === 'queue' || t.data.state === 'boarding');
+    const coming = npcs.tourists.some(t => t.data.state === 'to-pier');
+    let go = false;
+    if (G.runtime.introBoat || f.t < f.unloadFor || inLine) go = false;       // still unloading, or people are getting on
+    else if (f.boarded >= 5) go = f.sinceBoard >= 3;                          // five or more aboard: three more seconds, then off
+    else if (!f.boarded && !coming) go = f.t >= f.unloadFor + 2;              // nobody to take: leave
+    else go = coming ? f.t > 45 : f.sinceBoard >= 12;                          // a few aboard: wait a little for more
+    if (go) { f.state = 'leaving'; f.gap = 10; sfx('horn'); }
   } else if (f.state === 'leaving') {
-    f.speed = Math.min(90, f.speed + dt * 30);
+    f.speed = Math.min(130, f.speed + dt * 45);
     f.y += f.speed * dt;
-    if (f.y > 3000) { f.state = 'away'; f.next = nextFerryTime(); }
+    if (f.y > 3000) f.state = 'away';
   }
   if (G.runtime.boatBoost > 0) G.runtime.boatBoost -= dt;
 }
@@ -341,7 +363,7 @@ export function ferryDrawable() {
   if (!f || f.state === 'away') return null;
   return { x: f.x, y: f.y, sortY: f.y + 40, draw: (c, t) => drawBoatTop(c, t, { speed: f.speed, scale: 1.25, stripe: '#6fbfb0', cabin: '#fff5df' }) };
 }
-export function resetFerryForNewDay() { const f = npcs.ferry; if (!f) return; f.state = 'away'; f.y = 2980; f.next = nextFerryTime(); }
+export function resetFerryForNewDay() { const f = npcs.ferry; if (!f) return; f.state = 'away'; f.y = 2980; f.gap = 10; f.pax = 0; f.next = nextFerryTime(); }
 
 // ---------------------------------------------------------------- scooters
 function makeScooter(path, col, phase) {

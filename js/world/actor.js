@@ -4,6 +4,7 @@
 import { clamp, rand, TAU } from '../core/util.js';
 import { drawHuman, drawEmote } from '../gfx/character.js';
 import { drawCat } from '../gfx/cat.js';
+import { G } from '../systems/state.js';
 import { drawLying } from '../gfx/hammock.js';
 
 let nextId = 1;
@@ -60,14 +61,21 @@ export class Actor {
   doHop(v = 95) { if (this.hop <= 0.01) { this.hopV = v; this.squash = 0.6; } }
   setAct(act, held = null) { if (this.act !== act) this.actT = 0; this.act = act; this.held = held; }
 
-  update(dt, t) {
+  update(dt, t, scene) {
     // path following
     if (this.path && this.path.length) {
+      // (a waypoint someone is standing on is skipped, not circled — unless it's where you're going)
+      if (scene && this.path.length > 1 && (this.data?.npc || this.data?.tourist)) { const [wx, wy] = this.path[0]; if (scene.actors.some(o => o !== this && !o.path && o.visible !== false && Math.hypot(o.x - wx, o.y - wy) < 12)) this.path.shift(); }
       const [tx, ty] = this.path[0];
-      const dx = tx - this.x, dy = ty - this.y, d = Math.hypot(dx, dy);
+      let dx = tx - this.x, dy = ty - this.y; const d = Math.hypot(dx, dy);
       const step = this.pathSpeed * dt;
-      if (d <= step || d < 0.5) {
-        this.x = tx; this.y = ty; this.path.shift();
+      // islanders and visitors walk round people instead of through them
+      if (scene && (this.data?.npc || this.data?.tourist) && d > step) { const v = steerAround(this, scene, dx / d, dy / d, d); if (v) { dx = v[0] * d; dy = v[1] * d; } }
+      // (a waypoint on the way counts as reached a few steps early, so two people heading
+      //  through the same corner don't circle it trying to give each other room)
+      if (d <= step || d < 0.5 || (this.path.length > 1 && d < 8 && (this.data?.npc || this.data?.tourist))) {
+        if (d <= step || d < 0.5) { this.x = tx; this.y = ty; }
+        this.path.shift();
         if (!this.path.length) { this.path = null; const r = this._resolve; this._resolve = null; if (r) r(true); }
       } else {
         if (this.sit && this.kind !== 'pet') { this.sit = false; this.seatH = undefined; if (this.act === 'ride') this.act = null; }   // walking always means standing up
@@ -136,6 +144,36 @@ export class Actor {
     const top = this.kind === 'pet' ? -26 : this.kind === 'cat' ? -44 : -50 * (this.look?.scale || 1) - (this.look?.hat === 'nonla' || this.look?.hat === 'chef' || this.look?.hat === 'sunhat' ? 6 : 0);
     drawEmote(c, this.emote.type, this.x + 9, this.y + top - this.hop, this.emote.t / this.emote.dur, t);
   }
+}
+
+// Steering round other people: anyone standing or walking in your way (within a couple of
+// steps ahead and closer than a body-width to your line) nudges you sideways, away from
+// them. When two people meet head on, both keep to their own right, so they pass instead of
+// bumping. Never steers you into a wall or the water, and lets you walk straight onto
+// your own spot at the end.
+const LOOK = 40, CLEAR = 21;
+function steerAround(a, scene, ux, uy, remaining) {
+  const lastLeg = !a.path || a.path.length <= 1;
+  if (lastLeg && remaining < 14) return null;
+  let sx = 0, sy = 0;
+  const px = -uy, py = ux;                                  // your left
+  for (const o of scene.actors) {
+    if (o === a || o.visible === false || o.kind === 'pet' || o.kind === 'cat' && o !== G.meo) continue;
+    const ox = o.x - a.x, oy = o.y - a.y, od = Math.hypot(ox, oy);
+    if (od > LOOK || od < 0.01) continue;
+    if (od < 14) { sx -= ox / od * (1 - od / 14) * 1.2; sy -= oy / od * (1 - od / 14) * 1.2; }   // personal space: never walk inside someone
+    const ahead = ox * ux + oy * uy; if (ahead < -2) continue;
+    if (lastLeg && ahead > remaining + 6) continue;          // they're past where you're going
+    const lat = ox * px + oy * py;                           // + = on your left
+    if (Math.abs(lat) >= CLEAR) continue;
+    const side = Math.abs(lat) < 1.5 ? -1 : -Math.sign(lat);   // step away from them; dead ahead: keep right
+    const w = (1 - Math.max(0, ahead) / LOOK) * (1 - Math.abs(lat) / CLEAR) * (od < CLEAR ? 2 : 1);
+    sx += px * side * w; sy += py * side * w;
+  }
+  if (!sx && !sy) return null;
+  let vx = ux + sx * 1.6, vy = uy + sy * 1.6; const l = Math.hypot(vx, vy) || 1; vx /= l; vy /= l;
+  if (scene.canStand && !scene.canStand(a.x + vx * 6, a.y + vy * 6, 4)) return null;
+  return [vx, vy];
 }
 
 export const DIRS = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };

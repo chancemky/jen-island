@@ -33,7 +33,7 @@ On `localhost` only:
 | economy | first repair ≈ 231k, margins per tier, property payback, one price per business, a keeper's day of trade and its books |
 | screens | Business / Milestones / Staff screens draw |
 | quests | every side quest plays start to finish (find, meet, puzzle, deliver, routes) |
-| world | TV, radio, piano, lamp, fish, books, fountain, timetable, fishing and the garden all work |
+| world | TV, radio, piano, lamp, fish, books, fountain, timetable, fishing and the garden all work; on a busy evening nobody shares a standing spot or walks through anyone; the ferry shuttle's boarding rules |
 | stability | stuck-screen regressions: stacked rewards/achievements/level-ups queue one at a time; cutscene + chapter card + achievements + quest + milestone rewards together (with rapid tapping); duplicate scene requests; overlapping dialogue; sleep with pending popups; doors after a cutscene; the watchdog recovering a hung scene, leaked pause and leaked lock; real finger taps on "Yay!", reward cards and dialogue, also with the click dropped the way iOS sometimes does — then controls, movement and the action button must work |
 | chaos (`npm run test:chaos`, not in `npm test`) | Chapters 1→20 with an impatient player: random taps, mashing the action key, opening/closing the menu around transitions |
 | render | every look × pose × direction draws pixels, and every figure keeps its big head |
@@ -97,5 +97,7 @@ No build step, no framework. Canvas 2D for the world, DOM for UI.
 
 - **Two kinds of help.** Small businesses (sheds, the food truck, café, grill, Night Market stalls) can hire a *shopkeeper / stall keeper* who opens, preps and serves (`economy.js`, `state.keepers`). Only the restaurant has *employees* with roles — cook, server, prep, cleaner, cashier, manager (`restaurant.js`, `biz.restaurant.employees`). They are separate systems on purpose.
 - **Everything is physical.** Customers walk to queues; restaurant staff walk to stoves, tables, the register and the break chair; nothing is a hidden timer.
+- **One person per spot.** Islanders and visitors claim a standing spot before walking to it (`systems/crowd.js`: plaza rings, clusters round every activity spot, stroll stops beside every path); spots are at least 30 px apart and never shared. Walkers steer round anyone in their way (`steerAround` in `world/actor.js`) and keep right when meeting head on.
+- **The ferry is a shuttle.** The next boat ties up 10 s after the last leaves; everyone in line boards; with five or more aboard it waits 3 s and goes; with nobody to take it leaves. The timetable's visitor boats only decide how many visitors ride in.
 - **Cutscenes never teleport important moments.** Mèo Mây walks you around, turns toward what it's talking about, and walks away afterwards (it has its own daily routine and home).
 - **Time runs at 1 game minute per second** and pauses in menus, dialogue and cutscenes. Your shops close at 23:00 (customers already in line can still be served if you're at the counter); Night Market stalls open at 17:00; you get sleepy after midnight; sleeping ends the day.

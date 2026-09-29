@@ -447,6 +447,54 @@ if (only === 'all' || only === 'world') {
   const want = ['tv', 'radio', 'lamp', 'fish', 'books', 'piano', 'coin', 'timetable', 'fishing', 'garden'];
   const miss = want.filter(k => !found.includes(k));
   if (miss.length) fail('world', 'not discovered: ' + miss.join(', ')); else pass('world', `${found.length} kinds of interaction tried and remembered (${found.join(', ')})`);
+  // crowds: a busy evening — nobody shares a standing spot or walks through anyone
+  {
+    await p.evaluate(async () => {
+      const J = window.__jen, G = J.G, s = G.state; if (G.scene !== G.scenes.island) J.setScene('island');
+      s.story.chapter = Math.max(s.story.chapter, 5); (s.achievements ||= []).push('lantern_festival'); s.time = 18 * 60;
+      for (let i = 0; i < 14; i++) G.npcs.spawnVisitorAt(880 + (i % 5) * 26, 1720 + Math.floor(i / 5) * 26, i % 2 ? 'plaza' : 'stroll');
+      for (const a of G.npcs.residents) if (a.data.state === 'idle') a.data.until = 0;
+    });
+    let stand = 0, through = 0, spots = 0, standInfo = '';
+    for (let k = 0; k < 40; k++) {
+      await p.waitForTimeout(1000);
+      const r = await p.evaluate(() => {
+        const G = window.__jen.G, A = G.scenes.island.actors.filter(a => a.visible !== false && (a.data?.npc || a.data?.tourist) && a.data.state !== 'disembark');
+        const who = a => `${a.name || 'visitor'} (${a.data.state}${a.sit ? ', seated' : ''}${a.data.stand ? ', spot ' + [...a.data.stand.tags].join('/') + (a.data.stand.owner === a ? '' : ' NOT theirs') : ', no spot'} at ${Math.round(a.x)},${Math.round(a.y)})`;
+        let st = 0, th = 0, info = ''; for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) { const d = Math.hypot(A[i].x - A[j].x, A[i].y - A[j].y); if (!A[i].path && !A[j].path && d < 26) { st++; info = `${who(A[i])} & ${who(A[j])}, ${Math.round(d)} px apart`; } else if (d < 9) th++; }
+        const owners = new Map(); let dup = 0; for (const a of A) { const sp = a.data.stand; if (!sp) continue; if (owners.has(sp) && owners.get(sp) !== a) dup++; owners.set(sp, a); }
+        return { st, th, dup, info };
+      });
+      if (r.st > stand) standInfo = r.info; stand = Math.max(stand, r.st); through += r.th; spots = Math.max(spots, r.dup);
+    }
+    if (stand) fail('world', `${stand} pair(s) of people standing on top of each other — e.g. ${standInfo}`); else pass('world', 'on a busy evening nobody stands on top of anyone (40 s)');
+    if (spots) fail('world', `${spots} standing spot(s) given to two people`); else pass('world', 'every standing spot belongs to one person');
+    if (through > 3) fail('world', `people walked through each other ${through} times`); else pass('world', `people walk round each other (${through} close brush${through === 1 ? '' : 'es'} in 40 s)`);
+  }
+  // the ferry shuttle: comes back 10 s after leaving, takes everyone in line, waits 3 s once 5 are aboard, leaves empty if nobody's there
+  {
+    const r = await p.evaluate(async () => {
+      const G = window.__jen.G, f = G.npcs.ferry, wait = ms => new Promise(r => setTimeout(r, ms)), out = [];
+      const until = async (fn, ms) => { const t0 = performance.now(); while (!fn() && performance.now() - t0 < ms) await wait(100); return fn() ? (performance.now() - t0) / 1000 : null; };
+      G.state.time = 10 * 60; f.pax = 0; f.next = 99999;
+      for (const t of G.npcs.tourists) { t.data.leaveAt = 99999; if (['queue', 'to-pier'].includes(t.data.state)) t.data.state = 'idle'; }
+      // an empty boat: leaves by itself, the next one ties up about 10 s later
+      if (await until(() => f.state === 'docked', 40000) == null) return ['the ferry never came in'];
+      const left = await until(() => f.state === 'leaving', 15000); if (left == null) out.push('an empty ferry never left'); else if (left > 6) out.push(`an empty ferry waited ${left.toFixed(1)} s`);
+      const back = await until(() => f.state === 'docked', 20000); if (back == null || back < 8.5 || back > 12) out.push(`the next boat tied up ${back?.toFixed(1)} s after the last left (want about 10)`);
+      await until(() => f.state === 'leaving', 15000); await until(() => f.state === 'away', 15000);
+      // seven waiting: all of them board, then it goes 3 s after the last
+      const who = []; for (let i = 0; i < 7; i++) who.push(G.npcs.spawnVisitorAt(880 + i * 30, 2380, 'beach'));
+      await wait(1500); for (const t of who) { t.stop(); t.data.state = 'idle'; t.data.leaveAt = 0; }
+      if (await until(() => f.state === 'docked', 30000) == null) return [...out, 'the ferry never came back for the line'];
+      const gone = await until(() => f.state === 'leaving', 60000);
+      if (gone == null) out.push('the ferry never left with its passengers');
+      else { if (f.boarded < 7) out.push(`only ${f.boarded} of 7 got on`); if (f.sinceBoard < 2.8 || f.sinceBoard > 4) out.push(`left ${f.sinceBoard.toFixed(1)} s after the last boarded (want 3)`); }
+      if (who.some(t => G.npcs.tourists.includes(t))) out.push('somebody was left on the pier');
+      return out;
+    });
+    if (r.length) r.forEach(x => fail('world', 'ferry: ' + x)); else pass('world', 'ferry shuttle: back 10 s after leaving, everyone in line boards, leaves 3 s later; an empty boat just goes');
+  }
   if (errors.length) fail('world', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('world', 'no errors');
   await ctx.close();
 }

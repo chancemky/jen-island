@@ -199,7 +199,7 @@ async function coinToss() {
 async function timetable() {
   discover('timetable');
   const times = [8, 11, 14, 17].map(h => clock(h * 60)), nxt = [8, 11, 14, 17].find(h => h * 60 > G.state.time);
-  await say(null, T(`FERRY — to the mainland and back: ${times.join(' · ')}. ${nxt ? `Next boat: ${clock(nxt * 60)}.` : 'No more boats today.'} Someone has crossed out "twice a week" and written "EVERY DAY" in marker.`, `TÀU — ra đất liền và quay về: ${times.join(' · ')}. ${nxt ? `Chuyến kế: ${clock(nxt * 60)}.` : 'Hôm nay hết tàu.'} Có ai gạch chữ “hai lần một tuần” rồi ghi “MỖI NGÀY” bằng bút lông.`));
+  await say(null, T(`FERRY — a shuttle boat runs back and forth all day: a new one pulls in a few moments after the last one leaves. Big visitor boats: ${times.join(' · ')}. ${nxt ? `Next visitor boat: ${clock(nxt * 60)}.` : 'No more visitor boats today.'} Someone has crossed out "twice a week" and written "EVERY DAY" in marker.`, `TÀU — tàu con thoi chạy qua lại cả ngày: chuyến trước vừa đi một lát là có chuyến mới cập bến. Tàu chở khách lớn: ${times.join(' · ')}. ${nxt ? `Chuyến khách kế: ${clock(nxt * 60)}.` : 'Hôm nay hết tàu khách.'} Có ai gạch chữ “hai lần một tuần” rồi ghi “MỖI NGÀY” bằng bút lông.`));
 }
 async function waveFerry() {
   discover('wave'); const pl = G.player;

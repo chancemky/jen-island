@@ -417,7 +417,7 @@ export async function runArrival() {
     S().step = 'tour'; markDirty(true);
   });
   G.runtime.introBoat = false;
-  f.state = 'docked'; f.dockUntil = G.state.time + 5;
+  f.state = 'docked'; f.t = 0; f.boarded = 0; f.sinceBoard = 0; f.unloadFor = 0;
   await runTour();
 }
 
