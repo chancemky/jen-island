@@ -47,6 +47,17 @@ On `localhost` only:
 
 The service worker (`sw.js`) is network-first, so updates land immediately; bump `CACHE` in `sw.js` when the file list changes.
 
+## Launch checklist (dev tools)
+
+The game ships with a **Dev** tab in the menu while it's being tested (jump to any chapter with
+the world set up for it, money, stock, levels, businesses, staff, time and clock speed, customers,
+collections, bridges and festivals, side quests, teleporting, walking speed). Before launch:
+
+1. In `js/dev/flag.js` set `DEV_TOOLS = false` — the Dev tab and the red "DEV BUILD" ribbon disappear
+   and `js/dev/devtools.js` is never loaded (it can also be deleted).
+2. Deploy with `npm run deploy:launch` — it refuses to deploy while `DEV_TOOLS` is still `true`
+   (`npm run check:launch` runs just the check).
+
 ## Supabase
 
 Uses the shared `jen-simulator` project (`cgbaigeergwvbmghrakb`) but **only** the isolated `jen_island_*` tables from `supabase/migrations/001_initial.sql`:
@@ -78,10 +89,12 @@ No build step, no framework. Canvas 2D for the world, DOM for UI.
 
 ### Economy rules
 
-- Prices come from ingredients: every recipe's base price = its cost of goods / a target margin (early 35–45 %, mid 45–55 %, premium café/grill 50–60 %). The validator and the economy test enforce this.
+- **v5.3: a real grind.** The balance knobs live in one block (`ECON` at the end of `js/data/game.js`), with the rest named there: customer flow, shopkeeper wages and supply runners, rent and property, clothes, pets, level and milestone rewards. Owning everything takes many weeks of island days.
+- Margins are thin: early recipes 18–35 %, mid 30–48 %, premium café/grill 37–50 % (ingredients cost 1.25× their list price). The economy test enforces the bands.
+- Rewards are small: level-ups and milestone tiers pay a modest, slowly growing sum (milestones used to grow ×1.6 per tier). Money comes from running shops.
 - Game bonuses (recipe level, shop level, special, register) stack to at most +45 %; only the player's own price goes beyond.
 - One acquisition price per business (`BUSINESSES[id].buy`); Mèo Mây's keys read it.
-- Property pays back in 45–65 days of rent; owning adds +5 % custom and 10 % cheaper upgrades.
+- Property pays back in 90–130 days of rent; owning adds +5 % custom and 10 % cheaper upgrades. Shopkeepers cost 100–135k a day and still pay for themselves several times over.
 
 ### Reliability rules (never get stuck)
 

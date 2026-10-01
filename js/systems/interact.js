@@ -13,7 +13,7 @@ import { openSheet, h } from '../ui/sheets.js';
 import { sfx, setRoomMusic, roomMusic, playNote } from '../core/audio.js';
 import { fx } from '../world/render.js';
 import { choice, dist, rand, clock, bus } from '../core/util.js';
-import { PLAZA, PIER, PIER_END } from '../world/island.js';
+import { PLAZA, PIER, PIER_END, isOcean } from '../world/island.js';
 import { CHAPTERS } from '../data/game.js';
 import { COUNTS } from '../core/counts.js';
 import { npcs } from './npc.js';
@@ -183,11 +183,20 @@ export function outdoorAction(pl) {
   if (nearShore(pl)) return { label: T('Skip a stone', 'Ném thia lia'), icon: 'rock', run: skipStone };
   return null;
 }
-function nearShore(pl) {
-  const sc = G.scene; if (!sc.terrain(pl.x, pl.y)) return false;
-  for (const [dx, dy] of [[0, 26], [0, 34], [26, 0], [-26, 0]]) if (!sc.terrain(pl.x + dx, pl.y + dy)) return pl.y > 2100 || pl.x < 260 || pl.x > 1700;
-  return false;
+// Where a skimmed stone would go: out over open sea, from the beach or the very end of the
+// pier (never along the pier's planks). The way you face is tried first. Null if there's no
+// open water to throw into.
+const inR = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+function throwDir(pl) {
+  const sc = G.scene; if (sc !== G.scenes?.island || !sc.terrain(pl.x, pl.y)) return null;
+  const onPier = inR(PIER, pl.x, pl.y) || inR(PIER_END, pl.x, pl.y);
+  if (onPier && pl.y < PIER_END.y - 4) return null;                       // walk out to the end first
+  const face = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] }[pl.dir] || [0, 1];
+  const dirs = [face, [0, 1], [-1, 0], [1, 0]].filter((d, i, a) => a.findIndex(e => e[0] === d[0] && e[1] === d[1]) === i);
+  for (const d of dirs) if ([30, 52, 74].every(k => isOcean(pl.x + d[0] * k, pl.y + d[1] * k + (d[1] ? 0 : 12)))) return d;
+  return null;
 }
+const nearShore = pl => !!throwDir(pl);
 async function coinToss() {
   if (!canAfford(1)) return;
   addMoney(-1, 'other'); discover('coin'); sfx('coin');
@@ -210,8 +219,12 @@ async function waveFerry() {
 async function skipStone() {
   const pl = G.player; discover('stones');
   pl.setAct('wave'); sfx('whoosh');
-  const n = Math.max(1, Math.round(rand(0.6, 1) * rand(1, 7))), dir = pl.dir === 'left' ? -1 : pl.dir === 'right' ? 1 : 0, dy = pl.dir === 'up' ? -1 : 1;
-  for (let i = 1; i <= n; i++) setTimeout(() => { sfx('splash'); fx.burst('splash', pl.x + dir * i * 22, pl.y + (dir ? 10 : dy * i * 22) + 20, 4, { up: 12, col: '#e6f7ff' }); }, 200 + i * 170);
+  const d = throwDir(pl) || [0, 1]; pl.face(d[0] < 0 ? 'left' : d[0] > 0 ? 'right' : d[1] < 0 ? 'up' : 'down');
+  // every skip lands on open water: the throw ends where the sea does
+  const at = i => [pl.x + d[0] * (8 + i * 22), pl.y + d[1] * (8 + i * 22) + (d[1] ? 0 : 12)];
+  let room = 0; while (room < 7 && isOcean(...at(room + 1))) room++;
+  const n = Math.max(1, Math.min(room, Math.round(rand(0.6, 1) * rand(1, 7))));
+  for (let i = 1; i <= n; i++) setTimeout(() => { const [x, y] = at(i); sfx('splash'); fx.burst('splash', x, y, 4, { up: 12, col: '#e6f7ff' }); }, 200 + i * 170);
   setTimeout(() => pl.setAct(null), 500);
   const s = G.state; s.stats.bestSkip = Math.max(s.stats.bestSkip || 0, n); markDirty();
   await new Promise(r => setTimeout(r, 300 + n * 170));

@@ -4,7 +4,7 @@
 
 import { TAU, shade, rng } from '../core/util.js';
 import { T, tr } from '../systems/state.js';
-import { INK, ell, circ, box, poly, line, limb, shadow, glow, text, stext, flower } from './draw.js';
+import { INK, ell, circ, box, poly, line, limb, shadow, glow, text, stext, flower, fitSize } from './draw.js';
 import { drawHammock } from './hammock.js';
 
 // Shared night-light factor (0 day … 1 night), set by the time system each frame.
@@ -478,7 +478,7 @@ export function foodCart(c, t, p) {
       // big cone sign on top
       c.save(); c.translate(12, -48); poly(c, [-3.2, 0, 3.2, 0, 0, 10], '#e3a85a', INK, 0.8); line(c, -1.6, 2, 1.6, 5, '#b9803e', 0.5); line(c, 1.6, 2, -1.6, 5, '#b9803e', 0.5); circ(c, 0, -2, 3.6, '#f7b6c8', INK, 0.8); circ(c, 0.4, -5.6, 2.8, '#fff4d8', INK, 0.8); circ(c, 0.4, -8.6, 1, '#e8584e', null); c.restore();
     }
-    stext(c, tr(p.label) || T('ICE CREAM', 'KEM'), 0, -16, 5.4, '#e56b8b', 900);
+    { const lab = tr(p.label) || T('ICE CREAM', 'KEM'); stext(c, lab, 0, -16, fitSize(lab, 5.4, 34), '#e56b8b', 900); }
   } else if (p.type === 'banhtrang') {
     // bánh tráng trộn: rice paper stacks, a jar of mango, quail eggs, chili, and ready bags on hooks
     cartBase(c, '#fff5df', '#f2a14e');
@@ -490,14 +490,17 @@ export function foodCart(c, t, p) {
       for (let k = 0; k < 5; k++) ell(c, 6 + (k % 3) * 2.6, -32.6 - (k > 2 ? 2 : 0), 1.3, 1, '#f3ead8', INK, 0.4);          // quail eggs
       circ(c, 14, -33, 2.2, '#e8584e', INK, 0.5); line(c, 14, -35.2, 14.6, -36.6, '#6fb356', 0.7);                          // chili
     }
-    // little bags of mixed bánh tráng hanging on the side
-    if (!closed) for (const x of [-26, -21]) { line(c, x, -30, x, -26, INK, 0.5); poly(c, [x - 2.4, -26, x + 2.4, -26, x + 2, -18, x - 2, -18], 'rgba(255,255,255,.75)', INK, 0.5); for (let k = 0; k < 3; k++) line(c, x - 1.4 + k * 1.2, -24, x - 1 + k * 1.1, -19.5, ['#e3703a', '#9fd67a', '#f7de8c'][k], 0.8); }
-    stext(c, tr(p.label) || T('RICE PAPER', 'BÁNH TRÁNG'), 0, -16, 5, '#d9602e', 900);
+    // little bags of mixed bánh tráng hanging from a hook rail on the cart's side
+    if (!closed) {
+      limb(c, [-20, -29, -30, -29], 1.2, '#8f96a0'); limb(c, [-29.5, -29, -29.5, -26.5], 1, '#8f96a0');   // the rail, bolted to the cart
+      for (const x of [-27, -23]) { line(c, x, -29, x, -26, INK, 0.5); poly(c, [x - 1.9, -26, x + 1.9, -26, x + 1.6, -19, x - 1.6, -19], 'rgba(255,255,255,.8)', INK, 0.5); for (let k = 0; k < 3; k++) line(c, x - 1.1 + k * 1.1, -24.5, x - 0.8 + k * 1, -20, ['#e3703a', '#9fd67a', '#f7de8c'][k], 0.7); }
+    }
+    { const lab = tr(p.label) || T('RICE PAPER', 'BÁNH TRÁNG'); stext(c, lab, 0, -16, fitSize(lab, 5, 34), '#d9602e', 900); }
   } else {
     cartBase(c, '#fff5df', '#6fbfb0');
     box(c, -16, -44, 32, 14, 2, 'rgba(210,240,250,.55)');
     for (let i = 0; i < 3; i++) ell(c, -10 + i * 10, -34, 4, 2, ['#e0a052', '#f7de8c', '#ff9a7a'][i]);
-    stext(c, tr(p.label) || 'BÁNH MÌ', 0, -16, 5.4, '#e8584e', 900);
+    { const lab = tr(p.label) || 'BÁNH MÌ'; stext(c, lab, 0, -16, fitSize(lab, 5.4, 32), '#e8584e', 900); }
   }
   if (!closed && LIGHT.night > 0.05) glowLater(p, 0, -30, 40, 'rgba(255,210,140,.45)');
 }
@@ -634,7 +637,7 @@ export function sugarcaneCart(c, t, p) {
   // cups of fresh green juice with ice (a cloth over them at night)
   if (CART_CLOSED.sugarcane) { box(c, -18, -30, 20, 6, 2, '#c9b8a8', INK, 0.7); }
   else for (let i = 0; i < 3; i++) { const x = -13 + i * 6; poly(c, [x - 2.4, -31, x + 2.4, -31, x + 2, -24.6, x - 2, -24.6], 'rgba(255,255,255,.85)', INK, 0.5); poly(c, [x - 2.1, -29.6, x + 2.1, -29.6, x + 1.8, -25, x - 1.8, -25], '#cfe39a', null); box(c, x - 1.3, -29.4, 1.2, 1.2, 0.2, '#fff', null); line(c, x + 1, -31, x + 2, -34, '#e8584e', 0.7); }
-  stext(c, tr(p.label) || T('SUGARCANE', 'NƯỚC MÍA'), 0, -14, 5, '#fff', 900, 'center', INK, 1.6);
+  { const lab = tr(p.label) || T('SUGARCANE', 'NƯỚC MÍA'); stext(c, lab, 0, -14, fitSize(lab, 5, 33), '#fff', 900, 'center', INK, 1.6); }
 }
 export function rattanSet(c, t, p) {
   shadow(c, 0, 1, 22, 5, 0.16);

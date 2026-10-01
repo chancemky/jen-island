@@ -35,7 +35,8 @@ export function addXP(n, why = '') {
   markDirty();
 }
 // Grows with the level (so it stays worth celebrating), but never outpaces what your shops earn.
-export const levelReward = lv => Math.round((25 + lv * 12 + lv * lv * 1.5) / 5) * 5;
+// v5.3: a modest bonus that grows slowly (it used to grow with the square of the level)
+export const levelReward = lv => Math.round((10 + lv * 4) / 5) * 5;
 export const LEVEL_GIFTS = { 5: 'plant_bonsai', 10: 'record_player', 15: 'rocking_chair', 20: 'aquarium_big', 25: 'piano', 30: 'bamboo_screen', 40: 'fishtank', 50: 'sofa' };
 // XP for an existing save that predates levels, so veterans don't restart at 1.
 export function seedLevel(s) {
@@ -132,7 +133,9 @@ export const TRACKS = [
   finite({ id: 'secrets', icon: 'star', en: 'Island secrets', vi: 'Bí mật của đảo', get: s => (s.achievements || []).filter(id => ACHIEVEMENTS[id]?.hidden).length, gifts: { last: { clothes: 'cat_ears' } } }, [1, 2, 3, 4], () => Object.values(ACHIEVEMENTS).filter(a => a.hidden).length),
 ];
 for (const tr of TRACKS) if (!tr.max) tr.max = null;
-export const milestoneReward = i => ({ money: Math.round(60 * Math.pow(1.6, i) / 5) * 5, xp: 40 + i * 35 });
+// v5.3: milestones are about the XP and the keepsakes; the money is a small thank-you that grows
+// gently (it used to grow ×1.6 per tier — tier 12 paid more than everything else you'd earned)
+export const milestoneReward = i => ({ money: Math.round((15 + i * 10) / 5) * 5, xp: 40 + i * 35 });
 export function trackState(tr) {
   const s = G.state, claimed = s.milestones?.[tr.id] || 0, val = tr.get(s), target = tr.tier(claimed);
   const completed = target === Infinity;

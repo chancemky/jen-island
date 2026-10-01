@@ -223,8 +223,8 @@ export function recipeCost(id, opts = {}) {
 export const RECIPE_UPGRADES = [
   null,
   { cost: 0 },
-  { mul: 14, price: 1.15, patience: 1.1, tip: 1.1, label: 'Better ingredients', labelVi: 'Nguyên liệu tốt hơn' },
-  { mul: 40, price: 1.3, patience: 1.2, tip: 1.25, label: 'Signature presentation', labelVi: 'Trình bày đặc sắc' },
+  { mul: 30, price: 1.15, patience: 1.1, tip: 1.1, label: 'Better ingredients', labelVi: 'Nguyên liệu tốt hơn' },
+  { mul: 90, price: 1.3, patience: 1.2, tip: 1.25, label: 'Signature presentation', labelVi: 'Trình bày đặc sắc' },
 ];
 // a recipe upgrade costs more the more valuable the dish is
 export const recipeUpgradeCost = (id, lv) => Math.round(RECIPES[id].price * (RECIPE_UPGRADES[lv]?.mul || 0) / 10) * 10;
@@ -365,7 +365,6 @@ export const FURNITURE = {
   ship_model:  { vi: 'Mô hình thuyền', en: 'Model ferry',        price: 2500, w: 36, h: 12, collector: true, unlock: 12, fixed: true },
   art_commission:{ vi: 'Tranh đặt vẽ của Vy', en: 'A painting commissioned from Vy', price: 3500, w: 50, h: 8, wall: true, collector: true, unlock: 14, need: 'vy_brushes', fixed: true },
   meo_statue:  { vi: 'Tượng Mèo Mây mạ vàng', en: 'Golden Mèo Mây statue', price: 6000, w: 34, h: 16, collector: true, unlock: 16, fixed: true },
-  garden_terrace:{ vi: 'Mở rộng vườn', en: 'Garden terrace (3 more beds)', price: 1200, w: 44, h: 12, collector: true, unlock: 5, fixed: true, special: 'garden' },
 };
 
 // ---------------------------------------------------------------- customers
@@ -450,9 +449,22 @@ export const FESTIVAL_REQ = { level: 20, lanterns: 16, served: 40 };     // Chap
 export const KEEPER_REQ = { level: 30, regulars: 15 };                     // Chapter 20: Keeper of the Island (and every business owned)
 export const STATUE_COST = { cost: 3500, mats: { paint: 10, tile: 10 } };
 
-// ---------------------------------------------------------------- economy tuning (v5)
-// Prices above are the real ones (no blanket multipliers). Furniture is priced as
-// a cosy reward, not a wall; shop upgrades cost a little more than their list price.
-export const ECON = { furniture: 2.5, upgrades: 1.5 };
+// ---------------------------------------------------------------- economy tuning (v5.3 — a real grind)
+// The money balance in one place. Prices written above are list prices; these multipliers
+// make the game's economy. Owning everything (every business, upgrade, property, recipe
+// level, outfit, piece of furniture and pet) is meant to take many weeks of island days,
+// not a few. Other knobs: customer flow (business.js nextSpawnDelay), shopkeeper wages and
+// supply runners (economy.js), rent & property (economy.js PLACES), clothes (wardrobe.js),
+// pets (pets.js), level and milestone rewards (progress.js).
+export const ECON = {
+  furniture: 5,          // furniture × list price (v5: 2.5)
+  upgrades: 3.5,         // shop upgrades × list price (v5: 1.5)
+  businesses: 1.5,       // buying a business (and its key from Mèo Mây) ×
+  build: 1.75,           // the bridges, the statue and the Night Market restoration ×
+  ingredients: 1.25,     // what ingredients cost × — thinner margins on every sale
+};
 for (const v of Object.values(FURNITURE)) if (!v.fixed) v.price = Math.round(v.price * ECON.furniture / 5) * 5;
 for (const b of Object.values(BUSINESSES)) for (const u of b.upgrades || []) if (u?.cost) u.cost = Math.round(u.cost * ECON.upgrades / 10) * 10;
+for (const b of Object.values(BUSINESSES)) if (b.buy) b.buy = Math.round(b.buy * ECON.businesses / 50) * 50;
+for (const r of [BRIDGE_REPAIR, HARBOUR_BRIDGE, COVE_BRIDGE, STATUE_COST, NIGHT_MARKET_RESTORE]) r.cost = Math.round(r.cost * ECON.build / 50) * 50;
+for (const g of Object.values(INGREDIENTS)) { g.cost = Math.round(g.cost * ECON.ingredients * 100) / 100; g.price = Math.max(1, Math.round(g.cost * g.pack)); }

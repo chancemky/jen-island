@@ -11,7 +11,6 @@ import { ell, circ } from '../gfx/draw.js';
 import { updateBarks, drawBarks } from './fun.js';
 import { seatsIn, hopOnto } from './seats.js';
 import { updateSideQuests, drawSideQuests, sideQuestDrawables } from './sidequests.js';
-import { gardenDrawables } from './garden.js';
 import { growthDrawables } from './growth.js';
 import { PATHS, BUILDINGS, QUEUES } from '../world/island.js';
 import { rand, randi, choice, chance, dist, bus, clamp, TAU, smoothLine } from '../core/util.js';
@@ -158,7 +157,9 @@ function goTo(island, a, x, y, then) {
   a.setAct(null);
   if (a.sit) { a.sit = false; a.seatH = undefined; a.doHop(60); a.y += 10; }  // hop off the seat first
 
-  a.walkTo(island.nav.path(a.x, a.y, x, y).concat([[x, y]])).then(ok => { if (ok) then?.(); });   // (and right onto the spot itself)
+  const route = island.nav.path(a.x, a.y, x, y);
+  if (route.unreachable) { releaseStand(a); a.data.state = 'idle'; a.data.until = G.state.time + rand(3, 8); return; }   // can't get there from here: choose again soon
+  a.walkTo(route.concat([[x, y]])).then(ok => { if (ok) then?.(); });   // (and right onto the spot itself)
 }
 
 function updateResident(island, a, dt) {
@@ -244,21 +245,31 @@ function idleAct(a) {
 }
 
 // ---------------------------------------------------------------- tourists & ferry
+// Visitors come out of the cabin onto the boat's back deck (drawn on top of the boat),
+// step to the rail, hop across onto the pier and walk off to a place of their own.
+const DECK = f => [f.x - 6, f.y + 14];
 function spawnTourists(island, n) {
+  const f = npcs.ferry;
   for (let i = 0; i < n; i++) {
-    const seed = randi(1, 1e6);
-    const a = new Actor({ kind: 'human', look: visitorLook(seed, 'tourist'), x: BERTH.x - 20, y: BERTH.y, speed: rand(46, 60), data: { tourist: true, state: 'disembark', leaveAt: G.state.time + rand(120, 260) } });
-    a.visible = false;
+    const seed = randi(1, 1e6), [dx, dy] = DECK(f);
+    const a = new Actor({ kind: 'human', look: visitorLook(seed, 'tourist'), x: dx + ((i % 3) - 1) * 8, y: dy, speed: rand(46, 60), data: { tourist: true, state: 'disembark', leaveAt: G.state.time + rand(120, 260) } });
+    a.visible = false; a.sortY = f.y + 60;                     // on deck: in front of the boat
     island.add(a);
     npcs.tourists.push(a);
     setTimeout(() => {
-      a.visible = true; a.doHop(110);
-      // off the boat and straight to a place of their own (never all bunched at the foot of the pier)
-      const sp = claimWeighted(island, a, [['beach', 2], ['stroll', 2], ['market', 1], ['plaza', 1], ['view', 1]]);
-      const off = [[962, BERTH.y], [900, BERTH.y - 8], [900, 2440]];
-      a.data.state = 'walking';
-      a.walkTo(sp ? off.concat(island.nav.path(900, 2440, sp.x, sp.y), [[sp.x, sp.y]]) : off).then(() => { a.data.state = 'idle'; a.data.until = sp ? G.state.time + rand(15, 45) : 0; });
-    }, 700 + i * 650);
+      a.visible = true; a.alpha = 0; a.fadeIn = true;          // out of the cabin
+      a.walkTo([[f.x - 18, BERTH.y + 4]], { speed: 40 }).then(() => {
+        a.doHop(120);
+        return a.walkTo([[962, BERTH.y]], { speed: 70 });        // across onto the pier
+      }).then(() => {
+        delete a.sortY;
+        // off the boat and straight to a place of their own (never all bunched at the foot of the pier)
+        const sp = claimWeighted(island, a, [['beach', 2], ['stroll', 2], ['market', 1], ['plaza', 1], ['view', 1]]);
+        const off = [[900, BERTH.y - 8], [900, 2440]];
+        a.data.state = 'walking';
+        return a.walkTo(sp ? off.concat(island.nav.path(900, 2440, sp.x, sp.y), [[sp.x, sp.y]]) : off).then(() => { a.data.state = 'idle'; a.data.until = sp ? G.state.time + rand(15, 45) : 0; });
+      });
+    }, 700 + i * 900);
   }
 }
 function updateTourist(island, a, dt) {
@@ -304,7 +315,12 @@ function boardWaiting(island) {
   const f = npcs.ferry, line = npcs.tourists.filter(t => t.data.state === 'queue').sort((a, b) => a.data.slot - b.data.slot);
   line.forEach((a, i) => {
     a.data.state = 'boarding';
-    setTimeout(() => a.walkTo([[900, 2578], [962, BERTH.y], [BERTH.x - 12, BERTH.y]], { speed: 55 }).then(() => {
+    // along the pier to the gangway, a hop across onto the deck, then into the cabin
+    setTimeout(() => a.walkTo([[900, 2578], [962, BERTH.y]], { speed: 55 }).then(() => {
+      a.sortY = f.y + 60; a.doHop(120);
+      const [dx, dy] = DECK(f);
+      return a.walkTo([[f.x - 18, BERTH.y + 4], [dx + ((f.boarded % 3) - 1) * 8, dy]], { speed: 60 });
+    }).then(() => {
       a.fadeOut = true; const k = npcs.tourists.indexOf(a); if (k >= 0) npcs.tourists.splice(k, 1);
       f.boarded++; f.sinceBoard = 0;
     }), i * 500);
@@ -334,7 +350,7 @@ function updateFerry(island, dt) {
     if (dy < 1) {
       f.y = BERTH.y; f.speed = 0; f.state = 'docked'; f.t = 0; f.boarded = 0; f.sinceBoard = 0;
       const n = Math.min(f.pax, Math.max(0, 16 - npcs.tourists.length)); f.pax = 0;
-      f.unloadFor = n ? 1.2 + n * 0.65 : 0.6;
+      f.unloadFor = n ? 2.4 + n * 0.9 : 0.6;
       if (n && !G.runtime.introBoat) { spawnTourists(island, n); G.runtime.boatBoost = 30; bus.emit('ferry', n); }
       boardWaiting(island);
       fx.burst('splash', f.x - 20, f.y + 20, 8, { up: 50, life: 0.6 });
@@ -533,7 +549,6 @@ export function npcDrawables() {
   out.push(...animalDrawables());
   if (G.state.time >= 6 * 60 && G.state.time < 24 * 60) for (const sc of npcs.scooters) out.push(scooterDrawable(sc));
   for (const d of sideQuestDrawables()) out.push(d);
-  for (const d of gardenDrawables()) out.push(d);
   for (const d of growthDrawables()) out.push(d);
   for (const b of npcs.butterflies) out.push({ x: b.x, y: b.y, sortY: b.y + 30, draw: (c, t) => { c.save(); c.translate(0, -22 - Math.sin(b.t * 3) * 4); const f = Math.abs(Math.sin(b.t * 16)); c.fillStyle = b.col; c.strokeStyle = 'rgba(91,63,54,.7)'; c.lineWidth = 0.6; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * 2.6 * f, -1, 2.6 * f + 0.4, 3, s * 0.4, 0, TAU); c.fill(); c.stroke(); } c.restore(); } });
   return out;

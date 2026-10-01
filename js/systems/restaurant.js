@@ -101,7 +101,7 @@ export const STAFF_ROLES = ['cook', 'server', 'prep', 'cleaner', 'cashier', 'man
 export const ROLE_PAY = { cook: 1.2, server: 1, prep: 0.85, cleaner: 0.8, cashier: 0.9, manager: 1.7 };
 const KEY_STAT = { cook: 'cooking', server: 'service', prep: 'speed', cleaner: 'speed', cashier: 'reliability', manager: 'reliability' };
 const statTotal = e => e.stats.speed + e.stats.cooking + e.stats.service + e.stats.reliability;
-export const wageOf = (e, role = e.role) => Math.round((18 + statTotal(e) * 4) * (ROLE_PAY[role] || 1));
+export const wageOf = (e, role = e.role) => Math.round((36 + statTotal(e) * 8) * (ROLE_PAY[role] || 1));   // v5.3: twice what it was
 export const feeOf = (e, role = e.role) => wageOf(e, role) * 2;
 export const roleAvailable = (role, e = null) => role !== 'manager' || e?.role === 'manager' || (G.state.story.chapter >= 19 && !bizOf('restaurant').employees.some(x => x.role === 'manager'));
 export const hasManager = () => staffByRole('manager').length > 0;

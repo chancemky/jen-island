@@ -28,10 +28,10 @@ export const PETS = {
   duckling:{ kind: 'duck', col: '#ffe27a', price: 350, en: 'Duckling', vi: 'Vịt con', sfx: 'quack' },
 };
 COUNTS.pets = Object.keys(PETS).length;
-export const PET_FOOD = { price: 20, n: 5 };
+export const PET_FOOD = { price: 30, n: 5 };
 // v4.3: pets cost more
 // pets are a big, happy goal; their food is cheap so caring for them never hurts
-for (const v of Object.values(PETS)) if (v.price) v.price = Math.round(v.price * 2.5 / 10) * 10;
+for (const v of Object.values(PETS)) if (v.price) v.price = Math.round(v.price * 4 / 10) * 10;   // v5.3
 const S = () => { const s = G.state; s.pets ||= []; s.petFood ??= 0; return s; };
 export const myPets = () => S().pets;
 export const followerUid = () => S().petFollow || null;

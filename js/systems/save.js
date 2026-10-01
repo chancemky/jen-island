@@ -2,7 +2,8 @@
 // immediately for important events) plus cloud saves to Supabase.
 //
 // Protection against losing an island:
-//  • local backups — a small ring of snapshots (each night, and every 10 minutes of play)
+//  • local backups — a small ring of snapshots (each night, and every 10 minutes of play), used
+//    only to recover a damaged save automatically: players can't pick one to roll back to
 //  • cloud snapshots — one per in-game day, the last 7 kept (jen_island_save_snapshots)
 //  • malformed / unreadable saves are never overwritten silently: the bad copy is
 //    kept aside (…corrupt) and the newest good backup is used instead
@@ -68,14 +69,6 @@ export function backupNow(reason = 'auto', data = G.state) {
   writeRaw(bakKey(G.user.id), JSON.stringify(list));
   lastBackup = performance.now();
 }
-export function restoreBackup(i) {
-  const b = readBackups()[i]; if (!b) return false;
-  backupNow('before-restore');
-  G.state = migrate(b.data); G.state.savedAt = Date.now();
-  saveLocal(); saveCloudNow({ keepalive: true });
-  return true;
-}
-
 export function saveLocal() {
   if (!G.user) return;
   if (writeRaw(localKey(G.user.id), JSON.stringify(snapshot()))) saveStatus.localAt = Date.now();

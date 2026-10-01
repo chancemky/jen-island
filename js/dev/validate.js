@@ -12,7 +12,6 @@ import { PLACES } from '../systems/economy.js';
 import { TRACKS } from '../systems/progress.js';
 import { CLOTHES } from '../data/wardrobe.js';
 import { LATER } from '../systems/interact.js';
-import { CROPS } from '../systems/garden.js';
 import { FISH } from '../systems/fishing.js';
 import { BUILDINGS } from '../world/island.js';
 
@@ -56,7 +55,7 @@ export function validateContent(scenes = null) {
   for (const [id, b] of Object.entries(BUSINESSES)) for (const r of b.menu || []) { if (!RECIPES[r]) bad('business', `${id} menu has unknown recipe ${r}`); else if (RECIPES[r].biz !== b.biz) bad('business', `${id} menu recipe ${r} belongs to ${RECIPES[r].biz}`); }
   for (const [id, r] of Object.entries(RECIPES)) if (r.stallOnly && !Object.values(BUSINESSES).some(b => b.menu?.includes(id))) bad('recipe', `${id} is stall-only but no stall sells it`);
   // economy sanity: every dish earns more than its ingredients cost
-  for (const [id, r] of Object.entries(RECIPES)) { const c = recipeCost(id); if (c >= r.price * 0.7) bad('economy', `${id} costs ${c.toFixed(1)}k to make but sells for ${r.price}k`); }
+  for (const [id, r] of Object.entries(RECIPES)) { const c = recipeCost(id); if (c >= r.price * 0.82) bad('economy', `${id} costs ${c.toFixed(1)}k to make but sells for ${r.price}k`); }
   for (const b of BUILDINGS) if (b.biz && !BUSINESSES[b.biz]) bad('building', `${b.id} points at missing business ${b.biz}`);
   if (scenes) for (const b of BUILDINGS) if (b.interior && !scenes[b.interior]) bad('building', `${b.id} opens into missing interior ${b.interior}`);
   // ---- properties
@@ -113,7 +112,6 @@ export function validateContent(scenes = null) {
   for (const [id, a] of Object.entries(ACHIEVEMENTS)) if (a.hidden && !a.hint) bad('achievement', `secret ${id} has no hint`);
   // things that change with the story point at real spots
   if (scenes) for (const key of Object.keys(LATER)) { const [sid, tid] = key.split(':'); if (!scenes[sid]?.triggers?.some(t => t.id === tid)) bad('world', `story-changing look ${key} points at nothing`); }
-  for (const id of Object.keys(CROPS)) if (!INGREDIENTS[id]) bad('garden', `crop ${id} is not an ingredient`);
   for (const [id, f] of Object.entries(FISH)) if (f.ing && !INGREDIENTS[f.ing]) bad('fishing', `${id} gives unknown ingredient`);
   return out;
 }

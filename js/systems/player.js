@@ -25,7 +25,7 @@ export class Player extends Actor {
     // ease-in to feel responsive but not twitchy
     const k = m > 0 ? 0.45 + 0.55 * m : 0;
     this.running = m > 0.93 && !G.runtime?.sleepy;            // push the stick all the way to jog
-    const speed = WALK_SPEED * (G.runtime?.sleepy ? 0.72 : 1) * (this.running ? 1.3 : 1);
+    const speed = WALK_SPEED * (G.runtime?.sleepy ? 0.85 : 1) * (this.running ? 1.3 : 1) * (G.runtime?.devWalk || 1);   // (devWalk: the dev tab)
     const tx = ix * speed * (k > 0 ? 1 : 0) * Math.min(1, m * 1.25), ty = iy * speed * Math.min(1, m * 1.25);
     this.vx = damp(this.vx, tx, m > 0 ? 14 : 18, dt);
     this.vy = damp(this.vy, ty, m > 0 ? 14 : 18, dt);

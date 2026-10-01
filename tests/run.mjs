@@ -253,14 +253,15 @@ if (only === 'all' || only === 'economy') {
     const firstStock = ['tea', 'kumquat', 'sugar', 'ice'].reduce((a, k) => a + E.INGREDIENTS[k].price, 0);
     out.info.repair = rep; out.info.firstStock = firstStock;
     if (rep < 230 || rep > 260) bad(`first repair costs ${rep}k (want 230–260k)`);
-    if (300 - rep < firstStock) bad(`after the repair ${300 - rep}k is left, the first ingredients cost ${firstStock}k`);
-    // margins by tier: early ≤ ch 3, mid ch 4–12, premium café/grill
+    const start = (await import('/js/systems/state.js')).defaultState().money;
+    if (start - rep < firstStock) bad(`after the repair ${start - rep}k is left, the first ingredients cost ${firstStock}k`);
+    // margins by tier (v5.3: thinner than before): early ≤ ch 3, mid ch 4–12, premium café/grill
     for (const [id, R] of Object.entries(E.RECIPES)) {
-      const m = 1 - E.recipeCost(id) / R.price, tier = ['cafe', 'grill'].includes(R.biz) ? [0.5, 0.6] : R.chapter <= 3 ? [0.35, 0.47] : [0.44, 0.58];
+      const m = 1 - E.recipeCost(id) / R.price, tier = ['cafe', 'grill'].includes(R.biz) ? [0.37, 0.5] : R.chapter <= 3 ? [0.18, 0.35] : [0.3, 0.48];
       if (m < tier[0] - 0.005 || m > tier[1] + 0.005) bad(`${id} margin ${(m * 100).toFixed(0)}% outside ${tier[0] * 100}–${tier[1] * 100}%`);
     }
-    // property pays back in 40–70 days of rent
-    for (const [id, P] of Object.entries(E.PLACES)) { const d = E.propertyPrice(id) / P.rent; if (d < 40 || d > 70) bad(`${id} pays back in ${d.toFixed(0)} days`); }
+    // property pays back in 85–140 days of rent (v5.3: a long-term investment)
+    for (const [id, P] of Object.entries(E.PLACES)) { const d = E.propertyPrice(id) / P.rent; if (d < 85 || d > 140) bad(`${id} pays back in ${d.toFixed(0)} days`); }
     // one price per business: Mèo Mây's key costs what the business costs
     for (const [id, g] of Object.entries(E.GATES)) if (g.cost !== E.BUSINESSES[id].buy) bad(`${id} key ${g.cost} ≠ business price ${E.BUSINESSES[id].buy}`);
     // price bonuses never stack past the cap
@@ -404,7 +405,7 @@ if (only === 'all' || only === 'quests') {
 
 // ---------------------------------------------------------------- world interactions
 // Walk up to things and use them: furniture at home, the fountain, the pier, the shore,
-// fishing, the garden. Each should offer an action, run without errors and count as a discovery.
+// fishing. Each should offer an action, run without errors and count as a discovery.
 if (only === 'all' || only === 'world') {
   console.log('world interactions');
   const { p, errors, ctx } = await openGame('world');
@@ -412,7 +413,7 @@ if (only === 'all' || only === 'world') {
   const pump = makePump(p);
   const tryAt = async (scene, x, y, expect) => {
     const label = await p.evaluate(([scene, x, y]) => { const J = window.__jen; if (J.G.scene.id !== scene) J.setScene(scene, x, y, 'up'); const pl = J.G.player; pl.x = x; pl.y = y; pl.face('up'); return new Promise(r => setTimeout(() => r(document.getElementById('actBtn')?.innerText || document.querySelector('.act-btn, #action')?.innerText || ''), 500)); }, [scene, x, y]);
-    const act = await p.evaluate(([scene, x, y]) => { const J = window.__jen, sc = J.G.scene, pl = J.G.player; const a = J.ix.nearbyThing(sc, pl) || J.fishing.fishingAction(pl) || J.garden.gardenAction(pl) || J.ix.outdoorAction(pl) || J.garden.plaqueAction(pl); if (!a) return ''; window.__run = a.run(); return a.label; }, [scene, x, y]);
+    const act = await p.evaluate(([scene, x, y]) => { const J = window.__jen, sc = J.G.scene, pl = J.G.player; const a = J.ix.nearbyThing(sc, pl) || J.fishing.fishingAction(pl) || J.ix.outdoorAction(pl) || J.garden.plaqueAction(pl); if (!a) return ''; window.__run = a.run(); return a.label; }, [scene, x, y]);
     if (!act) { fail('world', `nothing to do at ${scene} (${x}, ${y}) — wanted ${expect}`); return false; }
     await pump(1500);
     for (let k = 0; k < 12 && await p.evaluate(() => window.__jen.dialogue.active || window.__jen.isUiOpen()); k++) await pump(700);
@@ -437,16 +438,41 @@ if (only === 'all' || only === 'world') {
     await pump(1500);
     if (!(await p.evaluate(() => Object.keys(window.__jen.G.state.fishBag || {}).length))) fail('world', 'caught nothing while fishing');
   }
-  // garden: plant, water twice over two days, harvest
-  const G0 = await p.evaluate(() => window.__jen.garden.GARDEN);
-  if (await tryAt('island', G0.x - 30, G0.y + 14, 'garden')) {
-    await p.evaluate(() => { const g = window.__jen.G.state.garden; if (g?.beds?.[0]) { g.beds[0].water = 2; } });
-    await tryAt('island', G0.x - 30, G0.y + 14, 'harvest');
-  }
   const found = await p.evaluate(() => Object.keys(window.__jen.G.state.discovered || {}));
-  const want = ['tv', 'radio', 'lamp', 'fish', 'books', 'piano', 'coin', 'timetable', 'fishing', 'garden'];
+  const want = ['tv', 'radio', 'lamp', 'fish', 'books', 'piano', 'coin', 'timetable', 'fishing'];
   const miss = want.filter(k => !found.includes(k));
   if (miss.length) fail('world', 'not discovered: ' + miss.join(', ')); else pass('world', `${found.length} kinds of interaction tried and remembered (${found.join(', ')})`);
+  // decorating: add from the tray, drag to the very bottom of the room, turn, undo, Done keeps it
+  {
+    await p.evaluate(async () => { const J = window.__jen, hm = J.G.state.home; for (const f of hm.furniture) hm.owned.push(f.id); hm.furniture = []; hm.owned.push('table_low'); J.setScene('house', 135, 270, 'up'); J.decorate.rebuildHouseFurniture(); (await import('/js/ui/decorate.js')).startDecorate(); });
+    await p.waitForTimeout(900);
+    const bad = [];
+    const item = await p.evaluateHandle(() => [...document.querySelectorAll('.deco-item')].find(e => /Tea table|Bàn trà/.test(e.textContent)));
+    if (!item.asElement()) bad.push('the tea table is not in the tray');
+    else {
+      await item.asElement().click(); await p.waitForTimeout(400);
+      const scr = (x, y) => p.evaluate(([x, y]) => { const v = window.__jen.cam.view, z = window.__jen.cam.zoom, r = document.getElementById('game').getBoundingClientRect(); return [r.left + (x - v.x) * z, r.top + (y - v.y) * z]; }, [x, y]);
+      const f = await p.evaluate(() => { const f = window.__jen.G.state.home.furniture.find(f => f.id === 'table_low'); return f && { x: f.x, y: f.y }; });
+      if (!f) bad.push('tapping it in the tray did not put it in the room');
+      else {
+        const H = await p.evaluate(() => window.__jen.G.scenes.house.h);
+        await p.mouse.click(...(await scr(230, 250))); await p.waitForTimeout(150);            // tap empty floor (deselect)
+        const [ax, ay] = await scr(f.x, f.y - 6), [bx, by] = await scr(80, H - 20);
+        await p.mouse.move(ax, ay); await p.mouse.down(); for (let i = 1; i <= 10; i++) { await p.mouse.move(ax + (bx - ax) * i / 10, ay + (by - ay) * i / 10); await p.waitForTimeout(25); } await p.mouse.up(); await p.waitForTimeout(300);
+        const g = await p.evaluate(() => window.__jen.G.state.home.furniture.find(f => f.id === 'table_low'));
+        if (g.y < H - 30) bad.push(`dragging to the bottom of the room left it at y ${g.y} (room is ${H} tall)`);
+        const turn = await p.evaluateHandle(() => [...document.querySelectorAll('.deco-tools .btn')].find(b => b.textContent === '↻'));
+        if (!turn.asElement()) bad.push('no turn button on the selected piece'); else { await turn.asElement().click(); await p.waitForTimeout(200); if ((await p.evaluate(() => window.__jen.G.state.home.furniture.find(f => f.id === 'table_low').rot)) !== 1) bad.push('turning did nothing'); }
+        await (await p.evaluateHandle(() => document.querySelector('.deco-actions .btn'))).asElement().click(); await p.waitForTimeout(200);
+        if ((await p.evaluate(() => window.__jen.G.state.home.furniture.find(f => f.id === 'table_low')?.rot)) !== 0) bad.push('undo did not undo the turn');
+        await (await p.evaluateHandle(() => [...document.querySelectorAll('.deco-actions .btn')].find(b => /Done|Xong/.test(b.textContent)))).asElement().click(); await p.waitForTimeout(300);
+        const h = await p.evaluate(() => ({ f: window.__jen.G.state.home.furniture.find(f => f.id === 'table_low'), open: !!document.querySelector('.deco-bar') }));
+        if (h.open) bad.push('Done did not close decorating'); if (!h.f || h.f.y !== g.y) bad.push('Done moved the furniture');
+      }
+    }
+    if (bad.length) bad.forEach(b => fail('world', 'decorate: ' + b)); else pass('world', 'decorating: add from the tray, drag anywhere (even the bottom of the room), turn, undo; Done keeps everything');
+    await p.evaluate(() => window.__jen.setScene('island', 900, 1700, 'down'));
+  }
   // crowds: a busy evening — nobody shares a standing spot or walks through anyone
   {
     await p.evaluate(async () => {

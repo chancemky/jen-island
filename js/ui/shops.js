@@ -127,7 +127,7 @@ export function openMaterialShop() {
     const list = h('div', 'list scroll'); list.style.flex = '1'; body.appendChild(list);
     const need = G.runtime.materialNeed?.();
     if (need) {
-      const missing = Object.entries(need.mats).filter(([k, n]) => mats(k) < n).map(([k, n]) => [k, n - mats(k)]);
+      const missing = Object.entries(need.mats).filter(([k, n]) => mats(k) < n && !matLocked(k)).map(([k, n]) => [k, n - mats(k)]);
       if (missing.length) {
         const total = missing.reduce((s, [k, n]) => s + MATERIALS[k].price * n, 0);
         const r = highlightRow();
@@ -141,7 +141,10 @@ export function openMaterialShop() {
       }
     }
     for (const [id, m] of Object.entries(MATERIALS)) {
-      if (m.unlock && G.state.story.chapter < m.unlock) continue;
+      if (matLocked(id)) {                                  // shown, but not sold yet: say when it arrives
+        const r = rowEl({ icon: id, title: escapeHtml(matName(id)), sub: T(`Arrives in Chapter ${m.unlock}`, `Có từ Chương ${m.unlock}`), have: T(`Have: ${mats(id)}`, `Có: ${mats(id)}`), right: h('span', 'locked-tag', '🔒') });
+        r.classList.add('locked'); list.appendChild(r); continue;
+      }
       const q = qtyStepper(20, 1, v => b.innerHTML = money(m.price * v));
       const right = col();
       const b = btn(money(m.price), () => {
@@ -166,7 +169,6 @@ export function openFurnitureShop() {
       const f = FURNITURE[id];
       if (f.unlock && s.story.chapter < f.unlock) continue;
       if (f.need && !s.story.flags[f.need] && !(s.sideQuests?.[f.need] === 'done')) continue;
-      if (f.special === 'garden' && s.garden?.big) continue;
       if (f.collector && !collectorHead) { collectorHead = true; list.appendChild(h('div', 'section-title', T('✦ Collector\'s corner', '✦ Góc sưu tầm'))); }
       const owned = s.home.owned.filter(x => x === id).length + s.home.furniture.filter(x => x.id === id).length;
       const r = h('div', 'row');
@@ -177,7 +179,6 @@ export function openFurnitureShop() {
       r.append(ico, info, btn(money(f.price), () => {
         if (!canAfford(f.price)) return noMoney();
         addMoney(-f.price, 'furniture'); sfx('buy'); merchantSay();
-        if (f.special === 'garden') { (s.garden ||= { beds: [null, null, null] }).big = true; s.garden.beds.push(null, null, null); markDirty(true); toast({ text: T('Anh Khoa built you a garden terrace', 'Anh Khoa đã làm cho bạn một thềm vườn'), sub: T('Three more beds beside your house.', 'Thêm ba luống cạnh nhà bạn.'), icon: 'herbs' }); api.rebuild(); return; }
         s.home.owned.push(id); markDirty(true);
         toast({ text: T(`${furnName(id)} delivered to your home`, `${furnName(id)} đã được gửi về nhà`), sub: T('Tap Decorate inside your house.', 'Bấm Trang trí trong nhà nhé.') });
         bus.emit('bought', 'furniture', id); api.rebuild();
@@ -353,10 +354,13 @@ export function openRequirement({ title, sub = '', cost = 0, mats: need = {}, ac
 
 // Requirement chips: tap a material to see its name and where to buy it; "?" explains all of them
 const MAT_SHOP = () => T('Ben Vung Materials (Market Street)', 'VLXD Bền Vững (Phố Chợ)');
+// (some materials only reach the island later in the story — the shop and this hint use the same rule)
+const matLocked = k => { const lv = MATERIALS[k]?.unlock; return !!lv && G.state.story.chapter < lv; };
 function matWhere(k) {
   const m = MATERIALS[k]; if (!m) return '';
-  const lv = m.unlock, locked = lv && level() < lv;
-  return locked ? T(`Sold at ${MAT_SHOP()} from island level ${lv} (you're level ${level()})`, `Bán ở ${MAT_SHOP()} từ đảo cấp ${lv} (bạn đang cấp ${level()})`) : T(`Sold at ${MAT_SHOP()}`, `Có bán ở ${MAT_SHOP()}`);
+  return matLocked(k)
+    ? T(`Not in the shops yet: ${matName(k).toLowerCase()} arrive at ${MAT_SHOP()} in Chapter ${m.unlock} (you're in Chapter ${G.state.story.chapter}). Keep following the story!`, `Chưa có bán: ${matName(k).toLowerCase()} sẽ về ${MAT_SHOP()} ở Chương ${m.unlock} (bạn đang ở Chương ${G.state.story.chapter}). Cứ theo cốt truyện nhé!`)
+    : T(`Sold at ${MAT_SHOP()}`, `Có bán ở ${MAT_SHOP()}`);
 }
 export function needChips(need, cost = 0) {
   const s = G.state, n = h('div', 'need');

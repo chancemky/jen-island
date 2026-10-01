@@ -892,5 +892,4 @@ Object.assign(FURN_DRAW, {
     c.fillStyle = INK; c.font = '900 3px Nunito, sans-serif'; c.textAlign = 'right'; c.fillText('Vy', 19, -43); c.restore(); },
   lantern_wall: (c, t, p) => { c.save(); c.translate(0, p.preview ? 50 : 0); line(c, -24, -66, 24, -66, '#5b3f36', 0.8);
     ['#ea5a4f', '#f2c14e', '#f08ca0', '#6fbfb0', '#b39ddb', '#ffae3a'].forEach((col, i) => { const x = -20 + i * 8, y = -62 + (i % 2) * 3; line(c, x, -66, x, y - 5, INK, 0.5); ell(c, x, y, 3.2, 4, col, INK, 0.6); }); c.restore(); },
-  garden_terrace: (c, t, p) => { box(c, -22, -12, 44, 12, 3, '#a8784e', INK, 1); for (let i = -1; i <= 1; i++) { line(c, i * 12, -4, i * 12, -12, '#5f9f3a', 1.2); circ(c, i * 12, -13, 3, '#6fbf4a', INK, 0.5); } },
 });

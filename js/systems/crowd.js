@@ -66,9 +66,12 @@ export function releaseStand(a) { const s = a.data?.stand; if (s && s.owner === 
 export function claimStand(island, a, tag, near = null) {
   let list = stands.filter(s => s.tags.has(tag) && (s.owner === a || !holds(s)) && !occupiedNow(island, s, a));
   if (!list.length) return null;
-  let s;
-  if (near) s = list.reduce((b, x) => dist(x.x, x.y, near.x, near.y) < dist(b.x, b.y, near.x, near.y) ? x : b);
-  else s = list[Math.floor(Math.random() * list.length)];
+  // nearest first (to `near`), otherwise in random order — and only somewhere you can walk to
+  // from where you are now (not across the water to an island whose bridge isn't built)
+  if (near) list.sort((p, q) => dist(p.x, p.y, near.x, near.y) - dist(q.x, q.y, near.x, near.y));
+  else for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+  const s = list.slice(0, 8).find(x => !island.nav.path(a.x, a.y, x.x, x.y).unreachable);
+  if (!s) return null;
   releaseStand(a);
   s.owner = a; a.data.stand = s;
   return s;

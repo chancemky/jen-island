@@ -393,14 +393,23 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 @media (orientation: landscape) and (max-height: 520px) and (pointer: coarse) { #rotate { display: flex; } }
 
 /* ---------------------------------------------------------------- house decorating */
-.deco-bar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 45; pointer-events: auto; background: var(--cream); border-top: 3.5px solid var(--ink); border-radius: 22px 22px 0 0; padding: 10px 12px calc(12px + var(--sab)); animation: sheetUp .3s cubic-bezier(.2,1.1,.35,1); }
-.deco-bar .row-scroll { display: flex; gap: 8px; overflow-x: auto; touch-action: pan-x; padding: 4px 2px 6px; }
+.deco-bar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 45; pointer-events: auto; background: var(--cream); border-top: 3.5px solid var(--ink); border-radius: 22px 22px 0 0; padding: 8px 12px calc(10px + var(--sab)); animation: sheetUp .3s cubic-bezier(.2,1.1,.35,1); }
+.deco-bar .row-scroll { display: flex; gap: 8px; overflow-x: auto; touch-action: pan-x; padding: 6px 2px 4px; }
+.deco-bar.folded .row-scroll { display: none; }
+.deco-head { display: flex; align-items: center; gap: 8px; }
 .deco-item { flex: none; width: 76px; padding: 6px 4px; border-radius: 14px; background: #fff; border: 2.5px solid #e9d8bf; text-align: center; font-size: 10.5px; font-weight: 900; }
-.deco-item.on { border-color: var(--pink2); box-shadow: 0 0 0 3px rgba(240,140,160,.35); }
+.deco-item:active { border-color: var(--pink2); }
 .deco-item canvas { width: 56px; height: 44px; display: block; margin: 0 auto 2px; }
-.deco-hint { font-size: 12.5px; font-weight: 800; opacity: .7; margin: 0 4px 6px; }
-.deco-actions { display: flex; gap: 8px; margin-top: 6px; }
-.deco-actions .btn { flex: 1; padding: 11px; font-size: 14px; }
+.deco-hint { flex: 1; font-size: 12px; font-weight: 800; opacity: .75; line-height: 1.25; margin-left: 2px; }
+.deco-actions { display: flex; gap: 6px; flex: none; }
+.deco-actions .btn { padding: 8px 14px; font-size: 14px; }
+.deco-empty { font-size: 12px; font-weight: 800; opacity: .6; padding: 10px 4px; }
+.btn.small.icon { font-size: 21px; line-height: 1; padding: 4px 11px; }
+.btn.small { padding: 7px 11px; font-size: 13px; border-width: 2.5px; border-radius: 12px; box-shadow: 0 3px 0 rgba(91,63,54,.3); }
+/* the toolbar floating over the piece you're moving */
+.deco-tools { position: absolute; z-index: 46; display: flex; gap: 5px; padding: 5px; background: rgba(255,248,234,.95); border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 0 4px 0 rgba(91,63,54,.25); pointer-events: auto; }
+.deco-tools.hidden { display: none; }
+.deco-tools::after { content: ''; position: absolute; left: 50%; bottom: -8px; margin-left: -6px; border: 6px solid transparent; border-top-color: var(--ink); border-bottom: 0; }
 
 /* map */
 .map-wrap { position: relative; flex: 1; min-height: 0; border-radius: 20px; overflow: hidden; border: 3px solid var(--ink); background: #5ec2cf; }
@@ -438,6 +447,8 @@ body.show-joy-hint #joyBase:not(.on) { opacity: .6; transform: scale(.92); left:
 .opt-row { flex-direction: row; align-items: center; gap: 6px; }
 .opt-row small { width: 44px; flex: none; line-height: 1.05; font-size: 10px; }
 .opt-row .seg { flex: 1; }
+.opt-row small .hq { display: block; margin-top: 2px; font-style: normal; font-size: 11px; letter-spacing: 0; opacity: 1; color: var(--ink); text-transform: none; }
+.opt-row small .hq.low { color: #d9433a; }
 .seg button { padding: 8px 2px; }
 .svc-grid { flex: 1 1 auto; min-height: 76px; grid-template-columns: repeat(5, 1fr); gap: 6px; padding-top: 6px; }
 .ing .tray { aspect-ratio: 1.45; }
@@ -679,3 +690,14 @@ body.lookout #hud, body.lookout .hud-top, body.lookout #questPill, body.lookout 
 .album-view b { font-size: 16px; } .album-view small { opacity: .75; font-weight: 800; }
 /* cutscenes: no joystick or "touch & drag" hint on screen */
 body.hide-controls #joyBase, body.hide-controls #joyHint, body.cutscene #joyHint { opacity: 0 !important; transition: opacity .3s; }
+
+/* things not in the shops yet (they arrive later in the story) */
+.row.locked { opacity: .55; }
+.locked-tag { font-size: 18px; padding: 0 8px; }
+
+/* dev tools (testing builds only — js/dev/flag.js) */
+#devRibbon { position: fixed; left: 50%; top: 0; transform: translateX(-50%); z-index: 300; padding: 1px 10px 2px; border-radius: 0 0 8px 8px; background: #d9433a; color: #fff; font: 900 9px/1.4 Nunito, sans-serif; letter-spacing: 1.5px; pointer-events: none; opacity: .85; }
+.dev-banner { margin: 4px 0 8px; padding: 8px 10px; border-radius: 12px; background: #fde2df; border: 2px solid #e8a4a0; color: #a8322b; font-weight: 900; font-size: 12px; }
+.dev-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.dev-grid .btn { flex: 1 1 auto; }
+.dev-select { flex: 1 1 100%; padding: 8px; border-radius: 10px; border: 2.5px solid var(--ink); font-weight: 800; font-size: 13px; background: #fff; }

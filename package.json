@@ -1,6 +1,6 @@
 {
   "name": "jen-island",
-  "version": "5.2.0",
+  "version": "5.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,7 +14,9 @@
     "test:quests": "node tests/run.mjs quests",
     "test:world": "node tests/run.mjs world",
     "test:stability": "node tests/run.mjs stability",
-    "test:chaos": "node tests/run.mjs chaos"
+    "test:chaos": "node tests/run.mjs chaos",
+    "check:launch": "node tests/launch-check.mjs",
+    "deploy:launch": "node tests/launch-check.mjs && npx wrangler deploy"
   },
   "devDependencies": {
     "playwright": "1.63.0"

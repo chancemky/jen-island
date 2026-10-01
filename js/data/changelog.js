@@ -3,9 +3,31 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.2.0';
+export const APP_VERSION = '5.3.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.0', date: '2026-10-01T16:36:38Z',
+    title: ['A Real Grind', 'Đường Dài Mới Biết Ngựa Hay'],
+    items: [
+      ["Making money is a real grind now: fewer customers, thinner margins on every dish, shopkeepers and supply runners that cost a fair share of what a shop makes, higher rent, and everything you collect or upgrade costs about twice as much. Owning everything takes many weeks of island days", "Kiếm tiền giờ là cả một hành trình: ít khách hơn, lời mỗi món mỏng hơn, người trông quán và người giao hàng tốn một phần đáng kể tiền lãi, tiền thuê cao hơn, và mọi thứ để sưu tầm hay nâng cấp đắt gấp khoảng đôi. Muốn sở hữu tất cả phải mất nhiều tuần trên đảo"],
+      ["Milestones and level-ups give a small thank-you instead of a fortune (milestone money used to grow faster than anything else); you start with 330k", "Cột mốc và lên cấp chỉ tặng một chút tiền cảm ơn thay vì cả gia tài (trước đây tiền cột mốc tăng nhanh hơn mọi thứ); bạn bắt đầu với 330k"],
+      ["Decorating is drag and drop: touch any piece (even the bed, wardrobe and kitchen) and drag it — it stays where you let go, saved at once. A little toolbar turns it or puts it away, Undo steps back, and Done never moves anything back", "Trang trí giờ là kéo và thả: chạm vào bất kỳ món nào (cả giường, tủ và bếp) rồi kéo — thả ở đâu là đặt ở đó, lưu ngay. Thanh công cụ nhỏ để xoay hoặc cất đi, Hoàn tác để quay lại, và nút Xong không bao giờ dời đồ về chỗ cũ"],
+      ["While decorating you see the whole room above the tray (which folds down), so you can place things right down to the bottom of the room; rugs and mats go under furniture", "Khi trang trí bạn thấy cả căn phòng phía trên khay đồ (có thể thu gọn), nên đặt được đồ tới tận đáy phòng; thảm nằm dưới đồ đạc"],
+      ["Fixed the game getting slow after midnight (sleeping animals' little z's were redrawn from scratch every frame); sleepy walking is less slow", "Sửa lỗi game bị chậm sau nửa đêm (chữ z của thú đang ngủ bị vẽ lại từ đầu mỗi khung hình); đi khi buồn ngủ cũng bớt chậm"],
+      ["Visitors step out of the cabin onto the boat's deck and hop across onto the pier (and hop aboard when they leave) — you see them the whole way", "Khách bước ra khỏi khoang lên boong tàu rồi nhảy sang cầu tàu (và nhảy lên tàu khi về) — bạn thấy họ suốt chặng đường"],
+      ["People walk along the pier instead of through the water, and every path on the island is joined up: nobody walks through water, walls or the grandmas' carts any more", "Mọi người đi trên cầu tàu thay vì lội nước, và mọi con đường trên đảo đều nối liền: không còn ai đi xuyên nước, tường hay xe hàng của các bà"],
+      ["You can only skip stones from the end of the pier or the beach, out over open water", "Chỉ ném thia lia được từ cuối cầu tàu hoặc bãi biển, ra vùng nước trống"],
+      ["The rice paper salad cart's sign fits on the cart and its little bags hang from a rail; every cart's sign shrinks to fit", "Biển xe bánh tráng trộn vừa với xe và các túi nhỏ treo trên thanh móc; biển mọi xe đều tự thu nhỏ cho vừa"],
+      ["Proper roads: a straight avenue below the houses on the east side with a front walk to every door, the west road runs below the houses, the shrine road goes round the lotus pond; the coast road from the dock to Chú Hải's house is back, and the road from his house down to the cove bridge is gone", "Đường sá gọn gàng: đại lộ thẳng phía dưới dãy nhà phía đông với lối đi tới từng cửa, đường phía tây chạy dưới các nhà, đường lên đình vòng quanh hồ sen; đường ven biển từ bến tàu tới nhà Chú Hải đã trở lại, còn đường từ nhà chú xuống cầu vịnh đã bỏ"],
+      ["The little garden patch between your house and Mèo Mây's is gone", "Mảnh vườn nhỏ giữa nhà bạn và nhà Mèo Mây đã được dỡ bỏ"],
+      ["Surfboards are carried level under the arm", "Ván lướt sóng được kẹp ngang dưới nách"],
+      ["When making a drink, sugar and ice show how much is left next to their heading (the sugar bar is gone)", "Khi pha nước, đường và đá hiện số còn lại cạnh tiêu đề (bỏ thanh đo đường)"],
+      ["Roof tiles, lanterns and light strings arrive at the materials shop later in the story: the shop shows them (locked) with the chapter they arrive in, and tapping one in an upgrade says so", "Ngói, lồng đèn và dây đèn về cửa hàng vật liệu ở các chương sau: cửa hàng hiện chúng (khóa) kèm chương sẽ có, và chạm vào món đó trong bảng nâng cấp cũng nói rõ"],
+      ["Backups can no longer be restored from Settings (damaged saves are still repaired automatically)", "Không còn khôi phục bản sao lưu trong Cài đặt nữa (dữ liệu hỏng vẫn được tự sửa)"],
+      ["Testing build: a Dev tab in the menu to jump to any chapter and adjust almost anything (it will be removed at launch)", "Bản thử nghiệm: thẻ Dev trong menu để nhảy tới bất kỳ chương nào và chỉnh gần như mọi thứ (sẽ gỡ khi ra mắt)"]
+    ],
+  },
   {
     v: '5.2.0', date: '2026-09-28T18:33:51Z',
     title: ['Room to Breathe', 'Thong Thả'],

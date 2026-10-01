@@ -449,7 +449,7 @@ export function updateBusinesses(dt, gameMin) {
     if (lastCall && !r.lastCall) { r.lastCall = true; bus.emit('toast', { text: T('Last orders!', 'Phục vụ lượt cuối!'), sub: T('The shop is closing — serve the customers still in line.', 'Quán sắp đóng — phục vụ nốt khách đang xếp hàng nhé.'), icon: 'sleep_moon' }); }
     if (!lastCall) r.lastCall = false;
     // spawn
-    r.spawnT -= lastCall ? 0 : dt;   // real seconds, so the day's length doesn't change customer flow
+    r.spawnT -= lastCall ? 0 : dt * (G.runtime.devCustomers || 1);   // real seconds, so the day's length doesn't change customer flow (devCustomers: the dev tab's speed-up)
     if (r.spawnT <= 0) {
       const made = makeableRecipes(id).length;
       if (!made) { if (!r.noStockWarned) { r.noStockWarned = true; bus.emit('toast', { text: T('Out of ingredients!', 'Hết nguyên liệu!'), sub: T(`${bizName(id)}: restock or prep more.`, `${bizName(id)}: mua thêm hoặc sơ chế nhé.`), bad: true }); } r.spawnT = 6; }
@@ -500,14 +500,14 @@ function nextSpawnDelay(id) {
   const tf = demandAt(id, h);
   const boat = G.runtime.boatBoost > 0 ? 1.5 : 1;
   const special = b.special ? 1.12 : 1;
-  const early = s.story.chapter <= 2 ? 1.35 : 1;
+  const early = s.story.chapter <= 2 ? 1.15 : 1;            // (v5.3: a gentler head start)
   const owned = s.property?.[id] ? 1.05 : 1;                      // your own place: you can put a sign out front
   const festive = eventBoost(def.biz);                            // Tết, summer beach days, Mid-Autumn…
   const recs = bizRecipes(id);
   const appeal = recs.length ? recs.reduce((a, r) => a + priceAppeal(r, id), 0) / recs.length : 1;
   const gear = eq(id, 'attract') * (h >= 18 ? eq(id, 'night') : 1);
   const rate = attract * rep * tf * boat * special * early * appeal * gear * owned * festive; // customers per ~34 game-minutes baseline
-  return clamp(rand(26, 44) / rate, 6, 60);
+  return clamp(rand(32, 52) / rate, 7, 70);                 // v5.3: fewer customers than before
 }
 
 export function stationStock(bizId, key) { return stockOf(bizId, key); }

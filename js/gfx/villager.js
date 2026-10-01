@@ -640,14 +640,17 @@ function drawTote(c, L, S, yaw, swing) {
   c.beginPath(); c.moveTo(bx - w, by - 3); c.lineTo(bx + w, by - 3); c.lineTo(bx + w * 1.15, by + 4); c.lineTo(bx - w * 1.15, by + 4); c.closePath(); c.fillStyle = L.tote; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
   if (Math.cos(yaw) > -0.2 || Math.abs(Math.sin(yaw)) > 0.5) heart(c, bx, by + 0.8, 1.1 * Math.min(1, w / 3.6), '#f28fa3', null);
 }
-// surfboard carried upright under the right arm: edge-on from the front, its face from the side
+// surfboard carried level under the right arm: seen from the side its nose points the way
+// you're walking; from the front or back it lies across your hip
 function drawSurf(c, L, S, yaw, swing) {
-  const pos = proj(add(S.waist, rotY([SHO_X + 4.2, 3, 0.8], yaw))), face = Math.max(0.28, Math.abs(Math.sin(yaw)));
-  c.save(); c.translate(pos[0], pos[1] - 2 + swing * 0.4); c.rotate(0.12 * Math.sign(Math.cos(yaw) || 1) + swing * 0.03);
-  const hw = 4.2 * face, top = -15, bot = 14;
-  c.beginPath(); c.moveTo(0, top); c.bezierCurveTo(hw * 1.1, top + 5, hw, bot - 6, 0, bot); c.bezierCurveTo(-hw, bot - 6, -hw * 1.1, top + 5, 0, top); c.closePath();
+  const sd = Math.sin(yaw), pos = proj(add(S.waist, rotY([SHO_X + 3.2, 2.6, 0.6], yaw)));
+  const nose = Math.abs(sd) > 0.35 ? Math.sign(sd) : 1;                        // which way the long end points on screen
+  c.save(); c.translate(pos[0] + nose * (Math.abs(sd) > 0.35 ? 3 : 9), pos[1] - 1 + swing * 0.4); c.rotate(-0.06 * nose + swing * 0.03);
+  const len = 16, th = 3.4;
+  c.beginPath(); c.moveTo(-len * nose, 0); c.bezierCurveTo(-len * 0.7 * nose, -th * 1.1, len * 0.5 * nose, -th, len * nose, -0.4);
+  c.bezierCurveTo(len * 0.5 * nose, th, -len * 0.7 * nose, th * 1.1, -len * nose, 0); c.closePath();
   c.fillStyle = L.surf; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
-  if (face > 0.45) { line(c, 0, top + 2, 0, bot - 2, 'rgba(255,255,255,.85)', 0.8); line(c, -hw * 0.45, top + 7, -hw * 0.45, bot - 6, 'rgba(255,255,255,.45)', 0.6); }
+  line(c, -len * 0.82 * nose, 0, len * 0.82 * nose, -0.2, 'rgba(255,255,255,.85)', 0.8);   // the stringer down the middle
   c.restore();
 }
 function drawBackGear(c, L, S) {

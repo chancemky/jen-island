@@ -50,7 +50,7 @@ import { initAlbum } from './systems/album.js';
 import { nearbyThing, outdoorAction, morningEvent, updateWorldEvents, lookText } from './systems/interact.js';
 import { updateSeasonal } from './systems/growth.js';
 import { fishingAction } from './systems/fishing.js';
-import { gardenAction, plaqueAction } from './systems/garden.js';
+import { plaqueAction } from './systems/garden.js';
 import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones, TRACKS, trackState, claimMilestone } from './systems/progress.js';
 import { BRIDGE_REPAIR, FESTIVAL_REQ, KEEPER_REQ } from './data/game.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
@@ -403,8 +403,6 @@ function updateInteraction(dt) {
   }
   // fishing off the end of the pier (once Chú Hải has shown you how)
   const fish = fishingAction(pl); if (fish) { setAction(fish.label, fish.run, fish.icon); return; }
-  // the garden patch behind your house
-  const gd = gardenAction(pl); if (gd) { setAction(gd.label, gd.run, gd.icon); return; }
   // the fountain, the pier, the shore
   const od = outdoorAction(pl); if (od) { setAction(od.label, od.run, od.icon); return; }
   // lore on restored places
@@ -830,6 +828,8 @@ if (window.__jen) {
 // localhost only: check the game's content for broken references at boot
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) import('./dev/validate.js').then(async m => { while (!scenes.island || !scenes.shed1) await new Promise(r => setTimeout(r, 250)); const issues = m.validateContent(scenes); window.__jen.validate = () => m.validateContent(scenes); if (issues.length) console.warn(`[validate] ${issues.length} content issue(s):\n` + issues.join('\n')); else console.info('[validate] content OK'); });
 
+// testing builds wear a ribbon, so a dev build can never be mistaken for the real thing (js/dev/flag.js)
+import('./dev/flag.js').then(m => { if (m.DEV_TOOLS) { const r = document.createElement('div'); r.id = 'devRibbon'; r.textContent = 'DEV BUILD'; document.body.appendChild(r); } }).catch(() => {});
 boot().catch(e => { console.error(e); $('bootMsg').textContent = bootText('err'); });
 
 // Offline support + "Add to Home Screen" (skip on localhost so tests always get fresh files).

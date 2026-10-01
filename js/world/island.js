@@ -107,14 +107,22 @@ function coastRoad(xFrom, xTo, dir) {
 export const PATHS = {
   main: [[900, 2410], [900, 2250], [902, 2000], [904, 1760], [900, 1644]],
   beachW: coastRoad(900, 250, -1),
-  beachE: coastRoad(900, 1580, 1),
-  east: [[1000, 1580], [1120, 1690], [1260, 1766], [1420, 1766], [1560, 1720], [1610, 1640]],
+  // the coast road east from the dock road: along the shore, past the front of the food truck, up to Chú Hải's door
+  beachE: [...coastRoad(900, 1250, 1), [1330, 2236], [1400, 2208], [1468, 2176], [1518, 2090], [1550, 2010], [1560, 1958]],
+  // the east side: one straight avenue below the houses, with a short front walk from each door
+  east: [[1000, 1580], [1062, 1672], [1124, 1776], [1360, 1776], [1600, 1776], [1604, 1650], [1600, 1540]],
+  walkTuan: [[1140, 1652], [1140, 1776]],
+  walkHome: [[1260, 1736], [1260, 1776]],
+  walkMai: [[1360, 1602], [1360, 1776]],
+  walkMeo: [[1480, 1730], [1480, 1776]],
   salon: [[1492, 1346], [1500, 1450], [1500, 1570]],
-  lane: [[1120, 1690], [1232, 1660], [1340, 1634], [1440, 1604], [1500, 1572]],
   north: [[900, 1436], [900, 1300], [900, 1186]],
   market: [[480, 1184], [700, 1190], [900, 1188], [1100, 1186], [1340, 1178], [1418, 1170]],
-  west: [[800, 1560], [650, 1604], [500, 1602], [362, 1558], [270, 1440], [230, 1330]],
-  linh: [[300, 1392], [270, 1440]],
+  // the west road runs below the houses (not across their doorsteps), each with its own front walk
+  west: [[800, 1556], [700, 1600], [480, 1604], [380, 1592], [296, 1520], [218, 1440], [230, 1330]],
+  linh: [[300, 1384], [300, 1508]],
+  walkBatu: [[420, 1546], [420, 1596]],
+  walkShed2: [[592, 1574], [592, 1602]],
   lan: [[690, 1458], [760, 1500], [812, 1520]],
   nw: [[480, 1184], [460, 1080], [456, 960], [454, 846], [446, 808]],
   nm: [[446, 808], [440, 760], [430, 520]],
@@ -134,7 +142,7 @@ export const PATHS = {
   isletS: [[2150, 1470], [2200, 1600], [2290, 1700], [2230, 1820]],
   isletN: [[2260, 1440], [2250, 1330], [2230, 1210]],
   paddy: [[1195, 1040], [1380, 1042], [1470, 1044], [1560, 1044]],
-  dinh: [[940, 620], [800, 590], [650, 440], [620, 392]],
+  dinh: [[912, 410], [820, 394], [740, 392], [625, 398]],   // round the top of the lotus pond (not through it)
   westCoast: [[230, 1330], [180, 1200], [150, 1090], [140, 1000], [196, 880], [262, 810]],
 };
 const PATH_W = 30;
@@ -281,7 +289,7 @@ export const TRUCK_SPOTS = {
   plaza: { x: 1000, y: 1720, en: 'Wind Plaza', vi: 'Quảng trường gió', fx: 'Steady neighbours all day, busy evenings', fxVi: 'Hàng xóm ghé đều cả ngày, tối đông', steady: 1.15 },
   harbour: { x: 2552, y: 707, en: 'Harbour Town', vi: 'Phố Cảng', need: 'harbourBridge', fx: 'Visitors from the guesthouse; pricier menus are fine', fxVi: 'Khách từ nhà nghỉ; giá cao hơn cũng được', tolerance: 1.18, steady: 1.05 },
 };
-export const NAV_ONLY = new Set(['nm', 'bridge', 'hbridge', 'cbridge', 'beachE']);   // walkable routes for NPCs with no road drawn (beachE: no road behind the food truck)
+export const NAV_ONLY = new Set(['nm', 'bridge', 'hbridge', 'cbridge', 'coveRoad']);   // walkable routes for NPCs with no road drawn (coveRoad: no road from Chú Hải's house down to the cove bridge)
 const SMOOTH_PATHS = Object.fromEntries(Object.entries(PATHS).filter(([k]) => !NAV_ONLY.has(k)).map(([k, p]) => [k, p.length > 2 ? chunkPts(smoothLine(p, 6)) : p]));
 function chunkPts(flat) { const o = []; for (let i = 0; i < flat.length; i += 2) o.push([flat[i], flat[i + 1]]); return o; }
 
@@ -832,10 +840,10 @@ export class Island extends Scene {
     const spot = (x, y, tags, linkTo) => { const n = nav.add(x, y, tags); const near = linkTo ? nav.nearest(linkTo[0], linkTo[1], m => m !== n) : nav.nearest(x, y, m => m !== n && m.tags.has('path')); nav.link(n, near); return n; };
     for (const [x, y] of [[700, 2300], [1120, 2320], [1300, 2270], [480, 2240], [1000, 2340], [800, 2350]]) spot(x, y, ['beach', 'spot']);
     for (const [x, y] of [[830, 1650], [970, 1650], [830, 1460], [970, 1460]]) spot(x, y + 6, ['bench', 'spot', 'sit']);
-    spot(900, 2575, ['dock', 'spot']); spot(860, 2580, ['dock', 'spot']);
+    spot(900, 2575, ['dock', 'spot']); spot(860, 2580, ['dock', 'spot'], [900, 2575]);   // (the second one joins along the pier end, not across the water)
     for (const [x, y] of [[790, 1250], [1010, 1252], [700, 1206], [1090, 1206], [1310, 1196]]) spot(x, y, ['market', 'spot']);
     for (const [x, y] of [[400, 620], [470, 620], [400, 710], [470, 710], [430, 800]]) spot(x, y, ['nightmarket', 'spot'], [436, 700]);
-    for (const [x, y] of [[760, 560], [1250, 1060], [950, 360], [1500, 1150]]) spot(x, y, ['view', 'spot']);
+    for (const [x, y] of [[760, 560], [1250, 1060], [950, 360], [1500, 1150]]) spot(x, y, ['view', 'spot'], x === 760 ? [940, 620] : null);   // (the pond lookout joins the north road, not across the pond)
     for (const b of BUILDINGS) if (b.home) spot(b.x, b.y + 10, ['home:' + b.home]);
     for (const [id, q] of Object.entries(QUEUES)) spot(q[0][0], q[0][1] + 8, ['queue:' + id]);
     spot(1200, 760, ['door:restaurant']);
@@ -843,6 +851,14 @@ export class Island extends Scene {
     for (const [x, y] of [[2600, 700], [2720, 660], [2480, 720]]) spot(x, y, ['harbour', 'spot']);
     for (const [x, y] of [[2400, 2300], [2520, 2260]]) spot(x, y, ['cove', 'spot']);
     for (const [x, y] of [[2250, 1420], [2400, 1520]]) spot(x, y, ['islet', 'spot']);
+    // the roads only meet where they're drawn to meet; join any that end a few steps apart, then
+    // route only along stretches you can actually walk right now (no water, no unbuilt bridges)
+    const land = (x, y) => this.terrain(x, y) || SEA_BRIDGES.some(b => inRect(b, x, y));
+    const clear = (a, b) => { const d = Math.hypot(b.x - a.x, b.y - a.y), n = Math.ceil(d / 8); for (let i = 0; i <= n; i++) if (!land(a.x + (b.x - a.x) * i / n, a.y + (b.y - a.y) * i / n)) return false; return true; };
+    const left = nav.joinPieces(clear);
+    if (left > 1) console.warn(`[nav] ${left} separate pieces of path left`);
+    nav.passable = (x, y) => this.terrain(x, y);
+    nav.version = () => { const f = G.state?.story?.flags || {}; return (bridgeFixed() ? 'L' : '') + (f.harbourBridge ? 'H' : '') + (f.coveBridge ? 'C' : ''); };
   }
 
   // ---------------------------------------------------------------- per-frame water

@@ -170,6 +170,17 @@ function steerAround(a, scene, ux, uy, remaining) {
     const w = (1 - Math.max(0, ahead) / LOOK) * (1 - Math.abs(lat) / CLEAR) * (od < CLEAR ? 2 : 1);
     sx += px * side * w; sy += py * side * w;
   }
+  // and round things in the way: carts, stalls, stools, lamps, trees (anything small and solid)
+  const obstacle = (cx, cy, R) => {
+    const ox = cx - a.x, oy = cy - a.y, od = Math.hypot(ox, oy); if (od > LOOK + R) return;
+    const ahead = ox * ux + oy * uy; if (ahead < -R * 0.5) return;
+    if (lastLeg && ahead - R > remaining) return;
+    const lat = ox * px + oy * py, clear = R + 8; if (Math.abs(lat) >= clear) return;
+    const side = Math.abs(lat) < 1.5 ? -1 : -Math.sign(lat), w = (1 - Math.max(0, ahead - R) / LOOK) * (1 - Math.abs(lat) / clear) * 1.6;
+    sx += px * side * w; sy += py * side * w;
+  };
+  for (const c of scene.circles || []) obstacle(c.x, c.y, c.r);
+  for (const b of scene.solids || []) if (!b.off && b.w < 80 && b.h < 80) obstacle(b.x + b.w / 2, b.y + b.h / 2, Math.max(b.w, b.h) / 2);
   if (!sx && !sy) return null;
   let vx = ux + sx * 1.6, vy = uy + sy * 1.6; const l = Math.hypot(vx, vy) || 1; vx /= l; vy /= l;
   if (scene.canStand && !scene.canStand(a.x + vx * 6, a.y + vy * 6, 4)) return null;

@@ -2,9 +2,10 @@
 
 import { G, T, setLang, markDirty } from '../systems/state.js';
 import { openSheet, tabs, h, btn } from './sheets.js';
+import { DEV_TOOLS } from '../dev/flag.js';
 import { SAND, GRASS, RIVER, POND, PATHS, BUILDINGS, PLAZA, NM_PLAZA, PIER, W, H, LANDS, ISLET_SAND, PADDIES } from '../world/island.js';
 import { activeQuests } from '../systems/sidequests.js';
-import { saveStatus, saveLocal, saveCloudNow, resetGame, readBackups, restoreBackup } from '../systems/save.js';
+import { saveStatus, saveLocal, saveCloudNow, resetGame } from '../systems/save.js';
 import { setAudio, sfx } from '../core/audio.js';
 import { escapeHtml, clock, TAU } from '../core/util.js';
 import { openJournal } from './shops.js';
@@ -83,7 +84,8 @@ const leaderboardRowNow = () => leaderboardRow(G.state);
 export function openMenu({ onLogout, tab = 0 } = {}) {
   const s = G.state;
   openSheet({ title: s.island.name || 'JEN Island', sub: T(`Day ${s.day} · ${clock(s.time)} · Chapter ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.title || ''}`, `Ngày ${s.day} · ${clock(s.time)} · Chương ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.vi || ''}`), full: true, build: (body, api) => {
-    tabs(body, [T('Map', 'Bản đồ'), T('Business', 'Kinh doanh'), T('Milestones', 'Cột mốc'), T('Leaderboard', 'Xếp hạng'), T('Settings', 'Cài đặt'), T('Account', 'Tài khoản')], (i, pane) => {
+    tabs(body, [T('Map', 'Bản đồ'), T('Business', 'Kinh doanh'), T('Milestones', 'Cột mốc'), T('Leaderboard', 'Xếp hạng'), T('Settings', 'Cài đặt'), T('Account', 'Tài khoản'), ...(DEV_TOOLS ? ['🛠 Dev'] : [])], (i, pane) => {
+      if (DEV_TOOLS && i === 6) { import('../dev/devtools.js').then(m => m.renderDevPane(pane, api)); return; }   // testing only — see js/dev/flag.js
       if (i === 1) return renderOffice(pane, api);
       if (i === 2) return renderMilestones(pane, api);
       if (i === 3) return renderLeaderboard(pane);
@@ -123,19 +125,7 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
         list.appendChild(h('div', 'row', `<div class="info"><b>${T('Saves', 'Lưu game')}</b><small>${T('On this device', 'Trên máy này')}: ${ago(saveStatus.localAt)}<br>${T('Cloud', 'Đám mây')}: ${saveStatus.offline ? T('offline — will retry', 'mất kết nối — sẽ thử lại') : ago(saveStatus.cloudAt)}</small></div>`));
         const sv = btn(T('Save now', 'Lưu ngay'), async (b) => { saveLocal(); b.innerHTML = T('Saving…', 'Đang lưu…'); await saveCloudNow(); b.innerHTML = saveStatus.offline ? T('Offline — saved on this device', 'Mất kết nối — đã lưu trên máy') : T('Saved ✓', 'Đã lưu ✓'); sfx('success'); }, 'btn');
         pane.appendChild(sv);
-        // backups: the island is snapshotted every night and every 10 minutes of play
-        const baks = readBackups();
         if (saveStatus.recovered) pane.appendChild(h('div', 'empty-note', T(`Save recovery: ${saveStatus.recovered}.`, `Khôi phục dữ liệu: ${saveStatus.recovered}.`)));
-        if (baks.length) {
-          pane.appendChild(h('div', 'section-title', T('Backups', 'Bản sao lưu')));
-          const bl = h('div', 'list'); pane.appendChild(bl);
-          const why = { night: T('night', 'buổi tối'), auto: T('auto', 'tự động'), 'other-device': T('other device', 'máy khác'), 'before-reset': T('before reset', 'trước khi chơi lại'), 'before-restore': T('before restore', 'trước khi khôi phục') };
-          baks.forEach((b, i) => {
-            const r = h('div', 'row', `<div class="info"><b>${T(`Day ${b.day} · Chapter ${b.chapter}`, `Ngày ${b.day} · Chương ${b.chapter}`)}</b><small>${new Date(b.at).toLocaleString()} · ${why[b.reason] || b.reason}</small></div>`);
-            r.appendChild(btn(T('Restore', 'Khôi phục'), async () => { if (!(await confirmBox(T('Restore this backup?', 'Khôi phục bản sao lưu này?'), T('Your current island is saved as another backup first, so nothing is lost.', 'Hòn đảo hiện tại sẽ được sao lưu trước, nên không mất gì cả.'), T('Restore', 'Khôi phục')))) return; if (restoreBackup(i)) { api.close(true); location.reload(); } }, 'buy alt'));
-            bl.appendChild(r);
-          });
-        }
         if (onLogout) { const lo = btn(T('Sign out', 'Đăng xuất'), () => { api.close(true); onLogout(); }, 'btn ghost'); lo.style.marginTop = '10px'; pane.appendChild(lo); }
       }
     }, tab, api);

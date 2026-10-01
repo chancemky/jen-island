@@ -77,6 +77,19 @@ export function star(c, x, y, r, fill, stroke = INK, lw = 1, points = 5, inner =
   if (fill) { c.fillStyle = fill; c.fill(); }
   if (stroke) { c.strokeStyle = stroke; c.lineWidth = lw; c.stroke(); }
 }
+// The largest size (up to `size`) at which `str` fits in `maxW` (measured once, then cached).
+const FIT = new Map(); let fitCtx = null;
+export function fitSize(str, size, maxW, weight = 900) {
+  const k = str + '|' + size + '|' + maxW + '|' + weight; let v = FIT.get(k);
+  if (v === undefined) {
+    fitCtx ||= document.createElement('canvas').getContext('2d');
+    fitCtx.font = `${weight} 100px Nunito, ui-rounded, system-ui, sans-serif`;
+    const w = fitCtx.measureText(String(str)).width / 100;
+    v = Math.min(size, w > 0 ? maxW / w : size);
+    if (document.fonts?.check?.(`${weight} 12px Nunito`)) { if (FIT.size > 400) FIT.clear(); FIT.set(k, v); }   // (don't remember a size measured with a fallback font)
+  }
+  return v;
+}
 // Stable text for world signs: tiny canvas text snaps to font hinting as the
 // camera moves (it shimmers), so signs draw a cached 4× bitmap instead.
 const TXT = new Map();

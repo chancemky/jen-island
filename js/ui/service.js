@@ -116,11 +116,13 @@ function buildOptions() {
   for (const k of keys) {
     const o = OPTIONS[k];
     const row = h('div', 'opt-row');
-    row.innerHTML = `<small>${escapeHtml(T(o.en || o.label, o.label))}</small>`;
+    // sugar and ice: how much is left sits with the heading (not repeated on every button)
+    const headQty = k === 'sugar' || k === 'ice';
+    row.innerHTML = `<small>${escapeHtml(T(o.en || o.label, o.label))}${headQty ? '<i class="hq"></i>' : ''}</small>`;
     const seg = h('div', 'seg'); seg.dataset.k = k;
     for (const v of o.values) {
       const lab = escapeHtml(k === 'sugar' ? v + '%' : o.btn ? T(o.btn[v][0], o.btn[v][1]) : v);
-      const b = h('button', 'icon-opt', `<span class="oi">${optionPicture(k, v)}</span><span class="ol">${lab}</span><i class="cnt"></i>`);
+      const b = h('button', 'icon-opt', `<span class="oi">${optionPicture(k, v)}</span><span class="ol">${lab}</span>${headQty ? '' : '<i class="cnt"></i>'}`);
       b.type = 'button'; b.dataset.v = v;
       b.onclick = () => setOption(k, v, seg, b);
       seg.appendChild(b);
@@ -137,12 +139,14 @@ function optionPicture(k, v) {
   if (k === 'chili') return v === 'không ớt' ? im('chili', 'no') : im('chili');
   if (k === 'topping') return v === 'none' ? im('tra_sua', 'no') : im(v);
   if (k === 'size') return im('tra_tac', 'sz-' + v);
-  if (k === 'sugar') return `${im('sugar')}<b class="gauge"><b style="height:${v}%"></b></b>`;
+  if (k === 'sugar') return im('sugar');
   return '';
 }
 function markOptions() {
   for (const seg of S.el.querySelectorAll('.seg[data-k]')) {
     const k = seg.dataset.k, o = OPTIONS[k], vals = o.values;
+    const hq = seg.parentElement?.querySelector('.hq');
+    if (hq && o.uses) { const n = stockOf(S.bizId, o.uses); hq.textContent = '×' + n; hq.classList.toggle('low', n <= 3); }
     [...seg.children].forEach((b, i) => {
       b.classList.toggle('on', S.asm[k] === vals[i]);
       // how much of what this choice uses is left (ice, sugar, chili, each topping)

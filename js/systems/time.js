@@ -23,7 +23,7 @@ let lastHour = -1, warned = false;
 export function updateClock(dt) {
   if (timePaused()) return 0;
   const s = G.state;
-  const gm = s.time >= NIGHT_HOLD ? 0 : dt * TIME_SCALE;
+  const gm = s.time >= NIGHT_HOLD ? 0 : dt * TIME_SCALE * (G.runtime.devClock || 1);   // (devClock: the dev tab's clock speed)
   s.time += gm;
   G.runtime.sleepy = s.time >= LATE;
   const hr = Math.floor(s.time / 60);

@@ -1,6 +1,9 @@
-// Home decorating: pick an item from your delivered furniture, tap the floor
-// to place it (a ghost shows where it will go, green = fits), tap placed items
-// to pick them back up. Furniture becomes real props with collision.
+// Home decorating — drag and drop. Touch any piece (furniture, or the bed, wardrobe and
+// kitchen) and drag it: it follows your finger with a green/red outline and stays wherever
+// you let go (saved at once; if it doesn't fit there it slides back). A small toolbar by the
+// selected piece turns it or puts it away; Undo steps back. Tap something in the tray to
+// add it to a free spot. The camera frames the whole room above the tray (which folds
+// down), so every corner can be reached. Rugs and mats go under everything.
 
 import { G, T, markDirty, unlockAchievement } from '../systems/state.js';
 import { FURNITURE, furnName } from '../data/game.js';
@@ -60,7 +63,7 @@ export function rebuildHouseFurniture() {
   sc.triggers = sc.triggers.filter(t => !t.builtin);
   const bs = builtinState();
   for (const [k, b] of Object.entries(BUILTINS)) {
-    if (D?.moving === k) continue;                       // being carried right now
+    if (D?.lifted?.key === k) continue;                  // being carried right now
     const st = bs[k], rot = st.rot || 0, fp = footprint(b.w, b.h, rot, b.kind);
     const p = { kind: b.kind, builtin: k, x: st.x, y: st.y, ...b.opts() };
     p.draw = (c, t) => drawTurned(c, t, b.kind, rot, () => F[b.kind](c, t, p));
@@ -73,7 +76,7 @@ export function rebuildHouseFurniture() {
     if (tr) sc.trigger({ ...tr, kind: 'act', x: rot % 2 ? st.x + (rot === 1 ? fp.w / 2 : -fp.w / 2 - 22) : st.x + tr.dx, y: rot % 2 ? st.y - fp.h / 2 : st.y + tr.dy, w: rot % 2 ? 22 : tr.w, h: rot % 2 ? Math.min(40, fp.h) : tr.h, builtin: k });
     if (k === 'bed') sc.bedPos = { x: st.x - 2, y: st.y - 30 };
   }
-  for (const f of G.state.home.furniture) addFurnProp(sc, f);
+  for (const f of G.state.home.furniture) if (D?.lifted?.f !== f) addFurnProp(sc, f);
 }
 function addFurnProp(sc, f) {
   const def = FURNITURE[f.id]; if (!def) return;
@@ -84,24 +87,66 @@ function addFurnProp(sc, f) {
   sc.prop(p);
   if (!def.floor && !def.wall) sc.solid(f.x - fp.w / 2, f.y - fp.h, fp.w, fp.h, { homeFurn: f });
 }
-function fits(sel, x, y, rot = 0) {
-  const def = defOf(sel), sc = house(), a = sc.decorArea;
+// does `sel` (a furniture id, or 'builtin:<key>') fit with its base at x,y?
+// (`self` is the piece being moved or turned, so it doesn't bump into its own outline)
+function fits(sel, x, y, rot = 0, self = null) {
+  const def = defOf(sel), sc = house();
   if (def.wall) return x - def.w / 2 > 14 && x + def.w / 2 < sc.w - 14;
   const fp = footprint(def.w, def.h, rot, keyOf(sel));
   // anywhere on the floor, right up against the walls
   if (x - fp.w / 2 < 4 || x + fp.w / 2 > sc.w - 4 || y > sc.h - 6) return false;
   if (y - fp.h < sc.WH - 4) return false;
-  void a;
-  if (def.floor) return true;
+  if (def.floor) return true;                              // rugs and mats lie under anything
   // don't block the doorway
   if (Math.abs(x - sc.door.x) < fp.w / 2 + 18 && y > sc.h - 30) return false;
   for (const s of sc.solids) {
-    if (s.off) continue;
+    if (s.off || (self && (self.f ? s.homeFurn === self.f : s.builtin === self.key))) continue;
     if (x - fp.w / 2 < s.x + s.w && x + fp.w / 2 > s.x && y - fp.h < s.y + s.h && y > s.y) return false;
   }
   return true;
 }
 
+// ---------------------------------------------------------------- pieces in the room
+// a piece: { f } for your furniture, { key } for a built-in
+const selOf = pc => pc.f ? pc.f.id : 'builtin:' + pc.key;
+const posOf = pc => pc.f ? pc.f : builtinState()[pc.key];
+const samePiece = (a, b) => !!a && !!b && (a.f ? a.f === b.f : a.key === b.key);
+function pieces() {
+  const out = G.state.home.furniture.map(f => ({ f }));
+  for (const k of Object.keys(BUILTINS)) out.push({ key: k });
+  return out;
+}
+// what's under a tap: things standing on the floor first (front-most first), then wall
+// pieces, and rugs last (so you can always grab the table that stands on the rug)
+function pieceAt(wx, wy) {
+  const hits = [];
+  for (const [order, pc] of pieces().entries()) {
+    const def = defOf(selOf(pc)), st = posOf(pc), fp = footprint(def.w, def.h, st.rot || 0, keyOf(selOf(pc)));
+    const hw = Math.max(fp.w / 2, 13) + 5, top = def.wall ? st.y - 66 : def.floor ? st.y - fp.h - 4 : st.y - Math.max(fp.h, pc.key ? 44 : 30) - 16;
+    // (rugs: your own lie on top of the built-in mat, and newer ones on top of older ones)
+    if (wx > st.x - hw && wx < st.x + hw && wy > top && wy < st.y + 8) hits.push({ pc, rank: def.floor ? (pc.f ? 0.5 : 0) : def.wall ? 1 : 2, y: def.floor ? order : st.y });
+  }
+  hits.sort((a, b) => b.rank - a.rank || b.y - a.y);
+  return hits[0]?.pc || null;
+}
+// a free place for something new, as close to the middle of the floor as possible
+function freeSpot(sel) {
+  const sc = house(), def = defOf(sel);
+  if (def.wall) { for (let r = 0; r < sc.w / 2; r += 8) for (const sx of [1, -1]) { const x = sc.w / 2 + sx * r; if (fits(sel, x, sc.WH)) return { x: Math.round(x / 4) * 4, y: sc.WH }; } return null; }
+  const cx = sc.w / 2, cy = (sc.WH + sc.h) / 2 + def.h / 2;
+  for (let r = 0; r < 260; r += 8) for (let k = 0; k < Math.max(1, Math.floor(r / 4)); k++) {
+    const a = k / Math.max(1, Math.floor(r / 4)) * Math.PI * 2, x = Math.round((cx + Math.cos(a) * r) / 4) * 4, y = Math.round((cy + Math.sin(a) * r * 0.7) / 4) * 4;
+    if (fits(sel, x, y)) return { x, y };
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------- undo
+const snap = () => JSON.stringify({ furniture: G.state.home.furniture, owned: G.state.home.owned, builtins: builtinState() });
+function restore(txt) { const o = JSON.parse(txt); Object.assign(G.state.home, { furniture: o.furniture, owned: o.owned, builtins: o.builtins }); D.sel = null; rebuildHouseFurniture(); markDirty(true); }
+function changed(before) { if (before !== snap()) { D.hist.push(before); if (D.hist.length > 30) D.hist.shift(); markDirty(true); } }
+
+// ---------------------------------------------------------------- the mode
 export function isDecorating() { return !!D; }
 export function startDecorate() {
   if (D) return;
@@ -109,115 +154,162 @@ export function startDecorate() {
   input.enabled = false;
   G.runtime.pause++;
   document.body.classList.add('hide-controls', 'decorating');
-  const bar = h('div', 'deco-bar');
-  document.getElementById('app').appendChild(bar);
-  D = { bar, sel: null, ghost: null, valid: false, moving: null, rot: 0 };
-  cam.targetZoomMul = 1.05;
+  const bar = h('div', 'deco-bar'), tools = h('div', 'deco-tools hidden');
+  document.getElementById('app').append(bar, tools);
+  D = { bar, tools, sel: null, lifted: null, drag: null, ghost: null, valid: false, hist: [], folded: false, padWas: house().bottomPad || 0 };
   renderBar();
   const touch = document.getElementById('touch');
   D.onDown = e => {
     if (!D) return;
     e.preventDefault(); e.stopImmediatePropagation();
-    const r = document.getElementById('game').getBoundingClientRect();
-    const [wx, wy] = G.renderer.toWorld(e.clientX - r.left, e.clientY - r.top);
-    if (!D.sel) { pickUpAt(wx, wy); return; }
-    const def = defOf(D.sel);
-    const x = Math.round(wx / 4) * 4, y = def.wall ? house().WH : Math.round((wy + def.h / 2) / 4) * 4;
-    D.ghost = { x, y };
-    D.valid = fits(D.sel, x, y, D.rot);
+    const [wx, wy] = toWorld(e);
+    const pc = pieceAt(wx, wy);
+    if (!pc) { if (D.sel) { D.sel = null; sfx('back'); renderBar(); } return; }
+    const st = posOf(pc);
+    D.sel = pc;
+    D.drag = { pc, id: e.pointerId, sx: e.clientX, sy: e.clientY, gx: wx - st.x, gy: wy - st.y, moved: false, from: { x: st.x, y: st.y, rot: st.rot || 0 }, before: snap() };
+    sfx('pop'); renderBar();
+  };
+  D.onMove = e => {
+    const d = D?.drag; if (!d || e.pointerId !== d.id) return;
+    if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 6) return;
+    if (!d.moved) { d.moved = true; D.lifted = d.pc; rebuildHouseFurniture(); }    // lift it out of the room while it's carried
+    const [wx, wy] = toWorld(e), sel = selOf(d.pc), def = defOf(sel);
+    const x = Math.round((wx - d.gx) / 4) * 4, y = def.wall ? house().WH : Math.round((wy - d.gy) / 4) * 4;
+    D.ghost = { x, y }; D.valid = fits(sel, x, y, d.from.rot, d.pc);
+    renderHint();
+  };
+  D.onUp = e => {
+    const d = D?.drag; if (!d || e.pointerId !== d.id) return;
+    D.drag = null;
+    if (d.moved) {
+      const st = posOf(d.pc);
+      if (D.valid) { st.x = D.ghost.x; st.y = D.ghost.y; sfx('success'); fx.burst('spark', st.x, st.y - 14, 6, { up: 24, col: '#ffd35a' }); }
+      else { sfx('error'); toast({ text: T('It doesn\'t fit there', 'Không vừa chỗ đó'), sub: T('Put back where it was.', 'Đã để lại chỗ cũ.'), icon: 'sofa', ms: 1400 }); }
+      D.lifted = null; D.ghost = null; rebuildHouseFurniture(); changed(d.before);
+    }
     renderBar();
   };
   touch.addEventListener('pointerdown', D.onDown, true);
-  G.runtime.decoOverlay = drawGhost;
+  window.addEventListener('pointermove', D.onMove, true);
+  window.addEventListener('pointerup', D.onUp, true);
+  window.addEventListener('pointercancel', D.onUp, true);
+  G.runtime.decoOverlay = drawOverlay;
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__deco = () => D;   // (tests)
+  const tick = () => { if (!D) return; placeTools(); D.raf = requestAnimationFrame(tick); }; tick();
 }
-function pickUpAt(wx, wy) {
-  const list = G.state.home.furniture;
-  for (let i = list.length - 1; i >= 0; i--) {
-    const f = list[i], def = FURNITURE[f.id], fp = footprint(def.w, def.h, f.rot || 0, f.id), hw = Math.max(fp.w / 2, 12) + 4;
-    const top = def.wall ? f.y - 64 : f.y - Math.max(fp.h, 30) - 16;
-    if (wx > f.x - hw && wx < f.x + hw && wy > top && wy < f.y + 6) {
-      list.splice(i, 1); G.state.home.owned.push(f.id);
-      rebuildHouseFurniture(); markDirty(true);
-      D.sel = f.id; D.rot = f.rot || 0; D.ghost = { x: f.x, y: f.y }; D.valid = fits(f.id, f.x, f.y, D.rot);
-      sfx('pop'); renderBar(); return;
-    }
-  }
-  // the bed, wardrobe and kitchen can be picked up too (they must be put back down)
-  const bs = builtinState();
-  for (const [k, b] of Object.entries(BUILTINS)) {
-    const st = bs[k], fp = footprint(b.w, b.h, st.rot || 0, b.kind), hw = Math.max(fp.w / 2, 12) + 4, top = st.y - Math.max(fp.h, b.floor ? 0 : 40) - (b.floor ? 4 : 20);
-    if (wx > st.x - hw && wx < st.x + hw && wy > top && wy < st.y + 6) {
-      D.moving = k; D.from = { ...st }; rebuildHouseFurniture();
-      D.sel = 'builtin:' + k; D.rot = st.rot || 0; D.ghost = { x: st.x, y: st.y }; D.valid = fits(D.sel, st.x, st.y, D.rot);
-      sfx('pop'); renderBar(); return;
-    }
-  }
+function toWorld(e) { const r = document.getElementById('game').getBoundingClientRect(); return G.renderer.toWorld(e.clientX - r.left, e.clientY - r.top); }
+
+// frame the whole room in the space above the tray
+function frameRoom() {
+  const sc = house(), cv = document.getElementById('game').getBoundingClientRect(), W = cv.width, H = cv.height;
+  const trayH = D.bar.getBoundingClientRect().height || 180;
+  let zb = cam.baseZoom * (sc.zoomBias || 1); if (sc.fitW) zb = Math.min(zb, Math.max(W / sc.fitW, cam.baseZoom * 0.8));
+  const z = Math.min(W / (sc.w + 16), (H - trayH - 24) / (sc.h + 10), zb * 1.15);
+  cam.targetZoomMul = z / zb; cam.zoomMul = cam.targetZoomMul;
+  sc.bottomPad = D.padWas + (trayH + 8) / z;
+}
+
+function act(label, cls, fn, disabled = false) { const b = h('button', 'btn ' + cls, label); b.type = 'button'; b.disabled = disabled; b.onclick = e => { e.stopPropagation(); fn(b); }; return b; }
+function renderHint() {
+  const el = D?.bar.querySelector('.deco-hint'); if (!el) return;
+  el.textContent = D.drag?.moved ? (D.valid ? T('Let go to put it here', 'Thả tay để đặt ở đây') : T('It doesn\'t fit here — let go and it goes back', 'Không vừa chỗ này — thả ra là về chỗ cũ'))
+    : D.sel ? T('Drag it anywhere · turn it or put it away with the buttons', 'Kéo đi chỗ khác · xoay hoặc cất bằng các nút')
+    : T('Drag anything in your room to move it · tap an item below to add it', 'Kéo đồ trong phòng để dời · chạm món bên dưới để thêm vào');
 }
 function renderBar() {
-  const owned = G.state.home.owned;
-  const counts = {};
-  for (const id of owned) counts[id] = (counts[id] || 0) + 1;
-  const bar = D.bar;
-  const hint = D.sel ? (D.ghost ? (D.valid ? T('Place it here?', 'Đặt ở đây?') : T('It doesn\'t fit here', 'Không vừa chỗ này')) : T('Tap the floor to place it', 'Chạm vào sàn để đặt')) : (owned.length ? T('Pick an item below, or tap any furniture (even the bed, wardrobe and kitchen) to move or turn it', 'Chọn đồ bên dưới, hoặc chạm vào đồ bất kỳ (cả giường, tủ, bếp) để dời hoặc xoay') : T('Tap any furniture — even the bed, wardrobe and kitchen — to move or turn it, or buy more from Anh Khoa.', 'Chạm vào bất kỳ đồ nào — cả giường, tủ và bếp — để dời hoặc xoay, hoặc mua thêm ở Nhà đẹp Anh Khoa.'));
-  bar.innerHTML = `<div class="deco-hint">${escapeHtml(hint)}</div><div class="row-scroll"></div><div class="deco-actions"></div>`;
+  const bar = D.bar, owned = G.state.home.owned, counts = {};
+  for (const id of owned) if (FURNITURE[id]) counts[id] = (counts[id] || 0) + 1;
+  bar.classList.toggle('folded', D.folded);
+  bar.innerHTML = `<div class="deco-head"><div class="deco-hint"></div><div class="deco-actions"></div></div><div class="row-scroll"></div>`;
+  renderHint();
+  const acts = bar.querySelector('.deco-actions');
+  acts.append(
+    act(T('↶ Undo', '↶ Hoàn tác'), 'ghost small', () => { if (D.hist.length) { restore(D.hist.pop()); sfx('whoosh'); renderBar(); } }, !D.hist.length),
+    act(D.folded ? '▴' : '▾', 'ghost small', () => { D.folded = !D.folded; sfx('ui'); renderBar(); }),
+    act(T('Done', 'Xong'), 'gold', () => stopDecorate()));
+  acts.children[1].title = D.folded ? T('Show your items', 'Hiện đồ') : T('Hide the tray', 'Thu gọn');
   const row = bar.querySelector('.row-scroll');
-  for (const [id, n] of Object.entries(counts)) {
-    const it = h('button', 'deco-item' + (D.sel === id ? ' on' : ''));
-    it.type = 'button';
+  const ids = Object.keys(counts);
+  if (!ids.length) row.appendChild(h('div', 'deco-empty', T('Everything you own is in the room. Anh Khoa sells more on Market Street.', 'Đồ của bạn đã bày hết trong phòng. Nhà đẹp Anh Khoa ở Phố Chợ có bán thêm.')));
+  for (const id of ids) {
+    const it = h('button', 'deco-item'); it.type = 'button';
     const cv = document.createElement('canvas'); cv.width = 112; cv.height = 88;
-    it.appendChild(cv); it.appendChild(document.createTextNode(`${furnName(id)}${n > 1 ? ' ×' + n : ''}`));
+    it.appendChild(cv); it.appendChild(document.createTextNode(`${furnName(id)}${counts[id] > 1 ? ' ×' + counts[id] : ''}`));
     drawFurniturePreview(cv, id, FURNITURE[id]);
-    it.onclick = () => { sfx('ui'); D.sel = D.sel === id ? null : id; D.ghost = null; renderBar(); };
+    it.onclick = () => {
+      const spot = freeSpot(id);
+      if (!spot) { sfx('error'); toast({ text: T('No room for that', 'Hết chỗ rồi'), sub: T('Move or put something away first.', 'Dời hoặc cất bớt đồ trước nhé.'), icon: 'sofa' }); return; }
+      const before = snap(), i = owned.indexOf(id); if (i >= 0) owned.splice(i, 1);
+      const f = { id, x: spot.x, y: spot.y, rot: 0 }; G.state.home.furniture.push(f);
+      rebuildHouseFurniture(); changed(before); D.sel = { f };
+      fx.burst('spark', f.x, f.y - 14, 8, { up: 30, col: '#ffd35a' }); sfx('success');
+      if (G.state.home.furniture.length >= 5) unlockAchievement('cozy_home');
+      renderBar();
+    };
     row.appendChild(it);
   }
-  const acts = bar.querySelector('.deco-actions');
-  if (D.moving) { const b = BUILTINS[D.moving], it = h('button', 'deco-item on'); it.type = 'button'; it.textContent = T(`${b.en} (moving)`, `${b.vi} (đang dời)`); row.prepend(it); }
-  if (D.sel && !defOf(D.sel).wall && !defOf(D.sel).floor) {
-    const turn = d => { D.rot = (D.rot + d + 4) % 4; if (D.ghost) D.valid = fits(D.sel, D.ghost.x, D.ghost.y, D.rot); sfx('whoosh'); renderBar(); };
-    const l = h('button', 'btn ghost rot', '⟲ 90°'); l.type = 'button'; l.onclick = () => turn(-1);
-    const r = h('button', 'btn ghost rot', '90° ⟳'); r.type = 'button'; r.onclick = () => turn(1);
-    acts.append(l, r);
-  }
-  if (D.sel && D.ghost) {
-    const place = h('button', 'btn pink', T('Place', 'Đặt')); place.type = 'button'; place.disabled = !D.valid;
-    place.onclick = () => {
-      if (!D.valid) return;
-      if (D.moving) { builtinState()[D.moving] = { x: D.ghost.x, y: D.ghost.y, rot: D.rot }; D.moving = null; }
-      else {
-        const i = G.state.home.owned.indexOf(D.sel); if (i >= 0) G.state.home.owned.splice(i, 1);
-        G.state.home.furniture.push({ id: D.sel, x: D.ghost.x, y: D.ghost.y, rot: D.rot });
-      }
-      rebuildHouseFurniture(); markDirty(true);
-      fx.burst('spark', D.ghost.x, D.ghost.y - 16, 8, { up: 30, col: '#ffd35a' }); sfx('success');
-      if (G.state.home.furniture.length >= 5) unlockAchievement('cozy_home');
-      D.sel = null; D.ghost = null; D.rot = 0; renderBar();
-    };
-    const cancel = h('button', 'btn ghost', T('Cancel', 'Bỏ chọn')); cancel.type = 'button'; cancel.onclick = () => { putBack(); D.sel = null; D.ghost = null; D.rot = 0; sfx('back'); renderBar(); };
-    acts.append(cancel, place);
-  }
-  const done = h('button', 'btn gold', T('Done', 'Xong')); done.type = 'button'; done.onclick = () => { putBack(); stopDecorate(); };
-  acts.appendChild(done);
+  renderTools();
+  requestAnimationFrame(() => D && frameRoom());
 }
-// a built-in that was picked up but not placed goes back where it was
-function putBack() { if (D?.moving) { builtinState()[D.moving] = D.from; D.moving = null; rebuildHouseFurniture(); } }
-function drawGhost(c, t) {
-  if (!D?.sel || !D.ghost) return;
-  const def = defOf(D.sel), fp = footprint(def.w, def.h, D.rot, keyOf(D.sel));
-  c.save();
-  c.globalAlpha = 0.55 + Math.sin(t * 6) * 0.15;
-  c.translate(D.ghost.x, D.ghost.y);
-  drawSel(c, t, D.sel, D.ghost.x, D.ghost.y, D.rot);
-  c.restore();
-  c.save();
-  c.strokeStyle = D.valid ? '#6fbf73' : '#e8584e'; c.lineWidth = 2; c.setLineDash([4, 4]);
-  if (def.wall) c.strokeRect(D.ghost.x - def.w / 2, D.ghost.y - 66, def.w, 26);
-  else c.strokeRect(D.ghost.x - fp.w / 2, D.ghost.y - fp.h, fp.w, fp.h);
-  c.restore();
+// the little toolbar that floats over the selected piece
+function renderTools() {
+  const t = D.tools; t.innerHTML = '';
+  if (!D.sel) { t.classList.add('hidden'); return; }
+  const sel = selOf(D.sel), def = defOf(sel);
+  const turn = d => {
+    const st = posOf(D.sel), rot = ((st.rot || 0) + d + 4) % 4;
+    if (!fits(sel, st.x, st.y, rot, D.sel)) { sfx('error'); toast({ text: T('No room to turn it here', 'Không đủ chỗ để xoay'), icon: 'sofa', ms: 1400 }); return; }
+    const before = snap(); st.rot = rot; rebuildHouseFurniture(); changed(before); sfx('whoosh'); renderBar();
+  };
+  if (!def.wall && SIDE[keyOf(sel)]) t.append(act('↺', 'ghost small icon', () => turn(-1)), act('↻', 'ghost small icon', () => turn(1)));
+  if (D.sel.f) t.append(act(T('Put away', 'Cất đi'), 'ghost small', () => {
+    const before = snap(), list = G.state.home.furniture, i = list.indexOf(D.sel.f);
+    if (i >= 0) { list.splice(i, 1); G.state.home.owned.push(D.sel.f.id); }
+    D.sel = null; rebuildHouseFurniture(); changed(before); sfx('pop'); renderBar();
+  }));
+  t.append(act('✕', 'ghost small', () => { D.sel = null; sfx('back'); renderBar(); }));
+  t.classList.remove('hidden');
+}
+function placeTools() {
+  const t = D.tools; if (!D.sel || D.drag?.moved) { t.style.visibility = 'hidden'; return; }
+  const st = posOf(D.sel), def = defOf(selOf(D.sel)), v = cam.view, z = cam.zoom, r = document.getElementById('game').getBoundingClientRect();
+  const top = def.wall ? st.y - 70 : st.y - Math.max(footprint(def.w, def.h, st.rot || 0, keyOf(selOf(D.sel))).h, D.sel.key ? 48 : 34) - 22;
+  const sx = r.left + (st.x - v.x) * z, sy = r.top + (top - v.y) * z;
+  const w = t.offsetWidth, hh = t.offsetHeight;
+  t.style.left = clamp(sx - w / 2, 8, innerWidth - w - 8) + 'px'; t.style.top = clamp(sy - hh, 8, innerHeight - hh - 8) + 'px'; t.style.visibility = 'visible';
+}
+function drawOverlay(c, t) {
+  if (!D) return;
+  // the piece being carried
+  if (D.lifted && D.ghost) {
+    const sel = selOf(D.lifted), def = defOf(sel), rot = posOf(D.lifted).rot || 0, fp = footprint(def.w, def.h, rot, keyOf(sel));
+    c.save(); c.globalAlpha = 0.75; c.translate(D.ghost.x, D.ghost.y - 3); drawSel(c, t, sel, D.ghost.x, D.ghost.y, rot); c.restore();
+    c.save(); c.strokeStyle = D.valid ? '#4fae5a' : '#e8584e'; c.fillStyle = D.valid ? 'rgba(111,191,115,.18)' : 'rgba(232,88,78,.18)'; c.lineWidth = 2; c.setLineDash([5, 4]);
+    if (def.wall) { c.fillRect(D.ghost.x - def.w / 2, D.ghost.y - 66, def.w, 26); c.strokeRect(D.ghost.x - def.w / 2, D.ghost.y - 66, def.w, 26); }
+    else { c.fillRect(D.ghost.x - fp.w / 2, D.ghost.y - fp.h, fp.w, fp.h); c.strokeRect(D.ghost.x - fp.w / 2, D.ghost.y - fp.h, fp.w, fp.h); }
+    c.restore(); return;
+  }
+  // the selected piece: a soft pulsing outline round its footprint
+  if (D.sel) {
+    const sel = selOf(D.sel), def = defOf(sel), st = posOf(D.sel), fp = footprint(def.w, def.h, st.rot || 0, keyOf(sel)), k = 2 + Math.sin(t * 5) * 1.2;
+    c.save(); c.strokeStyle = '#f08ca0'; c.lineWidth = 2; c.setLineDash([6, 4]); c.lineDashOffset = -t * 20;
+    if (def.wall) c.strokeRect(st.x - def.w / 2 - k, st.y - 66 - k, def.w + k * 2, 26 + k * 2);
+    else c.strokeRect(st.x - fp.w / 2 - k, st.y - fp.h - k, fp.w + k * 2, fp.h + k * 2);
+    c.restore();
+  }
 }
 export function stopDecorate() {
   if (!D) return;
-  document.getElementById('touch').removeEventListener('pointerdown', D.onDown, true);
-  D.bar.remove();
+  const touch = document.getElementById('touch');
+  touch.removeEventListener('pointerdown', D.onDown, true);
+  window.removeEventListener('pointermove', D.onMove, true);
+  window.removeEventListener('pointerup', D.onUp, true);
+  window.removeEventListener('pointercancel', D.onUp, true);
+  cancelAnimationFrame(D.raf);
+  if (D.lifted) { D.lifted = null; rebuildHouseFurniture(); }
+  D.bar.remove(); D.tools.remove();
+  house().bottomPad = D.padWas;
   D = null;
   input.enabled = true;
   G.runtime.pause--;

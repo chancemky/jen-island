@@ -287,7 +287,7 @@ export function animalDrawables() {
     DRAW[a.kind](c, t, a);
     if (a.react && a.kind === 'chicken' && k < 1) { c.strokeStyle = INK; c.lineWidth = 0.8; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * 5, -8); c.lineTo(s * (9 + Math.sin(k * 40) * 2), -12 - Math.abs(Math.sin(k * 40)) * 3); c.stroke(); } }
     c.restore();
-    if (a.sleeping) for (let i = 0; i < 2; i++) { const k2 = (t * 0.35 + i * 0.5 + a.seed) % 1; c.globalAlpha = Math.sin(k2 * Math.PI) * 0.8; stext(c, 'z', 5 + k2 * 6, -TOP[a.kind] * SC[a.kind] * 0.7 - k2 * 12, 4 + k2 * 3, '#fff', 900, 'center', INK, 1.2); c.globalAlpha = 1; }
+    if (a.sleeping) for (let i = 0; i < 2; i++) { const k2 = (t * 0.35 + i * 0.5 + a.seed) % 1; c.globalAlpha = Math.sin(k2 * Math.PI) * 0.8; const zs = (4 + k2 * 3) / 6; c.save(); c.translate(5 + k2 * 6, -TOP[a.kind] * SC[a.kind] * 0.7 - k2 * 12); c.scale(zs, zs); stext(c, 'z', 0, 0, 6, '#fff', 900, 'center', INK, 1.2); c.restore(); c.globalAlpha = 1; }   // (one cached size, scaled — a new size every frame meant a new bitmap every frame)
     drawReact(c, a, TOP[a.kind] * SC[a.kind] + hop);
   } });
   for (const f of fish) if (f.jump) {

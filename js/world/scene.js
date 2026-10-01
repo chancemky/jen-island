@@ -96,7 +96,19 @@ export class Scene {
 // ---------------------------------------------------------------- navigation
 // A small waypoint graph. NPCs pick a destination node; A* gives the route.
 export class NavGraph {
-  constructor() { this.nodes = []; }
+  // passable(x, y): can you stand here right now (set by the island: water, unbuilt bridges…);
+  // version(): changes whenever that can change (a bridge gets built), so edge checks are re-made
+  constructor() { this.nodes = []; this.passable = null; this.version = () => ''; this._edge = new Map(); }
+  // can you walk the straight stretch between two linked nodes (right now)?
+  canWalk(a, b) {
+    if (!this.passable) return true;
+    const k = a.id < b.id ? a.id * 100000 + b.id : b.id * 100000 + a.id, v = this.version(), e = this._edge.get(k);
+    if (e && e.v === v) return e.ok;
+    const d = dist(a.x, a.y, b.x, b.y), n = Math.max(1, Math.ceil(d / 8)); let ok = true;
+    for (let i = 0; i <= n && ok; i++) { const t = i / n; ok = this.passable(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
+    this._edge.set(k, { v, ok });
+    return ok;
+  }
   add(x, y, tags = []) { const n = { id: this.nodes.length, x, y, links: new Set(), tags: new Set(tags) }; this.nodes.push(n); return n; }
   link(a, b) { if (a === b) return; a.links.add(b.id); b.links.add(a.id); }
   nearest(x, y, filter) {
@@ -151,6 +163,7 @@ export class NavGraph {
       const cn = this.nodes[cur];
       for (const nid of cn.links) {
         const nn = this.nodes[nid];
+        if (!this.canWalk(cn, nn)) continue;                 // across water, or a bridge that isn't built yet
         const tg = g.get(cur) + dist(cn.x, cn.y, nn.x, nn.y);
         if (tg < (g.get(nid) ?? Infinity)) { came.set(nid, cur); g.set(nid, tg); f.set(nid, tg + dist(nn.x, nn.y, to.x, to.y)); open.add(nid); }
       }
@@ -158,12 +171,33 @@ export class NavGraph {
     return [];
   }
   // Route from an arbitrary point to an arbitrary point via the graph.
+  // A route from one point to another along the graph. If there isn't one, the result is
+  // just the end point, flagged `unreachable` (so callers can choose somewhere else rather
+  // than walk straight there through water and walls).
   path(x1, y1, x2, y2) {
     const a = this.nearest(x1, y1), b = this.nearest(x2, y2);
     const nodes = this.route(a, b);
     const pts = nodes.map(n => [n.x, n.y]);
     pts.push([x2, y2]);
+    if (!nodes.length && a !== b) pts.unreachable = true;
     return pts;
+  }
+  // link every separate piece of the graph to its nearest neighbour, wherever the straight
+  // walk between them is clear (roads that end a few steps short of each other)
+  joinPieces(clear, maxGap = 90) {
+    for (let pass = 0; pass < 20; pass++) {
+      const comp = new Map(); let nc = 0;
+      for (const n of this.nodes) { if (comp.has(n.id)) continue; const q = [n]; comp.set(n.id, nc); while (q.length) { const c = q.pop(); for (const id of c.links) if (!comp.has(id)) { comp.set(id, nc); q.push(this.nodes[id]); } } nc++; }
+      if (nc <= 1) return 0;
+      let joined = 0;
+      for (let c = 0; c < nc; c++) {
+        let best = null, bd = maxGap;
+        for (const a of this.nodes) { if (comp.get(a.id) !== c) continue; for (const b of this.nodes) { if (comp.get(b.id) === c) continue; const d = dist(a.x, a.y, b.x, b.y); if (d < bd && clear(a, b)) { bd = d; best = [a, b]; } } }
+        if (best) { this.link(best[0], best[1]); joined++; }
+      }
+      if (!joined) return nc;
+    }
+    return 1;
   }
 }
 
