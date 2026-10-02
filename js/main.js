@@ -427,6 +427,8 @@ function updateInteraction(dt) {
   const od = outdoorAction(pl); if (od) { setAction(od.label, od.run, od.icon); return; }
   // lore on restored places
   const pq = plaqueAction(pl); if (pq) { setAction(pq.label, pq.run, pq.icon); return; }
+  // just inside a doorway (where you land when you come in): the way out is one tap
+  if (sc.kind === 'interior' && sc.door && Math.abs(pl.x - sc.door.x) < 24 && pl.y > sc.h - 40) { setAction(T('Leave', 'Ra ngoài'), () => exitBuilding(), 'door'); return; }
   noAction(dt);
 }
 function nearestTalkable(sc, pl) {
@@ -503,7 +505,10 @@ function frontAction(tr) {
   }
   if (bizId === 'truck' && !z.owned) return doorAction(scenes.island.triggers.find(t => t.kind === 'door' && t.building === 'truck'));
   if (bizId === 'truck') return setAction(T('Drive to…', 'Lái xe tới…'), () => driveTruck(), 'goi_cuon');
-  setAction('', null);
+  // the shop's open: its counter, prep table and OPEN are inside, so the window offers the door
+  const door = scenes.island.triggers.find(t => t.kind === 'door' && t.building === tr.building);
+  if (door && enterable(door.building)) return doorAction(door);
+  noAction(0);
 }
 // the food truck goes where the customers are
 async function driveTruck() {

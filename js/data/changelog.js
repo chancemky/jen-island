@@ -3,9 +3,19 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.4';
+export const APP_VERSION = '5.3.5';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.5', date: '2026-10-02T18:14:18Z',
+    title: ['Clear Doors', 'Cửa Rõ Hơn'],
+    items: [
+      ['Doors are easier to hit, and standing just inside still offers Leave', 'Cửa dễ chạm hơn, và đứng ngay bên trong vẫn hiện Ra ngoài'],
+      ['When a shop is open, the window still lets you Enter instead of a blank button', 'Khi quán đang mở, cửa sổ vẫn cho Vào thay vì nút trống'],
+      ['Indoors, the goal arrow points at the exit when your next stop is outside', 'Trong nhà, mũi tên mục tiêu chỉ lối ra khi điểm đến tiếp theo ở ngoài'],
+      ['First-hour quests point you to the counter, shelves and OPEN inside each shop', 'Nhiệm vụ giờ đầu chỉ bạn tới quầy, kệ và nút MỞ CỬA bên trong từng quán'],
+    ],
+  },
   {
     v: '5.3.4', date: '2026-10-02T17:00:23Z',
     title: ['Launch Ready', 'Sẵn Sàng Ra Mắt'],

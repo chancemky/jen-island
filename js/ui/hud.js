@@ -97,7 +97,10 @@ export function setWaypoint(target, label) {
 export function updatePointer(renderer) {
   const el = $('pointer');
   if (waypoint?.scene === G.scene?.id && Math.hypot(G.player.x - waypoint.x, G.player.y - waypoint.y) < 70) waypoint = null;
-  const tg = waypoint || (typeof questTarget === 'function' ? questTarget() : questTarget);
+  let tg = waypoint || (typeof questTarget === 'function' ? questTarget() : questTarget);
+  // the goal is somewhere else and you're indoors: point at the door out
+  const sc = G.scene;
+  if (tg && sc && tg.scene !== sc.id && sc.kind === 'interior' && sc.door) tg = { scene: sc.id, x: sc.door.x, y: sc.h, lift: 14 };
   if (!tg || (!waypoint && !G.state.settings.arrow) || document.body.classList.contains('cutscene') || tg.scene !== G.scene?.id) { el.style.opacity = 0; return; }
   const [sx, sy] = renderer.toScreen(tg.x, tg.y - (tg.lift || 30));
   const W = renderer.w, H = renderer.h, m = 40, top = 110, bottom = 150;

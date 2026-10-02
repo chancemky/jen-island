@@ -771,7 +771,7 @@ export class Island extends Scene {
     this.solid(b.x - b.w / 2, b.y - b.fp, b.w, b.fp - 2, { building: b.id });
     if (b.interior) {
       const dx = b.door[0];
-      this.trigger({ id: 'door:' + b.id, kind: 'door', x: b.x + dx - 13, y: b.y - 6, w: 26, h: 22, building: b.id, interior: b.interior, doorX: b.x + dx, doorY: b.y });
+      this.trigger({ id: 'door:' + b.id, kind: 'door', x: b.x + dx - 17, y: b.y - 6, w: 34, h: 26, building: b.id, interior: b.interior, doorX: b.x + dx, doorY: b.y });
     }
     if (b.biz && b.type === 'kiosk') this.trigger({ id: 'front:' + b.id, kind: 'front', x: b.x - 42, y: b.y - 4, w: 84, h: 38, building: b.id, biz: b.biz });
     else if (b.biz && b.type !== 'restaurant') {
