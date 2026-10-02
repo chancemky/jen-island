@@ -3,9 +3,20 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.0';
+export const APP_VERSION = '5.3.1';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.1', date: '2026-10-02T16:14:33Z',
+    title: ['Fairer First Days', 'Ngày Đầu Dễ Thở Hơn'],
+    items: [
+      ["Milk-tea toppings (tapioca, jelly, cheese foam) cost a little more so they no longer lose money after ingredient prices went up", "Topping trà sữa (trân châu, thạch, foam cheese) hơi đắt hơn một chút để không còn lỗ sau khi giá nguyên liệu tăng"],
+      ["You start with a bit more cash (380k) so after the first shed repair and first ingredients you still have a cushion for another pack", "Bạn bắt đầu với nhiều tiền hơn một chút (380k) — sau khi sửa nhà kho đầu và mua nguyên liệu lần đầu vẫn còn dư để mua thêm một gói"],
+      ["Café, grill and Night Market stalls say they come fully fitted out instead of “No upgrades here yet,” and point you to equipment, recipes and prices", "Quầy cà phê, nướng và Chợ Đêm nói rõ đã trang bị sẵn thay vì “Chưa có nâng cấp,” và nhắc bạn dùng dụng cụ, công thức và giá bán"],
+      ["Before you hire a shopkeeper, the Hire screen shows what that shop has been clearing lately next to the wage, and warns when the wage would eat most of the profit", "Trước khi thuê người trông, màn Thuê hiện số tiền quán gần đây lời được cạnh mức lương, và cảnh báo khi lương sẽ ăn gần hết tiền lời"],
+      ["Locked recipes no longer fill the book with “???” — one summary counts what’s still secret (story, reputation, new shops) and highlights when your current story goal will teach a recipe", "Công thức khóa không còn đầy sổ bằng “???” — một dòng tóm tắt còn bao nhiêu bí mật (cốt truyện, danh tiếng, quán mới) và làm nổi khi mục tiêu truyện sắp dạy một công thức"],
+    ],
+  },
   {
     v: '5.3.0', date: '2026-10-01T16:36:38Z',
     title: ['A Real Grind', 'Đường Dài Mới Biết Ngựa Hay'],

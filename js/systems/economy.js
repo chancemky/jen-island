@@ -83,6 +83,11 @@ export function candidate(id) {
   return { name: adults[Math.floor(r(1) * adults.length)], seed, trait: TRAIT[Math.floor(r(2) * TRAIT.length)].id, skill };
 }
 export const hireFee = (id, k = candidate(id)) => wageFor(id, keeperSkill(k)) * HIRE_DAYS;
+// what a shop has cleared per day lately (average of the last 3 days; null before it has any books)
+export function recentShopNet(id) {
+  const days = (G.state.history || []).slice(-3).map(d => d.biz?.[id]).filter(v => v != null);
+  return days.length ? Math.round(days.reduce((a, v) => a + v, 0) / days.length) : null;
+}
 export function hireKeeper(id) {
   const k = candidate(id), fee = hireFee(id, k);                  // first two days up front
   if (keeperOf(id) || !canAfford(fee)) return false;

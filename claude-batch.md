@@ -1,6 +1,14 @@
 # Claude Code batch — jen-island
 
-**Status:** running — Claude Watcher launched Claude Code on Vestas-MacBook-Pro  
+**Status:** done — C1–C6 + What's New 5.3.1; tests passed (`check`, `test:economy`, content, ui); awaiting Game Auditor then push main
+
+### What changed
+- **C1** `OPTIONS.topping.surcharge` → tapioca 5 / jelly 4 / cheese_foam 7 (≈ cost × 1.15). New check in `validate.js` + economy test: surcharge ≥ post-ECON ingredient cost.
+- **C2** Start money 330 → 380 (repair 231k + first stock 82k leaves 67k). Economy test now requires a 40–100k spare.
+- **C3** Pricing-philosophy comment rewritten to the v5.3 bands the tests enforce (18–35 / 30–48 / 37–50%); test comment cross-references it.
+- **C4** Option A: kiosks/stalls show "comes fully fitted out — grow it with Equipment, recipe upgrades, daily special, prices" instead of "No upgrades here yet" (EN+VI).
+- **C5** Hire UX: day history now stores per-shop net; `recentShopNet(id)` (3-day avg) shown next to the applicant's wage in Business; red tip when net < 1.5× wage, and a "run it yourself first" note before a shop has books. Wages unchanged.
+- **C6** Bag → Recipes and Mèo Mây's notebook collapse locked recipes into one "N recipes still secret" row (counts by story / reputation with next threshold / new shops / ready to learn), plus a highlighted "A new recipe is on its way — finish your story goal: …" row via new `STEP_TEACHES` in `story.js` (validated in `validate.js`). No names spoiled.  
 **Target:** systems & gameplay / economy balance  
 **Source:** Balance Auditor findings @ `e6aa4b7` / v5.3.0  
 **Repo:** `chancemky/jen-island` (prefer `/workspace/jen-island-repo` on `main`)

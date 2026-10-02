@@ -6,7 +6,7 @@ import { INGREDIENTS, PREPPED, PREP_VERB, STATION, RECIPES, BUSINESSES, MATERIAL
 import { RESIDENTS, MERCHANTS } from '../data/looks.js';
 import { hasIcon } from '../gfx/food.js';
 import { FURN_DRAW } from '../gfx/furniture.js';
-import { STEPS } from '../systems/story.js';
+import { STEPS, STEP_TEACHES } from '../systems/story.js';
 import { SIDE_QUESTS } from '../systems/sidequests.js';
 import { PLACES } from '../systems/economy.js';
 import { TRACKS } from '../systems/progress.js';
@@ -56,6 +56,8 @@ export function validateContent(scenes = null) {
   for (const [id, r] of Object.entries(RECIPES)) if (r.stallOnly && !Object.values(BUSINESSES).some(b => b.menu?.includes(id))) bad('recipe', `${id} is stall-only but no stall sells it`);
   // economy sanity: every dish earns more than its ingredients cost
   for (const [id, r] of Object.entries(RECIPES)) { const c = recipeCost(id); if (c >= r.price * 0.82) bad('economy', `${id} costs ${c.toFixed(1)}k to make but sells for ${r.price}k`); }
+  // …and a topping never costs more than the customer pays for it
+  for (const [k, sur] of Object.entries(OPTIONS.topping.surcharge)) { const c = INGREDIENTS[k]?.cost || 0; if (sur < c) bad('economy', `${k} topping costs ${c.toFixed(2)}k but only adds ${sur}k to the price`); }
   for (const b of BUILDINGS) if (b.biz && !BUSINESSES[b.biz]) bad('building', `${b.id} points at missing business ${b.biz}`);
   if (scenes) for (const b of BUILDINGS) if (b.interior && !scenes[b.interior]) bad('building', `${b.id} opens into missing interior ${b.interior}`);
   // ---- properties
@@ -78,6 +80,7 @@ export function validateContent(scenes = null) {
   if (cur && seen.has(cur)) bad('story', `step loop at ${cur}`);
   if (!seen.has('free')) bad('story', 'the chain never reaches free play');
   for (const id of Object.keys(STEPS)) if (!seen.has(id) && !['tour', 'nightIntro', 'restoIntro'].includes(id) && !order.includes(id)) bad('story', `step ${id} can never be reached`);
+  for (const [id, rs] of Object.entries(STEP_TEACHES)) { if (!STEPS[id]) bad('story', `STEP_TEACHES names missing step ${id}`); for (const r of rs) if (!RECIPES[r]) bad('story', `step ${id} teaches unknown recipe ${r}`); }
   let lastCh = 0; for (const id of order) { const c = STEPS[id]?.ch || 0; if (c < lastCh) bad('story', `chapter goes backwards at ${id} (${lastCh} → ${c})`); lastCh = Math.max(lastCh, c); }
   // ---- people
   const people = new Set([...Object.keys(RESIDENTS), ...Object.keys(MERCHANTS)]);

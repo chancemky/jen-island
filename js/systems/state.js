@@ -17,7 +17,7 @@ export function defaultState() {
     player: { name: '', look: null },
     island: { name: '' },
     day: 1, time: 7 * 60,
-    money: 330, reputation: 0, lifetime: 0,   // (v5.3: enough for the first repair and the first ingredients, which cost more now)
+    money: 380, reputation: 0, lifetime: 0,   // (v5.3: the first repair + first ingredients, with one spare pack's worth left over)
     pantry: {},              // raw ingredients: id → portions
     materials: {},           // id → count
     recipes: [],             // discovered recipe ids

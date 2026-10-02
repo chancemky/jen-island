@@ -53,7 +53,7 @@ export function endDay() {
     meoLine: meoNightLine(t),
     books, staff, sales: Math.round(t.revenue - t.tips), net: books.totalIn - books.totalOut, prev: prev || null,
   };
-  s.history.push({ day: s.day, revenue: sum.revenue, served: sum.served, tips: sum.tips, spent: books.totalOut, net: sum.net, chapter: s.story.chapter });
+  s.history.push({ day: s.day, revenue: sum.revenue, served: sum.served, tips: sum.tips, spent: books.totalOut, net: sum.net, chapter: s.story.chapter, biz: Object.fromEntries(Object.entries(books.biz).map(([id, p]) => [id, p.net])) });
   if (s.history.length > 30) s.history.shift();
   s.stats.daysPlayed++;
   s.day++;

@@ -248,14 +248,18 @@ if (only === 'all' || only === 'economy') {
   const r = await p.evaluate(async () => {
     const J = window.__jen, E = J.econ, G = J.G, s = G.state, out = { bad: [], info: {} };
     const bad = m => out.bad.push(m);
-    // Chapter 1: the first repair is 230–260k and leaves enough for the first ingredients
+    // Chapter 1: the first repair is 230–260k and leaves enough for the first ingredients,
+    // with a 40–100k cushion so one mistake doesn't leave you soft-broke (but no windfall either)
     const rep = Object.entries(E.BUSINESSES.shed1.repair).reduce((a, [k, n]) => a + E.MATERIALS[k].price * n, 0);
     const firstStock = ['tea', 'kumquat', 'sugar', 'ice'].reduce((a, k) => a + E.INGREDIENTS[k].price, 0);
     out.info.repair = rep; out.info.firstStock = firstStock;
     if (rep < 230 || rep > 260) bad(`first repair costs ${rep}k (want 230–260k)`);
-    const start = (await import('/js/systems/state.js')).defaultState().money;
-    if (start - rep < firstStock) bad(`after the repair ${start - rep}k is left, the first ingredients cost ${firstStock}k`);
-    // margins by tier (v5.3: thinner than before): early ≤ ch 3, mid ch 4–12, premium café/grill
+    const start = (await import('/js/systems/state.js')).defaultState().money, spare = start - rep - firstStock;
+    if (spare < 40 || spare > 100) bad(`after the repair and the first ingredients ${spare}k is left (want 40–100k)`);
+    // toppings are never sold at a loss
+    for (const [k, sur] of Object.entries(E.OPTIONS.topping.surcharge)) if (sur < E.INGREDIENTS[k].cost) bad(`${k} topping adds ${sur}k but costs ${E.INGREDIENTS[k].cost}k`);
+    // margins by tier (v5.3: thinner than before): early ≤ ch 3, mid ch 4+, premium café/grill
+    // (keep in sync with the pricing philosophy comment in js/data/game.js)
     for (const [id, R] of Object.entries(E.RECIPES)) {
       const m = 1 - E.recipeCost(id) / R.price, tier = ['cafe', 'grill'].includes(R.biz) ? [0.37, 0.5] : R.chapter <= 3 ? [0.18, 0.35] : [0.3, 0.48];
       if (m < tier[0] - 0.005 || m > tier[1] + 0.005) bad(`${id} margin ${(m * 100).toFixed(0)}% outside ${tier[0] * 100}–${tier[1] * 100}%`);

@@ -151,7 +151,7 @@ export const OPTIONS = {
   ice:     { label: 'Đá', en: 'Ice', values: ['không đá', 'ít đá', 'đá bình thường'], short: ['none', 'less', 'normal'], uses: 'ice',
              btn: { 'không đá': ['None', 'Không'], 'ít đá': ['Less', 'Ít'], 'đá bình thường': ['Normal', 'Thường'] },
              say: { 'không đá': ['no ice', 'không đá'], 'ít đá': ['less ice', 'ít đá'], 'đá bình thường': ['normal ice', 'đá bình thường'] } },
-  topping: { label: 'Topping', en: 'Topping', values: ['none', 'tapioca', 'jelly', 'cheese_foam'], names: { none: 'không topping', tapioca: 'trân châu', jelly: 'thạch', cheese_foam: 'foam cheese' }, surcharge: { tapioca: 4, jelly: 3, cheese_foam: 6 },
+  topping: { label: 'Topping', en: 'Topping', values: ['none', 'tapioca', 'jelly', 'cheese_foam'], names: { none: 'không topping', tapioca: 'trân châu', jelly: 'thạch', cheese_foam: 'foam cheese' }, surcharge: { tapioca: 5, jelly: 4, cheese_foam: 7 },   // ≈ ingredient cost × 1.15 (after ECON.ingredients)
              btn: { none: ['None', 'Không'], tapioca: ['Tapioca', 'Trân châu'], jelly: ['Jelly', 'Thạch'], cheese_foam: ['Foam', 'Foam'] },
              say: { none: ['no topping', 'không topping'], tapioca: ['tapioca pearls', 'trân châu'], jelly: ['grass jelly', 'thạch'], cheese_foam: ['cheese foam', 'foam cheese'] } },
   chili:   { label: 'Ớt', en: 'Chili', values: ['không ớt', 'có ớt'], uses: 'chili', btn: { 'không ớt': ['No', 'Không'], 'có ớt': ['Yes', 'Có ớt'] }, say: { 'không ớt': ['no chili', 'không ớt'], 'có ớt': ['with chili', 'có ớt'] } },
@@ -206,10 +206,12 @@ Object.assign(RECIPES, {
 });
 // ---------------------------------------------------------------- pricing philosophy
 // Every base price comes from what goes into the dish (cost of goods, from the
-// per-portion ingredient costs above) and a target margin that grows with the
-// dish's tier: early street food keeps 35–45%, mid-game dishes 45–55%, premium
-// café drinks and Cove seafood 50–60%. Premium seafood is expensive to buy, so it
-// is expensive to eat — but no dish is a money printer.
+// per-portion ingredient costs above, after ECON.ingredients) and a target margin
+// that grows with the dish's tier. v5.3 margins are deliberately thin:
+// early street food (Chapter ≤ 3) keeps 18–35%, mid-game dishes 30–48%, premium
+// café drinks and Cove seafood 37–50%. Premium seafood is expensive to buy, so it
+// is expensive to eat — but no dish is a money printer. Toppings are charged at
+// about their cost + 15%. (tests/run.mjs economy checks these bands.)
 export function recipeCost(id, opts = {}) {
   const R = RECIPES[id]; if (!R) return 0;
   let c = 0;

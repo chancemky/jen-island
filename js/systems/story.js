@@ -107,6 +107,13 @@ const keeperFinalGoals = () => [
 const since = key => G.state.stats.served - (S().flags['served@' + key] ?? G.state.stats.served);
 const bizServedSince = (biz, key) => (bizOf(biz).stats.served) - (S().flags['bs@' + key] ?? bizOf(biz).stats.served);
 
+// Recipes a step's closing scene teaches (so the recipe book can point at the story goal
+// without naming the dish). Keep in sync with the discoverRecipe() calls in those scenes.
+export const STEP_TEACHES = {
+  repair: ['tra_tac'], repair2: ['banh_mi_thit'], truck: ['goi_cuon'],
+  restoreNM: ['banh_trang_nuong', 'che_ba_mau'], repairResto: ['pho_bo', 'com_tam'],
+};
+
 export const STEPS = {
   // ---- Chapter 1
   tour: { ch: 1, next: 'materials' },                 // (the tour cutscene moves on by itself)

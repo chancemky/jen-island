@@ -9,7 +9,7 @@ import { sfx } from '../core/audio.js';
 import { money, escapeHtml } from '../core/util.js';
 import { toast } from './hud.js';
 import { fx } from '../world/render.js';
-import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName, rentToday, keeperOf, keeperWage, candidate, hireKeeper, fireKeeper, keeperTrait, canHaveKeeper, keeperUnlocked, hasSupply, buySupply, toggleSupply, SUPPLY, supplyUnlocked, staffedCount, keeperSkill, SKILL_NAMES, wageFor, hireFee } from '../systems/economy.js';
+import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName, rentToday, keeperOf, keeperWage, candidate, hireKeeper, fireKeeper, keeperTrait, canHaveKeeper, keeperUnlocked, hasSupply, buySupply, toggleSupply, SUPPLY, supplyUnlocked, staffedCount, keeperSkill, SKILL_NAMES, wageFor, hireFee, recentShopNet } from '../systems/economy.js';
 import { daySheet, netWorth, lifetimeTotals, catName } from '../systems/ledger.js';
 import { dailyWages } from '../systems/restaurant.js';
 
@@ -69,6 +69,10 @@ export function renderOffice(pane, api) {
         const c = candidate(id), tr = keeperTrait(c);
         const w = wageFor(id, keeperSkill(c)), fee = hireFee(id, c);
         card.appendChild(h('div', 'oc-line', `${T('Applicant', 'Ứng viên')}: <b>${escapeHtml(c.name)}</b> · ${escapeHtml(T(...SKILL_NAMES[keeperSkill(c)]))} · ${escapeHtml(T(tr.en, tr.vi))} · ${T(`${money(w)}/day`, `${money(w)}/ngày`)}`));
+        // wage vs what the shop actually makes, so hiring is never a blind loss
+        const net = recentShopNet(id);
+        if (net == null) card.appendChild(h('div', 'oc-line dim', T('No books for this shop yet — run it yourself for a day or two to see what it makes before hiring.', 'Quán này chưa có sổ sách — tự bán một hai ngày để xem quán lời bao nhiêu rồi hẵng thuê.')));
+        else card.appendChild(h('div', 'oc-line' + (net < w * 1.5 ? '' : ' dim'), `${T(`Lately this shop clears about ${money(net)}/day; the wage would be ${money(w)}/day.`, `Gần đây quán lời khoảng ${money(net)}/ngày; lương sẽ là ${money(w)}/ngày.`)}${net < w * 1.5 ? ` <span style="color:#c0473b">${T('That\'s thin — a shopkeeper would eat most of it. Upgrade recipes, raise prices or wait until it\'s busier.', 'Hơi mỏng — lương sẽ ăn gần hết tiền lời. Hãy nâng cấp công thức, tăng giá hoặc đợi quán đông hơn.')}</span>` : ''}`));
         row.appendChild(btn(T(`Hire shopkeeper · ${money(fee)}`, `Thuê người trông · ${money(fee)}`), () => {
           if (!hireKeeper(id)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
           sfx('success'); toast({ text: T(`${c.name} will run ${bizName(id)}!`, `${c.name} sẽ trông ${bizName(id)}!`), sub: T('They open, prep and serve during opening hours. Keep the pantry stocked!', 'Họ sẽ mở cửa, sơ chế và bán trong giờ mở cửa. Nhớ giữ kho đủ hàng nha!'), icon: 'person' });

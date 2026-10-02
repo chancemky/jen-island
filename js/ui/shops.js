@@ -18,6 +18,7 @@ import { RESIDENTS } from '../data/looks.js';
 import { EQUIPMENT, SHOP_LEVEL_REQ, PRICE_RANGE, recipeUpgradeCost, BRAND_COLOURS, SIGN_STYLES, BRAND_RECOLOUR } from '../data/game.js';
 import { upgradeCost, shopNeed } from '../systems/economy.js';
 import { toast } from './hud.js';
+import { STEPS, STEP_TEACHES } from '../systems/story.js';
 
 const bagBtn = () => document.getElementById('bagBtn');
 const noMoney = () => { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); };
@@ -206,11 +207,12 @@ export function openBag() {
         if (!ids.length) list.appendChild(h('div', 'empty-note', T('No materials yet. Ben Vung Materials on Market Street sells wood, metal and paint.', 'Chưa có vật liệu. VLXD Bền Vững ở Phố Chợ bán gỗ, tôn và sơn.')));
         for (const k of ids) list.appendChild(rowEl({ icon: k, title: escapeHtml(matName(k)), have: `×${mats(k)}` }));
       } else if (i === 2) {
-        for (const [id, r] of Object.entries(RECIPES)) {
-          const known = s.recipes.includes(id), lv = s.recipeLevels[id] || 1;
+        for (const id of s.recipes) {
+          const r = RECIPES[id], lv = s.recipeLevels[id] || 1;
           const shop = bizName(Object.keys(BUSINESSES).find(b => BUSINESSES[b].biz === r.biz));
-          list.appendChild(rowEl({ icon: known ? r.icon : 'rice_paper', title: known ? `${escapeHtml(recipeName(id))} <span class="pill lv">Lv ${lv}</span>` : '???', sub: known ? `${r.price}k · ${escapeHtml(shop)}` : T('Not discovered yet', 'Chưa khám phá'), dim: !known }));
+          list.appendChild(rowEl({ icon: r.icon, title: `${escapeHtml(recipeName(id))} <span class="pill lv">Lv ${lv}</span>`, sub: `${r.price}k · ${escapeHtml(shop)}` }));
         }
+        secretRecipes(list);
       } else if (i === 3) {
         const regs = Object.entries(s.regulars).sort((a, b) => b[1].visits - a[1].visits);
         if (!regs.length) list.appendChild(h('div', 'empty-note', T('Serve the same people a few times and they\'ll become regulars.', 'Phục vụ một người vài lần là họ thành khách quen.')));
@@ -268,7 +270,8 @@ export function openBizMenu(bizId, { onUpgrade } = {}) {
           }, 'buy', !next));
           list.appendChild(r);
         }
-        if (ups.length <= 2) list.appendChild(h('div', 'empty-note', T('No upgrades here yet.', 'Chưa có nâng cấp.')));
+        // kiosks and stalls come fully fitted out: they grow through equipment, recipe levels and prices instead
+        if (ups.length <= 2) list.appendChild(h('div', 'empty-note', T('This kiosk comes fully fitted out — there\'s nothing to build here. Grow it with Equipment, recipe upgrades in Mèo Mây\'s notebook, a daily special and your prices.', 'Quầy này đã được trang bị đầy đủ — không cần xây thêm gì. Hãy phát triển nó bằng Dụng cụ, nâng cấp công thức trong sổ tay Mèo Mây, món đặc biệt và giá bán của bạn.')));
       } else {
         const t = s.today.biz[bizId] || { served: 0, revenue: 0, perfect: 0 };
         list.appendChild(rowEl({ icon: 'coin', title: T(`Today: ${t.served} customers · ${money(t.revenue)}`, `Hôm nay: ${t.served} khách · ${money(t.revenue)}`), sub: T(`${t.perfect} perfect orders`, `${t.perfect} món hoàn hảo`) }));
@@ -401,12 +404,40 @@ export function openRecipeBook({ onDiscover } = {}) {
       }));
       list.appendChild(r);
     }
-    const locked = Object.keys(RECIPES).filter(id => !s.recipes.includes(id) && !avail.includes(id));
-    if (locked.length) {
-      list.appendChild(h('div', 'section-title', T('Coming later', 'Sắp tới')));
-      for (const id of locked) { const R = RECIPES[id]; const why = R.stallOnly ? T('Comes with a Night Market stall', 'Đi kèm một sạp Chợ Đêm') + (s.story.chapter < R.chapter ? T(` (Chapter ${R.chapter})`, ` (Chương ${R.chapter})`) : '') : R.starter && !R.needRep ? T('Comes with its shop', 'Đi kèm quán của nó') + (s.story.chapter < R.chapter ? T(` (Chapter ${R.chapter})`, ` (Chương ${R.chapter})`) : '') : s.story.chapter < R.chapter ? T(`Chapter ${R.chapter}`, `Chương ${R.chapter}`) : T(`Needs ${R.needRep} reputation`, `Cần ${R.needRep} danh tiếng`); list.appendChild(rowEl({ icon: 'rice_paper', title: '???', sub: why, dim: true })); }
-    }
+    secretRecipes(list, avail, T('Coming later', 'Sắp tới'));
   } });
+}
+// Recipes you haven't learned stay secret (no names): one summary row instead of a wall of "???",
+// plus a nudge when your current story goal is about to teach one.
+function secretRecipes(list, exclude = [], heading = '') {
+  const s = G.state, locked = Object.keys(RECIPES).filter(id => !s.recipes.includes(id) && !exclude.includes(id));
+  if (!locked.length) return;
+  if (heading) list.appendChild(h('div', 'section-title', heading));
+  const soon = (STEP_TEACHES[s.story.step] || []).filter(id => locked.includes(id)), step = STEPS[s.story.step];
+  if (soon.length && step?.text) {
+    const r = highlightRow();
+    r.innerHTML = `<div class="ico"><img src="${iconURL('notebook', 44)}" alt=""></div><div class="info"><b>${soon.length > 1 ? T(`${soon.length} new recipes are on their way!`, `Sắp có ${soon.length} công thức mới!`) : T('A new recipe is on its way!', 'Sắp có công thức mới!')}</b><small>${escapeHtml(T('Finish your story goal to learn it: ', 'Hoàn thành mục tiêu cốt truyện để học: ') + step.text())}</small></div>`;
+    list.appendChild(r);
+  }
+  const ready = availableRecipes();
+  let story = 0, shop = 0, rep = 0, learn = 0, nextRep = Infinity;
+  for (const id of locked) {
+    const R = RECIPES[id];
+    if (soon.includes(id)) continue;
+    if (ready.includes(id)) learn++;
+    else if (R.stallOnly || (R.starter && !R.needRep)) shop++;
+    else if (!R.needRep || s.story.chapter < R.chapter) story++;
+    else if (!bizUnlockedFor(R.biz)) shop++;
+    else { rep++; nextRep = Math.min(nextRep, R.needRep); }
+  }
+  const parts = [
+    learn && T(`Ready to learn in Mèo Mây's notebook: ${learn}`, `Có thể học trong sổ tay Mèo Mây: ${learn}`),
+    story && T(`From the story: ${story}`, `Theo cốt truyện: ${story}`),
+    rep && T(`Need more reputation: ${rep} (next at ${nextRep}, you have ${Math.floor(s.reputation)})`, `Cần thêm danh tiếng: ${rep} (món kế ở ${nextRep}, bạn có ${Math.floor(s.reputation)})`),
+    shop && T(`With new shops & stalls: ${shop}`, `Đi kèm quán & sạp mới: ${shop}`),
+  ].filter(Boolean);
+  const n = locked.length - soon.length;
+  if (n > 0) list.appendChild(rowEl({ icon: 'rice_paper', title: T(`${n} recipe${n > 1 ? 's' : ''} still secret`, `Còn ${n} công thức bí mật`), sub: escapeHtml(parts.join(' · ')) + '<br>' + T('Follow the story and earn reputation to uncover them.', 'Theo cốt truyện và tích danh tiếng để khám phá.'), dim: true }));
 }
 export function availableRecipes() {
   const s = G.state;
