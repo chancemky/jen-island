@@ -24,6 +24,7 @@ const localKey = uid => `jenisland.save${SAVE_VERSION}.${uid}`;
 const bakKey = uid => localKey(uid) + '.backups';
 const BACKUPS = 4;
 let lastLocal = 0, lastCloud = 0, lastBackup = 0, cloudDirty = false, cloudBusy = false;
+let keptAt = null;     // the clock and position in the last local save (see tickSave)
 export const saveStatus = { cloudAt: 0, localAt: 0, offline: false, error: '', recovered: '' };
 
 function snapshot() {
@@ -31,7 +32,8 @@ function snapshot() {
   s.savedAt = Date.now();
   if (G.scene && G.player && !G.runtime.inCutscene) s.pos = { scene: G.scene.id, x: Math.round(G.player.x), y: Math.round(G.player.y) };
   s.money = Math.round(s.money * 100) / 100;
-  return s;
+  // a cutscene that shows other hours of the day (the automation montage) saves the real clock
+  return G.runtime.realTime != null ? { ...s, time: G.runtime.realTime } : s;
 }
 // a save must at least look like an island before we trust it
 export function validSave(s) {
@@ -69,10 +71,25 @@ export function backupNow(reason = 'auto', data = G.state) {
   writeRaw(bakKey(G.user.id), JSON.stringify(list));
   lastBackup = performance.now();
 }
+function writeLocal() {
+  const snap = snapshot();
+  if (writeRaw(localKey(G.user.id), JSON.stringify(snap))) { saveStatus.localAt = Date.now(); keptAt = { time: snap.time, pos: snap.pos }; }
+}
 export function saveLocal() {
   if (!G.user) return;
-  if (writeRaw(localKey(G.user.id), JSON.stringify(snapshot()))) saveStatus.localAt = Date.now();
+  writeLocal();
   G.dirty = false; cloudDirty = true;
+}
+// Walking around and the clock ticking don't mark the save dirty, so a reload could put you
+// back where (and when) something last changed. Every few seconds of play, if you've moved
+// or the clock has run on, the local copy is refreshed (local only: no extra cloud traffic).
+function drifted() {
+  const s = G.state, p = G.player, k = keptAt;
+  if (!s.player?.name || !s.story?.flags?.freeRoam) return false;
+  if (!k) return true;
+  if (Math.abs((s.time || 0) - (k.time || 0)) >= 5) return true;
+  if (!G.scene || !p || G.runtime.inCutscene) return false;
+  return !k.pos || k.pos.scene !== G.scene.id || Math.hypot(p.x - k.pos.x, p.y - k.pos.y) > 24;
 }
 export async function saveCloudNow({ keepalive = false } = {}) {
   if (!G.user || G.user.local || cloudBusy || !cloud.hasSession()) return;
@@ -88,6 +105,7 @@ export async function saveCloudNow({ keepalive = false } = {}) {
 export function tickSave() {
   const now = performance.now();
   if (G.dirty && now - lastLocal > 1500) { lastLocal = now; saveLocal(); }
+  else if (G.user && now - lastLocal > 5000 && drifted()) { lastLocal = now; writeLocal(); }
   if (cloudDirty && now - lastCloud > 8000) saveCloudNow();
   if (now - lastBackup > 10 * 60 * 1000 && G.state.player?.name) backupNow('auto');
 }

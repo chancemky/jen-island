@@ -72,8 +72,11 @@ export function rebuildHouseFurniture() {
     sc.prop(p);
     if (!b.floor) sc.solid(st.x - fp.w / 2, st.y - fp.h, fp.w, fp.h, { builtin: k });
     const tr = b.trig;
-    // the action spot follows the piece: in front of it, or beside it when it's turned
-    if (tr) sc.trigger({ ...tr, kind: 'act', x: rot % 2 ? st.x + (rot === 1 ? fp.w / 2 : -fp.w / 2 - 22) : st.x + tr.dx, y: rot % 2 ? st.y - fp.h / 2 : st.y + tr.dy, w: rot % 2 ? 22 : tr.w, h: rot % 2 ? Math.min(40, fp.h) : tr.h, builtin: k });
+    // the action spot follows the piece: in front of it, or beside it when it's turned.
+    // The bed is the exception: anywhere next to it (either side, the foot, however it's
+    // turned) offers Sleep, so walking up to it from any direction works.
+    if (k === 'bed') sc.trigger({ ...tr, kind: 'act', x: st.x - fp.w / 2 - 14, y: st.y - fp.h, w: fp.w + 28, h: fp.h + 22, builtin: k });
+    else if (tr) sc.trigger({ ...tr, kind: 'act', x: rot % 2 ? st.x + (rot === 1 ? fp.w / 2 : -fp.w / 2 - 22) : st.x + tr.dx, y: rot % 2 ? st.y - fp.h / 2 : st.y + tr.dy, w: rot % 2 ? 22 : tr.w, h: rot % 2 ? Math.min(40, fp.h) : tr.h, builtin: k });
     if (k === 'bed') sc.bedPos = { x: st.x - 2, y: st.y - 30 };
   }
   for (const f of G.state.home.furniture) if (D?.lifted?.f !== f) addFurnProp(sc, f);

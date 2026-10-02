@@ -63,6 +63,7 @@ export function updateHud(dt) {
 
 // ---------------------------------------------------------------- quest pill + pointer
 let questTarget = null;
+let waypoint = null;
 // A side-quest guide ("return the sandal to Bà Tư") temporarily takes over the
 // quest pill and the arrow; the story goal comes back once it's returned.
 let guide = null, story = [null, null];
@@ -85,10 +86,19 @@ function showQuest(text, target) {
   }
   questTarget = target;
 }
+export function setWaypoint(target, label) {
+  waypoint = target;
+  toast({
+    text: T(`Waypoint: ${label}`, `Điểm đến: ${label}`),
+    sub: T('Follow the gold arrow.', 'Đi theo mũi tên vàng nhé.'),
+    icon: 'map',
+  });
+}
 export function updatePointer(renderer) {
   const el = $('pointer');
-  const tg = typeof questTarget === 'function' ? questTarget() : questTarget;
-  if (!tg || !G.state.settings.arrow || document.body.classList.contains('cutscene') || tg.scene !== G.scene?.id) { el.style.opacity = 0; return; }
+  if (waypoint?.scene === G.scene?.id && Math.hypot(G.player.x - waypoint.x, G.player.y - waypoint.y) < 70) waypoint = null;
+  const tg = waypoint || (typeof questTarget === 'function' ? questTarget() : questTarget);
+  if (!tg || (!waypoint && !G.state.settings.arrow) || document.body.classList.contains('cutscene') || tg.scene !== G.scene?.id) { el.style.opacity = 0; return; }
   const [sx, sy] = renderer.toScreen(tg.x, tg.y - (tg.lift || 30));
   const W = renderer.w, H = renderer.h, m = 40, top = 110, bottom = 150;
   const inside = sx > m && sx < W - m && sy > top && sy < H - bottom;
@@ -157,6 +167,16 @@ export function toast({ text, sub = '', icon = null, cls = '', bad = false, ms =
   while (box.children.length > 3) box.firstElementChild.remove();
   if (cls === 'ach') sfx('fanfare'); else if (bad) sfx('error'); else sfx('pop');
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, ms);
+}
+
+export function moneyShortfall(required) {
+  const need = Math.max(0, Math.round(required || 0));
+  const have = Math.round(G.state.money || 0);
+  toast({
+    text: T('Not enough money', 'Không đủ tiền'),
+    sub: T(`Need ${money(need)} · Have ${money(have)} · Short ${money(Math.max(0, need - have))}`, `Cần ${money(need)} · Có ${money(have)} · Thiếu ${money(Math.max(0, need - have))}`),
+    bad: true,
+  });
 }
 
 export function screenPosOfMoney() { const r = $('moneyChip').getBoundingClientRect(); return [r.left + 18, r.top + r.height / 2]; }

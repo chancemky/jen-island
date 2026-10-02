@@ -8,7 +8,7 @@ import { RESIDENTS, visitorLook } from '../data/looks.js';
 import { addXP } from './progress.js';
 import { Actor } from '../world/actor.js';
 import { QUEUES, TRUCK_SPOTS } from '../world/island.js';
-import { bus, rand, randi, choice, chance, clamp, dist } from '../core/util.js';
+import { bus, rand, randi, choice, chance, clamp, dist, clock } from '../core/util.js';
 import { sfx } from '../core/audio.js';
 import { applyPronouns, customerProfile } from './pronouns.js';
 import { fx } from '../world/render.js';
@@ -118,7 +118,14 @@ export function isOpenHours(bizId, minutes = G.state.time) {
 export function openBiz(bizId) {
   const b = bizOf(bizId);
   if (b.open) return { ok: true };
-  if (!isOpenHours(bizId)) return { ok: false, why: bizId === 'night' && G.state.time < 17 * 60 ? T('The night market opens at 17:00.', 'Chợ đêm mở lúc 17:00.') : T('It\'s past 11 pm — your shops are closed until 6:00. (Islanders\' own shops keep their own hours.)', 'Đã quá 23 giờ — các quán của bạn đóng cửa tới 6:00. (Quán của người dân trên đảo có giờ riêng.)') };
+  if (!isOpenHours(bizId)) {
+    const opens = BUSINESSES[bizId].hours?.[0] ?? 6 * 60;
+    const openTime = clock(opens).replace(/^0/, '');
+    const why = G.state.time < opens
+      ? T(`Opens at ${openTime}.`, `Mở cửa lúc ${openTime}.`)
+      : T('It\'s past 11 pm — your shops are closed until 6:00. (Islanders\' own shops keep their own hours.)', 'Đã quá 23 giờ — các quán của bạn đóng cửa tới 6:00. (Quán của người dân trên đảo có giờ riêng.)');
+    return { ok: false, why };
+  }
   if (!bizRecipes(bizId).length) return { ok: false, why: T('You don\'t know a recipe for this shop yet.', 'Bạn chưa biết món nào cho quán này.') };
   if (!makeableRecipes(bizId).length) return { ok: false, why: T('Not enough ingredients!\nBuy supplies and prep them first.', 'Hết nguyên liệu!\nMua và sơ chế nguyên liệu trước nhé.') };
   b.open = true;

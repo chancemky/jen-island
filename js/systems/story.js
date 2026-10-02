@@ -35,6 +35,8 @@ const S = () => G.state.story;
 const island = () => scenes.island;
 const B = id => island().buildings[id];
 const doorOf = id => { const b = B(id); return { scene: 'island', x: b.x + (b.door?.[0] || 0), y: b.y }; };
+// just in front of your bed, wherever you've moved it (decorate.js keeps it in home.builtins)
+const bedSpot = () => { const b = G.state.home?.builtins?.bed; return b ? { scene: 'house', x: b.x, y: b.y + 10 } : { scene: 'house', x: 48, y: 124 }; };
 const frontOf = id => { const b = B(id); return { scene: 'island', x: b.x - 14, y: b.y + 26 }; };
 
 // ---------------------------------------------------------------- helpers for the longer story
@@ -149,10 +151,10 @@ export const STEPS = {
   repair: { ch: 1, text: () => T('Repair the little shed on the beach', 'Sửa căn chòi nhỏ ở bãi biển'), target: () => frontOf('shed1'), done: () => bizOf('shed1').repair >= 1, next: 'ingredients', scene: () => afterFirstRepair() },
   // ---- Chapter 1 (continued): first ingredients, prep, opening day
   ingredients: { ch: 1, text: () => { const need = ['tea', 'kumquat', 'sugar', 'ice'].filter(k => !hasStockFor(k)); return need.length ? T(`Buy kumquat tea ingredients at Binh Minh Supermarket (still need: ${need.map(k => ingName(k).toLowerCase()).join(', ')})`, `Mua nguyên liệu trà tắc ở Siêu thị Bình Minh (còn thiếu: ${need.map(k => ingName(k).toLowerCase()).join(', ')})`) : T('You have everything!', 'Đủ nguyên liệu rồi!'); }, target: () => G.scene?.id === 'supermarket' ? null : doorOf('supermarket'), done: () => ['tea', 'kumquat', 'sugar', 'ice'].every(hasStockFor), next: 'prep' },
-  prep: { ch: 1, text: () => T('Slice kumquats at the prep table inside the shed', 'Cắt tắc ở bàn sơ chế trong quán'), target: () => G.scene?.id === 'shed1' ? { scene: 'shed1', x: 194, y: 108 } : doorOf('shed1'), done: () => (bizOf('shed1').prepped.kumquat_cut || 0) > 0 || flag('firstServed3'), next: 'open' },
+  prep: { ch: 1, text: () => T('Slice kumquats at the prep table in Your Drink Stand', 'Cắt tắc ở bàn sơ chế trong quán nước của bạn'), target: () => G.scene?.id === 'shed1' ? { scene: 'shed1', x: 194, y: 108 } : doorOf('shed1'), done: () => (bizOf('shed1').prepped.kumquat_cut || 0) > 0 || flag('firstServed3'), next: 'open' },
   open: { ch: 1, text: () => T('Open the shop! Press OPEN inside', 'Mở cửa quán! Bấm MỞ CỬA bên trong'), target: () => G.scene?.id === 'shed1' ? null : doorOf('shed1'), done: () => bizOf('shed1').open || flag('firstServed3'), next: 'serve' },
   serve: { ch: 1, text: () => T(`Serve your first customers at the counter (${Math.min(3, since('serve'))}/3)`, `Phục vụ những vị khách đầu tiên ở quầy (${Math.min(3, since('serve'))}/3)`), target: () => G.scene?.id === 'shed1' ? { scene: 'shed1', x: 80, y: 128 } : doorOf('shed1'), done: () => since('serve') >= 3, next: 'sleep', scene: () => afterFirstCustomers() },
-  sleep: { ch: 1, text: () => G.state.time < 17 * 60 ? T('Keep selling, then go home and sleep', 'Bán thêm, rồi về nhà ngủ') : T('Go home and sleep in your bed', 'Về nhà và đi ngủ'), target: () => G.scene?.id === 'house' ? { scene: 'house', x: 48, y: 124 } : doorOf('house'), done: () => G.state.day >= 2, next: 'settle' },
+  sleep: { ch: 1, text: () => G.state.time < 17 * 60 ? T('Keep selling, then go home and sleep', 'Bán thêm, rồi về nhà ngủ') : T('Go home and sleep in your bed', 'Về nhà và đi ngủ'), target: () => G.scene?.id === 'house' ? bedSpot() : doorOf('house'), done: () => G.state.day >= 2, next: 'settle' },
   // ---- Chapter 3: word is spreading → Chapter 4: the bánh mì shed
   grow: { ch: 3, text: () => goals(T('Word is spreading', 'Tiếng lành đồn xa'), growGoals()), target: () => null, done: () => allDone(growGoals()), next: 'key2', scene: () => introShed2() },
   key2: { ch: 4, text: () => T(`Buy the bánh mì shed's key from Mèo Mây (${gateText('shed2')})`, `Mua chìa khóa quán bánh mì từ Mèo Mây (${gateText('shed2')})`), target: () => meoTarget(), done: () => gatePaid('shed2'), next: 'repair2' },
@@ -617,7 +619,7 @@ async function afterFirstRepair() {
     await say('meo', T('A shop needs a menu, though. Here — this is the very first recipe Bà Tư ever taught me.', 'Mà quán thì phải có thực đơn chứ. Đây — công thức đầu tiên Bà Tư dạy mình.'), { emo: 'happy' });
     await discoverRecipe('tra_tac');
     await say('meo', T('Kumquat tea: *tea*, then *kumquat*. The customer tells you the size, sugar and ice.', 'Trà tắc: *trà* trước, rồi *tắc*. Khách sẽ nói size, đường và đá.'));
-    await say('meo', T('Buy *tea, kumquats, sugar and ice* at Binh Minh Supermarket. Slice the kumquats at the prep table inside the shed. Then — open up!', 'Mua *trà, tắc, đường và đá* ở Siêu thị Bình Minh. Cắt tắc ở bàn sơ chế trong quán. Rồi — mở cửa thôi!'), { emo: 'happy' });
+    await say('meo', T('Buy *tea, kumquats, sugar and ice* at Binh Minh Supermarket. Slice the kumquats at the prep table in Your Drink Stand. Then — open up!', 'Mua *trà, tắc, đường và đá* ở Siêu thị Bình Minh. Cắt tắc ở bàn sơ chế trong quán nước của bạn. Rồi — mở cửa thôi!'), { emo: 'happy' });
     await say('meo', T('I\'ll be nearby. I have very important napping to do.', 'Mình ở gần đây thôi. Mình có một giấc ngủ trưa cực kỳ quan trọng.'), { tilt: 0.15 });
     walk(m, 700, 2296, { speed: 70 }).then(() => { m.sit = true; releaseMeo('beach'); });
     await wait(0.8);
@@ -1215,6 +1217,7 @@ async function automationMontage() {
   if (stalls.length) shots.push({ h: 19.5, ids: stalls, x: 430, y: 650, zoom: 0.95, en: `The Night Market. ${stalls.length} stalls, every one staffed and lit.`, vi: `Chợ Đêm. ${stalls.length} sạp, sạp nào cũng có người trông, đèn sáng rực.` });
   if (owned('restaurant')) shots.push({ h: 20, ids: ['restaurant'], zoom: 1.05, en: `The restaurant on the hill: ${s.biz.restaurant.employees.length} people prepping, cooking and serving.`, vi: `Nhà hàng trên đồi: ${s.biz.restaurant.employees.length} người sơ chế, nấu nướng và phục vụ.` });
   await cs.run('montage', async () => {
+    G.runtime.realTime = time0;                                    // saves during the montage keep the real clock
     await fadeOut(500, true);
     caption(T('A day on the island — while you take a walk…', 'Một ngày trên đảo — trong lúc bạn đi dạo…'));
     await wait(1.6); caption(null);
@@ -1241,7 +1244,7 @@ async function automationMontage() {
       await camTo(1300, 1500, { zoom: 0.42, rate: 1.4 });
       caption(T('Everywhere you look, someone is open for business.', 'Nhìn đâu cũng thấy quán xá mở cửa.'));
       await wait(2.6); caption(null);
-    } finally { s.time = time0; G.runtime.showOpen = null; setMood(time0 >= 18.5 * 60 || time0 < 6 * 60 ? 'night' : 'day'); }
+    } finally { s.time = time0; G.runtime.realTime = null; G.runtime.showOpen = null; setMood(time0 >= 18.5 * 60 || time0 < 6 * 60 ? 'night' : 'day'); }
     await summonMeo();
     await say('meo', T('Every shop opened this morning without you. Nobody panicked. Well, I panicked a little, out of habit.', 'Sáng nay mọi quán tự mở cửa mà không cần bạn. Không ai hoảng. À, mình hoảng chút xíu, theo thói quen thôi.'), { emo: 'happy', tilt: 0.15 });
     await say('meo', T('You don\'t have to stand behind every counter any more. You built something that can live without you. That\'s the whole trick.', 'Bạn không cần đứng sau mọi quầy nữa. Bạn đã xây một thứ có thể tự sống mà không cần bạn. Bí quyết là vậy đó.'), { tilt: 0.1 });

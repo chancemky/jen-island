@@ -1,6 +1,6 @@
 # Codex batch — jen-island
 
-**Status:** ready — paste into Codex  
+**Status:** done — included in 5.3.4 Launch Ready push (X1–X9 in tree)
 **Target:** narrow bugs and localized copy/UI fixes  
 **Source:** Balance Auditor findings @ `e6aa4b7` / v5.3.0  
 **Repo:** `chancemky/jen-island` (prefer `/workspace/jen-island-repo` on `main`)
@@ -56,3 +56,6 @@ Leave economy retunes, pricing philosophy, upgrades, keeper balance, and recipe-
 - EN+VI via `T()` everywhere.
 - No refactors unless required for the fix.
 - When finished: set Status to `done`.
+
+## Required before finish/push
+Bump APP_VERSION in js/data/changelog.js AND version.json to same new v; add newest-first CHANGELOG (EN+VI title + player-facing [en,vi] items) for showWhatsNew(). Then Auditor ok → push main (no PR).

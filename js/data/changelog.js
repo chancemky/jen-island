@@ -3,9 +3,37 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.1';
+export const APP_VERSION = '5.3.4';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.4', date: '2026-10-02T17:00:23Z',
+    title: ['Launch Ready', 'Sẵn Sàng Ra Mắt'],
+    items: [
+      ['The testing tools are gone: no more Dev tab in the menu and no "DEV BUILD" ribbon on screen', 'Đã gỡ công cụ thử nghiệm: menu không còn thẻ Dev và màn hình không còn dải "DEV BUILD"'],
+    ],
+  },
+  {
+    v: '5.3.3', date: '2026-10-02T16:49:47Z',
+    title: ['Steady Nights', 'Đêm Yên Ổn'],
+    items: [
+      ['Staying up all night no longer freezes the clock at 5:30 — at dawn you nod off for a moment and wake to a new day right where you are, so waiting in your shop for opening time works', 'Thức trắng đêm không còn làm đồng hồ đứng ở 5:30 — tới bình minh bạn chợp mắt một lát rồi thức dậy sang ngày mới ngay tại chỗ, nên đợi tới giờ mở quán ngay trong quán cũng được'],
+      ['Walking up to your bed from any side offers Sleep, wherever you have moved it, and a pet saying hi no longer covers the button; the goal marker points at your bed', 'Đi tới giường từ bất kỳ phía nào cũng hiện nút Ngủ, dù bạn đã dời giường đi đâu, và thú cưng chạy tới chào không còn che mất nút; mũi tên mục tiêu chỉ đúng giường của bạn'],
+      ['Reloading the game keeps your clock (even after 2 am) and puts you back where you were instead of in the plaza', 'Tải lại game giữ nguyên giờ (kể cả sau 2 giờ sáng) và đưa bạn về đúng chỗ cũ thay vì ra quảng trường'],
+      ['The action button (Talk, Enter, Leave, Sleep) holds steady instead of flickering when someone walks past or you stand at the edge of a doorway', 'Nút hành động (Nói chuyện, Vào, Ra ngoài, Ngủ) đứng yên thay vì nhấp nháy khi có người đi ngang hay khi bạn đứng sát mép cửa'],
+    ],
+  },
+  {
+    v: '5.3.2', date: '2026-10-02T16:22:24Z',
+    title: ['Clear Signs', 'Rõ Ràng Hơn'],
+    items: [
+      ["Trying to open a shop before dawn now tells you when it opens instead of saying it's past 11 pm", 'Mở quán trước bình minh giờ sẽ báo đúng giờ mở cửa thay vì nói đã quá 23 giờ'],
+      ['Supply runners show their real 35% delivery fee; unaffordable property buttons are greyed out, and shop purchases tell you exactly how much money is missing', 'Người giao hàng hiển thị đúng phí giao 35%; nút mua nhà đất sẽ mờ khi chưa đủ tiền, và các giao dịch ở quán báo chính xác bạn còn thiếu bao nhiêu'],
+      ['The Business screen now explains that island level unlocks features while every shop has its own upgrade level', 'Màn Kinh doanh giờ giải thích cấp đảo dùng để mở khóa tính năng, còn mỗi quán có cấp nâng cấp riêng'],
+      ['Your first shop is consistently called Your Drink Stand in its goal, interior and map, and its starter recipes are filed under Chapter 1', 'Quán đầu tiên được gọi thống nhất là Quán Nước trong mục tiêu, bên trong quán và bản đồ; các công thức khởi đầu cũng được xếp vào Chương 1'],
+      ['Milestones clearly label the next goal and tier; tap any available future business to mark it with a gold waypoint', 'Cột mốc ghi rõ mục tiêu kế tiếp và bậc; chạm vào địa điểm kinh doanh sắp mở để đánh dấu bằng mũi tên vàng'],
+    ],
+  },
   {
     v: '5.3.1', date: '2026-10-02T16:14:33Z',
     title: ['Fairer First Days', 'Ngày Đầu Dễ Thở Hơn'],

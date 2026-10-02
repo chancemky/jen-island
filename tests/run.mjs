@@ -325,11 +325,22 @@ if (only === 'all' || only === 'ui') {
     s.recipes = ['tra_tac', 'banh_mi_thit', 'goi_cuon', 'oc_luoc', 'pho_bo']; s.recipeLevels = { tra_tac: 3 };
     s.keepers = { shed2: { name: 'Hạnh', seed: 5, trait: 'quick', skill: 3, served: 420, today: 34 } };
     s.biz.restaurant.employees = [{ id: 'e1', seed: 9, name: 'Phúc', role: 'cook', trait: 'steady', stats: { speed: 3, cooking: 4, service: 2, reliability: 3 }, today: { cooked: 12 }, work: 40 }];
-    s.property = { house: true }; s.stats.served = 300; s.stats.perfect = 90; s.lifetime = 20000; s.story.chapter = Math.max(s.story.chapter, 12); s.money = 4000;
+    s.property = { house: true }; s.stats.served = 300; s.stats.perfect = 90; s.lifetime = 20000; s.story.chapter = Math.max(s.story.chapter, 12); s.money = 0;
     s.explored = { 'Wind Plaza': true, 'Sunny Beach': true }; s.pets = [];
     const txt = () => [...document.querySelectorAll('.sheet-wrap:not(.out) .sheet')].pop()?.innerText || '';
     const close = async () => { [...document.querySelectorAll('.sheet-wrap:not(.out) .x')].pop()?.click(); await wait(400); };
-    J.openMenu({ tab: 1 }); await wait(700); res.office = txt(); await close();
+    s.biz.shed1.open = false; s.time = 5 * 60 + 30; res.preDawn = J.openBiz('shed1').why;
+    s.time = 23 * 60; res.afterClose = J.openBiz('shed1').why; s.time = 10 * 60;
+    res.recipeChapters = [(await import('/js/data/game.js')).RECIPES.tra_tac.chapter, (await import('/js/data/game.js')).RECIPES.tra_dao.chapter];
+    J.setScene('island', 900, 1650, 'up');
+    J.openMenu({ tab: 1 }); await wait(700); res.office = txt();
+    const propertyBtn = [...document.querySelectorAll('.sheet-wrap:not(.out) button')].find(b => /Buy property|Mua đứt/.test(b.textContent));
+    res.propertyDisabled = !!propertyBtn?.disabled;
+    const hireBtn = [...document.querySelectorAll('.sheet-wrap:not(.out) button')].find(b => /Hire shopkeeper|Thuê người trông/.test(b.textContent));
+    hireBtn?.click(); await wait(100); res.shortfallToast = document.getElementById('toasts').innerText;
+    const more = [...document.querySelectorAll('.office-card')].find(e => /More places you could run|Những nơi bạn có thể mở thêm/.test(e.textContent));
+    res.moreButton = more?.querySelector('button')?.textContent || ''; more?.querySelector('button')?.click(); await wait(700);
+    res.waypointToast = document.getElementById('toasts').innerText; res.pointerVisible = document.getElementById('pointer').style.opacity === '1';
     J.openMenu({ tab: 2 }); await wait(700); res.miles = txt(); await close();
     J.openStaffBoard(); await wait(600); res.staff = txt(); await close();
     const sum = J.endDay(); res.sum = { net: sum.net, staff: sum.staff.length };
@@ -337,6 +348,15 @@ if (only === 'all' || only === 'ui') {
   });
   const need = [['office', /Net worth|Tổng tài sản/], ['office', /The books|Sổ sách/], ['office', /Hạnh/], ['office', /pays back in|hoàn vốn/], ['miles', /tier \d+ of \d+|bậc \d+\/\d+/], ['miles', /Island secrets|Bí mật/], ['staff', /Phúc/], ['staff', /cooked|nấu/]];
   for (const [k, re] of need) if (!re.test(out[k])) fail('ui', `${k} screen is missing ${re}`);
+  if (!/Opens at 6:00|Mở cửa lúc 6:00/.test(out.preDawn) || /past 11 pm|quá 23 giờ/.test(out.preDawn)) fail('ui', `wrong pre-dawn opening message: ${out.preDawn}`);
+  if (!/past 11 pm|quá 23 giờ/.test(out.afterClose)) fail('ui', `wrong after-close message: ${out.afterClose}`);
+  if (!/35%/.test(out.office)) fail('ui', 'the supply-runner copy does not show its 35% fee');
+  if (!/Island level unlocks features|Cấp đảo mở khóa tính năng/.test(out.office)) fail('ui', 'island level and shop level are not explained');
+  if (!/You have .*short|Bạn có .*thiếu/.test(out.office) || !out.propertyDisabled) fail('ui', 'an unaffordable property is not disabled with its shortfall shown');
+  if (!/Need .*Have .*Short|Cần .*Có .*Thiếu/.test(out.shortfallToast)) fail('ui', 'the insufficient-funds toast does not show need, have and shortfall');
+  if (out.recipeChapters.some(ch => ch !== 1)) fail('ui', `starter recipe chapters are ${out.recipeChapters.join(', ')}, not Chapter 1`);
+  if (!/Next goal|Mục tiêu kế tiếp/.test(out.miles)) fail('ui', 'milestones do not label the next goal');
+  if (!out.moreButton || !/Waypoint:|Điểm đến:/.test(out.waypointToast) || !out.pointerVisible) fail('ui', 'the future-business button did not set a visible waypoint');
   if (out.sum.staff < 2) fail('ui', 'the day summary lost the team report');
   if (!need.some(([k, re]) => !re.test(out[k]))) pass('ui', 'business, milestones and staff screens draw their new content');
   if (errors.length) fail('ui', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('ui', 'no errors on the screens');
@@ -734,6 +754,75 @@ if (only === 'all' || only === 'stability') {
 
   const real = errors.filter(e => !/\[watchdog\]|\[cutscene\]|\[input\]/.test(e));
   if (real.length) fail('stability', 'errors: ' + real.slice(0, 3).join(' | ')); else pass('stability', 'no errors');
+  await ctx.close();
+}
+
+// ---------------------------------------------------------------- clock, bed, reload, action button
+if (only === 'all' || only === 'clock') {
+  console.log('clock & saves');
+  const { p, errors, ctx } = await openGame('clock');
+  if (!(await reachFreeRoam(p))) fail('clock', 'never reached free roam');
+  const pump = makePump(p);
+  const J = fn => p.evaluate(fn);
+  await J(() => { const s = window.__jen.G.state; for (const id of ['shed1']) { s.biz[id].owned = true; s.biz[id].unlocked = true; s.biz[id].repair = 1; s.biz[id].open = false; } });
+  // 1) up all night in a closed stand: the clock runs past 5:30 to 6:00 and a new day starts right there
+  const day0 = await J(() => { const j = window.__jen; j.setScene('shed1', 150, 200, 'up'); j.G.state.time = 29 * 60 + 20; j.G.runtime.devClock = 30; return j.G.state.day; });
+  let dawn = null;
+  for (let i = 0; i < 30 && !dawn; i++) { await pump(1000); dawn = await J(() => { const j = window.__jen, s = j.G.state; return s.day > 0 && !j.G.runtime.sleeping && !j.cs.active && s.time < 7 * 60 ? { day: s.day, time: s.time, scene: j.G.scene.id } : null; }); }
+  await J(() => { window.__jen.G.runtime.devClock = 1; });
+  if (!dawn || dawn.day !== day0 + 1) fail('clock', `staying up all night never reached a new morning: ${JSON.stringify(dawn)} (day was ${day0})`);
+  else if (dawn.scene !== 'shed1') fail('clock', `woke up in ${dawn.scene} instead of where you nodded off`);
+  else pass('clock', `stayed up past 5:30 in a closed stand → day ${dawn.day} at ${Math.floor(dawn.time / 60)}:${String(Math.floor(dawn.time % 60)).padStart(2, '0')}, still in the stand`);
+  const opens = await J(() => window.__jen.G.state.time >= 6 * 60);
+  if (!opens) fail('clock', 'the new morning starts before opening time');
+  // 2) the bed offers Sleep at night from the foot and from the side, and a pet doesn't steal it
+  const bed = await J(async () => {
+    const j = window.__jen, s = j.G.state, pl = j.G.player, wait = ms => new Promise(r => setTimeout(r, ms));
+    j.setScene('house', 135, 170, 'down'); s.time = 23 * 60 + 30;
+    const b = s.home.builtins.bed, sc = j.scenes.house, out = {};
+    const at = async (x, y) => { pl.x = x; pl.y = y; await wait(450); return { label: document.getElementById('actLabel').textContent, ready: document.getElementById('actBtn').classList.contains('ready') }; };
+    out.foot = await at(b.x, b.y + 8);
+    out.side = sc.canStand(b.x + 40, b.y - 10, 5) ? await at(b.x + 40, b.y - 10) : { label: 'Sleep', ready: true, skipped: true };
+    const { Actor } = await import('/js/world/actor.js');
+    const pet = new Actor({ kind: 'pet', name: 'Mít', x: b.x + 6, y: b.y + 14, data: {} }); pet.talkable = true; sc.add(pet);
+    out.pet = await at(b.x, b.y + 8); sc.remove(pet);
+    return out;
+  });
+  for (const [k, v] of Object.entries(bed)) if (!v.ready || !/Sleep|Ngủ/.test(v.label)) fail('clock', `bed (${k}) offers "${v.label}" (ready: ${v.ready}) instead of Sleep`);
+  if (Object.values(bed).every(v => v.ready && /Sleep|Ngủ/.test(v.label))) pass('clock', 'at night the bed offers Sleep from the foot and the side, even with a pet nearby');
+  // 3) the action button holds steady a little past a trigger's edge
+  const edge = await J(async () => {
+    const j = window.__jen, pl = j.G.player, sc = j.scenes.house, wait = ms => new Promise(r => setTimeout(r, ms));
+    const ex = sc.triggers.find(t => t.kind === 'exit'); if (!ex) return null;
+    pl.x = ex.x + ex.w / 2; pl.y = ex.y + ex.h / 2; await wait(400);
+    const a = document.getElementById('actLabel').textContent;
+    pl.y = ex.y - 12; await wait(400);
+    return { a, b: document.getElementById('actLabel').textContent, ready: document.getElementById('actBtn').classList.contains('ready') };
+  });
+  if (!edge) fail('clock', 'the house has no exit trigger');
+  else if (!edge.ready || edge.a !== edge.b) fail('clock', `the action button changed from "${edge.a}" to "${edge.b}" just past the trigger edge`);
+  else pass('clock', `"${edge.a}" stays offered just past the trigger edge`);
+  // 4) the local save keeps up with walking and the clock without anything else changing
+  const uid = await J(() => window.__jen.G.user.id);
+  const drift = await J(async () => {
+    const j = window.__jen, s = j.G.state, pl = j.G.player, wait = ms => new Promise(r => setTimeout(r, ms));
+    j.setScene('supermarket', 150, 230, 'up'); s.time = 26 * 60 + 40; j.G.dirty = false;
+    await wait(1800); pl.x = 110; pl.y = 250; j.G.dirty = false;
+    await wait(6500);
+    const key = Object.keys(localStorage).find(k => k.endsWith('.' + j.G.user.id));
+    const saved = JSON.parse(localStorage.getItem(key));
+    return { pos: saved.pos, time: saved.time };
+  });
+  if (drift.pos?.scene !== 'supermarket' || Math.abs(drift.pos.x - 110) > 6 || Math.abs(drift.time - (26 * 60 + 40)) > 10) fail('clock', `the local save fell behind: ${JSON.stringify(drift)}`);
+  else pass('clock', 'walking and the clock are saved locally without any other change');
+  // 5) reload: same clock (even after 2 am) and same place
+  await p.goto(`${BASE}/?dev=${uid.replace(/^dev-/, '')}`); await p.waitForFunction(() => window.done, null, { timeout: 30000 });
+  await p.waitForTimeout(2500);
+  const back = await J(() => { const j = window.__jen; return { time: j.G.state.time, scene: j.G.scene?.id, x: Math.round(j.G.player.x), y: Math.round(j.G.player.y) }; });
+  if (Math.abs(back.time - (26 * 60 + 40)) > 10) fail('clock', `reload moved the clock to ${(back.time / 60).toFixed(2)} h (saved at 26.67 h)`);
+  else if (back.scene !== 'supermarket' || Math.hypot(back.x - 110, back.y - 250) > 24) fail('clock', `reload moved you to ${back.scene} ${back.x},${back.y}`);
+  else pass('clock', 'reload keeps the clock (after 2 am) and your place');
+  if (errors.length) fail('clock', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('clock', 'no errors');
   await ctx.close();
 }
 

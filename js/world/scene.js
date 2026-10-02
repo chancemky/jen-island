@@ -43,6 +43,15 @@ export class Scene {
     return null;
   }
   canStand(x, y, r = 5) { return this.terrain(x, y) && this.terrainEdge(x, y, r) && !this.blocked(x, y, r); }
+  // the free spot closest to x,y (rings outward up to `max` px), or null
+  nearestStand(x, y, r = 5, max = 96) {
+    if (this.canStand(x, y, r)) return [x, y];
+    for (let d = 4; d <= max; d += 4) {
+      const n = Math.max(8, Math.round(d * 0.8));
+      for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, nx = x + Math.cos(a) * d, ny = y + Math.sin(a) * d; if (this.canStand(nx, ny, r)) return [nx, ny]; }
+    }
+    return null;
+  }
   terrainEdge(x, y, r) { return this.terrain(x - r, y) && this.terrain(x + r, y) && this.terrain(x, y - r * 0.5) && this.terrain(x, y + r * 0.5); }
 
   // Move with sliding along obstacles. Returns the new position.

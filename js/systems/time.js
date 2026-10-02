@@ -12,9 +12,12 @@ import { dailyWages, resetRestaurantDay, staffReport } from './restaurant.js';
 import { resetFerryForNewDay } from './npc.js';
 import { setMood } from '../core/audio.js';
 
-// 6:00 → 24:00 lasts 20 real minutes. After midnight you get sleepy (and clumsy)
-// until you go to bed; the clock never forces a new day.
-export const DAY_START = 6 * 60, LATE = 24 * 60, NIGHT_HOLD = 29 * 60 + 30, TIME_SCALE = 1080 / (20 * 60);
+// 6:00 → 24:00 lasts 20 real minutes (TIME_SCALE = 0.9 game min per real second; a full
+// 6:00 → 6:00 all-nighter is ~27 real minutes). After midnight you get sleepy (and clumsy)
+// until you go to bed. If you stay up all night, the clock runs on to DAWN (6:00 the next
+// morning) and stops there: main.js then lets you nod off where you stand and wake to a
+// new day, so waiting up for opening time never leaves the clock stuck before 6:00.
+export const DAY_START = 6 * 60, LATE = 24 * 60, DAWN = 30 * 60, TIME_SCALE = 1080 / (20 * 60);
 
 export function timePaused() {
   return G.runtime.pause > 0 || G.runtime.inCutscene || document.hidden || !G.state.story.flags.freeRoam;
@@ -23,7 +26,7 @@ let lastHour = -1, warned = false;
 export function updateClock(dt) {
   if (timePaused()) return 0;
   const s = G.state;
-  const gm = s.time >= NIGHT_HOLD ? 0 : dt * TIME_SCALE * (G.runtime.devClock || 1);   // (devClock: the dev tab's clock speed)
+  const gm = Math.max(0, Math.min(DAWN - s.time, dt * TIME_SCALE * (G.runtime.devClock || 1)));   // (devClock: the dev tab's clock speed)
   s.time += gm;
   G.runtime.sleepy = s.time >= LATE;
   const hr = Math.floor(s.time / 60);

@@ -68,7 +68,7 @@ export function migrate(raw) {
   s.money = Number.isFinite(+raw.money) ? +raw.money : d.money;
   s.reputation = Math.max(0, +raw.reputation || 0);
   s.day = Math.max(1, Math.floor(+raw.day || 1));
-  s.time = clamp(+raw.time || 7 * 60, 6 * 60, 26 * 60);
+  s.time = clamp(+raw.time || 7 * 60, 6 * 60, 30 * 60);   // 6:00 → 6:00 the next morning (time.js DAWN): a late-night save loads at its own time
   s.milestones = { ...(raw.milestones || {}) };
   s.prices = { ...(raw.prices || {}) };
   s.keys = { ...(raw.keys || {}) };

@@ -7,7 +7,7 @@ import { BUSINESSES, bizName } from '../data/game.js';
 import { h, btn } from './sheets.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml } from '../core/util.js';
-import { toast } from './hud.js';
+import { toast, moneyShortfall, setWaypoint } from './hud.js';
 import { fx } from '../world/render.js';
 import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName, rentToday, keeperOf, keeperWage, candidate, hireKeeper, fireKeeper, keeperTrait, canHaveKeeper, keeperUnlocked, hasSupply, buySupply, toggleSupply, SUPPLY, supplyUnlocked, staffedCount, keeperSkill, SKILL_NAMES, wageFor, hireFee, recentShopNet } from '../systems/economy.js';
 import { daySheet, netWorth, lifetimeTotals, catName } from '../systems/ledger.js';
@@ -43,6 +43,7 @@ export function renderOffice(pane, api) {
   const wages = Object.keys(s.keepers || {}).reduce((a, id) => a + keeperWage(id), 0) + (s.biz.restaurant?.owned ? dailyWages() : 0);
   const st = staffedCount();
   pane.appendChild(h('div', 'office-head', `<div><small>${T('Rent per day', 'Tiền thuê mỗi ngày')}</small><b>${money(rentToday())}</b></div><div><small>${T('Wages per day', 'Lương mỗi ngày')}</small><b>${money(wages)}</b></div><div><small>${T('Shops running themselves', 'Quán tự vận hành')}</small><b>${st.staffed}/${st.total}</b></div>`));
+  pane.appendChild(h('div', 'oc-line dim', T('Island level unlocks features; each shop has its own upgrade level.', 'Cấp đảo mở khóa tính năng; mỗi quán có cấp nâng cấp riêng.')));
   if (s.day < 3) pane.appendChild(h('div', 'empty-note', T('Rent starts on day 3 — Mèo Mây talked the landlords into a welcome discount.', 'Tiền thuê bắt đầu từ ngày 3 — Mèo Mây đã xin chủ nhà giảm giá chào mừng.')));
   const list = h('div', 'list'); pane.appendChild(list);
   renderBooks(list);
@@ -51,13 +52,15 @@ export function renderOffice(pane, api) {
     const own = ownsProperty(id), price = propertyPrice(id);
     card.appendChild(h('div', 'oc-title', `<b>${escapeHtml(placeName(id))}</b><small>${own ? T('You own this property ✓', 'Bạn sở hữu bất động sản này ✓') : T(`Rent ${money(PLACES[id].rent)}/day · buying pays back in ${PLACES[id].payback} days`, `Thuê ${money(PLACES[id].rent)}/ngày · mua đứt hoàn vốn sau ${PLACES[id].payback} ngày`)}</small>`));
     if (!own && id !== 'house') card.appendChild(h('div', 'oc-line dim', T('Owning it: no rent, +5% customers (your own sign out front), 10% cheaper shop upgrades.', 'Sở hữu: không tiền thuê, +5% khách (biển hiệu của riêng bạn), nâng cấp quán rẻ hơn 10%.')));
+    const affordable = canAfford(price);
+    if (!own && !affordable) card.appendChild(h('div', 'oc-line dim', T(`You have ${money(s.money)} · short ${money(price - s.money)}`, `Bạn có ${money(s.money)} · thiếu ${money(price - s.money)}`)));
     const row = h('div', 'oc-row');
     if (!own) row.appendChild(btn(T(`Buy property · ${money(price)}`, `Mua đứt · ${money(price)}`), () => {
-      if (!canAfford(price)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
+      if (!canAfford(price)) return moneyShortfall(price);
       buyProperty(id); sfx('fanfare'); if (G.player) fx.burst('confetti', G.player.x, G.player.y - 30, 24, { up: 70, col: ['#ffd35a', '#f08ca0', '#9fd8c8'] });
       toast({ text: T(`You now own ${placeName(id)}!`, `Bạn đã sở hữu ${placeName(id)}!`), sub: T('No more rent here, ever.', 'Không bao giờ phải trả tiền thuê ở đây nữa.'), icon: 'key' });
       api.rebuild();
-    }, 'buy'));
+    }, 'buy', !affordable));
     if (id !== 'house' && canHaveKeeper(id)) {
       const k = keeperOf(id);
       if (k) {
@@ -74,7 +77,7 @@ export function renderOffice(pane, api) {
         if (net == null) card.appendChild(h('div', 'oc-line dim', T('No books for this shop yet — run it yourself for a day or two to see what it makes before hiring.', 'Quán này chưa có sổ sách — tự bán một hai ngày để xem quán lời bao nhiêu rồi hẵng thuê.')));
         else card.appendChild(h('div', 'oc-line' + (net < w * 1.5 ? '' : ' dim'), `${T(`Lately this shop clears about ${money(net)}/day; the wage would be ${money(w)}/day.`, `Gần đây quán lời khoảng ${money(net)}/ngày; lương sẽ là ${money(w)}/ngày.`)}${net < w * 1.5 ? ` <span style="color:#c0473b">${T('That\'s thin — a shopkeeper would eat most of it. Upgrade recipes, raise prices or wait until it\'s busier.', 'Hơi mỏng — lương sẽ ăn gần hết tiền lời. Hãy nâng cấp công thức, tăng giá hoặc đợi quán đông hơn.')}</span>` : ''}`));
         row.appendChild(btn(T(`Hire shopkeeper · ${money(fee)}`, `Thuê người trông · ${money(fee)}`), () => {
-          if (!hireKeeper(id)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
+          if (!hireKeeper(id)) return moneyShortfall(fee);
           sfx('success'); toast({ text: T(`${c.name} will run ${bizName(id)}!`, `${c.name} sẽ trông ${bizName(id)}!`), sub: T('They open, prep and serve during opening hours. Keep the pantry stocked!', 'Họ sẽ mở cửa, sơ chế và bán trong giờ mở cửa. Nhớ giữ kho đủ hàng nha!'), icon: 'person' });
           api.rebuild();
         }, 'buy'));
@@ -86,9 +89,10 @@ export function renderOffice(pane, api) {
           row.appendChild(btn(on ? T('Pause deliveries', 'Tạm ngưng giao') : T('Resume deliveries', 'Giao tiếp'), () => { toggleSupply(id); sfx('ui'); api.rebuild(); }, 'buy alt'));
         } else {
           const p = SUPPLY.price(id);
-          card.appendChild(h('div', 'oc-line dim', T('A supply runner looks at what this shop has been selling (and what\'s already prepped) and brings about a day and a half of ingredients every morning — shop price + 15% delivery.', 'Người giao hàng xem quán bán gì gần đây (và đã sơ chế bao nhiêu) rồi mang đủ nguyên liệu cho khoảng một ngày rưỡi mỗi sáng — giá siêu thị + 15% phí giao.')));
+          const feePct = Math.round((SUPPLY.fee - 1) * 100);
+          card.appendChild(h('div', 'oc-line dim', T(`A supply runner looks at what this shop has been selling (and what's already prepped) and brings about a day and a half of ingredients every morning — shop price + ${feePct}% delivery.`, `Người giao hàng xem quán bán gì gần đây (và đã sơ chế bao nhiêu) rồi mang đủ nguyên liệu cho khoảng một ngày rưỡi mỗi sáng — giá siêu thị + ${feePct}% phí giao.`)));
           row.appendChild(btn(T(`Supply runner · ${money(p)}`, `Người giao hàng · ${money(p)}`), () => {
-            if (!buySupply(id)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
+            if (!buySupply(id)) return moneyShortfall(p);
             sfx('success'); toast({ text: T('Deliveries start now!', 'Bắt đầu giao hàng!'), sub: T('The pantry is topped up every morning at 6:00.', 'Kho được bổ sung mỗi sáng lúc 6:00.'), icon: 'bag' }); api.rebuild();
           }, 'buy'));
         }
@@ -98,5 +102,15 @@ export function renderOffice(pane, api) {
     list.appendChild(card);
   }
   const notYet = Object.keys(BUSINESSES).filter(id => !places.includes(id) && G.state.story.chapter >= (BUSINESSES[id].chapter || 1));
-  if (notYet.length) list.appendChild(h('div', 'empty-note', T(`More places you could run: ${notYet.map(bizName).join(', ')}`, `Những nơi bạn có thể mở thêm: ${notYet.map(bizName).join(', ')}`)));
+  if (notYet.length) {
+    const more = h('div', 'office-card');
+    more.appendChild(h('div', 'oc-title', `<b>${T('More places you could run', 'Những nơi bạn có thể mở thêm')}</b><small>${T('Tap one to mark it with the gold arrow.', 'Chạm để đánh dấu bằng mũi tên vàng.')}</small>`));
+    const row = h('div', 'oc-row');
+    for (const id of notYet) {
+      const spot = G.scenes?.island?.buildings?.[id];
+      if (!spot) continue;
+      row.appendChild(btn(escapeHtml(bizName(id)), () => { api.close(true); setWaypoint({ scene: 'island', x: spot.x, y: spot.y }, bizName(id)); }, 'buy alt'));
+    }
+    if (row.children.length) { more.appendChild(row); list.appendChild(more); }
+  }
 }

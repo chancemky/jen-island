@@ -158,11 +158,11 @@ export const OPTIONS = {
 };
 
 export const RECIPES = {
-  tra_tac:        { vi: 'Trà tắc', en: 'Kumquat Iced Tea', blurbVi: 'Trà tắc chua ngọt mát lạnh. Góc phố nào ở Việt Nam cũng có.', biz: 'drinks', price: 16, vessel: 'cup', steps: ['tea', 'kumquat_cut'], options: ['size', 'sugar', 'ice'], icon: 'drink:tra_tac', chapter: 2,
+  tra_tac:        { vi: 'Trà tắc', en: 'Kumquat Iced Tea', blurbVi: 'Trà tắc chua ngọt mát lạnh. Góc phố nào ở Việt Nam cũng có.', biz: 'drinks', price: 16, vessel: 'cup', steps: ['tea', 'kumquat_cut'], options: ['size', 'sugar', 'ice'], icon: 'drink:tra_tac', chapter: 1,
                     blurb: 'Sweet-tart kumquat tea over ice. Every street corner in Việt Nam has one.' },
   ca_phe_sua_da:  { vi: 'Cà phê sữa đá', en: 'Iced Milk Coffee', blurbVi: 'Sữa đặc trước, rồi cà phê phin nhỏ giọt. Đủ đậm để đánh thức cả hòn đảo buồn ngủ.', biz: 'drinks', price: 22, vessel: 'cup', steps: ['condensed_milk', 'coffee'], options: ['size', 'ice'], icon: 'drink:ca_phe_sua_da', chapter: 3,
                     blurb: 'Condensed milk first, then slow-dripped phin coffee. Strong enough to wake a sleepy island.' },
-  tra_dao:        { vi: 'Trà đào', en: 'Peach Tea', blurbVi: 'Trà với siro đào và những miếng đào mềm. Du khách mê lắm.', biz: 'drinks', price: 28, vessel: 'cup', steps: ['tea', 'peach_syrup', 'peach_cut'], options: ['size', 'sugar', 'ice'], icon: 'drink:tra_dao', chapter: 2, needRep: 18,
+  tra_dao:        { vi: 'Trà đào', en: 'Peach Tea', blurbVi: 'Trà với siro đào và những miếng đào mềm. Du khách mê lắm.', biz: 'drinks', price: 28, vessel: 'cup', steps: ['tea', 'peach_syrup', 'peach_cut'], options: ['size', 'sugar', 'ice'], icon: 'drink:tra_dao', chapter: 1, needRep: 18,
                     blurb: 'Tea with peach syrup and soft peach slices. Tourists love it.' },
   tra_sua:        { vi: 'Trà sữa', en: 'Milk Tea', blurbVi: 'Trà sữa béo ngậy với topping tùy khách chọn.', biz: 'drinks', price: 24, vessel: 'cup', steps: ['tea', 'milk'], options: ['size', 'sugar', 'ice', 'topping'], icon: 'drink:tra_sua', chapter: 7,
                     blurb: 'Creamy milk tea with a topping of your customer\'s choice.' },

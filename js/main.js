@@ -19,7 +19,7 @@ import { inputLocked, lockNames, lockAge } from './core/locks.js';
 import { Grid } from './world/scene.js';
 import { enterLighthouse } from './ui/lookout.js';
 import { updateDialogue, dialogue, closeDialog } from './ui/dialogue.js';
-import { initHud, updateHud, showHud, setAction, setBizButton, triggerAction, toast, updatePointer, showArea, resetArea, renderStars } from './ui/hud.js';
+import { initHud, updateHud, showHud, setAction as hudSetAction, setBizButton, triggerAction, toast, updatePointer, showArea, resetArea, renderStars } from './ui/hud.js';
 import { isUiOpen, isPresenting, openSheet, h, btn } from './ui/sheets.js';
 import { openIngredientShop, openMaterialShop, openFurnitureShop, openBag, openBizMenu, openRequirement, openRecipeBook, openJournal, availableRecipes } from './ui/shops.js';
 import { openService, updateService, isServiceOpen, closeService } from './ui/service.js';
@@ -31,7 +31,7 @@ import { openMenu } from './ui/menu.js';
 import { showAuth } from './ui/auth.js';
 import { updateBusinesses, openBiz, closeBiz, rt as bizRT } from './systems/business.js';
 import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs } from './systems/npc.js';
-import { updateClock, endDay, specialsInit, timePaused } from './systems/time.js';
+import { updateClock, endDay, specialsInit, timePaused, DAWN } from './systems/time.js';
 import { repairBridge, STEPS , stallHandover } from './systems/story.js';
 import { buildSeaBridge } from './systems/story.js';
 import { runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
@@ -164,7 +164,10 @@ function startGame() {
   // resume where we left off
   const pos = s.pos && scenes[s.pos.scene] ? s.pos : { scene: 'house', x: 135, y: 170 };
   let { x, y } = pos;
-  if (!scenes[pos.scene].canStand(x, y, 5)) { const sc = scenes[pos.scene]; x = sc.spawn?.x ?? sc.entry?.x ?? 900; y = sc.entry?.y - 16 || 1700; }
+  // a spot you can't stand on (behind a counter, a moved piece of furniture) moves you to the nearest free floor, not across the map
+  const sc0 = scenes[pos.scene], near = sc0.nearestStand(x, y, 5);
+  if (near) [x, y] = near;
+  else { x = sc0.spawn?.x ?? sc0.entry?.x ?? 900; y = sc0.entry?.y - 16 || 1700; }
   setScene(pos.scene, x, y, 'down');
   if (!flag('freeRoam')) setFlag('freeRoam');
   if (s.story.step === 'free' && !flag('keeper')) setStep('rest7'); // new chapters 8–10 for finished saves
@@ -299,6 +302,7 @@ function loop(now) {
   const busyUi = isUiOpen() || isServiceOpen() || isPrepOpen() || dialogue.active || isDecorating();
   if (!busyUi && !isTransitioning()) pl.drive(dt, sc, sfx); else if (!pl.path) pl.moving = Math.max(0, pl.moving - dt * 6);
   if (!busyUi && !cs.active) updateSeat(moveVector()[2]);
+  if (G.state.time >= DAWN && !busyUi && !cs.active && !isTransitioning() && !G.runtime.sleeping) dawnDoze();   // stayed up all night
   updateFollow(dt);
   if (G.runtime.sleepy && !pl.act) { if (pl.emo !== 'sleepy') pl.setEmo('sleepy', 0); G.runtime.yawnT = (G.runtime.yawnT ?? 4) - dt; if (G.runtime.yawnT <= 0) { G.runtime.yawnT = 7 + Math.random() * 5; pl.showEmote('zzz', 2); } }
   else if (!G.runtime.sleepy && pl.emo === 'sleepy' && !G.runtime.sleeping) pl.setEmo('neutral', 0);
@@ -317,7 +321,7 @@ function loop(now) {
   updateDoors(dt);
   fx.update(dt);
   LIGHT.minutes = G.state.time;
-  if (!busyUi && !cs.active && !isTransitioning()) updateInteraction(dt); else setAction('', null);
+  if (!busyUi && !cs.active && !isTransitioning()) updateInteraction(dt); else clearAction();
   updateBizButton();
   cam.update(dt, sc, G.renderer.w, G.renderer.h);
   const light = lightingFor(G.state.time, sc.kind !== 'island');
@@ -343,13 +347,26 @@ function loop(now) {
 
 // ---------------------------------------------------------------- interactions
 function bizIdOfScene(sc) { return { shed1: 'shed1', shed2: 'shed2', truck: 'truck', restaurant: 'restaurant' }[sc.id] || null; }
+// The action button must hold still under your thumb: a villager strolling past, the edge of
+// a trigger or one frame with nothing found used to blink it between Talk / Enter / Leave and
+// nothing. So: the trigger or person you're already offered is kept while you stay a little
+// past where it started, and "nothing here" only clears the button after a short grace.
+const ACT_GRACE = 0.3, HOLD_PAD = 16;
+let actGrace = 0, heldTr = null, heldTalk = null, heldScene = null;
+function setAction(label, handler, icon) { if (handler) actGrace = ACT_GRACE; hudSetAction(label, handler, icon); }
+function noAction(dt) { if ((actGrace -= dt) > 0) return; hudSetAction('', null); }
+function clearAction() { actGrace = 0; heldTr = heldTalk = null; hudSetAction('', null); }
+const inTrigger = (t, x, y, pad) => x >= t.x - pad && x <= t.x + t.w + pad && y >= t.y - pad && y <= t.y + t.h + pad;
 let doorPeek = null;
 function updateInteraction(dt) {
   const pl = G.player, sc = G.scene;
+  if (heldScene !== sc) { heldScene = sc; clearAction(); }
   if (pl.seat) { setAction(T('Stand', 'Đứng dậy'), () => standUp(), 'sofa'); return; }
-  if (!pl.control) { setAction('', null); return; }
+  if (!pl.control) { clearAction(); return; }
   const [mx, my, mm] = moveVector();
-  const tr = sc.triggerAt(pl.x, pl.y, 8);
+  const trHere = sc.triggerAt(pl.x, pl.y, 8);
+  const keepTr = !trHere && heldTr && sc.triggers.includes(heldTr) && !heldTr.off && (!heldTr.enabled || heldTr.enabled()) && inTrigger(heldTr, pl.x, pl.y, HOLD_PAD);
+  const tr = heldTr = trHere || (keepTr ? heldTr : null);
   // doors swing a little as you approach
   if (sc === scenes.island) {
     const near = sc.triggers.find(t => t.kind === 'door' && dist(pl.x, pl.y, t.doorX, t.doorY) < 34);
@@ -358,8 +375,8 @@ function updateInteraction(dt) {
     doorPeek = near;
   }
   // walking into a doorway enters; walking out the door leaves
-  if (tr?.kind === 'door' && enterable(tr.building) && my < -0.45 && mm > 0.3) { enterBuilding(tr); return; }
-  if (tr?.kind === 'exit' && my > 0.45 && mm > 0.3) { exitBuilding(); return; }
+  if (trHere?.kind === 'door' && enterable(trHere.building) && my < -0.45 && mm > 0.3) { enterBuilding(trHere); return; }
+  if (trHere?.kind === 'exit' && my > 0.45 && mm > 0.3) { exitBuilding(); return; }
   // pick the best context action
   // 1) restaurant guest who wants to order
   if (sc.id === 'restaurant') {
@@ -367,9 +384,12 @@ function updateInteraction(dt) {
     const hasServer = [...restRT().staff.values()].some(a => a.data.emp.role === 'server');
     if (g && !hasServer) { setAction(T('Take order', 'Nhận order'), () => takeRestaurantOrder(g), RECIPES[g.recipe].icon); return; }
   }
-  // 2) talkable actors right in front of you
-  const talk = nearestTalkable(sc, pl);
-  if (talk && (!tr || tr.kind === 'door' || dist(talk.x, talk.y, pl.x, pl.y) < 22)) { setAction(T('Talk', 'Nói chuyện'), () => talkTo(talk), 'talk'); return; }
+  // 2) talkable actors right in front of you — over a trigger only when they're really close
+  //    (or standing still by a door); a pet never takes over the bed, a door or a counter
+  const talk = nearestTalkable(sc, pl), td = talk ? dist(talk.x, talk.y, pl.x, pl.y) : 1e9;
+  const talkWins = talk && (!tr || (talk.kind !== 'pet' && (td < 22 || (tr.kind === 'door' && td < 34 && !talk.path))));
+  heldTalk = talkWins ? talk : null;
+  if (talkWins) { setAction(T('Talk', 'Nói chuyện'), () => talkTo(talk), 'talk'); return; }
   if (tr) {
     if (tr.kind === 'door') return doorAction(tr);
     if (tr.kind === 'exit') { setAction(T('Leave', 'Ra ngoài'), () => exitBuilding(), 'door'); return; }
@@ -407,7 +427,7 @@ function updateInteraction(dt) {
   const od = outdoorAction(pl); if (od) { setAction(od.label, od.run, od.icon); return; }
   // lore on restored places
   const pq = plaqueAction(pl); if (pq) { setAction(pq.label, pq.run, pq.icon); return; }
-  setAction('', null);
+  noAction(dt);
 }
 function nearestTalkable(sc, pl) {
   let best = null, bd = 30;
@@ -416,8 +436,9 @@ function nearestTalkable(sc, pl) {
     if (a === pl || !a.visible || !(a.talkable || a.data?.tourist) || a.data?.state === 'busy' || (a === G.meo && a.data.busy)) continue;
     const dx = a.x - pl.x, dy = a.y - pl.y, d = Math.hypot(dx, dy);
     const facing = (dx * fx0 + dy * fy0) / (d || 1);
-    const score = d - facing * 10;
-    if (d < 34 && score < bd) { bd = score; best = a; }
+    const held = a === heldTalk;                                  // the one you're already offered stays a bit longer
+    const score = d - facing * 10 - (held ? 8 : 0);
+    if (d < (held ? 42 : 34) && score < bd) { bd = score; best = a; }
   }
   return best;
 }
@@ -643,15 +664,28 @@ async function passOut() {
   if (G.runtime.sleeping || cs.active) return;
   await doSleep(true);
 }
+// Up all night: when the clock reaches 6:00 you nod off for a moment right where you are
+// and wake there to a new day (so waiting in a closed shop for opening time works).
+async function dawnDoze() {
+  if (G.runtime.sleeping || cs.active) return;
+  await doSleep('dawn');
+}
 async function doSleep(passedOut) {
   if (G.runtime.sleeping) return;
   G.runtime.sleeping = true;
   closeService();
   const pl = G.player;
+  const dawn = passedOut === 'dawn', here = dawn ? { id: G.scene.id, x: pl.x, y: pl.y, dir: pl.dir } : null;
   try {
     await cs.run('sleep', async () => {
       G.runtime.inCutscene = true;
-      if (passedOut) {
+      if (dawn) {
+        pl.setEmo('sleepy', 3); pl.showEmote('zzz', 2); await wait(1.2);
+        await fadeOut(1000, true);
+        document.getElementById('caption').innerHTML = T('The sky is getting light… you nod off for a moment.', 'Trời hửng sáng… bạn chợp mắt một lát.');
+        document.getElementById('caption').classList.add('on');
+        await wait(1.8); document.getElementById('caption').classList.remove('on');
+      } else if (passedOut) {
         pl.setEmo('sleepy', 3); pl.showEmote('zzz', 2); await wait(1.2);
         await fadeOut(1000, true);
         document.getElementById('caption').innerHTML = T('You dozed off…', 'Bạn ngủ gục mất rồi…');
@@ -673,10 +707,11 @@ async function doSleep(passedOut) {
       if (cloud.hasSession()) cloud.saveDailySummary(sum.day, sum).catch(() => {});
       setMood('day');
       await showSummary(sum);
-      // morning in the bedroom
+      // morning in the bedroom (or wherever you nodded off at dawn)
       pl.setAct(null); pl.setEmo('happy', 2); pl.emote = null; pl.visible = true; G.runtime.sleeper = null;
       const bed = scenes.house.bedPos;
-      setScene('house', bed.x + 34, bed.y + 40, 'down');
+      if (here && scenes[here.id]) setScene(here.id, here.x, here.y, here.dir);
+      else setScene('house', bed.x + 34, bed.y + 40, 'down');
       cam.snap(pl.x, pl.y - 18);
       await wait(0.3);
       await fadeIn(900);

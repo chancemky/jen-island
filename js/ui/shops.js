@@ -17,11 +17,10 @@ import { albumPhotos } from '../systems/album.js';
 import { RESIDENTS } from '../data/looks.js';
 import { EQUIPMENT, SHOP_LEVEL_REQ, PRICE_RANGE, recipeUpgradeCost, BRAND_COLOURS, SIGN_STYLES, BRAND_RECOLOUR } from '../data/game.js';
 import { upgradeCost, shopNeed } from '../systems/economy.js';
-import { toast } from './hud.js';
+import { toast, moneyShortfall } from './hud.js';
 import { STEPS, STEP_TEACHES } from '../systems/story.js';
 
 const bagBtn = () => document.getElementById('bagBtn');
-const noMoney = () => { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); };
 const merchantSay = () => { const a = G.scene?.merchant; if (a) { a.showEmote('happy', 1.2); a.setEmo('happy', 1.5); a.doHop(60); } };
 
 function qtyStepper(max = 9, start = 1, onChange) {
@@ -73,7 +72,7 @@ export function openIngredientShop() {
       const r = highlightRow();
       r.innerHTML = `<div class="ico"><img src="${iconURL('bag', 44)}" alt=""></div><div class="info"><b>${T('Stock up · about 1½ days of what you sell', 'Mua đủ · khoảng 1,5 ngày bán hàng')}</b><small>${needs.map(([k, n]) => `${escapeHtml(ingName(k))} ×${n}`).join(', ')}</small></div>`;
       r.appendChild(btn(money(total), (b) => {
-        if (!canAfford(total)) return noMoney();
+        if (!canAfford(total)) return moneyShortfall(total);
         addMoney(-total, 'ingredients');
         for (const [k, n] of needs) addPantry(k, INGREDIENTS[k].pack * n);
         sfx('buy'); flyIcon(needs[0][0], b, bagBtn()); merchantSay();
@@ -89,7 +88,7 @@ export function openIngredientShop() {
       const right = col();
       const b = btn(money(g.price), () => {
         const n = q.get(), cost = g.price * n;
-        if (!canAfford(cost)) return noMoney();
+        if (!canAfford(cost)) return moneyShortfall(cost);
         addMoney(-cost, 'ingredients'); addPantry(id, g.pack * n);
         sfx('buy'); flyIcon(id, b, bagBtn()); merchantSay();
         bus.emit('bought', 'ingredients', id);
@@ -134,7 +133,7 @@ export function openMaterialShop() {
         const r = highlightRow();
         r.innerHTML = `<div class="ico"><img src="${iconURL('wood', 44)}" alt=""></div><div class="info"><b>${escapeHtml(T(`Everything for: ${need.label}`, `Đủ cho: ${need.label}`))}</b><small>${missing.map(([k, n]) => `${escapeHtml(matName(k))} ×${n}`).join(', ')}</small></div>`;
         r.appendChild(btn(money(total), b => {
-          if (!canAfford(total)) return noMoney();
+          if (!canAfford(total)) return moneyShortfall(total);
           addMoney(-total, 'materials'); for (const [k, n] of missing) addMat(k, n);
           sfx('buy'); flyIcon(missing[0][0], b, bagBtn()); merchantSay(); bus.emit('bought', 'materials'); api.rebuild();
         }, 'buy alt'));
@@ -150,7 +149,7 @@ export function openMaterialShop() {
       const right = col();
       const b = btn(money(m.price), () => {
         const n = q.get(), cost = m.price * n;
-        if (!canAfford(cost)) return noMoney();
+        if (!canAfford(cost)) return moneyShortfall(cost);
         addMoney(-cost, 'materials'); addMat(id, n); sfx('buy'); flyIcon(id, b, bagBtn()); merchantSay(); bus.emit('bought', 'materials', id); api.rebuild();
       });
       right.append(q.el, b);
@@ -178,7 +177,7 @@ export function openFurnitureShop() {
       const kind = f.light ? T('Glows warmly at night', 'Tỏa sáng ấm áp') : f.wall ? T('Hangs on the wall', 'Treo tường') : T('Place it in your home', 'Đặt trong nhà');
       const info = h('div', 'info', `<b>${escapeHtml(furnName(id))}</b><small>${kind}</small>${owned ? `<span class="have">${T('Owned', 'Đã có')}: ${owned}</span>` : ''}`);
       r.append(ico, info, btn(money(f.price), () => {
-        if (!canAfford(f.price)) return noMoney();
+        if (!canAfford(f.price)) return moneyShortfall(f.price);
         addMoney(-f.price, 'furniture'); sfx('buy'); merchantSay();
         s.home.owned.push(id); markDirty(true);
         toast({ text: T(`${furnName(id)} delivered to your home`, `${furnName(id)} đã được gửi về nhà`), sub: T('Tap Decorate inside your house.', 'Bấm Trang trí trong nhà nhé.') });
@@ -311,7 +310,7 @@ function brandPane(pane, bizId, api) {
   const sw = h('div', 'brand-swatches'); list.appendChild(sw);
   for (const [k, c] of Object.entries(BRAND_COLOURS)) {
     const b = h('button', 'swatch' + ((br.colour || 'classic') === k ? ' on' : ''), `<i style="background:linear-gradient(90deg, ${(c.awning || ['#fff5df', '#f28f7c'])[0]} 50%, ${(c.awning || ['#fff5df', '#f28f7c'])[1]} 50%)"></i><small>${escapeHtml(T(c.en, c.vi))}</small>`); b.type = 'button';
-    b.onclick = () => { if ((br.colour || 'classic') === k) return; if (!canAfford(BRAND_RECOLOUR)) return noMoney(); addMoney(-BRAND_RECOLOUR, 'upgrade'); br.colour = k; markDirty(true); sfx('buy'); api.rebuild(); };
+    b.onclick = () => { if ((br.colour || 'classic') === k) return; if (!canAfford(BRAND_RECOLOUR)) return moneyShortfall(BRAND_RECOLOUR); addMoney(-BRAND_RECOLOUR, 'upgrade'); br.colour = k; markDirty(true); sfx('buy'); api.rebuild(); };
     sw.appendChild(b);
   }
   list.appendChild(h('div', 'section-title', T('Sign style', 'Kiểu bảng hiệu')));
@@ -319,7 +318,7 @@ function brandPane(pane, bizId, api) {
   for (const [k, st] of Object.entries(SIGN_STYLES)) {
     const have = owned.includes(k), on = (br.sign || 'plain') === k, locked = st.lv && level() < st.lv;
     const r = rowEl({ icon: 'sign_open', title: escapeHtml(T(st.en, st.vi)) + (on ? ` <span class="pill new">${T('On', 'Đang dùng')}</span>` : ''), sub: locked ? T(`Needs island level ${st.lv}`, `Cần đảo cấp ${st.lv}`) : have ? T('Yours', 'Đã có') : money(st.cost), dim: locked });
-    if (!on && !locked) r.appendChild(btn(have ? T('Use', 'Dùng') : money(st.cost), () => { if (!have) { if (!canAfford(st.cost)) return noMoney(); addMoney(-st.cost, 'upgrade'); owned.push(k); } br.sign = k; markDirty(true); sfx('success'); api.rebuild(); }, have ? 'buy alt' : 'buy'));
+    if (!on && !locked) r.appendChild(btn(have ? T('Use', 'Dùng') : money(st.cost), () => { if (!have) { if (!canAfford(st.cost)) return moneyShortfall(st.cost); addMoney(-st.cost, 'upgrade'); owned.push(k); } br.sign = k; markDirty(true); sfx('success'); api.rebuild(); }, have ? 'buy alt' : 'buy'));
     list.appendChild(r);
   }
 }
@@ -331,7 +330,7 @@ function equipPane(pane, bizId, api) {
     const own = b.equip[e.id], locked = level() < e.lv;
     const r = rowEl({ icon: e.icon, dim: locked, title: escapeHtml(T(e.en, e.vi)) + (own ? ` <span class="pill new">${T('Owned', 'Đã có')}</span>` : ''), sub: locked ? T(`Needs level ${e.lv} · ${e.fx}`, `Cần cấp ${e.lv} · ${e.fxVi}`) : T(e.fx, e.fxVi) });
     if (!own) r.appendChild(btn(money(e.cost), () => {
-      if (!canAfford(e.cost)) return noMoney();
+      if (!canAfford(e.cost)) return moneyShortfall(e.cost);
       addMoney(-e.cost, 'equipment'); b.equip[e.id] = true; markDirty(true); sfx('buy');
       toast({ text: T(`${e.en} installed!`, `Đã lắp ${e.vi}!`), sub: T(e.fx, e.fxVi), icon: e.icon });
       api.rebuild();
@@ -398,7 +397,7 @@ export function openRecipeBook({ onDiscover } = {}) {
       const r = rowEl({ icon: R.icon, title: `${escapeHtml(recipeName(id))} <span class="pill lv">Lv ${lv}</span>`, sub: next ? T(`${next.label}: +${Math.round((next.price - 1) * 100)}% price, calmer customers, bigger tips`, `${next.labelVi}: giá +${Math.round((next.price - 1) * 100)}%, khách kiên nhẫn hơn, boa nhiều hơn`) : T('Perfect! Fully upgraded.', 'Hoàn hảo! Đã nâng cấp tối đa.') });
       const nextCost = next ? recipeUpgradeCost(id, lv + 1) : 0;
       if (next) r.appendChild(btn(money(nextCost), () => {
-        if (!canAfford(nextCost)) return noMoney();
+        if (!canAfford(nextCost)) return moneyShortfall(nextCost);
         addMoney(-nextCost, 'recipe'); s.recipeLevels[id] = lv + 1; markDirty(true); sfx('success');
         toast({ text: T(`${recipeName(id)} is now Lv ${lv + 1}!`, `${recipeName(id)} lên Lv ${lv + 1}!`), sub: T(next.label, next.labelVi), icon: R.icon }); api.rebuild();
       }));

@@ -1,6 +1,6 @@
 {
   "name": "jen-island",
-  "version": "5.3.1",
+  "version": "5.3.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,6 +15,7 @@
     "test:world": "node tests/run.mjs world",
     "test:stability": "node tests/run.mjs stability",
     "test:chaos": "node tests/run.mjs chaos",
+    "test:clock": "node tests/run.mjs clock",
     "check:launch": "node tests/launch-check.mjs",
     "deploy:launch": "node tests/launch-check.mjs && npx wrangler deploy"
   },
