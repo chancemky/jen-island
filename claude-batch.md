@@ -1,6 +1,6 @@
 # Claude Code batch — jen-island
 
-**Status:** ready — paste into Claude Code  
+**Status:** running — Claude Watcher launched Claude Code on Vestas-MacBook-Pro  
 **Target:** systems & gameplay / economy balance  
 **Source:** Balance Auditor findings @ `e6aa4b7` / v5.3.0  
 **Repo:** `chancemky/jen-island` (prefer `/workspace/jen-island-repo` on `main`)
