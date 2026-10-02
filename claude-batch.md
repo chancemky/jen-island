@@ -1,6 +1,6 @@
 # Claude Code batch — jen-island
 
-**Status:** done — C1–C6 + What's New 5.3.1; tests passed (`check`, `test:economy`, content, ui); awaiting Game Auditor then push main
+**Status:** done — C1–C6 + What's New 5.3.1 landed on main as `83e0bdf` (Auditor approved, pushed)
 
 ### What changed
 - **C1** `OPTIONS.topping.surcharge` → tapioca 5 / jelly 4 / cheese_foam 7 (≈ cost × 1.15). New check in `validate.js` + economy test: surcharge ≥ post-ECON ingredient cost.
