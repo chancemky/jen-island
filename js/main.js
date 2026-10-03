@@ -384,12 +384,15 @@ function updateInteraction(dt) {
     const hasServer = [...restRT().staff.values()].some(a => a.data.emp.role === 'server');
     if (g && !hasServer) { setAction(T('Take order', 'Nhận order'), () => takeRestaurantOrder(g), RECIPES[g.recipe].icon); return; }
   }
-  // 2) talkable actors right in front of you — over a trigger only when they're really close
+  // 2) nearby talkable actors — over a trigger only when they're genuinely closer
   //    (or standing still by a door); a pet never takes over the bed, a door or a counter
   const talk = nearestTalkable(sc, pl), td = talk ? dist(talk.x, talk.y, pl.x, pl.y) : 1e9;
-  const talkWins = talk && (!tr || (talk.kind !== 'pet' && (td < 22 || (tr.kind === 'door' && td < 34 && !talk.path))));
+  const talkWins = talk && (!tr || (talk.kind !== 'pet' && (td < 30 || (tr.kind === 'door' && td < 42 && !talk.path))));
   heldTalk = talkWins ? talk : null;
-  if (talkWins) { setAction(T('Talk', 'Nói chuyện'), () => talkTo(talk), 'talk'); return; }
+  if (talkWins) {
+    const verb = T('Talk', 'Nói chuyện'), label = talk.name ? `${verb} · ${talk.name}` : verb;
+    setAction(label, () => talkTo(talk), 'talk'); return;
+  }
   if (tr) {
     if (tr.kind === 'door') return doorAction(tr);
     if (tr.kind === 'exit') { setAction(T('Leave', 'Ra ngoài'), () => exitBuilding(), 'door'); return; }
@@ -432,15 +435,16 @@ function updateInteraction(dt) {
   noAction(dt);
 }
 function nearestTalkable(sc, pl) {
-  let best = null, bd = 30;
+  let best = null, bd = Infinity;
   const [fx0, fy0] = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] }[pl.dir];
   for (const a of sc.actors) {
     if (a === pl || !a.visible || !(a.talkable || a.data?.tourist) || a.data?.state === 'busy' || (a === G.meo && a.data.busy)) continue;
     const dx = a.x - pl.x, dy = a.y - pl.y, d = Math.hypot(dx, dy);
     const facing = (dx * fx0 + dy * fy0) / (d || 1);
     const held = a === heldTalk;                                  // the one you're already offered stays a bit longer
-    const score = d - facing * 10 - (held ? 8 : 0);
-    if (d < (held ? 42 : 34) && score < bd) { bd = score; best = a; }
+    if (d >= (held ? 56 : 46)) continue;
+    const score = d - facing * 8 - (held ? 10 : 0);               // facing chooses between people; it never hides the only one nearby
+    if (score < bd) { bd = score; best = a; }
   }
   return best;
 }

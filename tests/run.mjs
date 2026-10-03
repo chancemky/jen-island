@@ -802,7 +802,34 @@ if (only === 'all' || only === 'clock') {
   if (!edge) fail('clock', 'the house has no exit trigger');
   else if (!edge.ready || edge.a !== edge.b) fail('clock', `the action button changed from "${edge.a}" to "${edge.b}" just past the trigger edge`);
   else pass('clock', `"${edge.a}" stays offered just past the trigger edge`);
-  // 4) the local save keeps up with walking and the clock without anything else changing
+  // 4) Talk is easy to find from every side, names its target, works, and wins only at close range over a doorway
+  const talk = await J(async () => {
+    const j = window.__jen, pl = j.G.player, sc = j.scenes.house, wait = ms => new Promise(r => setTimeout(r, ms));
+    j.setScene('house', 135, 180, 'up');
+    const { Actor } = await import('/js/world/actor.js');
+    const a = new Actor({ name: 'Test Neighbor', x: pl.x + 42, y: pl.y, data: {} }); a.talkable = true; sc.add(a);
+    const labels = [];
+    for (const [dx, dy, away] of [[42, 0, 'left'], [-42, 0, 'right'], [0, 42, 'up'], [0, -42, 'down']]) {
+      a.x = pl.x + dx; a.y = pl.y + dy; pl.face(away); await wait(350);
+      labels.push(document.getElementById('actLabel').textContent);
+    }
+    j.triggerAction(); await wait(250); const opened = j.dialogue.active;
+    (await import('/js/ui/dialogue.js')).closeDialog();
+    for (let n = 0; n < 10 && j.cs.active; n++) await wait(100);
+    const ex = sc.triggers.find(t => t.kind === 'exit');
+    pl.x = ex.x + ex.w / 2; pl.y = ex.y + 2; a.x = pl.x; a.y = pl.y - 27; pl.face('down'); await wait(350);
+    const byDoor = document.getElementById('actLabel').textContent;
+    a.y = pl.y - 48; await wait(350); const door = document.getElementById('actLabel').textContent;
+    sc.remove(a);
+    return { labels, opened, byDoor, door };
+  });
+  const missedTalk = talk.labels.filter(x => !/Talk|Nói chuyện/.test(x));
+  if (missedTalk.length) fail('clock', `Talk was missing from ${missedTalk.length} side(s): ${JSON.stringify(talk.labels)}`);
+  else if (!talk.labels.every(x => x.includes('Test Neighbor'))) fail('clock', `Talk did not identify its target: ${JSON.stringify(talk.labels)}`);
+  else if (!talk.opened) fail('clock', 'pressing Talk did not open a conversation');
+  else if (!/Talk|Nói chuyện/.test(talk.byDoor) || !/Leave|Ra ngoài/.test(talk.door)) fail('clock', `door proximity offered "${talk.byDoor}" nearby and "${talk.door}" farther away`);
+  else pass('clock', 'Talk works from every side at 42px, names its target, and only takes a doorway at close range');
+  // 5) the local save keeps up with walking and the clock without anything else changing
   const uid = await J(() => window.__jen.G.user.id);
   const drift = await J(async () => {
     const j = window.__jen, s = j.G.state, pl = j.G.player, wait = ms => new Promise(r => setTimeout(r, ms));
@@ -815,7 +842,7 @@ if (only === 'all' || only === 'clock') {
   });
   if (drift.pos?.scene !== 'supermarket' || Math.abs(drift.pos.x - 110) > 6 || Math.abs(drift.time - (26 * 60 + 40)) > 10) fail('clock', `the local save fell behind: ${JSON.stringify(drift)}`);
   else pass('clock', 'walking and the clock are saved locally without any other change');
-  // 5) reload: same clock (even after 2 am) and same place
+  // 6) reload: same clock (even after 2 am) and same place
   await p.goto(`${BASE}/?dev=${uid.replace(/^dev-/, '')}`); await p.waitForFunction(() => window.done, null, { timeout: 30000 });
   await p.waitForTimeout(2500);
   const back = await J(() => { const j = window.__jen; return { time: j.G.state.time, scene: j.G.scene?.id, x: Math.round(j.G.player.x), y: Math.round(j.G.player.y) }; });

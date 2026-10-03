@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.5';
+export const APP_VERSION = '5.3.6';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.6', date: '2026-10-02T19:26:00Z',
+    title: ['Clearer Talk', 'Nói Chuyện Rõ Hơn'],
+    items: [
+      ['Talk is easier to find from any side, and the button names who you are talking to', 'Nút Nói chuyện dễ hiện hơn từ mọi phía, và ghi rõ bạn đang nói với ai'],
+      ['Near a doorway, Talk only takes over when someone is close; farther away you still get Leave', 'Gần cửa, Nói chuyện chỉ chiếm nút khi người đó đứng sát; đứng xa hơn vẫn hiện Ra ngoài'],
+    ],
+  },
   {
     v: '5.3.5', date: '2026-10-02T18:14:18Z',
     title: ['Clear Doors', 'Cửa Rõ Hơn'],
