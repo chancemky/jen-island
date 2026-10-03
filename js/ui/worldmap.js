@@ -174,6 +174,8 @@ function draw(cv, view) {
     if (reg && !regionOpen(reg)) continue;
     label(c, T(en, vi), x, y, 13 * k, '#5b3f36', null, 'italic 900');
   }
+  const nightMarketBridge = BRIDGES.find(b => b.x === 424 && b.y === 900);
+  if (nightMarketBridge) label(c, T('Bridge to Night Market', 'Cầu vào Chợ Đêm'), nightMarketBridge.x + nightMarketBridge.w / 2, nightMarketBridge.y + nightMarketBridge.h / 2, 13 * k, '#5b3f36', null, 'italic 900');
   c.globalAlpha = 1;
   // building badges with icons
   const placed = [];
