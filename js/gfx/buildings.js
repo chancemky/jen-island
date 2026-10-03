@@ -7,6 +7,7 @@ import { TAU, shade, mix, clamp, rng } from '../core/util.js';
 import { INK, ell, circ, box, poly, line, limb, shadow, text, stext, rrect, flower } from './draw.js';
 import { LIGHT, glows, lanternShape } from './props.js';
 import { G, T, tr } from '../systems/state.js';
+import { BUSINESSES } from '../data/game.js';
 
 const glow = (b, x, y, r, col) => glows.push([b.x + x, b.y + y, r, col]);
 const nightA = () => LIGHT.night;
@@ -123,6 +124,17 @@ function signBoard(c, x, y, w, h, label, bg, fg = '#fff', opt = {}) {
   if (style === 'lights') { const n = Math.max(6, Math.round(w / 7)); for (let i = 0; i < n; i++) { const u = i / n, px = -w / 2 + u * w, on = (Math.floor(t * 4) + i) % 3 !== 0; circ(c, px + 3, -h / 2 - 1.5, 1.3, on ? '#ffe89a' : '#c9b37a', null); circ(c, px + 3, h / 2 + 1.5, 1.3, on ? '#c9b37a' : '#ffe89a', null); } }
   c.restore();
 }
+const PLAYER_CLOSE = 23 * 60;
+const hourLabel = minutes => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+export function exteriorHoursText(bizId) {
+  if (!BUSINESSES[bizId]) return '';
+  const [opens, closes] = BUSINESSES[bizId].hours || [6 * 60, PLAYER_CLOSE];
+  return T(`HOURS ${hourLabel(opens)}–${hourLabel(Math.min(closes, PLAYER_CLOSE))}`, `GIỜ ${hourLabel(opens)}–${hourLabel(Math.min(closes, PLAYER_CLOSE))}`);
+}
+function hoursPlate(c, bizId, x, y, w = 68) {
+  const label = exteriorHoursText(bizId); if (!label) return;
+  signBoard(c, x, y, w, 9, label, '#fff8ea', '#5b3f36');
+}
 function awning(c, x, y, w, cols, depth = 12, opt = {}) {
   const L = x - w / 2, R = x + w / 2, ext = depth * (opt.extend ?? 1);
   poly(c, [L, y, R, y, R + 3, y + ext, L - 3, y + ext], cols[0], INK, 1);
@@ -184,6 +196,7 @@ export function drawShed(c, t, b) {
   const label = s.sign || '???';
   if (k < 0.8) signBoard(c, -8, -h - 20, 56, 13, broken ? T('SHOP...', 'QUÁN...') : label, '#b8a898', '#6e5a4e', { tilt: broken ? 0.18 : 0.18 * (1 - k) });
   else signBoard(c, -8, -h - 22, 66, 15, label, s.signCol || '#e8584e', '#fff5df', { style: s.signStyle });
+  if (s.owned && k >= 1) hoursPlate(c, b.biz, -8, -h - 9);
   if (!broken && (s.level || 1) >= 3) stringLights(c, w + 6, -h + 2, t, b);
   if (!broken && s.open) {
     // OPEN sign flips on the door
@@ -470,6 +483,7 @@ export function drawRestaurant(c, t, b) {
   tileRoof(c, w, 50, h, mix('#8a7f78', '#d9784f', clamp(k * 2 - 0.5, 0, 1)), { overhang: 12, missing: k < 0.5, ridgeOrnament: !broken });
   const name = s.sign || T('RESTAURANT', 'NHÀ HÀNG');
   if (!broken) { signBoard(c, 0, -h - 12, 128, 20, name, s.branded ? s.signCol : '#a8563f', '#ffe7a8', { style: s.signStyle }); }
+  if (s.owned && k >= 1) hoursPlate(c, b.biz, 0, -h + 4, 76);
   if (!broken) {
     awning(c, 0, -h / 2 + 8, 150, s.branded ? s.awning : ['#fff5df', '#e8584e'], 10);
     for (const x of [-w / 2 + 10, w / 2 - 10]) { lanternShape(c, x, -h / 2 + 2, 0.9, '#ea5a4f', t, x); if (nightA() > 0.05) glow(b, x, -h / 2 + 12, 34, 'rgba(255,190,110,.55)'); }
@@ -500,7 +514,7 @@ export function drawFoodTruck(c, t, b) {
   box(c, -44, -32, 68, 5, 2, '#c9955e');
   c.restore();
   if (!owned) { signBoard(c, -10, -76, 60, 14, T('FOR SALE', 'BÁN'), '#fff5df', '#e8584e'); ell(c, 0, -30, 40, 14, 'rgba(160,150,140,.12)', null); }
-  else signBoard(c, -10, -76, 76, 14, s.sign || T('FOOD TRUCK', 'XE BÁNH'), s.signCol && s.awning?.[1] !== '#f28f7c' ? s.signCol : '#f28f7c', '#fff5df', { style: s.signStyle });
+  else { signBoard(c, -10, -76, 76, 14, s.sign || T('FOOD TRUCK', 'XE BÁNH'), s.signCol && s.awning?.[1] !== '#f28f7c' ? s.signCol : '#f28f7c', '#fff5df', { style: s.signStyle }); hoursPlate(c, b.biz, -10, -64); }
   if (open && nightA() > 0.05) stringLights(c, 90, -68, t, b);
 }
 
@@ -519,6 +533,7 @@ export function drawNightStall(c, t, b) {
   const cols = broken ? ['#9d8a80', '#b3a79a'] : s.awning ? [s.awning[1], s.awning[0]] : b.cloth || ['#e8584e', '#fff5df'];
   clothRoof(c, w, 18, h + 34, cols, { torn: broken });
   if (!broken && (s.label || b.label)) signBoard(c, 0, -h - 30, w - 12, 10, tr(s.label || b.label), s.signCol || (s.owned ? '#f08ca0' : '#fff5df'), s.owned ? '#fff' : '#a8563f', { style: s.signStyle });
+  if (!broken && (s.owned || b.biz === 'night')) hoursPlate(c, b.biz, 0, -h - 20, 62);
   if (!broken && nightA() > 0.05) { lanternShape(c, w / 2 - 4, -h - 40, 0.7, '#ea5a4f', t, b.x); glow(b, 0, -h - 20, 50, 'rgba(255,190,110,.6)'); }   // hangs from the post, clear of the sign
   if (broken) { poly(c, [-w / 2 + 6, -h - 2, w / 2 - 10, -h - 2, w / 2 - 14, -h + 10, -w / 2 + 10, -h + 12], 'rgba(90,70,60,.35)', null); }
 }
@@ -566,6 +581,7 @@ export function drawKiosk(c, t, b) {
   // sign
   const label = s.sign || (cafe ? T('HARBOUR CAFÉ', 'CÀ PHÊ BẾN CẢNG') : T('COVE GRILL', 'QUÁN NƯỚNG VỊNH DỪA'));
   signBoard(c, 0, cafe ? -h - 26 : -h - 30, cafe ? 78 : 88, 13, label, trim, '#fff', { style: s.signStyle });
+  if (own) hoursPlate(c, b.biz, 0, cafe ? -h - 15 : -h - 19, 76);
   if (cafe) { // coffee cup icon and two little bistro tables
     for (const x of [-w / 2 - 20, w / 2 + 20]) { ell(c, x, -14, 9, 3, '#fff8ea', INK, 0.8); limb(c, [x, -13, x, 0], 1.4, '#6b4431'); }
   } else { // tiki torches

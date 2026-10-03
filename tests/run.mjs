@@ -340,6 +340,9 @@ if (only === 'all' || only === 'ui') {
     const close = async () => { [...document.querySelectorAll('.sheet-wrap:not(.out) .x')].pop()?.click(); await wait(400); };
     s.biz.shed1.open = false; s.time = 5 * 60 + 30; res.preDawn = J.openBiz('shed1').why;
     s.time = 23 * 60; res.afterClose = J.openBiz('shed1').why; s.time = 10 * 60;
+    const buildings = await import('/js/gfx/buildings.js'), oldLang = s.settings.lang;
+    s.settings.lang = 'en'; res.hoursEn = ['shed1', 'cafe', 'grill', 'night'].map(buildings.exteriorHoursText);
+    s.settings.lang = 'vi'; res.hoursVi = buildings.exteriorHoursText('shed1'); s.settings.lang = oldLang;
     res.recipeChapters = [(await import('/js/data/game.js')).RECIPES.tra_tac.chapter, (await import('/js/data/game.js')).RECIPES.tra_dao.chapter];
     J.setScene('island', 900, 1650, 'up');
     J.openMenu({ tab: 1 }); await wait(700); res.office = txt();
@@ -359,6 +362,7 @@ if (only === 'all' || only === 'ui') {
   for (const [k, re] of need) if (!re.test(out[k])) fail('ui', `${k} screen is missing ${re}`);
   if (!/Opens at 6:00|Mở cửa lúc 6:00/.test(out.preDawn) || /past 11 pm|quá 23 giờ/.test(out.preDawn)) fail('ui', `wrong pre-dawn opening message: ${out.preDawn}`);
   if (!/past 11 pm|quá 23 giờ/.test(out.afterClose)) fail('ui', `wrong after-close message: ${out.afterClose}`);
+  if (out.hoursEn.join('|') !== 'HOURS 06:00–23:00|HOURS 06:00–22:00|HOURS 10:00–23:00|HOURS 17:00–23:00' || out.hoursVi !== 'GIỜ 06:00–23:00') fail('ui', `wrong exterior hours cues: ${out.hoursEn.join(' · ')} / ${out.hoursVi}`);
   if (!/35%/.test(out.office)) fail('ui', 'the supply-runner copy does not show its 35% fee');
   if (!/Island level unlocks features|Cấp đảo mở khóa tính năng/.test(out.office)) fail('ui', 'island level and shop level are not explained');
   if (!/You have .*short|Bạn có .*thiếu/.test(out.office) || !out.propertyDisabled) fail('ui', 'an unaffordable property is not disabled with its shortfall shown');
