@@ -33,7 +33,7 @@ export const INGREDIENTS = {
   avocado:        { vi: 'Bơ',            en: 'Avocados',        cost: 12, pack: 4, prep: { to: 'avocado_cut', method: 'scoop', verb: 'Scoop' } },
   tapioca:        { vi: 'Trân châu',     en: 'Tapioca pearls',  cost: 3.5, pack: 8 },
   jelly:          { vi: 'Thạch',         en: 'Grass jelly',     cost: 3, pack: 8 },
-  cheese_foam:    { vi: 'Kem cheese',    en: 'Cheese foam',     cost: 5, pack: 8 },
+  cheese_foam:    { vi: 'Kem phô mai',   en: 'Cheese foam',     cost: 5, pack: 8 },
   bread:          { vi: 'Bánh mì',       en: 'Baguettes',       cost: 5, pack: 6, prep: { to: 'bread_split', method: 'split', verb: 'Split' } },
   pate:           { vi: 'Pa tê',         en: 'Pâté',            cost: 4, pack: 8 },
   pork:           { vi: 'Thịt heo',      en: 'Pork',            cost: 9, pack: 6, prep: { to: 'pork_grilled', method: 'grill', verb: 'Grill' } },
@@ -151,9 +151,9 @@ export const OPTIONS = {
   ice:     { label: 'Đá', en: 'Ice', values: ['không đá', 'ít đá', 'đá bình thường'], short: ['none', 'less', 'normal'], uses: 'ice',
              btn: { 'không đá': ['None', 'Không'], 'ít đá': ['Less', 'Ít'], 'đá bình thường': ['Normal', 'Thường'] },
              say: { 'không đá': ['no ice', 'không đá'], 'ít đá': ['less ice', 'ít đá'], 'đá bình thường': ['normal ice', 'đá bình thường'] } },
-  topping: { label: 'Topping', en: 'Topping', values: ['none', 'tapioca', 'jelly', 'cheese_foam'], names: { none: 'không topping', tapioca: 'trân châu', jelly: 'thạch', cheese_foam: 'foam cheese' }, surcharge: { tapioca: 5, jelly: 4, cheese_foam: 7 },   // ≈ ingredient cost × 1.15 (after ECON.ingredients)
-             btn: { none: ['None', 'Không'], tapioca: ['Tapioca', 'Trân châu'], jelly: ['Jelly', 'Thạch'], cheese_foam: ['Foam', 'Foam'] },
-             say: { none: ['no topping', 'không topping'], tapioca: ['tapioca pearls', 'trân châu'], jelly: ['grass jelly', 'thạch'], cheese_foam: ['cheese foam', 'foam cheese'] } },
+  topping: { label: 'Topping', en: 'Topping', values: ['none', 'tapioca', 'jelly', 'cheese_foam'], names: { none: 'không topping', tapioca: 'trân châu', jelly: 'thạch', cheese_foam: 'kem phô mai' }, surcharge: { tapioca: 5, jelly: 4, cheese_foam: 7 },   // ≈ ingredient cost × 1.15 (after ECON.ingredients)
+             btn: { none: ['None', 'Không'], tapioca: ['Tapioca', 'Trân châu'], jelly: ['Jelly', 'Thạch'], cheese_foam: ['Cheese foam', 'Kem phô mai'] },
+             say: { none: ['no topping', 'không topping'], tapioca: ['tapioca pearls', 'trân châu'], jelly: ['grass jelly', 'thạch'], cheese_foam: ['cheese foam', 'kem phô mai'] } },
   chili:   { label: 'Ớt', en: 'Chili', values: ['không ớt', 'có ớt'], uses: 'chili', btn: { 'không ớt': ['No', 'Không'], 'có ớt': ['Yes', 'Có ớt'] }, say: { 'không ớt': ['no chili', 'không ớt'], 'có ớt': ['with chili', 'có ớt'] } },
 };
 
