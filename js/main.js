@@ -59,7 +59,7 @@ import { openBoutique, openWardrobe, currentLook, refreshPlayerLook } from './ui
 import { openSalon } from './ui/salon.js';
 import { spawnVendors, updateVendors, buyFromVendor } from './systems/vendors.js';
 import { updateKeepers, spawnKeepers, keeperActor } from './systems/economy.js';
-import { rebuildPets, updatePets, petMenu } from './systems/pets.js';
+import { rebuildPets, updatePets, petMenu, followerUid, setFollower } from './systems/pets.js';
 import { openPetShop } from './ui/petshop.js';
 import { bus, dist, clamp, sleep, choice, money, rand, clock } from './core/util.js';
 import { LIGHT } from './gfx/props.js';
@@ -434,7 +434,32 @@ function updateInteraction(dt) {
   const pq = plaqueAction(pl); if (pq) { setAction(pq.label, pq.run, pq.icon); return; }
   // just inside a doorway (where you land when you come in): the way out is one tap
   if (sc.kind === 'interior' && sc.door && Math.abs(pl.x - sc.door.x) < 24 && pl.y > sc.h - 40) { setAction(T('Leave', 'Ra ngoài'), () => exitBuilding(), 'door'); return; }
+  // the pet walking with you (it isn't talkable): feed it or send it home
+  const walker = followingPet(sc, pl); if (walker) { setAction(walker.data.pet.name, () => walkerMenu(walker), 'paw'); return; }
   noAction(dt);
+}
+function followingPet(sc, pl) {
+  const uid = followerUid(); if (!uid) return null;
+  const a = sc.actors.find(x => x.data?.pet?.uid === uid);
+  return a && !a.data.busy && dist(a.x, a.y, pl.x, pl.y) < 40 ? a : null;
+}
+async function walkerMenu(a) {
+  releaseJoystick();
+  const p = a.data.pet, s = G.state, food = s.petFood || 0;
+  const opts = [...(food > 0 ? [[T(`Feed (${food} food)`, `Cho ăn (${food} phần)`), 'feed']] : []), [T('Leave at home', 'Để ở nhà'), 'home'], [T('Keep walking', 'Đi tiếp'), 'stay']];
+  a.data.busy = true;
+  try {
+    const pick = opts[await ask(null, T(`${p.name} trots along beside you.`, `${p.name} lon ton đi bên bạn.`), opts.map(o => o[0]))]?.[1];
+    if (pick === 'feed') {
+      s.petFood--; markDirty();
+      a.stop?.(); a.face(G.player.x < a.x ? 'left' : 'right');
+      for (let i = 0; i < 4; i++) { sfx('munch'); a.data.happy = 1; await sleep(320); }
+      p.love = (p.love || 0) + 2; a.showEmote('heart', 1.4); markDirty();
+    } else if (pick === 'home') {
+      setFollower(null); sfx('pop');
+      toast({ text: T(`${p.name} trotted home`, `${p.name} đã chạy về nhà`), sub: T('Pick them up from home any time.', 'Về nhà dắt bé đi lúc nào cũng được.'), icon: 'paw' });
+    }
+  } finally { a.data.busy = false; }
 }
 function nearestTalkable(sc, pl) {
   let best = null, bd = Infinity;
