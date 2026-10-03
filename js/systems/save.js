@@ -47,6 +47,11 @@ function readJSON(key) {
   if (txt == null) return { ok: true, data: null };
   try { return { ok: true, data: JSON.parse(txt), txt }; } catch { return { ok: false, txt }; }
 }
+export function peekLocalLanguage(user) {
+  if (!user?.id) return null;
+  const r = readJSON(localKey(user.id)), lang = r.ok && r.data?.settings?.lang;
+  return lang === 'en' || lang === 'vi' ? lang : null;
+}
 function writeRaw(key, txt) {
   try { localStorage.setItem(key, txt); return true; }
   catch (e) {

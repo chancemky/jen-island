@@ -36,7 +36,7 @@ import { repairBridge, STEPS , stallHandover } from './systems/story.js';
 import { buildSeaBridge } from './systems/story.js';
 import { runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
 import { talkToResident, talkToMerchant, talkToStaff, talkToVisitor } from './systems/talk.js';
-import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, saveStatus } from './systems/save.js';
+import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, saveStatus, peekLocalLanguage } from './systems/save.js';
 import * as cloud from './systems/cloud.js';
 import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, MATERIALS, bizName, recipeName, HARBOUR_BRIDGE, COVE_BRIDGE } from './data/game.js';
 import { applyStaticText, bootText } from './ui/statictext.js';
@@ -118,6 +118,8 @@ async function boot() {
   $('boot').classList.add('gone');
   if (!user) user = await showAuth();
   G.user = user;
+  // The saved language belongs to this island; the device fallback may belong to a different account.
+  const savedLang = peekLocalLanguage(user); if (savedLang) G.state.settings.lang = savedLang;
   $('boot').classList.remove('gone'); progress(0.9, bootText('load'));
   G.state = await loadGame(user);
   seedLevel(G.state);
