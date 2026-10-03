@@ -11,6 +11,7 @@ const TEXT = {
 export function applyStaticText() {
   document.documentElement.lang = G.lang;
   for (const el of document.querySelectorAll('[data-t]')) { const v = TEXT[el.dataset.t]; if (v) el.textContent = T(v[0], v[1]); }
+  for (const [id, en, vi] of [['pauseBtn', 'Pause', 'Tạm dừng'], ['bagBtn', 'Bag', 'Túi đồ'], ['mapBtn', 'Map', 'Bản đồ'], ['menuBtn', 'Menu', 'Thực đơn']]) document.getElementById(id)?.setAttribute('aria-label', T(en, vi));
   for (const b of document.querySelectorAll('#langPick button')) b.classList.toggle('on', b.dataset.lang === G.lang);
 }
 export const bootText = k => ({ fonts: T('Loading…', 'Đang tải…'), build: T('Building the island…', 'Đang dựng đảo…'), decor: T('Decorating…', 'Đang trang trí…'), meo: T('Looking for Mèo Mây…', 'Đang tìm Mèo Mây…'), net: T('Connecting…', 'Đang kết nối…'), ready: T('Ready!', 'Sẵn sàng!'), load: T('Loading your journey…', 'Đang tải hành trình của bạn…'), err: T('Something went wrong. Please reload.', 'Lỗi khởi động. Vui lòng tải lại.') })[k];
