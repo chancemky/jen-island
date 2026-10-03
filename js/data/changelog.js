@@ -3,9 +3,24 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.8';
+export const APP_VERSION = '5.3.9';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.9', date: '2026-10-03T11:31:16Z',
+    title: ['Clearer Signs', 'Biển Báo Rõ Hơn'],
+    items: [
+      ['Shops you own show an hours sign (HOURS / GIỜ) with when they open and when they close', 'Quán bạn sở hữu có biển giờ (HOURS / GIỜ) ghi lúc mở cửa và lúc đóng cửa'],
+      ['The game starts in the language saved with this island, before the line that says it is loading your journey', 'Game khởi động bằng ngôn ngữ đã lưu cùng hòn đảo này, trước dòng đang tải hành trình của bạn'],
+      ['One visit now says “1 time” instead of “1 times”, and the still-secret recipe line has a space before the story hint', 'Một lần ghé giờ ghi “1 time” thay vì “1 times”, và dòng công thức còn bí mật có khoảng cách trước lời nhắc cốt truyện'],
+      ['The earnings milestone is called Lifetime sales and notes that it is not the cash in your wallet', 'Cột mốc tiền kiếm được gọi là Doanh thu tích lũy và ghi rõ đó không phải tiền trong ví'],
+      ['The Long Bridge stays labeled broken until chapter 14', 'Cầu Dài vẫn ghi là hư cho đến chương 14'],
+      ['While a pet is out with you, the pet shop says to leave them at home before you can pet and feed them', 'Khi thú cưng đang đi cùng, cửa hàng thú cưng bảo để chúng ở nhà rồi mới vuốt ve và cho ăn'],
+      ['The map labels the plank near the night market “Bridge to Night Market”', 'Bản đồ gọi tấm ván cạnh chợ đêm là Cầu vào Chợ Đêm'],
+      ['The office shows whether the Night Market is restored, and the cost to restore it if it is not', 'Văn phòng hiện Chợ Đêm đã khôi phục hay chưa, và chi phí khôi phục nếu chưa'],
+      ['Pause, Bag, Map, and Menu are labeled in Vietnamese for screen readers', 'Tạm dừng, Túi đồ, Bản đồ và Thực đơn có nhãn tiếng Việt cho trình đọc màn hình'],
+    ],
+  },
   {
     v: '5.3.8', date: '2026-10-03T11:29:45Z',
     title: ['Tonight\'s Bills', 'Chi Phí Đêm Nay'],
