@@ -48,7 +48,7 @@ export const COVE_SAND = smoothLoop(COVE_CP, 10);
 const COVE_GRASS = insetPoly(COVE_SAND, (x, y) => 70 + 50 * clamp((y - 2350) / 150, 0, 1), KCX, KCY);
 // sea bridges: the Long Bridge to Firefly Islet, the Harbour Bridge and the Cove Bridge
 export const SEA_BRIDGES = [
-  { id: 'long', x: 1690, y: 1500, w: 262, h: 38, fixed: () => bridgeFixed() },
+  { id: 'long', x: 1690, y: 1500, w: 262, h: 38, fixed: () => bridgeFixed(), label: ['BROKEN — Chapter 14', 'HƯ — Chương 14'] },
   { id: 'harbour', x: 1612, y: 681, w: 400, h: 38, fixed: () => !!G.state?.story?.flags?.harbourBridge, label: ['NOT BUILT YET', 'CHƯA XÂY'] },
   { id: 'cove', x: 1626, y: 2061, w: 320, h: 38, fixed: () => !!G.state?.story?.flags?.coveBridge, label: ['NOT BUILT YET', 'CHƯA XÂY'] },
 ];
