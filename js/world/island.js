@@ -284,7 +284,7 @@ function traceLine(c, pts) { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for 
 // walk-only routes: inside the Night Market plaza and across the bridge deck
 // where the food truck can park (Menu of the truck → Drive to…)
 export const TRUCK_SPOTS = {
-  beach: { x: 1420, y: 2152, en: 'East Beach', vi: 'Bãi biển phía đông', fx: 'Beach lunches and hot afternoons', fxVi: 'Trưa bãi biển và chiều nắng' },
+  beach: { x: 1420, y: 2152, en: 'Sunny Beach', vi: 'Bãi Biển', fx: 'Beach lunches and hot afternoons', fxVi: 'Trưa bãi biển và chiều nắng' },
   dock: { x: 1064, y: 2340, en: 'Ferry Dock', vi: 'Bến tàu', fx: 'A rush whenever the ferry comes in; tourists mind prices less', fxVi: 'Đông mỗi khi tàu cập bến; du khách ít để ý giá', ferry: 1.6, tolerance: 1.12 },
   plaza: { x: 1000, y: 1720, en: 'Wind Plaza', vi: 'Quảng trường gió', fx: 'Steady neighbours all day, busy evenings', fxVi: 'Hàng xóm ghé đều cả ngày, tối đông', steady: 1.15 },
   harbour: { x: 2552, y: 707, en: 'Harbour Town', vi: 'Phố Cảng', need: 'harbourBridge', fx: 'Visitors from the guesthouse; pricier menus are fine', fxVi: 'Khách từ nhà nghỉ; giá cao hơn cũng được', tolerance: 1.18, steady: 1.05 },
@@ -823,7 +823,7 @@ export class Island extends Scene {
     const shown = !!G.runtime?.showOpen?.has(s.biz);
     if (s.biz === 'night') { const bz = G.state.biz[s.biz]; return { repair: k, open: bz.open || shown, ...brand }; }
     const bz = s.biz && G.state.biz[s.biz];
-    if (bz?.owned) return { repair: k, open: bz.open || shown, label: ['YOUR STALL', 'SẠP CỦA BẠN'], owned: true, ...brand };   // bought from its old owner
+    if (bz?.owned) return { repair: k, open: bz.open || shown, label: s.label, owned: true, ...brand };   // bought from its old owner
     return { repair: k, open: k >= 1 && night };
   }
 
