@@ -350,7 +350,7 @@ function buildHomes() {
     r.furn('deskNook', 190, 104, {}, [-20, -8, 40, 8]); r.furn('bookshelf', 110, 90, {}, [-18, -10, 36, 10]);
     r.furn('cushion', 150, 190, { col: '#9fd8c8' }); r.furn('lamp', 216, 180, {}, [-5, -4, 10, 4]);
     r.furn('rug', 150, 214, { w: 90, h: 32, col: '#9fd8c8' });
-  }, [[190, 104, 'Exam notes covered in doodles of kumquats. Very focused studying.', 'Vở ôn thi vẽ đầy hình trái tắc. Học rất tập trung.'], [110, 96, 'Novels, a biology textbook, and a book called "How to Befriend a Cat".', 'Tiểu thuyết, sách sinh học, và một cuốn tên “Làm Thân Với Mèo”.'], [150, 66, 'A photo of Linh\'s graduation... from kindergarten.', 'Ảnh tốt nghiệp của Linh… mẫu giáo.']]);
+  }, [[190, 104, 'Exam notes covered in doodles of kumquats. Very focused studying.', 'Vở ôn thi vẽ đầy hình trái tắc. Học rất tập trung.'], [48, 96, 'Novels, a biology textbook, and a book called "How to Befriend a Cat".', 'Tiểu thuyết, sách sinh học, và một cuốn tên “Làm Thân Với Mèo”.'], [150, 66, 'A photo of Linh\'s graduation... from kindergarten.', 'Ảnh tốt nghiệp của Linh… mẫu giáo.']]);
   home('co_lan', { wall: '#fbe6ef', wall2: '#f6d4e2', floor: '#e8d2b8', bed: '#f4a9b8', wallStyle: 'dots', host: { x: 170, y: 130 } }, r => {
     // Cô Lan's flower shop (she lives in the back corner): a cooler of bouquets, dried
     // flowers on the wall, a wrapping counter and buckets of fresh stems
@@ -366,7 +366,7 @@ function buildHomes() {
     r.wallItem('photoWall', 160); r.wallItem('clock', 210);
     r.furn('sofa', 150, 150, { col: '#6f9fc8' }, [-30, -24, 60, 22]); r.furn('tv', 150, 96, {}, [-20, -8, 40, 8]);
     r.furn('crateStack', 214, 200, {}, [-20, -16, 40, 14]); r.furn('radio', 214, 110, {});
-  }, [[160, 66, 'Minh\'s photos of the island. In every one, Mèo Mây is somewhere in the background.', 'Ảnh đảo của Minh. Tấm nào cũng có Mèo Mây ở đâu đó phía sau.'], [214, 200, 'Scooter parts and a sign: "TAXI — cheap, fast, mostly safe".', 'Đồ phụ tùng xe máy và tấm bảng: “TAXI — rẻ, nhanh, khá an toàn”.'], [150, 100, 'The TV is showing a cooking show. The host is using far too much sugar.', 'TV đang chiếu chương trình nấu ăn. Người dẫn bỏ quá trời đường.']]);
+  }, [[160, 66, 'Minh\'s photos of the island. In every one, Mèo Mây is somewhere in the background.', 'Ảnh đảo của Minh. Tấm nào cũng có Mèo Mây ở đâu đó phía sau.'], [214, 200, 'Scooter parts and a sign: "TAXI — cheap, fast, mostly safe".', 'Đồ phụ tùng xe máy và tấm bảng: “TAXI — rẻ, nhanh, khá an toàn”.'], [88, 100, 'The TV is showing a cooking show. The host is using far too much sugar.', 'TV đang chiếu chương trình nấu ăn. Người dẫn bỏ quá trời đường.']]);
   home('chi_mai', { wall: '#eef6f9', wall2: '#e0eef3', floor: '#dcd2c2', floorStyle: 'tile', bed: '#fffaf0' }, r => {
     r.wallItem('wallShelf', 150); r.wallItem('calendar', 200, { day: () => G.state.day });
     r.furn('shelfJars', 196, 60, { w: 50, cols: ['#fffaf0', '#9fd8c8', '#f28f7c', '#fff'] });
@@ -376,7 +376,7 @@ function buildHomes() {
     r.wallItem('painting', 150); r.wallItem('window', 206, { w: 36, h: 22, hgt: 48, curtain: '#e8584e' });
     r.furn('fishtank', 190, 110, {}, [-16, -16, 32, 16]); r.furn('sacks', 214, 220, {}, [-20, -14, 40, 12]);
     r.furn('table', 130, 160, { w: 36, col: '#8a5f3e' }, [-18, -10, 36, 10]); r.furn('stool', 104, 168, {});
-  }, [[190, 114, 'A fish tank. One fish has a tiny name tag: "Not Dinner".', 'Bể cá. Một con cá đeo bảng tên nhỏ xíu: “Không Phải Bữa Tối”.'], [150, 66, 'A painting of a stormy sea. Chú Hải says it\'s a portrait of his mood before coffee.', 'Bức tranh biển động. Chú Hải bảo đó là tâm trạng chú trước khi uống cà phê.'], [214, 220, 'Nets, rope, and a sandal that is definitely Bà Tư\'s.', 'Lưới, dây thừng, và một chiếc dép chắc chắn là của Bà Tư.']]);
+  }, [[252, 114, 'A fish tank. One fish has a tiny name tag: "Not Dinner".', 'Bể cá. Một con cá đeo bảng tên nhỏ xíu: “Không Phải Bữa Tối”.'], [150, 66, 'A painting of a stormy sea. Chú Hải says it\'s a portrait of his mood before coffee.', 'Bức tranh biển động. Chú Hải bảo đó là tâm trạng chú trước khi uống cà phê.'], [214, 220, 'Nets, rope, and a sandal that is definitely Bà Tư\'s.', 'Lưới, dây thừng, và một chiếc dép chắc chắn là của Bà Tư.']]);
   home('vy', { wall: '#fdf3e0', wall2: '#f6e6c8', floor: '#d9b98a', bed: '#9fd8c8' }, r => {
     r.wallItem('painting', 110); r.wallItem('painting', 170);
     r.prop({ x: 160, y: 140, draw: (c, t) => PR.easel(c, t, {}), cull: { x: 130, y: 90, w: 60, h: 60 } }); r.solid(154, 136, 12, 5);
