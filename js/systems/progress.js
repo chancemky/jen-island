@@ -104,7 +104,7 @@ const bizKinds = s => new Set(Object.entries(s.biz).filter(([id, b]) => b.owned 
 export const TRACKS = [
   { id: 'served', icon: 'star', en: 'Customers served', vi: 'Khách đã phục vụ', get: s => s.stats.served, tier: doubleOn([10, 50, 100, 250, 500, 1000, 2500, 5000]), gifts: { 3: { furniture: 'lamp_floor' }, 6: { clothes: 'cafe' } } },
   { id: 'perfect', icon: 'star', en: 'Perfect orders', vi: 'Món hoàn hảo', get: s => s.stats.perfect, tier: doubleOn([5, 25, 75, 200, 500, 1000, 2500]), gifts: { 4: { clothes: 'chef_hat' } } },
-  { id: 'earned', icon: 'coin', en: 'Money earned', vi: 'Tiền đã kiếm', money: true, get: s => Math.floor(s.lifetime || 0), tier: doubleOn([500, 2000, 5000, 15000, 40000, 100000, 250000]), gifts: { 5: { clothes: 'tycoon' } } },
+  { id: 'earned', icon: 'coin', en: 'Lifetime sales', vi: 'Doanh thu tích lũy', money: true, get: s => Math.floor(s.lifetime || 0), tier: doubleOn([500, 2000, 5000, 15000, 40000, 100000, 250000]), gifts: { 5: { clothes: 'tycoon' } } },
   { id: 'tips', icon: 'coin', en: 'Tips collected', vi: 'Tiền boa', money: true, get: s => Math.floor(s.stats.tipsTotal || 0), tier: doubleOn([50, 250, 1000, 4000, 12000, 40000]) },
   { id: 'days', icon: 'sleep_moon', en: 'Days on the island', vi: 'Ngày trên đảo', get: s => s.day, tier: doubleOn([3, 7, 14, 30, 60, 100, 200, 365]), gifts: { 3: { furniture: 'clock' } } },
   { id: 'level', icon: 'trophy', en: 'Island level', vi: 'Cấp độ', get: s => s.level || 1, tier: doubleOn([5, 10, 15, 20, 30, 40, 50, 75, 100]) },
