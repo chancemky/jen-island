@@ -180,6 +180,7 @@ export function outdoorAction(pl) {
   if (Math.abs(pl.x - (PIER.x + PIER.w / 2)) < 40 && pl.y > PIER.y - 30 && pl.y < PIER.y + 30) return { label: T('Ferry timetable', 'Lịch tàu'), icon: 'notebook', run: timetable };
   const f = npcs.ferry;
   if (f && (f.state === 'arriving' || f.state === 'docked' || f.state === 'leaving') && pl.y > PIER.y + 40 && dist(pl.x, pl.y, f.x, f.y) < 260) return { label: T('Wave', 'Vẫy tay'), icon: 'heart', run: waveFerry };
+  if (f && f.state !== 'away' && dist(pl.x, pl.y, f.x, f.y) < 260) return { label: T('Ferry', 'Tàu'), icon: 'notebook', run: ferryStatus };
   if (nearShore(pl)) return { label: T('Skip a stone', 'Ném thia lia'), icon: 'rock', run: skipStone };
   return null;
 }
@@ -207,9 +208,13 @@ async function coinToss() {
 }
 async function timetable() {
   discover('timetable');
-  const times = [8, 11, 14, 17].map(h => clock(h * 60)), nxt = [8, 11, 14, 17].find(h => h * 60 > G.state.time);
-  await say(null, T(`FERRY — a shuttle boat runs back and forth all day: a new one pulls in a few moments after the last one leaves. Big visitor boats: ${times.join(' · ')}. ${nxt ? `Next visitor boat: ${clock(nxt * 60)}.` : 'No more visitor boats today.'} Someone has crossed out "twice a week" and written "EVERY DAY" in marker.`, `TÀU — tàu con thoi chạy qua lại cả ngày: chuyến trước vừa đi một lát là có chuyến mới cập bến. Tàu chở khách lớn: ${times.join(' · ')}. ${nxt ? `Chuyến khách kế: ${clock(nxt * 60)}.` : 'Hôm nay hết tàu khách.'} Có ai gạch chữ “hai lần một tuần” rồi ghi “MỖI NGÀY” bằng bút lông.`));
+  await say(null, ferryStatusText());
 }
+function ferryStatusText(atBoat = false) {
+  const times = [8, 11, 14, 17].map(h => clock(h * 60)), nxt = [8, 11, 14, 17].find(h => h * 60 > G.state.time);
+  return T(`FERRY — a shuttle boat runs back and forth all day: a new one pulls in a few moments after the last one leaves. Big visitor boats: ${times.join(' · ')}. ${nxt ? `Next visitor boat: ${clock(nxt * 60)}.` : 'No more visitor boats today.'} ${atBoat ? 'This boat is for visitors.' : 'Someone has crossed out "twice a week" and written "EVERY DAY" in marker.'}`, `TÀU — tàu con thoi chạy qua lại cả ngày: chuyến trước vừa đi một lát là có chuyến mới cập bến. Tàu chở khách lớn: ${times.join(' · ')}. ${nxt ? `Chuyến khách kế: ${clock(nxt * 60)}.` : 'Hôm nay hết tàu khách.'} ${atBoat ? 'Chiếc tàu này dành cho khách.' : 'Có ai gạch chữ “hai lần một tuần” rồi ghi “MỖI NGÀY” bằng bút lông.'}`);
+}
+async function ferryStatus() { await say(null, ferryStatusText(true)); }
 async function waveFerry() {
   discover('wave'); const pl = G.player;
   pl.setAct('wave'); sfx('horn'); setTimeout(() => pl.setAct(null), 1400);
