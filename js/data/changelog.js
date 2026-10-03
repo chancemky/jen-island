@@ -3,9 +3,20 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.7';
+export const APP_VERSION = '5.3.8';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.8', date: '2026-10-03T11:29:45Z',
+    title: ['Tonight\'s Bills', 'Chi Phí Đêm Nay'],
+    items: [
+      ['Tonight\'s bills shows the wallet trail (what you started with, restaurant wages, rent, shopkeeper wages, morning deliveries, and the wallet after) without changing those amounts', 'Mục Chi phí đêm nay hiện lộ trình ví (số tiền đầu đêm, lương nhà hàng, tiền thuê, lương người trông quán, giao hàng sáng, rồi ví còn lại) mà không đổi các khoản đó'],
+      ['Near the boat, Ferry status uses the timetable wording. Boarding does not change', 'Đứng gần tàu, nút Tàu dùng đúng lời lịch tàu. Cách lên tàu không đổi'],
+      ['If you cannot afford the Harbour Café yet, the buy prompt tells you to keep selling at your other shops. The price stays 7,500k', 'Nếu chưa đủ tiền mua Cà Phê Bến Cảng, lời nhắc bảo bạn bán tiếp ở các quán khác. Giá vẫn 7,500k'],
+      ['Cheese foam labels now say kem phô mai. The ingredient cost and the surcharge stay the same', 'Nhãn kem phô mai giờ ghi kem phô mai. Giá nguyên liệu và phụ thu không đổi'],
+      ['A restaurant that is not repaired pays no wages. Once it is repaired, staff are still paid on a closed day', 'Nhà hàng chưa sửa xong thì không trả lương. Quán đã sửa vẫn trả lương nhân viên vào ngày đóng cửa'],
+    ],
+  },
   {
     v: '5.3.7', date: '2026-10-03T00:41:41Z',
     title: ['Fairer Prices', 'Giá Cả Hợp Lý'],
