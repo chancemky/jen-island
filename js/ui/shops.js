@@ -465,7 +465,7 @@ export function openJournal() {
     else {
       const grid = h('div', 'album'); list.appendChild(grid);
       for (const ph of [...photos].reverse()) {
-        const f = h('button', 'album-ph', `<img src="${ph.img}" alt=""><small>${escapeHtml(T(ph.title[0], ph.title[1]))}<br>${T(`Day ${ph.day}`, `Ngày ${ph.day}`)}</small>`); f.type = 'button';
+        const f = h('button', 'album-ph', `<img src="${ph.img}" alt=""><small>${escapeHtml(T(ph.title[0], ph.title[1]))} · <br>${T(`Day ${ph.day}`, `Ngày ${ph.day}`)}</small>`); f.type = 'button';
         f.onclick = () => { const o = h('div', 'album-view', `<img src="${ph.img}" alt=""><b>${escapeHtml(T(ph.title[0], ph.title[1]))}</b><small>${T(`Day ${ph.day}`, `Ngày ${ph.day}`)}</small>`); o.onclick = () => o.remove(); document.getElementById('app').appendChild(o); sfx('page'); };
         grid.appendChild(f);
       }
