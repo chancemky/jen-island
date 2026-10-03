@@ -40,6 +40,7 @@ export function resetWarnings() { warned = false; lastHour = -1; }
 export function endDay() {
   const s = G.state;
   for (const id of Object.keys(BUSINESSES)) if (s.biz[id].open) closeBiz(id, 'sleep');
+  const walletStart = s.money;                         // the night's bills come out of this (shown on the card)
   const wages = s.biz.restaurant.owned ? dailyWages() : 0;
   if (wages) { addMoney(-wages, 'wages'); recordCost('restaurant', 'wages', wages); }
   const costs = dailyCosts();                          // rent + shopkeeper wages
@@ -67,6 +68,7 @@ export function endDay() {
   // a daily special only makes sense when there's more than one thing on the menu
   for (const id of Object.keys(BUSINESSES)) { const recs = bizRecipes(id); s.biz[id].special = recs.length > 1 ? choice(recs) : null; }
   const del = morningDeliveries(); sum.deliveries = del.total;
+  sum.wallet = { start: Math.round(walletStart), end: Math.round(s.money), bills: Math.round(wages + costs.rent + costs.keeperWages + del.total) };
   sum.gift = starterHelp();
   // how long each chapter takes (for pacing)
   const cd = (s.chapterDays ||= {}); cd[s.story.chapter] = (cd[s.story.chapter] || 0) + 1;

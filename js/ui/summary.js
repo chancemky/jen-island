@@ -6,6 +6,24 @@ import { T, tr } from '../systems/state.js';
 import { bizName } from '../data/game.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml } from '../core/util.js';
+
+// The night's bills, in the order they come out of your wallet: what you had,
+// each deduction, what's left — and one warning when the bills were more than you had.
+function walletTrail(sum) {
+  const lines = [
+    [T('Restaurant wages', 'Lương nhân viên nhà hàng'), sum.wages],
+    [T('Rent', 'Tiền thuê'), sum.rent],
+    [T('Shopkeeper wages', 'Lương người trông quán'), sum.keeperWages],
+    [T('Morning deliveries', 'Giao hàng sáng'), sum.deliveries],
+  ].filter(([, v]) => v > 0);
+  if (!lines.length) return '';
+  const w = sum.wallet, row = (label, v, cls = '') => `<li${cls ? ` class="${cls}"` : ''}><span>${escapeHtml(label)}</span><span>${v}</span></li>`;
+  return `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Tonight\'s bills', 'Chi phí đêm nay')}</div><ul class="sum-list">${[
+    w ? row(T('Wallet tonight', 'Ví tối nay'), money(w.start)) : '',
+    ...lines.map(([label, v]) => row(label, '−' + money(v))),
+    w ? row(T('Wallet this morning', 'Ví sáng nay'), `<b>${money(w.end)}</b>`) : '',
+  ].join('')}</ul>${w && w.bills > w.start ? `<div style="margin-top:6px;font-weight:800;color:#ffb38a">${T(`Tonight's bills (${money(w.bills)}) were more than you had (${money(w.start)}).`, `Chi phí đêm nay (${money(w.bills)}) nhiều hơn số tiền bạn có (${money(w.start)}).`)}</div>` : ''}</div>`;
+}
 import { BUSINESSES, ACHIEVEMENTS, CHAPTERS, ROLES } from '../data/game.js';
 import { catName } from '../systems/ledger.js';
 
@@ -37,8 +55,7 @@ function summaryCard(sum) {
       ${sum.gift ? `<div class="sum-card" style="text-align:center;font-weight:800">${escapeHtml(sum.gift)}</div>` : ''}
       ${(sum.milestones.length || sum.achievements.length) ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Milestones', 'Cột mốc')}</div><ul class="sum-list">${sum.milestones.map(m => `<li class="ach"><span>★ ${escapeHtml(tr(m))}</span></li>`).join('')}</ul></div>` : ''}
       <div class="sum-card" style="text-align:center;font-weight:800;opacity:.85">${escapeHtml(sum.meoLine)}</div>
-      ${(sum.rent || sum.keeperWages || sum.deliveries) ? `<div class="sum-card" style="text-align:center;font-weight:800;opacity:.85">${[sum.rent ? T(`Rent: ${money(sum.rent)}`, `Tiền thuê: ${money(sum.rent)}`) : '', sum.keeperWages ? T(`Shopkeeper wages: ${money(sum.keeperWages)}`, `Lương người trông quán: ${money(sum.keeperWages)}`) : '', sum.deliveries ? T(`Morning deliveries: ${money(sum.deliveries)}`, `Giao hàng sáng: ${money(sum.deliveries)}`) : ''].filter(Boolean).join(' · ')}</div>` : ''}
-      ${sum.wages ? `<div class="sum-card" style="text-align:center;font-weight:800;opacity:.85">${T(`Restaurant wages paid: ${money(sum.wages)}`, `Đã trả lương nhân viên nhà hàng: ${money(sum.wages)}`)}</div>` : ''}
+      ${walletTrail(sum)}
       <button class="btn big pink" type="button" style="max-width:420px">${T('Next day ☀', 'Ngày mới ☀')}</button>`;
     document.getElementById('app').appendChild(el);
     const stats = [...el.querySelectorAll('.sum-stat')];
