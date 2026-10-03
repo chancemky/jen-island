@@ -3,7 +3,7 @@
 // each property, hire a shopkeeper, and pay for a supply runner.
 
 import { G, T, canAfford } from '../systems/state.js';
-import { BUSINESSES, bizName } from '../data/game.js';
+import { BUSINESSES, NIGHT_MARKET_RESTORE, bizName } from '../data/game.js';
 import { h, btn } from './sheets.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml } from '../core/util.js';
@@ -47,6 +47,13 @@ export function renderOffice(pane, api) {
   if (s.day < 3) pane.appendChild(h('div', 'empty-note', T('Rent starts on day 3 — Mèo Mây talked the landlords into a welcome discount.', 'Tiền thuê bắt đầu từ ngày 3 — Mèo Mây đã xin chủ nhà giảm giá chào mừng.')));
   const list = h('div', 'list'); pane.appendChild(list);
   renderBooks(list);
+  const nightMarketRestored = !!s.nightMarket?.restored;
+  if (s.story.chapter >= 8 || nightMarketRestored) {
+    const card = h('div', 'office-card');
+    card.appendChild(h('div', 'oc-title', `<b>${nightMarketRestored ? T('Night Market: restored', 'Chợ Đêm: đã khôi phục') : T('Night Market: not restored yet', 'Chợ Đêm: chưa khôi phục')}</b>${nightMarketRestored ? '' : `<small>${T('Restore cost', 'Chi phí khôi phục')}: ${money(NIGHT_MARKET_RESTORE.cost)}</small>`}`));
+    if (!nightMarketRestored) card.appendChild(h('div', 'oc-line dim', T('Finish the story goal with Mèo Mây.', 'Hoàn thành mục tiêu cốt truyện với Mèo Mây.')));
+    list.appendChild(card);
+  }
   for (const id of places) {
     const card = h('div', 'office-card');
     const own = ownsProperty(id), price = propertyPrice(id);
