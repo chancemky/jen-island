@@ -122,7 +122,8 @@ export function openBiz(bizId) {
   if (!isOpenHours(bizId)) {
     const opens = BUSINESSES[bizId].hours?.[0] ?? 6 * 60;
     const openTime = clock(opens).replace(/^0/, '');
-    const why = G.state.time < opens
+    // (the clock doesn't wrap at midnight: 00:00–dawn is 24:00–30:00, which is before opening, not after 11 pm)
+    const why = G.state.time >= 24 * 60 || G.state.time < opens
       ? T(`Opens at ${openTime}.`, `Mở cửa lúc ${openTime}.`)
       : T('It\'s past 11 pm — your shops are closed until 6:00. (Islanders\' own shops keep their own hours.)', 'Đã quá 23 giờ — các quán của bạn đóng cửa tới 6:00. (Quán của người dân trên đảo có giờ riêng.)');
     return { ok: false, why };
