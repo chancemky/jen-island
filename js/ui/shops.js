@@ -215,7 +215,7 @@ export function openBag() {
       } else if (i === 3) {
         const regs = Object.entries(s.regulars).sort((a, b) => b[1].visits - a[1].visits);
         if (!regs.length) list.appendChild(h('div', 'empty-note', T('Serve the same people a few times and they\'ll become regulars.', 'Phục vụ một người vài lần là họ thành khách quen.')));
-        for (const [, r] of regs) list.appendChild(rowEl({ icon: RECIPES[r.fav]?.icon || 'heart', title: escapeHtml(r.name) + (r.visits >= 3 ? ` <span class="pill new">${T('Regular', 'Khách quen')}</span>` : ''), sub: T(`Visited ${r.visits} times · Favourite: ${r.fav ? recipeName(r.fav) : '—'}`, `Đã ghé ${r.visits} lần · Món ruột: ${r.fav ? recipeName(r.fav) : '—'}`) }));
+        for (const [, r] of regs) list.appendChild(rowEl({ icon: RECIPES[r.fav]?.icon || 'heart', title: escapeHtml(r.name) + (r.visits >= 3 ? ` <span class="pill new">${T('Regular', 'Khách quen')}</span>` : ''), sub: T(`Visited ${r.visits} ${r.visits === 1 ? 'time' : 'times'} · Favourite: ${r.fav ? recipeName(r.fav) : '—'}`, `Đã ghé ${r.visits} lần · Món ruột: ${r.fav ? recipeName(r.fav) : '—'}`) }));
       } else {
         const all = Object.entries(ACHIEVEMENTS), have = all.filter(([id]) => s.achievements.includes(id)).length;
         list.appendChild(h('div', 'empty-note', T(`${have} / ${all.length} — achievements are one-off special moments. Milestones (in the Menu) are counters that keep growing.`, `${have} / ${all.length} — thành tựu là những khoảnh khắc đặc biệt, chỉ một lần. Cột mốc (trong Menu) là bộ đếm cứ tăng dần.`)));
@@ -436,7 +436,7 @@ function secretRecipes(list, exclude = [], heading = '') {
     shop && T(`With new shops & stalls: ${shop}`, `Đi kèm quán & sạp mới: ${shop}`),
   ].filter(Boolean);
   const n = locked.length - soon.length;
-  if (n > 0) list.appendChild(rowEl({ icon: 'rice_paper', title: T(`${n} recipe${n > 1 ? 's' : ''} still secret`, `Còn ${n} công thức bí mật`), sub: escapeHtml(parts.join(' · ')) + '<br>' + T('Follow the story and earn reputation to uncover them.', 'Theo cốt truyện và tích danh tiếng để khám phá.'), dim: true }));
+  if (n > 0) list.appendChild(rowEl({ icon: 'rice_paper', title: T(`${n} recipe${n > 1 ? 's' : ''} still secret`, `Còn ${n} công thức bí mật`), sub: escapeHtml(parts.join(' · ')) + '<br> · ' + T('Follow the story and earn reputation to uncover them.', 'Theo cốt truyện và tích danh tiếng để khám phá.'), dim: true }));
 }
 export function availableRecipes() {
   const s = G.state;
