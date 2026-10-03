@@ -199,7 +199,7 @@ function throwDir(pl) {
 }
 const nearShore = pl => !!throwDir(pl);
 async function coinToss() {
-  if (!canAfford(1)) return;
+  if (!canAfford(1)) { await say(null, T('Not enough money.', 'Không đủ tiền.')); return; }
   addMoney(-1, 'other'); discover('coin'); sfx('coin');
   const pl = G.player; pl.setAct('cheer'); fx.burst('coin', PLAZA.x, PLAZA.y - 10, 1, { up: 60, life: 0.8 }); setTimeout(() => { sfx('splash'); fx.burst('splash', PLAZA.x + rand(-10, 10), PLAZA.y, 6, { up: 20, col: '#dff6ff' }); pl.setAct(null); }, 600);
   const s = G.state, k = 'wish';
