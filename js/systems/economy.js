@@ -5,7 +5,7 @@
 // The final goal of the game is an island where every shop runs itself.
 
 import { G, T, addMoney, canAfford, markDirty, bizOf, pantry, addPantry } from './state.js';
-import { BUSINESSES, INGREDIENTS, PREPPED, RECIPES, STATION, bizName } from '../data/game.js';
+import { BUSINESSES, INGREDIENTS, PREPPED, RECIPES, STATION, bizName, recipeName } from '../data/game.js';
 import { rt, openBiz, makeableRecipes, canMake, completeOrder, customerLeave, isOpenHours, ingredientsForBiz, recipeUses, bizRecipes } from './business.js';
 import { LOCAL_NAMES } from './business.js';
 import { visitorLook } from '../data/looks.js';
@@ -15,6 +15,7 @@ import {addXP } from './progress.js';
 import { COUNTS } from '../core/counts.js';
 import { fx } from '../world/render.js';
 import { recordCost } from './ledger.js';
+import { toast } from '../ui/hud.js';
 
 // ---------------------------------------------------------------- places, rent & property
 // payback: how many days of rent the property costs to buy (40–70 days). Owning also
@@ -127,9 +128,23 @@ function spawnKeeperActor(id) {
 export const keeperActor = id => actors[id] || null;
 export function spawnKeepers() { for (const id of Object.keys(G.state.keepers || {})) spawnKeeperActor(id); }
 
+// What your shopkeepers sold, told in a short toast. Sales are gathered per shop and shown at
+// most one toast every few seconds, so a busy afternoon doesn't bury the screen.
+const keeperSold = {}; let keeperToastT = 0;
+function noteKeeperSale(id, k, o) { const e = (keeperSold[id] ||= { n: 0, total: 0 }); e.name = k.name; e.recipe = o.recipe; e.n++; e.total += o.price || 0; }
+function flushKeeperSales(dt) {
+  if ((keeperToastT -= dt) > 0 || G.runtime.inCutscene) return;
+  const id = Object.keys(keeperSold)[0]; if (!id) return;
+  const e = keeperSold[id]; delete keeperSold[id]; keeperToastT = 6;
+  toast({
+    text: e.n > 1 ? T(`${e.name} sold ${e.n} orders`, `${e.name} đã bán ${e.n} phần`) : T(`${e.name} sold ${recipeName(e.recipe)}`, `${e.name} đã bán ${recipeName(e.recipe)}`),
+    sub: `${bizName(id)} · +${money(e.total)}`, icon: RECIPES[e.recipe]?.icon, ms: 2200,
+  });
+}
 // every frame: keepers open their shop, prep, and serve the customer at the counter
 export function updateKeepers(dt) {
   const s = G.state;
+  flushKeeperSales(dt);
   for (const [id, k] of Object.entries(s.keepers || {})) {
     if (!BUSINESSES[id] || !s.biz[id]?.owned) continue;
     const b = s.biz[id], r = rt(id), a = actors[id];
@@ -155,6 +170,7 @@ export function updateKeepers(dt) {
     const q = chance(keeperPerfect(k)) ? 'perfect' : 'good';
     k.served = (k.served || 0) + 1; k.today = (k.today || 0) + 1; keeperGrow(id, k);
     completeOrder(c, q);
+    noteKeeperSale(id, k, o);
     a?.doHop(50); a?.showEmote(q === 'perfect' ? 'heart' : 'happy', 1);
   }
 }
