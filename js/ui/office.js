@@ -2,8 +2,8 @@
 // loss per business, spending by category, net worth, lifetime profit), rent or buy
 // each property, hire a shopkeeper, and pay for a supply runner.
 
-import { G, T, canAfford } from '../systems/state.js';
-import { BUSINESSES, NIGHT_MARKET_RESTORE, bizName } from '../data/game.js';
+import { G, T, canAfford, bizOf } from '../systems/state.js';
+import { BUSINESSES, NIGHT_MARKET_RESTORE, ROLES, bizName } from '../data/game.js';
 import { h, btn } from './sheets.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml } from '../core/util.js';
@@ -12,6 +12,7 @@ import { fx } from '../world/render.js';
 import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName, rentToday, keeperOf, keeperWage, candidate, hireKeeper, fireKeeper, keeperTrait, canHaveKeeper, keeperUnlocked, hasSupply, buySupply, toggleSupply, SUPPLY, supplyUnlocked, staffedCount, keeperSkill, SKILL_NAMES, wageFor, hireFee, recentShopNet } from '../systems/economy.js';
 import { daySheet, netWorth, lifetimeTotals, catName } from '../systems/ledger.js';
 import { dailyWages } from '../systems/restaurant.js';
+import { openStaffBoard } from './staff.js';
 
 // ---------------------------------------------------------------- the books
 function renderBooks(pane) {
@@ -38,6 +39,19 @@ function renderBooks(pane) {
   pane.appendChild(w);
 }
 
+// The restaurant is yours once you have its key: say so plainly — repair, open/closed, the team
+// and what they cost — with Hire / Let go on the Staff Board. (Buying the property only ends the rent.)
+function restaurantStatus(card, row, api) {
+  const z = bizOf('restaurant'), team = z.employees || [];
+  const repaired = z.repair >= 1;
+  card.appendChild(h('div', 'oc-line', `🍽 <b>${T('Your restaurant', 'Nhà hàng của bạn')}</b> · ${repaired ? T('repaired ✓', 'đã sửa ✓') : T(`repair ${Math.round((z.repair || 0) * 100)}% — finish it to open`, `sửa được ${Math.round((z.repair || 0) * 100)}% — sửa xong mới mở được`)}${repaired ? ` · ${z.open ? T('open now', 'đang mở cửa') : T('closed', 'đang đóng cửa')}` : ''}`));
+  const roles = team.map(e => `${escapeHtml(e.name)} (${escapeHtml(T(ROLES[e.role]?.en || e.role, ROLES[e.role]?.vi || e.role))})`).join(', ');
+  card.appendChild(h('div', 'oc-line' + (team.length ? '' : ' dim'), team.length
+    ? `👥 ${T(`Staff ${team.length}`, `Nhân viên ${team.length}`)}: ${roles} · ${T(`wages ${money(dailyWages())}/day`, `lương ${money(dailyWages())}/ngày`)}${repaired ? '' : ` <span style="opacity:.75">${T('(paid once it\'s repaired)', '(trả lương khi đã sửa xong)')}</span>`}`
+    : T('No staff yet — hire a cook and a server so it runs on its own.', 'Chưa có nhân viên — thuê một đầu bếp và một phục vụ để nhà hàng tự vận hành.')));
+  if (repaired) row.appendChild(btn(T('Hire / Let go', 'Thuê / Cho nghỉ'), () => { api.close(true); openStaffBoard(); }, 'buy alt'));
+}
+
 export function renderOffice(pane, api) {
   const s = G.state, places = usedPlaces();
   const wages = Object.keys(s.keepers || {}).reduce((a, id) => a + keeperWage(id), 0) + (s.biz.restaurant?.owned ? dailyWages() : 0);
@@ -58,10 +72,11 @@ export function renderOffice(pane, api) {
     const card = h('div', 'office-card');
     const own = ownsProperty(id), price = propertyPrice(id);
     card.appendChild(h('div', 'oc-title', `<b>${escapeHtml(placeName(id))}</b><small>${own ? T('You own this property ✓', 'Bạn sở hữu bất động sản này ✓') : T(`Rent ${money(PLACES[id].rent)}/day · buying pays back in ${PLACES[id].payback} days`, `Thuê ${money(PLACES[id].rent)}/ngày · mua đứt hoàn vốn sau ${PLACES[id].payback} ngày`)}</small>`));
-    if (!own && id !== 'house') card.appendChild(h('div', 'oc-line dim', T('Owning it: no rent, +5% customers (your own sign out front), 10% cheaper shop upgrades.', 'Sở hữu: không tiền thuê, +5% khách (biển hiệu của riêng bạn), nâng cấp quán rẻ hơn 10%.')));
+    const row = h('div', 'oc-row');
+    if (id === 'restaurant') restaurantStatus(card, row, api);
+    if (!own && id !== 'house') card.appendChild(h('div', 'oc-line dim', T('It\'s already yours to run — buying the property is the deed that ends the rent: no rent, +5% customers (your own sign out front), 10% cheaper shop upgrades.', 'Quán đã là của bạn — mua đứt là mua giấy tờ nhà đất để hết phải trả tiền thuê: không tiền thuê, +5% khách (biển hiệu của riêng bạn), nâng cấp quán rẻ hơn 10%.')));
     const affordable = canAfford(price);
     if (!own && !affordable) card.appendChild(h('div', 'oc-line dim', T(`You have ${money(s.money)} · short ${money(price - s.money)}`, `Bạn có ${money(s.money)} · thiếu ${money(price - s.money)}`)));
-    const row = h('div', 'oc-row');
     if (!own) row.appendChild(btn(T(`Buy property · ${money(price)}`, `Mua đứt · ${money(price)}`), () => {
       if (!canAfford(price)) return moneyShortfall(price);
       buyProperty(id); sfx('fanfare'); if (G.player) fx.burst('confetti', G.player.x, G.player.y - 30, 24, { up: 70, col: ['#ffd35a', '#f08ca0', '#9fd8c8'] });
@@ -108,7 +123,14 @@ export function renderOffice(pane, api) {
     card.appendChild(row);
     list.appendChild(card);
   }
-  const notYet = Object.keys(BUSINESSES).filter(id => !places.includes(id) && G.state.story.chapter >= (BUSINESSES[id].chapter || 1));
+  if (bizOf('restaurant').owned && !places.includes('restaurant')) {
+    const card = h('div', 'office-card'), row = h('div', 'oc-row');
+    card.appendChild(h('div', 'oc-title', `<b>${escapeHtml(bizName('restaurant'))}</b><small>${T('You have the key ✓', 'Bạn đã có chìa khóa ✓')}</small>`));
+    restaurantStatus(card, row, api);
+    if (row.children.length) card.appendChild(row);
+    list.appendChild(card);
+  }
+  const notYet = Object.keys(BUSINESSES).filter(id => !places.includes(id) && !bizOf(id).owned && G.state.story.chapter >= (BUSINESSES[id].chapter || 1));
   if (notYet.length) {
     const more = h('div', 'office-card');
     more.appendChild(h('div', 'oc-title', `<b>${T('More places you could run', 'Những nơi bạn có thể mở thêm')}</b><small>${T('Tap one to mark it with the gold arrow.', 'Chạm để đánh dấu bằng mũi tên vàng.')}</small>`));
