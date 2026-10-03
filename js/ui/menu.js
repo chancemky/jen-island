@@ -123,8 +123,13 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
         const list = h('div', 'list'); pane.appendChild(list);
         const ago = t => t ? T(`${Math.max(0, Math.round((Date.now() - t) / 1000))}s ago`, `${Math.max(0, Math.round((Date.now() - t) / 1000))} giây trước`) : '—';
         list.appendChild(h('div', 'row', `<div class="info"><b>${escapeHtml(G.user?.email || T('Local player', 'Người chơi cục bộ'))}</b><small>${G.user?.local ? T('Offline test profile (localhost only)', 'Hồ sơ thử nghiệm ngoại tuyến') : T('Signed in · progress saves to the cloud', 'Đã đăng nhập · tiến trình được lưu lên mây')}</small></div>`));
-        list.appendChild(h('div', 'row', `<div class="info"><b>${T('Saves', 'Lưu game')}</b><small>${T('On this device', 'Trên máy này')}: ${ago(saveStatus.localAt)}<br>${T('Cloud', 'Đám mây')}: ${saveStatus.offline ? T('offline — will retry', 'mất kết nối — sẽ thử lại') : ago(saveStatus.cloudAt)}</small></div>`));
-        const sv = btn(T('Save now', 'Lưu ngay'), async (b) => { saveLocal(); b.innerHTML = T('Saving…', 'Đang lưu…'); await saveCloudNow(); b.innerHTML = saveStatus.offline ? T('Offline — saved on this device', 'Mất kết nối — đã lưu trên máy') : T('Saved ✓', 'Đã lưu ✓'); sfx('success'); }, 'btn');
+        const saveRow = h('div', 'row');
+        const renderSaveRow = () => {
+          const cloudState = saveStatus.error ? escapeHtml(saveStatus.error) : saveStatus.offline ? T('offline — will retry', 'mất kết nối — sẽ thử lại') : saveStatus.cloudAt ? ago(saveStatus.cloudAt) : T('not saved to cloud', 'chưa lưu lên mây');
+          saveRow.innerHTML = `<div class="info"><b>${T('Saves', 'Lưu game')}</b><small>${T('On this device', 'Trên máy này')}: ${ago(saveStatus.localAt)}<br>${T('Cloud', 'Đám mây')}: ${cloudState}</small></div>`;
+        };
+        renderSaveRow(); list.appendChild(saveRow);
+        const sv = btn(T('Save now', 'Lưu ngay'), async (b) => { saveLocal(); b.innerHTML = T('Saving…', 'Đang lưu…'); const cloudAt = saveStatus.cloudAt; await saveCloudNow(); renderSaveRow(); const saved = saveStatus.cloudAt !== cloudAt; b.textContent = saved ? T('Saved ✓', 'Đã lưu ✓') : T('Not saved to cloud', 'Chưa lưu lên mây'); sfx(saved ? 'success' : 'error'); }, 'btn');
         pane.appendChild(sv);
         if (saveStatus.recovered) pane.appendChild(h('div', 'empty-note', T(`Save recovery: ${saveStatus.recovered}.`, `Khôi phục dữ liệu: ${saveStatus.recovered}.`)));
         if (onLogout) { const lo = btn(T('Sign out', 'Đăng xuất'), () => { api.close(true); onLogout(); }, 'btn ghost'); lo.style.marginTop = '10px'; pane.appendChild(lo); }
