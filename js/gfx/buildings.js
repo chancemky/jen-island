@@ -447,7 +447,7 @@ export function drawShop(c, t, b) {
     door(c, w / 2 - 24, 24, 36, '#f2c14e', b.doorOpen || 0, { matCol: '#f08ca0', inside: '#fff8e8' });
     awning(c, -14, -h + 12, w - 32, ['#fff8e8', '#f2a14e'], 12);
     box(c, -w / 2 - 2, -h - 22, w + 4, 22, 10, '#f2a14e');
-    stext(c, T('BÉ BÔNG\'S PETS', 'THÚ CƯNG BÉ BÔNG'), -4, -h - 11, 10, '#fff', 900, 'center', INK, 2.4);
+    stext(c, T('Cô Bông\'s Pet Shop', 'THÚ CƯNG BÉ BÔNG'), -4, -h - 11, 10, '#fff', 900, 'center', INK, 2.4);
     // paw print badge
     const px = w / 2 - 10, py = -h - 11; circ(c, px, py + 1.5, 3, '#fff', null); for (const [dx, dy] of [[-3, -3], [0, -4.4], [3, -3]]) circ(c, px + dx, py + dy, 1.3, '#fff', null);
   }
