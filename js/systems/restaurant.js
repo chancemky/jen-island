@@ -453,7 +453,8 @@ export function collectRegister() {
   return k;
 }
 export function restaurantAutomated() { return ['cook', 'server'].every(r => staffByRole(r).length); }
-export function dailyWages() { return bizOf('restaurant').employees.reduce((s, e) => s + wageOf(e), 0); }
+// staff are paid every night once the restaurant is repaired (closed days too); nothing before that
+export function dailyWages() { const z = bizOf('restaurant'); return z.repair < 1 ? 0 : z.employees.reduce((s, e) => s + wageOf(e), 0); }
 export function resetRestaurantDay() {
   const r = restRT(), sc = scene();
   for (const g of r.guests) sc?.remove(g.actor);
