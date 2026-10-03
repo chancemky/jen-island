@@ -48,7 +48,10 @@ export function openPetShop() {
           list.appendChild(r);
           drawPreview(cv, p.id);
         }
-        if (f) list.appendChild(btn(T('Leave everyone at home', 'Để tất cả ở nhà'), () => { setFollower(null); sfx('back'); api.rebuild(); }, 'btn ghost'));
+        if (f) {
+          list.appendChild(h('div', 'empty-note', T('You can’t pet a pet that’s with you. Leave them at home to pet and feed.', 'Không thể vuốt ve thú đang đi cùng. Để ở nhà mới vuốt ve và cho ăn.')));
+          list.appendChild(btn(T('Leave everyone at home', 'Để tất cả ở nhà'), () => { setFollower(null); sfx('back'); api.rebuild(); }, 'btn ghost'));
+        }
       } else {
         list.appendChild(h('div', 'empty-note', T(`You have ${G.state.petFood || 0} portions of pet food. Feed your pets at home — they love you more every time.`, `Bạn có ${G.state.petFood || 0} phần thức ăn. Cho thú cưng ăn ở nhà — mỗi lần tụi nó thương bạn thêm.`)));
         for (const n of [1, 3]) list.appendChild(btn(T(`Buy ${PET_FOOD.n * n} portions · ${money(PET_FOOD.price * n)}`, `Mua ${PET_FOOD.n * n} phần · ${money(PET_FOOD.price * n)}`), () => { if (!buyFood(n)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; } sfx('buy'); api.rebuild(); }, 'btn big gold'));
