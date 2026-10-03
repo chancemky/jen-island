@@ -212,6 +212,10 @@ Object.assign(RECIPES, {
 // café drinks and Cove seafood 37–50%. Premium seafood is expensive to buy, so it
 // is expensive to eat — but no dish is a money printer. Toppings are charged at
 // about their cost + 15%. (tests/run.mjs economy checks these bands.)
+// On top of the list price, the game's own bonuses (recipe level, shop level, daily
+// special, cash register) stack to at most +28% (BONUS_CAP, systems/business.js) and
+// your own price setting runs 70–130% (PRICE_RANGE). Even fully stacked, an early
+// drink stays under ~60% margin, and customers notice pricey menus (PRICE_ELASTICITY).
 export function recipeCost(id, opts = {}) {
   const R = RECIPES[id]; if (!R) return 0;
   let c = 0;
@@ -306,7 +310,7 @@ export const EQUIPMENT = [
   { id: 'register', icon: 'coin', lv: 16, cost: 2100, en: 'Shiny cash register', vi: 'Máy tính tiền mới', fx: 'Prices +5% without scaring anyone', fxVi: 'Giá +5% mà khách không phàn nàn', price: 1.05 },
 ];
 // price the player sets for a recipe: multiplier of the base price
-export const PRICE_RANGE = [0.7, 1.6];
+export const PRICE_RANGE = [0.7, 1.3];
 
 export const NIGHT_MARKET_RESTORE = { mats: { wood: 20, metal: 8, paint: 6, lantern: 12, cable: 2 }, cost: 400 };
 

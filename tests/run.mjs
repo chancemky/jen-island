@@ -271,13 +271,22 @@ if (only === 'all' || only === 'economy') {
     // price bonuses never stack past the cap
     s.recipes = ['tra_tac', 'tra_dao']; s.recipeLevels.tra_tac = 3; s.biz.shed1.level = 5; s.biz.shed1.special = 'tra_tac'; s.biz.shed1.equip = { register: true };
     if (E.priceBonus('shed1', 'tra_tac') > E.BONUS_CAP + 1e-9) bad('price bonuses stack past the cap');
+    // F1: the whole stack (bonuses × your price) can't turn a street drink into a money printer —
+    // caps stay ≤ 1.3, an old save's 160% price is clamped, and maxed tra_tac stays under 60% margin
+    if (E.BONUS_CAP > 1.3 || E.PRICE_RANGE[1] > 1.3) bad(`price caps too loose: bonus ${E.BONUS_CAP}, range up to ${E.PRICE_RANGE[1]}`);
+    s.prices = { tra_tac: 1.6 };
+    if (E.priceMul('tra_tac') > E.PRICE_RANGE[1] + 1e-9) bad('an old save\'s price above the range is not clamped');
+    const maxed = E.recipePrice('shed1', 'tra_tac', 'M'), maxM = 1 - E.recipeCost('tra_tac') / maxed;
+    out.info.maxTraTac = maxed;
+    if (maxM > 0.6) bad(`fully stacked tra_tac sells at ${maxed}k (${(maxM * 100).toFixed(0)}% margin, want ≤ 60%)`);
+    s.prices = {};
     s.recipeLevels = {}; s.biz.shed1.level = 1; s.biz.shed1.equip = {};
     // toppings are charged; size L is a little more
     s.recipes.push('tra_sua');
     const plain = E.recipePrice('drinks' in s.biz ? 'shed1' : 'shed1', 'tra_sua', { size: 'M', topping: 'none' }), topped = E.recipePrice('shed1', 'tra_sua', { size: 'M', topping: 'cheese_foam' });
     if (topped <= plain) bad('toppings add nothing to the price');
     // demand curve is gentle: 130% price keeps at least 60% of the custom, 80% brings at most +40%
-    const a13 = Math.pow(1.3, -1.3), a08 = Math.pow(0.8, -1.3);
+    const a13 = Math.pow(1.3, -E.PRICE_ELASTICITY), a08 = Math.pow(0.8, -E.PRICE_ELASTICITY);
     if (a13 < 0.6 || a08 > 1.4) bad('demand curve too steep');
     // a real day of trade: a shopkeeper serves the drink stand; the books must add up
     s.biz.shed1.owned = true; s.biz.shed1.repair = 1; s.recipes = ['tra_tac'];

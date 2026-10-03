@@ -3,9 +3,18 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.6';
+export const APP_VERSION = '5.3.7';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.7', date: '2026-10-03T00:41:41Z',
+    title: ['Fairer Prices', 'Giá Cả Hợp Lý'],
+    items: [
+      ['Your own price setting now goes from 70% to 130% (it used to reach 160%); menus set higher are brought down to 130%', 'Giá bạn tự đặt giờ từ 70% tới 130% (trước đây lên tới 160%); món nào đang đặt cao hơn sẽ được hạ về 130%'],
+      ['Recipe upgrades, shop level, the daily special and the cash register together add at most +28% to a price (was +45%)', 'Nâng cấp công thức, cấp quán, món đặc biệt trong ngày và máy tính tiền cộng lại chỉ tăng giá tối đa +28% (trước đây +45%)'],
+      ['Customers notice pricey menus a little more, so charging the most no longer prints money', 'Khách để ý giá cao hơn một chút, nên đặt giá cao nhất không còn hái ra tiền nữa'],
+    ],
+  },
   {
     v: '5.3.6', date: '2026-10-02T19:26:00Z',
     title: ['Clearer Talk', 'Nói Chuyện Rõ Hơn'],

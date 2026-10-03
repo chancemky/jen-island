@@ -3,7 +3,7 @@
 // The restaurant has its own simulation in restaurant.js.
 
 import { G, T, addMoney, addRep, markDirty, pantry, addPantry, unlockAchievement, bizOf } from './state.js';
-import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, recipeName, bizName, recipeCost } from '../data/game.js';
+import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, PRICE_RANGE, recipeName, bizName, recipeCost } from '../data/game.js';
 import { RESIDENTS, visitorLook } from '../data/looks.js';
 import { addXP } from './progress.js';
 import { Actor } from '../world/actor.js';
@@ -65,8 +65,8 @@ export function bizRecipes(bizId) {
 export function makeableRecipes(bizId) { return bizRecipes(bizId).filter(r => canMake(bizId, r)); }
 // What a customer pays. opts may be an order's options, or just a size letter.
 // The bonuses the game gives (better recipe, shop level, daily special, cash register)
-// stack, but never past +45% — only your own price setting goes beyond that.
-export const BONUS_CAP = 1.45;
+// stack, but never past +28% — only your own price setting (PRICE_RANGE) goes beyond that.
+export const BONUS_CAP = 1.28;
 export function priceBonus(bizId, id) {
   const lv = RECIPE_UPGRADES[G.state.recipeLevels[id] || 1];
   const up = BUSINESSES[bizId].upgrades?.[bizOf(bizId).level];
@@ -82,8 +82,8 @@ export function recipePrice(bizId, id, opts = 'M') {
 }
 // cost of goods for one order (ingredients at supermarket price)
 export const orderCost = order => recipeCost(order.recipe, order.opts);
-// the price the player set (1 = the fair price)
-export const priceMul = id => G.state.prices?.[id] || 1;
+// the price the player set (1 = the fair price); saves from before the range shrank are clamped
+export const priceMul = id => clamp(G.state.prices?.[id] || 1, PRICE_RANGE[0], PRICE_RANGE[1]);
 // Better food feels worth more: an upgraded recipe in a nicer shop can charge more
 // before anyone minds.
 export function perceivedValue(bizId, id) {
@@ -99,7 +99,8 @@ export function tolerance(bizId, personality, perfectShop = false) {
 }
 // how customers feel about a price: <1 means fewer people want it. A gentle curve —
 // cheap, fair and pricey menus are all workable; they just attract different crowds.
-export const priceAppeal = (id, bizId = null, tol = 1) => Math.pow(priceMul(id) / (perceivedValue(bizId, id) * tol), -1.3);
+export const PRICE_ELASTICITY = 1.5;
+export const priceAppeal = (id, bizId = null, tol = 1) => Math.pow(priceMul(id) / (perceivedValue(bizId, id) * tol), -PRICE_ELASTICITY);
 // equipment effect multiplier for a shop
 export function eq(bizId, key) {
   const own = bizOf(bizId)?.equip; if (!own) return 1;
