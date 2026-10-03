@@ -14,10 +14,11 @@
 //    as a backup either way
 //  • quota errors: old backups are dropped to make room, then the save is retried
 
-import { G, migrate, defaultState, SAVE_VERSION } from './state.js';
+import { G, T, migrate, defaultState, SAVE_VERSION } from './state.js';
 import * as cloud from './cloud.js';
 import { bus } from '../core/util.js';
 import { leaderboardRow, shouldPushLeaderboard } from './progress.js';
+import { toast } from '../ui/hud.js';
 
 // saves from before the current SAVE_VERSION are not loaded — everyone starts fresh after a reset
 const localKey = uid => `jenisland.save${SAVE_VERSION}.${uid}`;
@@ -103,7 +104,11 @@ export async function saveCloudNow({ keepalive = false } = {}) {
     await cloud.saveCloud(snapshot(), { keepalive }); saveStatus.cloudAt = Date.now(); saveStatus.offline = false; saveStatus.error = ''; cloudDirty = false;
     if (G.state.player.name && (keepalive || shouldPushLeaderboard())) cloud.pushLeaderboard(leaderboardRow(G.state)).catch(e => console.warn('leaderboard', e.message));
   }
-  catch (e) { saveStatus.offline = true; saveStatus.error = e.message; console.warn('cloud save failed', e); }
+  catch (e) {
+    // say so once per outage while you're playing (it retries quietly; the game is still saved on this device)
+    if (!saveStatus.offline && !keepalive && G.state?.player?.name) toast({ text: T('Cloud save failed', 'Lưu đám mây thất bại'), sub: T('Saved on this device · retrying', 'Đã lưu trên máy · đang thử lại'), bad: true });
+    saveStatus.offline = true; saveStatus.error = e.message; console.warn('cloud save failed', e);
+  }
   finally { cloudBusy = false; lastCloud = performance.now(); }
 }
 
