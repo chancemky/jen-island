@@ -27,8 +27,10 @@ export class Player extends Actor {
     this.running = m > 0.93 && !G.runtime?.sleepy;            // push the stick all the way to jog
     const speed = WALK_SPEED * (G.runtime?.sleepy ? 0.85 : 1) * (this.running ? 1.3 : 1) * (G.runtime?.devWalk || 1);   // (devWalk: the dev tab)
     const tx = ix * speed * (k > 0 ? 1 : 0) * Math.min(1, m * 1.25), ty = iy * speed * Math.min(1, m * 1.25);
-    this.vx = damp(this.vx, tx, m > 0 ? 14 : 18, dt);
-    this.vy = damp(this.vy, ty, m > 0 ? 14 : 18, dt);
+    // let go and you stop: a quick settle, not a coast into the next bank or stall
+    this.vx = damp(this.vx, tx, m > 0 ? 14 : 40, dt);
+    this.vy = damp(this.vy, ty, m > 0 ? 14 : 40, dt);
+    if (m === 0 && Math.hypot(this.vx, this.vy) < 8) this.vx = this.vy = 0;
     const sp = Math.hypot(this.vx, this.vy);
     if (sp > 2) {
       const [nx, ny] = scene.moveWithCollision(this.x, this.y, this.vx * dt, this.vy * dt, this.radius);
@@ -40,7 +42,10 @@ export class Player extends Actor {
       this._driven = true;
       this.stepT += moved;
       if (this.stepT > 26) { this.stepT = 0; sfx?.('step'); }
-      if (moved < 0.02 * sp * dt) { this.vx *= 0.5; this.vy *= 0.5; }
+      if (moved === 0) { this.vx = this.vy = 0; }
+      else if (moved < 0.02 * sp * dt) { this.vx *= 0.5; this.vy *= 0.5; }
+      // ended up somewhere you can't stand (pushed, restored from a save): step to the nearest free spot
+      if (!scene.canStand(this.x, this.y, this.radius)) { const q = scene.nearestStand(this.x, this.y, this.radius); if (q) { [this.x, this.y] = q; this.vx = this.vy = 0; } }
     }
   }
 }

@@ -37,6 +37,7 @@ export class Scene {
       if (x > s.x - r && x < s.x + s.w + r && y > s.y - r * 0.6 && y < s.y + s.h + r * 0.6) return s;
     }
     for (const s of this.circles) {
+      if (s === ignore || s.soft) continue;   // (soft rings only space out scenery, they don't stop walkers)
       const dx = x - s.x, dy = (y - s.y) * 1.4;
       if (dx * dx + dy * dy < (s.r + r) * (s.r + r)) return s;
     }
@@ -60,9 +61,11 @@ export class Scene {
     if (this.canStand(nx, ny, r)) return [nx, ny];
     // already overlapping something (spawned or pushed into it): let any move out
     const here = this.blocked(x, y, r);
-    if (here && !this.blocked(nx, ny, r, here) && this.terrain(nx, ny)) {
-      const out = here.r !== undefined ? Math.hypot(nx - here.x, (ny - here.y) * 1.4) >= Math.hypot(x - here.x, (y - here.y) * 1.4) : true;
-      if (out) return [nx, ny];
+    if (here) {
+      // ease out of a trunk the way you're pushing; inside a wall, a facade or a counter, step straight to the nearest free floor
+      if (here.r !== undefined && !this.blocked(nx, ny, r, here) && this.terrain(nx, ny) && this.terrainEdge(nx, ny, r)
+        && Math.hypot(nx - here.x, (ny - here.y) * 1.4) >= Math.hypot(x - here.x, (y - here.y) * 1.4)) return [nx, ny];
+      const q = this.nearestStand(x, y, r); if (q) return q;
     }
     // round obstacles (trees, rocks, lamps): glide around the curve instead of stopping
     const hit = this.blocked(nx, ny, r);
@@ -84,6 +87,8 @@ export class Scene {
       const tx = x + (dx * c - dy * s) * 0.7, ty = y + (dx * s + dy * c) * 0.7;
       if (this.canStand(tx, ty, r)) return [tx, ty];
     }
+    // standing where nobody can (wedged on a bank, inside a trunk or a counter): step to the nearest free spot rather than freeze
+    if (!this.canStand(x, y, r)) { const q = this.nearestStand(x, y, r); if (q) return q; }
     return [x, y];
   }
 

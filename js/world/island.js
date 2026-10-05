@@ -262,11 +262,17 @@ export const QUEUES = {
 // ---------------------------------------------------------------- terrain tests
 const inRect = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 export function onBridge(x, y) { return BRIDGES.some(b => inRect(b, x, y)); }
+// dry footing round each river bridge: a little past the rails, and the bank shoulders at both ends so a side approach isn't water (mid-river stays wet)
+const BRIDGE_RAIL_PAD = 8, BRIDGE_BANK_PAD = 20, BRIDGE_BANK_DRY = 10;
+function bridgeFooting(x, y) {
+  return BRIDGES.some(b => inRect({ x: b.x - BRIDGE_RAIL_PAD, y: b.y, w: b.w + BRIDGE_RAIL_PAD * 2, h: b.h }, x, y)
+    || (inRect({ x: b.x - BRIDGE_BANK_PAD, y: b.y - BRIDGE_BANK_PAD, w: b.w + BRIDGE_BANK_PAD * 2, h: b.h + BRIDGE_BANK_PAD * 2 }, x, y) && distToLine(RIVER, x, y) > RIVER_W / 2 - BRIDGE_BANK_DRY));
+}
 export function isWater(x, y) {
   if (inRect(PIER, x, y) || inRect(PIER_END, x, y)) return false;
   for (const sb of SEA_BRIDGES) if (inRect(sb, x, y)) return !sb.fixed() && x > sb.x + 70 && x < sb.x + sb.w - 70; // unbuilt: only the stubs at each end
   if (!onSand(x, y)) return true;
-  if (onBridge(x, y)) return false;
+  if (bridgeFooting(x, y)) return false;
   if (distToLine(RIVER, x, y) < RIVER_W / 2) return true;
   const px = (x - POND.x) / POND.rx, py = (y - POND.y) / POND.ry;
   if (px * px + py * py < 1) return true;
@@ -517,7 +523,7 @@ export class Island extends Scene {
     const fn = P[kind];
     const p = { kind, x, y, ...o, draw: (c, t) => fn(c, t, p) };
     if ((kind === 'signpost' || kind === 'foodCart' || kind === 'sugarcaneCart' || kind === 'fruitStand') && this.keepOut) this.keepOut.push({ x, y, w: kind === 'signpost' ? 64 : 70 });   // keep these readable
-    if ((kind === 'scooter' || kind === 'bicycle') && !o.solidR) this.circles.push({ x, y: y - 2, r: 16, soft: true });   // keep trees off parked bikes
+    if ((kind === 'scooter' || kind === 'bicycle') && !o.solidR) { this.circles.push({ x, y: y - 2, r: 16, soft: true }); this.circle(x, y - 2, 7); }   // keep trees off parked bikes; walkers bump only the bike itself
     const r = o.cullR || 70;
     p.cull = o.cull || { x: x - r, y: y - (o.cullH || 140), w: r * 2, h: (o.cullH || 140) + 20 };
     this.prop(p);
@@ -799,7 +805,7 @@ export class Island extends Scene {
     st.isBuilding = true;
     this.prop(st);
     this.buildings[s.id] = st;
-    this.solid(s.x - 33, s.y - 30, 66, 28, { building: s.id });
+    this.solid(s.x - 33, s.y - 56, 66, 54, { building: s.id });   // counter and the canopy footprint behind it: nobody stands behind the counter
     if (s.biz) this.trigger({ id: 'front:' + s.id, kind: 'front', x: s.x - 40, y: s.y - 4, w: 80, h: 34, building: s.id, biz: s.biz });
   }
 
