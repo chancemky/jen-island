@@ -360,13 +360,26 @@ function noAction(dt) { if ((actGrace -= dt) > 0) return; hudSetAction('', null)
 function clearAction() { actGrace = 0; heldTr = heldTalk = null; hudSetAction('', null); }
 const inTrigger = (t, x, y, pad) => x >= t.x - pad && x <= t.x + t.w + pad && y >= t.y - pad && y <= t.y + t.h + pad;
 let doorPeek = null;
+// Doors: Enter shows from the doorstep (a step below the doorway and a little wider), and walking in only
+// takes you through once Enter has been up for a moment, so you never walk in silently on first touch.
+const DOORSTEP = 24, DOORSTEP_SIDE = 10, WALK_IN_AFTER = 0.25;
+let doorDwell = 0, dwellOn = null;
+const doorstepAt = (sc, x, y) => sc === scenes.island ? sc.triggers.find(t => t.kind === 'door' && !t.off && (!t.enabled || t.enabled()) && x >= t.x - DOORSTEP_SIDE && x <= t.x + t.w + DOORSTEP_SIDE && y >= t.y && y <= t.y + t.h + DOORSTEP) || null : null;
 function updateInteraction(dt) {
   const pl = G.player, sc = G.scene;
   if (heldScene !== sc) { heldScene = sc; clearAction(); }
   if (pl.seat) { setAction(T('Stand', 'Đứng dậy'), () => standUp(), 'sofa'); return; }
   if (!pl.control) { clearAction(); return; }
   const [mx, my, mm] = moveVector();
-  const trHere = sc.triggerAt(pl.x, pl.y, 8);
+  // standing on the exit mat: Leave, before anyone to talk to or any counter; push Down to walk out
+  const exitHere = sc.kind === 'interior' ? sc.triggers.find(t => t.kind === 'exit' && !t.off && inTrigger(t, pl.x, pl.y, 0)) : null;
+  if (exitHere) {
+    heldTr = exitHere; heldTalk = null;
+    if (my > 0.45 && mm > 0.3) { exitBuilding(); return; }
+    setAction(T('Leave', 'Ra ngoài'), () => exitBuilding(), 'door'); return;
+  }
+  const trHere = sc.triggerAt(pl.x, pl.y, 8) || doorstepAt(sc, pl.x, pl.y);
+  if (trHere?.kind === 'door' && trHere === dwellOn) doorDwell += dt; else { dwellOn = trHere?.kind === 'door' ? trHere : null; doorDwell = 0; }
   const keepTr = !trHere && heldTr && sc.triggers.includes(heldTr) && !heldTr.off && (!heldTr.enabled || heldTr.enabled()) && inTrigger(heldTr, pl.x, pl.y, HOLD_PAD);
   const tr = heldTr = trHere || (keepTr ? heldTr : null);
   // doors swing a little as you approach
@@ -377,7 +390,7 @@ function updateInteraction(dt) {
     doorPeek = near;
   }
   // walking into a doorway enters; walking out the door leaves
-  if (trHere?.kind === 'door' && enterable(trHere.building) && my < -0.45 && mm > 0.3) { enterBuilding(trHere); return; }
+  if (trHere?.kind === 'door' && enterable(trHere.building) && my < -0.45 && mm > 0.3 && doorDwell >= WALK_IN_AFTER && inTrigger(trHere, pl.x, pl.y, 8)) { enterBuilding(trHere); return; }
   if (trHere?.kind === 'exit' && my > 0.45 && mm > 0.3) { exitBuilding(); return; }
   // pick the best context action
   // 1) restaurant guest who wants to order

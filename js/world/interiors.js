@@ -25,8 +25,8 @@ export class Interior extends Scene {
     this.fitW = o.fitW || this.w + 26;
     this.entry = { x: this.door.x, y: this.h - 14 };
     this.building = o.building;
-    // exit through the doorway
-    this.trigger({ id: 'exit', kind: 'exit', x: this.door.x - this.door.w / 2, y: this.h - 10, w: this.door.w, h: 26 });
+    // exit through the doorway: the mat and a step either side of it, so Leave is there wherever you stand by the door
+    this.trigger({ id: 'exit', kind: 'exit', x: this.door.x - this.door.w / 2 - 14, y: this.h - 22, w: this.door.w + 28, h: 38 });
     this.front = this.prop({ x: 0, y: this.h + 2, sortY: this.h + 2, draw: (c, t) => this.drawLedge(c, t), cull: { x: -10, y: this.h - 20, w: this.w + 20, h: 40 } });
     this.doorOpen = 0;
   }
@@ -190,7 +190,7 @@ export function buildInteriors() {
     r.furn('bookshelf', 250, 96, {}, [-18, -10, 36, 10]);
     r.furn('fishtank', 238, 190, {}, [-16, -16, 32, 16]);
     r.furn('rug', 62, 196, { w: 60, h: 28, col: '#9fd8c8' });
-    r.furn('plant', 190, 286, {}, [-6, -6, 12, 6]);
+    r.furn('plant', 262, 292, {}, [-6, -6, 12, 6]);   // in the corner, clear of the doorway (no gap to squeeze into below it)
     r.furn('chair', 240, 250, { col: '#b77a4f' }, [-7, -6, 14, 6]);
     r.furn('table', 200, 250, { w: 34, col: '#b77a4f' }, [-17, -8, 34, 8]);
     r.furn('radio', 166, 88, {});

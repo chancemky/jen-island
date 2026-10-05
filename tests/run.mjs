@@ -910,9 +910,10 @@ if (only === 'all' || only === 'clock') {
     (await import('/js/ui/dialogue.js')).closeDialog();
     for (let n = 0; n < 10 && j.cs.active; n++) await wait(100);
     const ex = sc.triggers.find(t => t.kind === 'exit');
-    pl.x = ex.x + ex.w / 2; pl.y = ex.y + 2; a.x = pl.x; a.y = pl.y - 27; pl.face('down'); await wait(350);
+    // a step above the mat someone close wins; on the mat itself Leave always wins
+    pl.x = ex.x + ex.w / 2; pl.y = ex.y - 24; a.x = pl.x; a.y = pl.y - 27; pl.face('down'); await wait(350);
     const byDoor = document.getElementById('actLabel').textContent;
-    a.y = pl.y - 48; await wait(350); const door = document.getElementById('actLabel').textContent;
+    pl.y = ex.y + ex.h / 2 - 6; a.y = pl.y - 20; await wait(350); const door = document.getElementById('actLabel').textContent;
     sc.remove(a);
     return { labels, opened, byDoor, door };
   });
@@ -920,8 +921,8 @@ if (only === 'all' || only === 'clock') {
   if (missedTalk.length) fail('clock', `Talk was missing from ${missedTalk.length} side(s): ${JSON.stringify(talk.labels)}`);
   else if (!talk.labels.every(x => x.includes('Test Neighbor'))) fail('clock', `Talk did not identify its target: ${JSON.stringify(talk.labels)}`);
   else if (!talk.opened) fail('clock', 'pressing Talk did not open a conversation');
-  else if (!/Talk|Nói chuyện/.test(talk.byDoor) || !/Leave|Ra ngoài/.test(talk.door)) fail('clock', `door proximity offered "${talk.byDoor}" nearby and "${talk.door}" farther away`);
-  else pass('clock', 'Talk works from every side at 42px, names its target, and only takes a doorway at close range');
+  else if (!/Talk|Nói chuyện/.test(talk.byDoor) || !/Leave|Ra ngoài/.test(talk.door)) fail('clock', `by the door offered "${talk.byDoor}" (want Talk) and on the exit mat "${talk.door}" (want Leave)`);
+  else pass('clock', 'Talk works from every side at 42px and names its target; on the exit mat Leave always wins');
   // 5) the local save keeps up with walking and the clock without anything else changing
   const uid = await J(() => window.__jen.G.user.id);
   const drift = await J(async () => {
