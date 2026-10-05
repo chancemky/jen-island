@@ -3,9 +3,16 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.14';
+export const APP_VERSION = '5.3.16';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.16', date: '2026-10-05T15:18:00Z',
+    title: ['Recipe Notes', 'Ghi Chú Công Thức'],
+    items: [
+      ['In Bag → Recipes, tap a learned recipe to see ingredients and steps with Have or Missing counts', 'Trong Túi → Công thức, chạm món đã học để xem nguyên liệu và các bước kèm số Có hoặc Thiếu'],
+    ],
+  },
   {
     v: '5.3.14', date: '2026-10-05T14:41:36Z',
     title: ['Steady HUD', 'HUD Ổn Định'],

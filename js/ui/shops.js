@@ -8,7 +8,7 @@ import { sfx } from '../core/audio.js';
 import { money, escapeHtml, bus, clock } from '../core/util.js';
 import { iconURL } from '../gfx/food.js';
 import { drawFurniturePreview } from '../gfx/furniture.js';
-import { bizRecipes, ingredientsForBiz, canMake, recipePrice, priceMul, priceAppeal } from '../systems/business.js';
+import { bizRecipes, ingredientsForBiz, canMake, recipePrice, priceMul, priceAppeal, stockOf } from '../systems/business.js';
 import { level } from '../systems/progress.js';
 import { activeQuests, SIDE_QUESTS, deliverTarget } from '../systems/sidequests.js';
 import { MEO_MEMORIES } from '../data/lore.js';
@@ -187,6 +187,32 @@ export function openFurnitureShop() {
 }
 
 // ---------------------------------------------------------------- bag
+function recipeShopId(id, recipe) {
+  const menus = Object.entries(BUSINESSES).filter(([, b]) => b.menu?.includes(id));
+  const owned = menus.find(([bid]) => G.state.biz[bid]?.owned);
+  return (owned || menus[0] || Object.entries(BUSINESSES).find(([, b]) => b.biz === recipe.biz))?.[0] || null;
+}
+
+function bagRecipeDetail(id, bizId, lv) {
+  const recipe = RECIPES[id], ready = bizId ? canMake(bizId, id) : false;
+  const detail = h('div', 'recipe-detail');
+  detail.style.cssText = 'margin:-4px 8px 6px;padding:12px;background:#fff8ea;border:2.5px solid #e9d8bf;border-top:0;border-radius:0 0 16px 16px;';
+  const price = bizId ? recipePrice(bizId, id) : recipe.price;
+  detail.innerHTML = `<b style="display:block;font-size:15px">${escapeHtml(recipeName(id))} · Lv ${lv}</b><small style="display:block;margin-top:2px;font-weight:800;opacity:.72">${T('Price', 'Giá')}: ${money(price)} · ${T('Shop', 'Quán')}: ${escapeHtml(bizId ? bizName(bizId) : '—')}</small>${recipe.blurb ? `<p style="margin:8px 0;font-size:13px;font-weight:700;line-height:1.35">${escapeHtml(T(recipe.blurb, recipe.blurbVi))}</p>` : ''}<div style="font-size:13px;font-weight:900;color:${ready ? '#2f7f45' : '#b3453a'}">${ready ? T('✓ Ready to make', '✓ Sẵn sàng làm') : T('Missing ingredients', 'Thiếu nguyên liệu')}</div>`;
+  const need = {};
+  for (const step of recipe.steps) { const use = STATION[step]?.uses; if (use) need[use] = (need[use] || 0) + 1; }
+  const steps = h('div', 'recipe-steps'); steps.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-top:9px;';
+  recipe.steps.forEach((step, i) => {
+    const station = STATION[step], use = station?.uses;
+    const have = use && bizId ? stockOf(bizId, use) : 0, ok = !use || have >= need[use];
+    const row = h('div', 'recipe-step'); row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 8px;background:#fff;border-radius:12px;border:2px solid ' + (ok ? '#d9e9cf' : '#f2b1a8');
+    row.innerHTML = `<img src="${iconURL(station?.icon || recipe.icon, 28)}" alt="" style="width:28px;height:28px"><div style="flex:1;min-width:0"><b style="display:block;font-size:13px">${i + 1}. ${escapeHtml(use ? ingName(use) : T(station?.en || step, station?.label || step))}</b></div><span class="have" style="background:${ok ? '#e6f6dc' : '#fff0ec'};color:${ok ? '#2f7f45' : '#b3453a'}">${use ? ok ? T(`Have: ${have}`, `Có: ${have}`) : T(`Missing · Have: ${have}`, `Thiếu · Có: ${have}`) : T('Action', 'Thao tác')}</span>`;
+    steps.appendChild(row);
+  });
+  detail.appendChild(steps);
+  return detail;
+}
+
 export function openBag() {
   const s = G.state;
   openSheet({ title: T('Bag', 'Túi đồ'), full: true, build: (body, api) => {
@@ -206,8 +232,16 @@ export function openBag() {
       } else if (i === 2) {
         for (const id of s.recipes) {
           const r = RECIPES[id], lv = s.recipeLevels[id] || 1;
-          const shop = bizName(Object.keys(BUSINESSES).find(b => BUSINESSES[b].biz === r.biz));
-          list.appendChild(rowEl({ icon: r.icon, title: `${escapeHtml(recipeName(id))} <span class="pill lv">Lv ${lv}</span>`, sub: `${r.price}k · ${escapeHtml(shop)}` }));
+          const bid = recipeShopId(id, r), shop = bid ? bizName(bid) : '—';
+          const row = rowEl({ icon: r.icon, title: `${escapeHtml(recipeName(id))} <span class="pill lv">Lv ${lv}</span>`, sub: `${money(bid ? recipePrice(bid, id) : r.price)} · ${escapeHtml(shop)}` });
+          const detail = bagRecipeDetail(id, bid, lv), detailId = `bag-recipe-${id}`;
+          const arrow = h('span', 'recipe-arrow', '⌄'); arrow.style.cssText = 'font-size:22px;font-weight:900;transition:transform .18s;';
+          row.classList.add('recipe-row'); row.tabIndex = 0; row.setAttribute('role', 'button'); row.setAttribute('aria-controls', detailId); row.style.cursor = 'pointer';
+          detail.id = detailId; detail.hidden = api.recipeOpen !== id;
+          const sync = () => { const open = !detail.hidden; row.setAttribute('aria-expanded', String(open)); arrow.style.transform = open ? 'rotate(180deg)' : ''; };
+          const toggle = () => { sfx('ui'); detail.hidden = !detail.hidden; api.recipeOpen = detail.hidden ? null : id; sync(); };
+          row.appendChild(arrow); row.addEventListener('click', toggle); row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+          sync(); list.append(row, detail);
         }
         secretRecipes(list);
       } else if (i === 3) {
