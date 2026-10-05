@@ -1,7 +1,7 @@
 // Shop lists and inventory screens.
 
 import { G, T, addMoney, canAfford, addPantry, addMat, mats, pantry, hasMats, markDirty, repStars } from '../systems/state.js';
-import { INGREDIENTS, AISLES, MATERIALS, FURNITURE, RECIPES, STATION, PREPPED, BUSINESSES, RECIPE_UPGRADES, ACHIEVEMENTS, CHAPTERS, PREP_VERB, ingName, matName, recipeName, bizName, furnName } from '../data/game.js';
+import { INGREDIENTS, AISLES, MATERIALS, FURNITURE, RECIPES, STATION, BUSINESSES, RECIPE_UPGRADES, ACHIEVEMENTS, CHAPTERS, PREP_VERB, ingName, matName, recipeName, bizName, furnName } from '../data/game.js';
 import { MERCHANTS } from '../data/looks.js';
 import { openSheet, tabs, rowEl, btn, h, flyIcon, showReward } from './sheets.js';
 import { sfx } from '../core/audio.js';
@@ -95,9 +95,8 @@ export function openIngredientShop() {
         api.rebuild();
       });
       right.append(q.el, b);
-      // portions you own: raw in the bag plus anything already sliced/cooked in your shops (1 raw = 1 portion)
-      const prepped = g.prep ? Object.values(G.state.biz).reduce((n, b) => n + (b.prepped?.[g.prep.to] || 0), 0) : 0, have = pantry(id) + prepped;
-      list.appendChild(rowEl({ icon: id, title: escapeHtml(ingName(id)), sub: T(`${g.pack} portions per pack`, `${g.pack} phần / gói`), have: T(`Have: ${have}`, `Có: ${have}`), right }));
+      // The supermarket sells raw ingredients; prepped portions stay listed separately in the bag.
+      list.appendChild(rowEl({ icon: id, title: escapeHtml(ingName(id)), sub: T(`${g.pack} portions per pack`, `${g.pack} phần / gói`), have: T(`Have: ${pantry(id)}`, `Có: ${pantry(id)}`), right }));
     }
   } });
 }
@@ -114,8 +113,7 @@ export function shoppingNeeds() {
   }
   const out = [];
   for (const [k, n] of Object.entries(want)) {
-    const prepped = PREPPED[INGREDIENTS[k]?.prep?.to] ? Object.values(G.state.biz).reduce((s, b) => s + (b.prepped[INGREDIENTS[k].prep.to] || 0), 0) : 0;
-    const have = pantry(k) + prepped;
+    const have = pantry(k);
     if (have < n) out.push([k, Math.ceil((n - have) / INGREDIENTS[k].pack)]);
   }
   return out;
