@@ -5,7 +5,7 @@
 import { present } from '../ui/sheets.js';
 import { COUNTS } from '../core/counts.js';
 import { G, T, markDirty, addMoney } from './state.js';
-import { bus, money } from '../core/util.js';
+import { bus, money, moneyShort } from '../core/util.js';
 import { BUSINESSES, FURNITURE, RECIPES, ACHIEVEMENTS } from '../data/game.js';
 import { CLOTHES, FREE_CLOTHES } from '../data/wardrobe.js';
 import { RESIDENTS } from '../data/looks.js';
@@ -59,7 +59,7 @@ export const GATES = {
 for (const [id, g] of Object.entries(GATES)) Object.defineProperty(g, 'cost', { get: () => BUSINESSES[id].buy, enumerable: true });
 export function gateText(id) {
   const g = GATES[id], lv = level();
-  return T(`Lv ${Math.min(lv, g.level)}/${g.level} · money ${money(Math.floor(G.state.money))}/${money(g.cost)}`, `Cấp ${Math.min(lv, g.level)}/${g.level} · tiền ${money(Math.floor(G.state.money))}/${money(g.cost)}`);
+  return `${T('Lv', 'Cấp')} ${Math.min(lv, g.level)}/${g.level} · ${moneyShort(G.state.money, g.cost, T)}`;
 }
 export const gateReady = id => level() >= GATES[id].level && G.state.money >= GATES[id].cost;
 export const gatePaid = id => !!G.state.keys?.[id];

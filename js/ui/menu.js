@@ -7,7 +7,7 @@ import { SAND, GRASS, RIVER, POND, PATHS, BUILDINGS, PLAZA, NM_PLAZA, PIER, W, H
 import { activeQuests } from '../systems/sidequests.js';
 import { saveStatus, saveLocal, saveCloudNow, resetGame } from '../systems/save.js';
 import { setAudio, sfx } from '../core/audio.js';
-import { escapeHtml, clock, TAU } from '../core/util.js';
+import { escapeHtml, clock, TAU, money, moneyPair, moneyShort } from '../core/util.js';
 import { openJournal } from './shops.js';
 import { currentStep } from '../systems/story.js';
 import { CHAPTERS, BUSINESSES } from '../data/game.js';
@@ -18,7 +18,6 @@ import { renderChangelog } from './whatsnew.js';
 import { iconURL } from '../gfx/food.js';
 import { mountMap } from './worldmap.js';
 import { renderOffice } from './office.js';
-import { money } from '../core/util.js';
 import * as cloud from '../systems/cloud.js';
 import { showReward } from './sheets.js';
 
@@ -41,7 +40,10 @@ function renderMilestones(pane, api) {
     }
     const k = Math.min(1, (st.val - st.prev) / Math.max(1, st.target - st.prev));
     const tierTxt = st.total ? T(`tier ${st.claimed + 1} of ${st.total}`, `bậc ${st.claimed + 1}/${st.total}`) : T(`tier ${st.claimed + 1}`, `bậc ${st.claimed + 1}`);
-    const row = h('div', 'ms-row' + (st.ready ? ' ready' : ''), `<img src="${iconURL(tr.icon, 48)}" alt=""><div class="ms-info"><b>${escapeHtml(T(tr.en, tr.vi))}</b><small>${T('Next goal', 'Mục tiêu kế tiếp')}: ${fmt(Math.min(st.val, st.target))} / ${fmt(st.target)} · ${tierTxt}${giftName ? ` · 🎁 ${escapeHtml(giftName)}` : ''}${earnedNote}</small><div class="ms-bar"><i style="width:${(Math.max(0, k) * 100).toFixed(1)}%"></i></div></div>`);
+    const progress = tr.money
+      ? st.val < st.target ? moneyShort(st.val, st.target, T) : moneyPair(Math.min(st.val, st.target), st.target)
+      : `${fmt(Math.min(st.val, st.target))} / ${fmt(st.target)}`;
+    const row = h('div', 'ms-row' + (st.ready ? ' ready' : ''), `<img src="${iconURL(tr.icon, 48)}" alt=""><div class="ms-info"><b>${escapeHtml(T(tr.en, tr.vi))}</b><small>${T('Next goal', 'Mục tiêu kế tiếp')}: ${progress} · ${tierTxt}${giftName ? ` · 🎁 ${escapeHtml(giftName)}` : ''}${earnedNote}</small><div class="ms-bar"><i style="width:${(Math.max(0, k) * 100).toFixed(1)}%"></i></div></div>`);
     if (st.ready) row.appendChild(btn(T('Claim', 'Nhận'), () => {
       const r = claimMilestone(tr.id); if (!r) return; sfx('fanfare');
       const extra = [r.gift ? T(`🎁 ${r.gift}`, `🎁 ${r.gift}`) : '', r.completed ? T('✓ Completed!', '✓ Hoàn thành!') : ''].filter(Boolean).join(' · ');

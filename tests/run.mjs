@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { chromium, devices } from 'playwright';
+import { moneyPair, moneyShort } from '../js/core/util.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const only = process.argv[2] || 'all';
@@ -84,6 +85,11 @@ async function reachFreeRoam(p, pump = makePump(p)) {
 // ---------------------------------------------------------------- content
 if (only === 'all' || only === 'content') {
   console.log('content');
+  const pair = moneyPair(500, 15000), debt = moneyShort(-23200, 7500), partial = moneyShort(2000, 7500);
+  if (pair === '0.5M / 15M' && debt === 'Need 30.7M more' && partial === 'Need 5,500k more') pass('content', 'money goals keep one unit and show the full shortfall');
+  else fail('content', `money goal formatting is wrong: ${pair} | ${debt} | ${partial}`);
+  const vi = moneyShort(-23200, 7500, 'vi');
+  if (vi === 'Còn thiếu 30.7M') pass('content', 'money shortfalls are localized in Vietnamese'); else fail('content', `Vietnamese money shortfall is wrong: ${vi}`);
   const { p, errors, ctx } = await openGame('content');
   await p.waitForFunction(() => window.__jen?.validate, null, { timeout: 20000 });
   const issues = await p.evaluate(() => window.__jen.validate());
