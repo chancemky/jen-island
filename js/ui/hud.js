@@ -166,7 +166,8 @@ actBtn.addEventListener('pointerdown', e => {
   // A tap is the action; a drag that begins on the pink button still belongs to the floating stick.
   // Keep direct synthetic pointerdowns working for the browser test harness.
   const action = actionTapAt(e.clientX, e.clientY);
-  if (!e.isTrusted || !startJoystick(e, action)) { e.preventDefault(); action?.(); }
+  if (!e.isTrusted) { e.preventDefault(); action?.(); return; }
+  startJoystick(e, action);
 });
 // Keyboard activation and element.click() do not emit pointer events.
 actBtn.addEventListener('click', e => { if (!e.detail) triggerAction(); });

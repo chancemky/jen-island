@@ -649,6 +649,53 @@ if (only === 'all' || only === 'stability') {
     else if (after.money !== before.money || after.dialog || after.ui) fail('stability', 'a joystick drag starting on the action button also triggered its action');
     else pass('stability', 'dragging from the action button moves with the joystick without triggering the action');
   };
+  const actionUnderlayWorks = async () => {
+    const m0 = await p.evaluate(() => { const J = window.__jen; J.G.state.money = Math.max(50, J.G.state.money); J.setScene('island', 900, 1586, 'up'); J.G.player.x = 900; J.G.player.y = 1586; return J.G.state.money; });
+    await p.waitForTimeout(700);
+    const button = await p.evaluate(() => { const b = document.getElementById('actBtn'), r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, ready: b.classList.contains('ready') }; });
+    await p.evaluate(({ x, y }) => {
+      const o = { bubbles: true, pointerId: 77, pointerType: 'mouse', clientX: x, clientY: y };
+      document.getElementById('touch').dispatchEvent(new PointerEvent('pointerdown', { ...o, buttons: 1 }));
+      window.dispatchEvent(new PointerEvent('pointerup', { ...o, buttons: 0 }));
+    }, button);
+    await p.waitForTimeout(700);
+    const ok = await p.evaluate(m0 => window.__jen.G.state.money < m0 || window.__jen.dialogue.active, m0);
+    await settle(8000);
+    if (!button.ready || !ok) fail('stability', 'the visible action button lost to the underlying touch layer'); else pass('stability', 'the visible action button wins even when the touch layer receives pointerdown');
+  };
+  const inputRecoveryWorks = async () => {
+    const pointer = await p.evaluate(async () => {
+      const I = await import('/js/core/input.js'), zone = document.getElementById('touch');
+      const down = { bubbles: true, pointerId: 91, pointerType: 'mouse', clientX: 120, clientY: 300 };
+      zone.dispatchEvent(new PointerEvent('pointerdown', { ...down, buttons: 1 }));
+      window.dispatchEvent(new PointerEvent('pointermove', { ...down, clientX: 180, buttons: 1 }));
+      const moving = I.moveVector();
+      window.dispatchEvent(new PointerEvent('pointermove', { ...down, clientX: 180, buttons: 0 }));
+      const stopped = I.moveVector(); I.releaseJoystick();
+      const sweep = { bubbles: true, pointerId: 92, pointerType: 'mouse', clientX: 120, clientY: 360 };
+      zone.dispatchEvent(new PointerEvent('pointerdown', { ...sweep, buttons: 1 }));
+      window.dispatchEvent(new PointerEvent('pointermove', { ...sweep, clientX: 320, buttons: 1 }));
+      // The finger is still right of where this gesture began. A long outdoor swipe used
+      // to drag the joystick origin past it, turning this small correction into "left".
+      window.dispatchEvent(new PointerEvent('pointermove', { ...sweep, clientX: 220, buttons: 1 }));
+      const corrected = I.moveVector();
+      window.dispatchEvent(new PointerEvent('pointerup', { ...sweep, clientX: 220, buttons: 0 }));
+      return { moving, stopped, corrected };
+    });
+    if (pointer.moving[0] < 0.5 || pointer.stopped[2] !== 0) fail('stability', `lost pointer release left joystick input behind (${JSON.stringify(pointer)})`); else pass('stability', 'a lost pointer release cannot leave the joystick drifting');
+    if (pointer.corrected[0] < 0.5) fail('stability', `a long outdoor drag reversed after a same-side correction (${JSON.stringify(pointer.corrected)})`); else pass('stability', 'a floating-stick drag keeps its direction relative to where that gesture began');
+    await p.evaluate(() => { const J = window.__jen; J.setScene('island', 900, 1700, 'up'); J.G.player.x = 900; J.G.player.y = 1700; J.openMenu({ tab: 0 }); });
+    await p.waitForTimeout(700);
+    const map = await p.evaluate(() => { const c = document.querySelector('.map-wrap canvas'), r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+    await p.mouse.click(map.x, map.y);
+    const focused = await p.evaluate(() => document.activeElement?.id);
+    await p.evaluate(() => [...document.querySelectorAll('.sheet-wrap:not(.out) .x')].pop()?.click());
+    await p.waitForTimeout(350);
+    const a = await p.evaluate(() => [window.__jen.G.player.x, window.__jen.G.player.y]);
+    await p.keyboard.down('d'); await p.waitForTimeout(500); await p.keyboard.up('d');
+    const b = await p.evaluate(() => [window.__jen.G.player.x, window.__jen.G.player.y]);
+    if (focused !== 'touch' || Math.hypot(b[0] - a[0], b[1] - a[1]) < 5) fail('stability', `WASD did not recover after a map-canvas click (focus ${focused || 'none'})`); else pass('stability', 'WASD works after clicking and closing the map canvas');
+  };
 
   // 1) many rewards at once → one card at a time
   await p.evaluate(() => { const J = window.__jen; window.__maxCards = 0; window.__cardWatch = setInterval(() => { window.__maxCards = Math.max(window.__maxCards, document.querySelectorAll('.reward:not(.out), .levelup:not(.out)').length); }, 50);
@@ -669,8 +716,10 @@ if (only === 'all' || only === 'stability') {
   for (let i = 0; i < 25; i++) { await p.mouse.click(195, 420).catch(() => {}); await p.keyboard.press('e'); await p.waitForTimeout(60); }
   await clean('cutscene + chapter card + achievements + quest reward + milestone (with rapid tapping)');
   if ((await p.evaluate(() => window.__jen.G.state.story.chapter)) < 19) fail('stability', 'the chapter did not advance during the stress test');
+  await actionUnderlayWorks();
   await actionDragWorks();
   await actionWorks('after the stress test');
+  await inputRecoveryWorks();
 
   // 3) a scene asked for twice starts once
   const runs = await p.evaluate(async () => { const J = window.__jen; let n = 0; const f = () => J.cs.run('dup-test', async () => { n++; await new Promise(r => setTimeout(r, 300)); }); await Promise.all([f(), f(), f()]); return n; });

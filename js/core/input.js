@@ -15,7 +15,7 @@ export const input = {
   lastTouch: 0,
 };
 
-let base, knob, zone, active = null, ox = 0, oy = 0;
+let base, knob, zone, active = null, captureOwner = null, ox = 0, oy = 0;
 let downX = 0, downY = 0, downT = 0, dragMax = 0; // a quick touch without dragging is a tap
 let tapOverride = null;             // a HUD control can yield a drag to the stick, but keep an unmoved tap
 let lastMoveRead = performance.now();
@@ -30,7 +30,7 @@ export function initInput(zoneEl, baseEl, knobEl) {
   window.addEventListener('pointerup', onUp, true);
   window.addEventListener('pointercancel', onUp, true);
   window.addEventListener('lostpointercapture', onUp, true);
-  const resetInput = () => { releaseJoystick(); input.keys.clear(); };
+  const resetInput = () => { releaseJoystick(); input.keys.clear(); input.actionPressed = false; };
   window.addEventListener('blur', resetInput);
   window.addEventListener('pagehide', resetInput);
   document.addEventListener('visibilitychange', () => { if (document.hidden) resetInput(); });
@@ -82,10 +82,17 @@ export function initInput(zoneEl, baseEl, knobEl) {
 }
 
 export function startJoystick(e, onTap = null) {
-  if (!input.enabled || active !== null || stale(e)) return false;
+  if (!input.enabled || stale(e)) return false;
+  // A fresh down with the same pointer id means its previous release was lost.
+  // Re-anchor it here; a second finger must never steal the gesture in progress.
+  if (active !== null) {
+    if (e.pointerId !== active) return false;
+    releaseJoystick();
+  }
   e.preventDefault();
   active = e.pointerId;
   tapOverride = onTap;
+  input.x = input.y = input.mag = 0;
   if (document.body.classList.contains('show-joy-hint')) setTimeout(() => document.body.classList.remove('show-joy-hint'), 1500);
   input.lastTouch = performance.now();
   const r = zone.getBoundingClientRect();
@@ -94,6 +101,8 @@ export function startJoystick(e, onTap = null) {
   base.style.left = (ox - r.left) + 'px'; base.style.top = (oy - r.top) + 'px';
   base.classList.add('on');
   knob.style.transform = 'translate(-50%,-50%)';
+  captureOwner = e.currentTarget?.setPointerCapture ? e.currentTarget : e.target?.setPointerCapture ? e.target : null;
+  try { captureOwner?.setPointerCapture(e.pointerId); } catch { captureOwner = null; }
   return true;
 }
 function onDown(e) { startJoystick(e, input.tapOverrideAt?.(e.clientX, e.clientY) || null); }
@@ -104,22 +113,17 @@ function onMove(e) {
   // move with no button held is an implicit release, never a continuing joystick drag.
   if ((e.pointerType === 'mouse' || e.pointerType === 'pen') && e.buttons === 0) { onUp({ pointerId: e.pointerId, type: 'pointercancel' }); return; }
   e.preventDefault();
-  let dx = e.clientX - ox, dy = e.clientY - oy;
+  const dx = e.clientX - ox, dy = e.clientY - oy;
   const d = Math.hypot(dx, dy);
   dragMax = Math.max(dragMax, Math.hypot(e.clientX - downX, e.clientY - downY));
-  // drag the base along when the thumb goes far, so direction changes stay easy
-  if (d > R * 1.6) {
-    const k = (d - R * 1.6) / d; ox += dx * k; oy += dy * k;
-    const r = zone.getBoundingClientRect();
-    base.style.left = (ox - r.left) + 'px'; base.style.top = (oy - r.top) + 'px';
-    dx = e.clientX - ox; dy = e.clientY - oy;
-  }
-  const dd = Math.hypot(dx, dy), m = Math.min(1, dd / R);
-  const nx = dd ? dx / dd : 0, ny = dd ? dy / dd : 0;
+  // The origin belongs to this gesture. Moving the base after a long outdoor swipe
+  // made a small correction point the opposite way from the original drag.
+  const m = Math.min(1, d / R);
+  const nx = d ? dx / d : 0, ny = d ? dy / d : 0;
   const dead = 0.14;
   const mm = m < dead ? 0 : (m - dead) / (1 - dead);
   input.x = nx * mm; input.y = ny * mm; input.mag = mm;
-  knob.style.transform = `translate(calc(-50% + ${nx * Math.min(dd, R)}px), calc(-50% + ${ny * Math.min(dd, R)}px))`;
+  knob.style.transform = `translate(calc(-50% + ${nx * Math.min(d, R)}px), calc(-50% + ${ny * Math.min(d, R)}px))`;
 }
 function onUp(e) {
   if (e.pointerId !== active) return;
@@ -128,10 +132,13 @@ function onUp(e) {
   // If the action appeared after pointerdown (or the browser cached the old hit target),
   // a release over its now-visible hit box still belongs to the button.
   if (tapped && !override) override = input.tapOverrideAt?.(e.clientX, e.clientY) || null;
+  const owner = captureOwner;
   active = null;
+  captureOwner = null;
   tapOverride = null;
   input.x = input.y = input.mag = 0;
   resetKnob();
+  try { if (owner?.hasPointerCapture?.(e.pointerId)) owner.releasePointerCapture(e.pointerId); } catch {}
   // HUD buttons accept a deliberate hold as a tap; world taps stay quick so a held thumb never walks somewhere.
   if (tapped && override) override();
   else if (tapped && performance.now() - downT < 350) input.onTap?.(downX, downY);
