@@ -12,8 +12,27 @@ import { input, joystickActive, startJoystick } from '../core/input.js';
 const $ = id => document.getElementById(id);
 const hud = $('hud'), actions = $('actions');
 let shownMoney = null, moneyTarget = 0;
+let lastMinute = -1;
 
-export function showHud(on) { hud.classList.toggle('hidden', !on); actions.classList.toggle('hidden', !on); $('pointer').classList.toggle('hidden', !on); }
+export function paintHudNow() {
+  const s = G.state;
+  moneyTarget = s.money; shownMoney = s.money;
+  $('moneyLabel').textContent = money(s.money);
+  $('dayLabel').textContent = T('Day ', 'Ngày ') + s.day;
+  $('clockLabel').textContent = clock(s.time);
+  $('sunIcon').classList.toggle('night', s.time >= 18.5 * 60 || s.time < 6 * 60);
+  const lv = s.level || 1, need = Math.round(90 * Math.pow(lv, 1.5));
+  $('lvLabel').dataset.v = lv + G.lang;
+  $('lvLabel').textContent = (G.lang === 'vi' ? 'Cấp ' : 'Lv ') + lv;
+  $('xpFill').style.width = Math.min(100, (s.xp || 0) / need * 100).toFixed(1) + '%';
+  lastMinute = Math.floor(s.time);
+  renderStars();
+}
+
+export function showHud(on) {
+  if (on) paintHudNow();
+  hud.classList.toggle('hidden', !on); actions.classList.toggle('hidden', !on); $('pointer').classList.toggle('hidden', !on);
+}
 
 export function initHud() {
   const mi = document.getElementById('mapIco'); if (mi) mi.src = iconURL('map', 40);
@@ -40,7 +59,6 @@ export function renderStars() {
   const rn = document.getElementById('repNum'); if (rn) rn.textContent = '★' + v.toFixed(1);
 }
 
-let lastMinute = -1;
 export function updateHud(dt) {
   const s = G.state;
   // money rolls smoothly toward the real value

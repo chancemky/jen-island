@@ -3,9 +3,16 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.13';
+export const APP_VERSION = '5.3.14';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.14', date: '2026-10-05T14:41:36Z',
+    title: ['Steady HUD', 'HUD Ổn Định'],
+    items: [
+      ['Resuming a saved game no longer flashes Day 1 / 0k / Lv 1 before showing your real progress', 'Khi tiếp tục game đã lưu, HUD không còn chớp Ngày 1 / 0k / Cấp 1 trước khi hiện tiến trình thật'],
+    ],
+  },
   {
     v: '5.3.13', date: '2026-10-05T14:40:00Z',
     title: ['Clear Exits', 'Lối Ra Rõ'],
