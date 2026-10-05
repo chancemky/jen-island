@@ -3,9 +3,21 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.9';
+export const APP_VERSION = '5.3.10';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.10', date: '2026-10-05T14:09:00Z',
+    title: ['Smoother Walks', 'Đi Lại Mượt Hơn'],
+    items: [
+      ['Money goals show clearer shortfalls when your wallet is low', 'Mục tiêu tiền hiện rõ phần còn thiếu khi ví thấp'],
+      ['Fewer soft-locks at the Night Market bridge, north shore, and stall edges', 'Ít bị kẹt hơn ở cầu Chợ Đêm, bờ bắc và mép quầy'],
+      ['Supermarket Have counts raw stock only — sliced or cooked portions stay in the bag', 'Ở siêu thị, Có chỉ đếm hàng sống — phần đã thái hoặc nấu vẫn nằm trong túi'],
+      ['You can no longer stand or save on roofs, and narrow gaps between shops are sealed', 'Không còn đứng hoặc lưu trên mái, và khe hẹp giữa các quán được bịt lại'],
+      ['Talk, Enter, and Shop are easier to tap when the on-screen stick is out', 'Nói chuyện, Vào và Cửa hàng dễ chạm hơn khi cần điều khiển đang hiện'],
+      ['After a laggy moment, the stick and keys recover instead of teleporting or getting stuck', 'Sau lúc giật, cần và phím hồi lại thay vì dịch chỗ hoặc bị kẹt'],
+    ],
+  },
   {
     v: '5.3.9', date: '2026-10-03T11:31:16Z',
     title: ['Clearer Signs', 'Biển Báo Rõ Hơn'],
