@@ -575,6 +575,7 @@ body.hide-controls .pause-btn, body.cutscene .pause-btn { display: none; }
 .map-wrap { touch-action: none; }
 .map-ui { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 6px; }
 .map-ui button { width: 34px; height: 34px; border-radius: 12px; border: 2px solid var(--ink); background: #fff8ea; font: 900 18px Nunito, sans-serif; color: var(--ink); box-shadow: 0 2px 0 var(--ink); }
+.sheet-head .x.map-close { width: 48px; height: 48px; position: relative; z-index: 2; }
 /* the street outside the service window: sky, a strip of street, and window glass */
 .svc-outside { position: relative; flex: none; overflow: hidden; border-bottom: 3px solid var(--ink);
   background: linear-gradient(180deg, #9fdcf6 0%, #cdefff 48%, #f3fbff 60%, #bfe3a4 60.5%, #a6d68b 72%, #e8d3a8 72.5%, #d9bf8e 100%); }

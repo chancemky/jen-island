@@ -3,9 +3,16 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.11';
+export const APP_VERSION = '5.3.12';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.12', date: '2026-10-05T14:22:46Z',
+    title: ['Map Close', 'Đóng Bản Đồ'],
+    items: [
+      ['The map panel close button has a larger touch target and responds even when a phone drops the click', 'Nút đóng bảng bản đồ có vùng chạm lớn hơn và vẫn phản hồi khi điện thoại làm mất cú nhấp'],
+    ],
+  },
   {
     v: '5.3.11', date: '2026-10-05T14:14:00Z',
     title: ['Stick Aim', 'Hướng Cần'],

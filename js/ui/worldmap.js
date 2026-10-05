@@ -114,6 +114,17 @@ export function mountMap(wrap) {
   const ui = document.createElement('div'); ui.className = 'map-ui';
   ui.innerHTML = '<button type="button" data-z="1">+</button><button type="button" data-z="-1">−</button><button type="button" data-z="0">◎</button>';
   wrap.appendChild(ui);
+  // Some phones deliver the press on the map sheet's × but drop its later click.
+  // Give this busy corner a full touch target and close on the press; the existing
+  // click handler remains in place for keyboard and screen-reader activation.
+  const close = wrap.closest('.sheet')?.querySelector('.sheet-head .x');
+  if (close && !close.classList.contains('map-close')) {
+    close.classList.add('map-close');
+    close.addEventListener('pointerdown', e => {
+      if (e.button !== undefined && e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation(); close.click();
+    });
+  }
   const view = { x: 0, y: 0, s: 0 };           // world point at the canvas centre, px per unit
   let fit = 0, raf = 0;
   const size = () => { const r = wrap.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1); cv.width = Math.max(10, r.width * dpr); cv.height = Math.max(10, r.height * dpr); fit = Math.min(cv.width / (W - 60), cv.height / (H - 60)); view.fit = fit; };
@@ -138,8 +149,11 @@ export function mountMap(wrap) {
     }
     clampView(); redraw();
   });
-  const up = e => { pts.delete(e.pointerId); last = null; };
-  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  const up = e => {
+    pts.delete(e.pointerId); last = null;
+    try { if (cv.hasPointerCapture(e.pointerId)) cv.releasePointerCapture(e.pointerId); } catch {}
+  };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('lostpointercapture', up);
   cv.addEventListener('wheel', e => { e.preventDefault(); const [mx, my] = toCanvas(e); zoomAt(mx, my, e.deltaY < 0 ? 1.15 : 1 / 1.15); clampView(); redraw(); }, { passive: false });
   function zoomAt(mx, my, k) {
     const wx = view.x + (mx - cv.width / 2) / view.s, wy = view.y + (my - cv.height / 2) / view.s;

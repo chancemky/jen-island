@@ -333,6 +333,16 @@ if (only === 'all' || only === 'ui') {
   console.log('screens');
   const { p, errors, ctx } = await openGame('ui');
   if (!(await reachFreeRoam(p))) fail('ui', 'never reached free roam');
+  const mapClose = await p.evaluate(async () => {
+    window.__jen.openMenu({ tab: 0 });
+    await new Promise(r => setTimeout(r, 500));
+    const x = document.querySelector('.sheet-wrap:not(.out) .map-close');
+    const size = x ? [x.getBoundingClientRect().width, x.getBoundingClientRect().height] : [0, 0];
+    x?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 153, pointerType: 'touch', button: 0, isPrimary: true }));
+    await new Promise(r => setTimeout(r, 350));
+    return { size, closed: !document.querySelector('.sheet-wrap:not(.out)') };
+  });
+  if (!mapClose.closed || mapClose.size[0] < 44 || mapClose.size[1] < 44) fail('ui', `map close press was ignored (${JSON.stringify(mapClose)})`); else pass('ui', 'map close has a full touch target and works without a synthesized click');
   const out = await p.evaluate(async () => {
     const J = window.__jen, s = J.G.state, res = {};
     const wait = ms => new Promise(r => setTimeout(r, ms));
