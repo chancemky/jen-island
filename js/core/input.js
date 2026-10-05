@@ -16,6 +16,7 @@ export const input = {
 
 let base, knob, zone, active = null, ox = 0, oy = 0;
 let downX = 0, downY = 0, downT = 0, dragMax = 0; // a quick touch without dragging is a tap
+let tapOverride = null;             // a HUD control can yield a drag to the stick, but keep an unmoved tap
 const R = 46;
 
 export function initInput(zoneEl, baseEl, knobEl) {
@@ -60,10 +61,11 @@ export function initInput(zoneEl, baseEl, knobEl) {
   resetKnob();
 }
 
-function onDown(e) {
-  if (!input.enabled || active !== null) return;
+export function startJoystick(e, onTap = null) {
+  if (!input.enabled || active !== null) return false;
   e.preventDefault();
   active = e.pointerId;
+  tapOverride = onTap;
   if (document.body.classList.contains('show-joy-hint')) setTimeout(() => document.body.classList.remove('show-joy-hint'), 1500);
   input.lastTouch = performance.now();
   const r = zone.getBoundingClientRect();
@@ -72,7 +74,9 @@ function onDown(e) {
   base.style.left = (ox - r.left) + 'px'; base.style.top = (oy - r.top) + 'px';
   base.classList.add('on');
   knob.style.transform = 'translate(-50%,-50%)';
+  return true;
 }
+function onDown(e) { startJoystick(e); }
 function onMove(e) {
   if (e.pointerId !== active) return;
   e.preventDefault();
@@ -95,10 +99,15 @@ function onMove(e) {
 }
 function onUp(e) {
   if (e.pointerId !== active) return;
+  const tapped = dragMax < 12 && e.clientX !== undefined;
+  const override = tapOverride;
   active = null;
+  tapOverride = null;
   input.x = input.y = input.mag = 0;
   resetKnob();
-  if (dragMax < 12 && performance.now() - downT < 350 && e.clientX !== undefined) input.onTap?.(downX, downY);
+  // HUD buttons accept a deliberate hold as a tap; world taps stay quick so a held thumb never walks somewhere.
+  if (tapped && override) override();
+  else if (tapped && performance.now() - downT < 350) input.onTap?.(downX, downY);
 }
 function resetKnob() {
   if (!base) return;

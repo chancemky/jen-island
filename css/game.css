@@ -75,7 +75,7 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 #actions { position: absolute; inset: 0; z-index: 21; pointer-events: none; }
 .act-btn { pointer-events: auto; position: absolute; right: calc(18px + var(--sar)); bottom: calc(28px + var(--sab)); width: 84px; height: 84px; border-radius: 50%;
   background: radial-gradient(circle at 40% 30%, #ffb3c1, var(--pink) 60%, var(--pink2)); border: 3.5px solid var(--ink); box-shadow: 0 6px 0 rgba(91,63,54,.35);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; transition: transform .2s cubic-bezier(.3,1.5,.5,1), opacity .2s, filter .2s; }
+  display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; touch-action: none; transition: transform .2s cubic-bezier(.3,1.5,.5,1), opacity .2s, filter .2s; }
 .act-btn.idle { filter: saturate(.25) brightness(1.05); opacity: .75; }
 .act-btn.ready { animation: ready 1.4s infinite; }
 @keyframes ready { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }

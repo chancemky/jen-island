@@ -637,6 +637,18 @@ if (only === 'all' || only === 'stability') {
     await settle(8000);
     if (!ok) fail('stability', `${label}: the action button did nothing (${lab.join(' / ')})`); else pass('stability', `${label}: the action button works`);
   };
+  const actionDragWorks = async () => {
+    const before = await p.evaluate(() => { const J = window.__jen; J.G.state.money = Math.max(50, J.G.state.money); J.setScene('island', 900, 1586, 'up'); J.G.player.x = 900; J.G.player.y = 1586; return { x: J.G.player.x, y: J.G.player.y, money: J.G.state.money }; });
+    await p.waitForTimeout(700);
+    const button = await p.evaluate(() => { const b = document.getElementById('actBtn'), r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, ready: b.classList.contains('ready'), label: b.innerText }; });
+    await p.mouse.move(button.x, button.y); await p.mouse.down(); await p.mouse.move(button.x, button.y - 64, { steps: 5 }); await p.waitForTimeout(600); await p.mouse.up();
+    const after = await p.evaluate(() => { const J = window.__jen; return { x: J.G.player.x, y: J.G.player.y, money: J.G.state.money, dialog: J.dialogue.active, ui: J.isUiOpen() }; });
+    const moved = Math.hypot(after.x - before.x, after.y - before.y);
+    if (!button.ready) fail('stability', `action-button drag test had no action (${button.label})`);
+    else if (moved < 5) fail('stability', `a joystick drag starting on the action button did not move (${moved.toFixed(1)}px)`);
+    else if (after.money !== before.money || after.dialog || after.ui) fail('stability', 'a joystick drag starting on the action button also triggered its action');
+    else pass('stability', 'dragging from the action button moves with the joystick without triggering the action');
+  };
 
   // 1) many rewards at once → one card at a time
   await p.evaluate(() => { const J = window.__jen; window.__maxCards = 0; window.__cardWatch = setInterval(() => { window.__maxCards = Math.max(window.__maxCards, document.querySelectorAll('.reward:not(.out), .levelup:not(.out)').length); }, 50);
@@ -657,6 +669,7 @@ if (only === 'all' || only === 'stability') {
   for (let i = 0; i < 25; i++) { await p.mouse.click(195, 420).catch(() => {}); await p.keyboard.press('e'); await p.waitForTimeout(60); }
   await clean('cutscene + chapter card + achievements + quest reward + milestone (with rapid tapping)');
   if ((await p.evaluate(() => window.__jen.G.state.story.chapter)) < 19) fail('stability', 'the chapter did not advance during the stress test');
+  await actionDragWorks();
   await actionWorks('after the stress test');
 
   // 3) a scene asked for twice starts once

@@ -7,6 +7,7 @@ import { iconURL } from '../gfx/food.js';
 import { ACHIEVEMENTS } from '../data/game.js';
 import { sfx } from '../core/audio.js';
 import { cam } from '../world/render.js';
+import { startJoystick } from '../core/input.js';
 
 const $ = id => document.getElementById(id);
 const hud = $('hud'), actions = $('actions');
@@ -140,14 +141,22 @@ export function setAction(label, handler, icon = null) {
 // one press, one action: a burst of taps (or a tap while the last action is still starting)
 // can't run the same thing twice
 let actBusyUntil = 0;
-export function triggerAction() {
+export function triggerAction(handler = actHandler) {
   const now = performance.now();
-  if (!actHandler || now < actBusyUntil) return;
+  if (!handler || now < actBusyUntil) return;
   actBusyUntil = now + 450;
   sfx('tap');
-  try { const r = actHandler(); if (r?.catch) r.catch(e => console.error('[action]', e)); } catch (e) { console.error('[action]', e); }
+  try { const r = handler(); if (r?.catch) r.catch(e => console.error('[action]', e)); } catch (e) { console.error('[action]', e); }
 }
-actBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); triggerAction(); });
+actBtn.addEventListener('pointerdown', e => {
+  e.stopPropagation();
+  // A tap is the action; a drag that begins on the pink button still belongs to the floating stick.
+  // Keep direct synthetic pointerdowns working for the browser test harness.
+  const handler = actHandler;
+  if (!e.isTrusted || !startJoystick(e, () => triggerAction(handler))) { e.preventDefault(); triggerAction(handler); }
+});
+// Keyboard activation and element.click() do not emit pointer events.
+actBtn.addEventListener('click', e => { if (!e.detail) triggerAction(); });
 
 const bizBtn = $('bizBtn');
 let bizHandler = null;
