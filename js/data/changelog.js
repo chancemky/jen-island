@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.12';
+export const APP_VERSION = '5.3.13';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.13', date: '2026-10-05T14:40:00Z',
+    title: ['Clear Exits', 'Lối Ra Rõ'],
+    items: [
+      ['Leave always shows on the exit mat and beats Talk or Shop there; walk Down to leave', 'Ra ngoài luôn hiện trên thảm cửa và thắng Nói chuyện / Cửa hàng; đi Xuống để ra'],
+      ['Enter shows on the doorstep before you walk in, so shops and Home no longer open on first touch', 'Vào hiện trên bậc cửa trước khi bước vào, nên quán và Nhà không còn mở ngay cú chạm đầu'],
+    ],
+  },
   {
     v: '5.3.12', date: '2026-10-05T14:22:46Z',
     title: ['Map Close', 'Đóng Bản Đồ'],
