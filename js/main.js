@@ -36,6 +36,7 @@ import { repairBridge, STEPS , stallHandover } from './systems/story.js';
 import { buildSeaBridge } from './systems/story.js';
 import { runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
 import { talkToResident, talkToMerchant, talkToStaff, talkToVisitor } from './systems/talk.js';
+import { questDelivery } from './systems/sidequests.js';
 import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, saveStatus, peekLocalLanguage } from './systems/save.js';
 import * as cloud from './systems/cloud.js';
 import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, MATERIALS, bizName, recipeName, HARBOUR_BRIDGE, COVE_BRIDGE } from './data/game.js';
@@ -365,6 +366,10 @@ let doorPeek = null;
 const DOORSTEP = 24, DOORSTEP_SIDE = 10, WALK_IN_AFTER = 0.25;
 let doorDwell = 0, dwellOn = null;
 const doorstepAt = (sc, x, y) => sc === scenes.island ? sc.triggers.find(t => t.kind === 'door' && !t.off && (!t.enabled || t.enabled()) && x >= t.x - DOORSTEP_SIDE && x <= t.x + t.w + DOORSTEP_SIDE && y >= t.y && y <= t.y + t.h + DOORSTEP) || null : null;
+// Shop counters: standing at one (a little either side, a step back) offers Shop / Haircut / Pets even with the
+// shopkeeper right behind it; they're talked to from beside the counter instead (see nearestTalkable)
+const COUNTER_SIDE = 8, COUNTER_BACK = 14;
+const counterAt = (sc, x, y) => sc.kind === 'interior' ? sc.triggers.find(t => t.kind === 'act' && /^shop:/.test(t.action || '') && !t.off && (!t.enabled || t.enabled()) && x >= t.x - COUNTER_SIDE && x <= t.x + t.w + COUNTER_SIDE && y >= t.y - 4 && y <= t.y + t.h + COUNTER_BACK) || null : null;
 function updateInteraction(dt) {
   const pl = G.player, sc = G.scene;
   if (heldScene !== sc) { heldScene = sc; clearAction(); }
@@ -378,6 +383,9 @@ function updateInteraction(dt) {
     if (my > 0.45 && mm > 0.3) { exitBuilding(); return; }
     setAction(T('Leave', 'Ra ngoài'), () => exitBuilding(), 'door'); return;
   }
+  // at a shop counter the counter wins, unless you've brought the shopkeeper something they're waiting for
+  const counter = counterAt(sc, pl.x, pl.y);
+  if (counter && !(sc.merchant?.visible && questDelivery(sc.merchant.data.mid))) { heldTr = counter; heldTalk = null; return actAction(counter); }
   const trHere = sc.triggerAt(pl.x, pl.y, 8) || doorstepAt(sc, pl.x, pl.y);
   if (trHere?.kind === 'door' && trHere === dwellOn) doorDwell += dt; else { dwellOn = trHere?.kind === 'door' ? trHere : null; doorDwell = 0; }
   const keepTr = !trHere && heldTr && sc.triggers.includes(heldTr) && !heldTr.off && (!heldTr.enabled || heldTr.enabled()) && inTrigger(heldTr, pl.x, pl.y, HOLD_PAD);
@@ -402,7 +410,7 @@ function updateInteraction(dt) {
   // 2) nearby talkable actors — over a trigger only when they're genuinely closer
   //    (or standing still by a door); a pet never takes over the bed, a door or a counter
   const talk = nearestTalkable(sc, pl), td = talk ? dist(talk.x, talk.y, pl.x, pl.y) : 1e9;
-  const talkWins = talk && (!tr || (talk.kind !== 'pet' && (td < 30 || (tr.kind === 'door' && td < 42 && !talk.path))));
+  const talkWins = talk && (!tr || (talk.kind !== 'pet' && (tr !== trHere || td < 30 || (tr.kind === 'door' && td < 42 && !talk.path))));   // (a trigger you've stepped off only holds against nobody)
   heldTalk = talkWins ? talk : null;
   if (talkWins) {
     const verb = T('Talk', 'Nói chuyện'), label = talk.name ? `${verb} · ${talk.name}` : verb;
@@ -482,7 +490,8 @@ function nearestTalkable(sc, pl) {
     const dx = a.x - pl.x, dy = a.y - pl.y, d = Math.hypot(dx, dy);
     const facing = (dx * fx0 + dy * fy0) / (d || 1);
     const held = a === heldTalk;                                  // the one you're already offered stays a bit longer
-    if (d >= (held ? 56 : 46)) continue;
+    const reach = a.data?.merchant ? 60 : 46;                    // shopkeepers stand behind a counter: reach them from beside it
+    if (d >= (held ? reach + 10 : reach)) continue;
     const score = d - facing * 8 - (held ? 10 : 0);               // facing chooses between people; it never hides the only one nearby
     if (score < bd) { bd = score; best = a; }
   }

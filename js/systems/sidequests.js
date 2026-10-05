@@ -126,6 +126,8 @@ async function finishQuest(q, a, rid) {
   await showReward({ icon: q.icon || r.mat?.[0] || r.ing?.[0] || 'coin', kicker: T('Side quest complete!', 'Hoàn thành nhiệm vụ phụ!'), title: `+${cash}k · +${60 + q.ch * 5} XP`, text: (extra ? extra + ' · ' : '') + T('Written in your scrapbook.', 'Đã ghi vào sổ kỷ niệm.') });
   bus.emit('quest:done', q.id, q.reward?.keepsake || q.item);
 }
+// carrying something this person is waiting for (their Talk beats a shop counter so it can be handed over)
+export const questDelivery = rid => { const q = questFor(rid); return !!q && Q()[q.id] === 'found' && deliverTarget(q) === rid; };
 export const questOption = rid => {
   const q = questFor(rid); if (!q) return null;
   const st = Q()[q.id], P = x => rid === 'meo' ? x.replace(/\{[^}]+\}/g, 'bạn') : applyPlayerPronouns(x, profileOf(rid));

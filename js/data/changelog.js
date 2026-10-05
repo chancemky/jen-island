@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.16';
+export const APP_VERSION = '5.3.17';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.17', date: '2026-10-05T15:26:32Z',
+    title: ['Counter First', 'Quầy Trước'],
+    items: [
+      ['At a shop counter, Shop, Haircut or Pets now always shows, even with the shopkeeper standing right behind it', 'Ở quầy cửa hàng, Mua, Cắt tóc hay Thú cưng giờ luôn hiện, kể cả khi chủ tiệm đứng ngay sau quầy'],
+      ['To chat with a shopkeeper, stand beside the counter', 'Muốn trò chuyện với chủ tiệm, hãy đứng cạnh quầy'],
+    ],
+  },
   {
     v: '5.3.16', date: '2026-10-05T15:18:00Z',
     title: ['Recipe Notes', 'Ghi Chú Công Thức'],
