@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.10';
+export const APP_VERSION = '5.3.11';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.11', date: '2026-10-05T14:14:00Z',
+    title: ['Stick Aim', 'Hướng Cần'],
+    items: [
+      ['Outdoor joystick aims the way you drag, even if you start away from the stick', 'Cần điều khiển ngoài trời đi đúng hướng bạn kéo, kể cả khi bắt đầu xa nút'],
+      ['After a stuck or laggy gesture, movement recovers without signing out', 'Sau cử chỉ bị kẹt hoặc giật, di chuyển hồi lại mà không cần đăng xuất'],
+    ],
+  },
   {
     v: '5.3.10', date: '2026-10-05T14:09:00Z',
     title: ['Smoother Walks', 'Đi Lại Mượt Hơn'],
