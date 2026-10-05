@@ -5,7 +5,7 @@
 // ears twitch, the tail sways and curls, the head tilts, the mouth opens while
 // talking and the whole body squashes on hops.
 
-import { TAU, shade } from '../core/util.js';
+import { TAU } from '../core/util.js';
 import { anticTransform } from '../systems/fun.js';
 import { INK, ell, circ, shadow, limb } from './draw.js';
 import { viewOf } from './character.js';
@@ -240,6 +240,5 @@ export function drawCat(c, a, t) {
   c.restore();
   if (view === 'back') tail(c, a, t, view);        // nearest the camera when facing away
   paw(pR, false);
-  if (act === 'hold' && a.held) { void 0; }
   c.restore();
 }

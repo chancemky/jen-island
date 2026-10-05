@@ -4,8 +4,6 @@ import { TAU, shade, rng } from '../core/util.js';
 import { tr, T } from '../systems/state.js';
 import { INK, ell, circ, box, poly, line, limb, shadow, text, heart, flower, stext } from './draw.js';
 import { LIGHT, glows, lanternShape } from './props.js';
-import { ICONS, drawIcon } from './food.js';
-import { drawHuman } from './character.js';
 import { drawHammock } from './hammock.js';
 
 const g = (p, x, y, r, col) => { if (!p.off) glows.push([p.x + x, p.y + y, r, col]); };   // lamps you switched off don't glow
@@ -300,7 +298,6 @@ export const FURN_DRAW = {
   piano: (c, t, p) => F.piano(c, t, p),
   aquarium_big: (c, t, p) => F.koi(c, t, p),
 };
-export { ICONS, drawIcon };
 
 // ---------------------------------------------------------------- quality pass
 // Richer versions of the everyday pieces: wood grain, bevels, soft highlights,

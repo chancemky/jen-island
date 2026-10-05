@@ -4,7 +4,6 @@
 import { TAU } from '../core/util.js';
 
 export const INK = '#5b3f36';
-export const INK_SOFT = 'rgba(91,63,54,.55)';
 
 export function ell(c, x, y, rx, ry, fill, stroke = INK, lw = 1, rot = 0) {
   c.beginPath();

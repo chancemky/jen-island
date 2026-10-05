@@ -11,7 +11,7 @@ import { FURN_DRAW, F, drawFurniturePreview, SIDE, drawSide } from '../gfx/furni
 import { drawHuman } from '../gfx/character.js';
 import { h } from './sheets.js';
 import { sfx } from '../core/audio.js';
-import { escapeHtml, clamp } from '../core/util.js';
+import { clamp } from '../core/util.js';
 import { toast } from './hud.js';
 import { cam, fx } from '../world/render.js';
 import { input, releaseJoystick } from '../core/input.js';
@@ -40,7 +40,6 @@ function builtinState() {
 // Turning a piece: 0 front, 1 turned right, 2 back, 3 turned left. Turned left and
 // right show the piece's real side (a box model, see SIDE in furniture.js); round
 // pieces look the same from every side. The footprint turns with it.
-export function rotXform(c, rot) { if (rot === 2 || rot === 3) c.scale(-1, 1); }
 export function drawTurned(c, t, key, rot, front) {
   c.save();
   if (rot % 2 && SIDE[key]) { if (rot === 3) c.scale(-1, 1); drawSide(c, key, t); }
@@ -113,7 +112,6 @@ function fits(sel, x, y, rot = 0, self = null) {
 // a piece: { f } for your furniture, { key } for a built-in
 const selOf = pc => pc.f ? pc.f.id : 'builtin:' + pc.key;
 const posOf = pc => pc.f ? pc.f : builtinState()[pc.key];
-const samePiece = (a, b) => !!a && !!b && (a.f ? a.f === b.f : a.key === b.key);
 function pieces() {
   const out = G.state.home.furniture.map(f => ({ f }));
   for (const k of Object.keys(BUILTINS)) out.push({ key: k });
@@ -321,4 +319,3 @@ export function stopDecorate() {
   document.body.classList.remove('hide-controls', 'decorating');
   sfx('back');
 }
-export { clamp };

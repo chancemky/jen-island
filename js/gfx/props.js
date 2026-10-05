@@ -4,7 +4,7 @@
 
 import { TAU, shade, rng } from '../core/util.js';
 import { T, tr } from '../systems/state.js';
-import { INK, ell, circ, box, poly, line, limb, shadow, glow, text, stext, flower, fitSize } from './draw.js';
+import { INK, ell, circ, box, poly, line, limb, shadow, text, stext, flower, fitSize } from './draw.js';
 import { drawHammock } from './hammock.js';
 
 // Shared night-light factor (0 day … 1 night), set by the time system each frame.
@@ -120,7 +120,6 @@ export function frangipani(c, t, p) {
     for (let k = 0; k < 3; k++) { const fx0 = x * s + sw + (k - 1) * 4 * s, fy = y * s - 2 * s - (k % 2) * 3 * s; for (let q = 0; q < 5; q++) { const a = q / 5 * TAU + i; c.beginPath(); c.ellipse(fx0 + Math.cos(a) * 1.8 * s, fy + Math.sin(a) * 1.8 * s, 1.6 * s, 1.1 * s, a, 0, TAU); c.fillStyle = '#fffdf2'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.4; c.stroke(); } circ(c, fx0, fy, 1 * s, '#ffd35a', null); }
   }
 }
-function blob(c, x, y, r, col, seed = 1) { leafBlob(c, x, y, r, col, seed % 6, 8); }
 export function banyan(c, t, p) {
   const s = p.s || 1, w = wind(p.x, t, p.y);
   shadow(c, 0, 4, 80 * s, 20 * s, 0.18);
@@ -434,12 +433,6 @@ export function signpost(c, t, p) {
     c.restore();
     c.restore();
   });
-}
-export function fence(c, t, p) {
-  const w = p.w || 60;
-  for (let x = 0; x <= w; x += 10) limb(c, [x, 0, x, -14], 2.6, '#c9a26a');
-  line(c, -1, -10, w + 1, -10, INK, 3.4); line(c, -1, -10, w + 1, -10, '#b9905a', 2);
-  line(c, -1, -4, w + 1, -4, INK, 3.4); line(c, -1, -4, w + 1, -4, '#b9905a', 2);
 }
 export function clothesline(c, t, p) {
   const w = p.w || 50;

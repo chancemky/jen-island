@@ -3,10 +3,9 @@
 
 import { dailyCosts, morningDeliveries, rollUsage } from './economy.js';
 import { recordCost, daySheet } from './ledger.js';
-import { pantry, addPantry } from './state.js';
-import { G, T, freshDay, addMoney, markDirty, unlockAchievement } from './state.js';
+import { pantry, addPantry, G, T, freshDay, addMoney, markDirty, unlockAchievement } from './state.js';
 import { bus, choice } from '../core/util.js';
-import { BUSINESSES, RECIPES } from '../data/game.js';
+import { BUSINESSES } from '../data/game.js';
 import { closeBiz, bizRecipes } from './business.js';
 import { dailyWages, resetRestaurantDay, staffReport } from './restaurant.js';
 import { resetFerryForNewDay } from './npc.js';
@@ -103,4 +102,3 @@ export function specialsInit() {
   const s = G.state;
   for (const id of Object.keys(BUSINESSES)) if (!s.biz[id].special) { const recs = bizRecipes(id); s.biz[id].special = recs.length > 1 ? choice(recs) : null; }
 }
-export { RECIPES };

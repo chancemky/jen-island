@@ -14,7 +14,6 @@ import { PLAZA, QUEUES } from '../world/island.js';
 const GAP = 30;                               // no two spots closer than this (a head is about 24 across)
 const BODY = 22;                              // nobody else may be standing this close to a free spot
 let stands = [];
-export const allStands = () => stands;
 
 export function buildStands(island) {
   stands = [];

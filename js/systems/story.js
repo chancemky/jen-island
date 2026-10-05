@@ -4,9 +4,8 @@
 // that plays when it completes. Progress is saved after every step, and every
 // cutscene can be safely re-entered after a reload.
 
-import { G, T, flag, setFlag, hasMats, spendMats, addMoney, canAfford, learnRecipe, unlockAchievement, markDirty, bizOf, pantry, mats, addRep } from './state.js';
-import { ingName, matName, bizName, recipeName } from '../data/game.js';
-import { BUSINESSES, RECIPES, CHAPTERS, NIGHT_MARKET_RESTORE, STATUE_COST, STATION, BRIDGE_REPAIR, VY_VIEWS, HARBOUR_BRIDGE, COVE_BRIDGE, FESTIVAL_REQ, KEEPER_REQ } from '../data/game.js';
+import { G, T, flag, setFlag, hasMats, spendMats, addMoney, canAfford, learnRecipe, unlockAchievement, markDirty, bizOf, pantry, mats } from './state.js';
+import { ingName, bizName, recipeName, BUSINESSES, RECIPES, CHAPTERS, NIGHT_MARKET_RESTORE, STATUE_COST, STATION, BRIDGE_REPAIR, VY_VIEWS, HARBOUR_BRIDGE, COVE_BRIDGE, FESTIVAL_REQ, KEEPER_REQ } from '../data/game.js';
 import { MEO_MEMORIES } from '../data/lore.js';
 import { keeperOf, keeperActor, staffedCount, PLACES, propertyPrice, upgradeCost } from './economy.js';
 import { cs, wait, say, ask, camTo, camFollow, walk, face, emote, hop, startFollow, stopFollow, caption } from './cutscene.js';
@@ -22,13 +21,13 @@ import { addXP, GATES, gateText, gatePaid, payGate, level } from './progress.js'
 import { meoJoke, randomJoke, meoAntic, playRPS } from './fun.js';
 import { Actor } from '../world/actor.js';
 import { sfx, setMood } from '../core/audio.js';
-import { bus, rand, choice, dist, sleep, clamp, money, moneyShort } from '../core/util.js';
-import { rt as bizRT, bizRecipes, openBiz as openShop } from './business.js';
+import { bus, rand, choice, dist, sleep, money, moneyShort } from '../core/util.js';
+import { rt as bizRT, openBiz as openShop } from './business.js';
 import { availableRecipes } from '../ui/shops.js';
 import { questOption, questTalk } from './sidequests.js';
 import { morningEvent, birthdaysToday } from './interact.js';
 import { npcs } from './npc.js';
-import { playCinematic, drawBoatTop } from './cinematic.js';
+import { playCinematic } from './cinematic.js';
 import * as cloud from './cloud.js';
 
 const S = () => G.state.story;
@@ -251,7 +250,6 @@ export async function checkStory() {
 }
 
 // ---------------------------------------------------------------- Mèo Mây helpers
-export function meo() { return G.meo; }
 function placeMeo(sceneId, x, y) {
   const m = G.meo;
   const cur = Object.values(scenes).find(sc => sc.actors.includes(m));
@@ -992,7 +990,6 @@ async function longBridgeIntro() {
   });
   G.runtime.inCutscene = false;
 }
-export function bridgeReady() { return G.state.money >= BRIDGE_REPAIR.cost && hasMats(BRIDGE_REPAIR.mats); }
 export async function repairBridge() {
   await cs.run('bridge', async () => {
     G.runtime.inCutscene = true;
@@ -1306,7 +1303,7 @@ export async function talkToMeo() {
     if (fishy) { if (p === 0) { G.state.fishForMeo--; markDirty(true); m.doHop(90); sfx('meow'); fx.burst('heart', m.x, m.y - 30, 8, { up: 40 }); await say('meo', choice([T('A FISH. For ME. This is the best day of my life. (Until tomorrow\'s fish.)', 'CÁ. Cho MÌNH. Hôm nay là ngày đẹp nhất đời mình. (Cho tới con cá ngày mai.)'), T('*happy crunching noises* …Chú Hải taught you well.', '*tiếng nhai rộp rộp sung sướng* …Chú Hải dạy bạn giỏi ghê.'), T('You know the way to a cat\'s heart. It\'s through the fish.', 'Bạn biết đường tới trái tim mèo rồi đó. Đi qua con cá.')]), { emo: 'love' }); addXP(15, 'meo'); p = -1; } else p--; }
     if (p >= 0 && qo) { if (p === 0) { await questTalk(m, 'meo'); p = -1; } else p--; }
     if (p >= 0 && gate) { if (p === 0) { await keyTalk(gate); p = -1; } else p--; }
-    if (p === -1) void 0;
+    if (p === -1) { /* already answered above */ }
     else if (p === 0) {
       if (avail.length) await say('meo', T('I wrote a new recipe in my notebook! Come to my house and have a look.', 'Mình vừa ghi công thức mới vào sổ tay! Qua nhà mình xem nhé.'), { emo: 'happy' });
       if (st?.text) await say('meo', hintFor(S().step));

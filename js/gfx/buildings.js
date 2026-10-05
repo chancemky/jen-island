@@ -4,7 +4,7 @@
 // piece by piece, level up, open for business and swing its door.
 
 import { TAU, shade, mix, clamp, rng } from '../core/util.js';
-import { INK, ell, circ, box, poly, line, limb, shadow, text, stext, rrect, flower } from './draw.js';
+import { INK, ell, circ, box, poly, line, limb, shadow, stext, rrect, flower } from './draw.js';
 import { LIGHT, glows, lanternShape } from './props.js';
 import { G, T, tr } from '../systems/state.js';
 import { BUSINESSES } from '../data/game.js';

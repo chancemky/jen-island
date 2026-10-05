@@ -4,15 +4,15 @@
 // and ingredient trays with stock counts. Taps fly ingredients onto the board.
 
 import { G, T, bizOf } from '../systems/state.js';
-import { RECIPES, STATION, OPTIONS, PREPPED, INGREDIENTS, BUSINESSES, ingName, stationLabel, recipeName, bizName } from '../data/game.js';
-import { rt, stockOf, takeStock, returnStock, evaluate, completeOrder, failOrder, bizRecipes, openBiz, canMake, orderText } from '../systems/business.js';
-import { drawCup, DISHES, ICONS, iconURL, drawIcon } from '../gfx/food.js';
+import { RECIPES, STATION, OPTIONS, ingName, stationLabel, recipeName, bizName } from '../data/game.js';
+import { rt, stockOf, takeStock, returnStock, evaluate, completeOrder, failOrder, bizRecipes, openBiz, orderText } from '../systems/business.js';
+import { drawCup, DISHES, ICONS, iconURL } from '../gfx/food.js';
 import { drawAssembly } from '../gfx/assemble.js';
 import { drawHuman, EL } from '../gfx/character.js';
 import { drawVillagerHead } from '../gfx/villager.js';
-import { INK, ell, circ, box, shadow } from '../gfx/draw.js';
+import { circ, box } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
-import { escapeHtml, money, bus, clamp, TAU, clock } from '../core/util.js';
+import { escapeHtml, money, bus, TAU, clock } from '../core/util.js';
 import { h, flyIcon, flyCoins } from './sheets.js';
 import { toast } from './hud.js';
 import { releaseJoystick } from '../core/input.js';
@@ -157,7 +157,6 @@ function markOptions() {
 }
 function setOption(k, v, seg, b) {
   if (S.busy) return;
-  if (k === 'size' && S.asm.steps.length) { /* allow changing size mid-way */ }
   const uses = OPTIONS[k].uses;
   if (uses && v !== 'không đá' && v !== 'không ớt' && stockOf(S.bizId, uses) <= 0) { sfx('error'); seg.classList.add('shake'); setTimeout(() => seg.classList.remove('shake'), 300); toast({ text: T(`Out of ${ingName(uses).toLowerCase()}!`, `Hết ${ingName(uses).toLowerCase()}!`), bad: true }); return; }
   S.asm[k] = v;
@@ -492,9 +491,3 @@ function drawBoard(dt, t) {
   }
   c.restore();
 }
-function drawBase(c, v) {
-  if (v === 'bowl') { ell(c, 0, -2, 18, 6, '#fffdf6'); ell(c, 0, -2, 15, 4.5, '#f4efe4', null); c.beginPath(); c.moveTo(-18, -2); c.quadraticCurveTo(0, 20, 18, -2); c.fillStyle = '#fffdf6'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); c.strokeStyle = '#6aa5d8'; c.beginPath(); c.moveTo(-14, 4); c.quadraticCurveTo(0, 12, 14, 4); c.stroke(); }
-  else if (v === 'pan') { ell(c, 0, 0, 20, 10, '#4a4550'); ell(c, 0, -1, 17, 8, '#6b6572', null); c.strokeStyle = INK; c.lineWidth = 3; c.beginPath(); c.moveTo(18, 2); c.lineTo(32, 8); c.stroke(); }
-  else if (v === 'grill') { box(c, -20, -6, 40, 14, 3, '#4a4550'); for (let x = -16; x <= 16; x += 5) { c.strokeStyle = '#8f9aa3'; c.lineWidth = 1; c.beginPath(); c.moveTo(x, -6); c.lineTo(x, 8); c.stroke(); } }
-}
-export { canMake };

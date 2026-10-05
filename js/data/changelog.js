@@ -3,9 +3,16 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.17';
+export const APP_VERSION = '5.3.18';
 
 export const CHANGELOG = [
+  {
+    v: '5.3.18', date: '2026-10-05T16:13:13Z',
+    title: ['Tidy Workshop', 'Xưởng Gọn Gàng'],
+    items: [
+      ['Behind-the-scenes tidy-up: old unused code and test pages removed so future updates land faster and safer', 'Dọn dẹp hậu trường: gỡ bỏ mã cũ và trang thử không dùng nữa để các bản cập nhật sau nhanh và an toàn hơn'],
+    ],
+  },
   {
     v: '5.3.17', date: '2026-10-05T15:26:32Z',
     title: ['Counter First', 'Quầy Trước'],

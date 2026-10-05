@@ -9,15 +9,13 @@ import { G, T, bizOf, addMoney, addRep, markDirty, unlockAchievement } from './s
 import { Interior } from '../world/interiors.js';
 import { Grid } from '../world/scene.js';
 import { Actor } from '../world/actor.js';
-import { F } from '../gfx/furniture.js';
 import { DISHES, ICONS } from '../gfx/food.js';
-import { INK, ell, circ, box, text } from '../gfx/draw.js';
-import { RECIPES, BUSINESSES, ROLES, TRAITS, EMPLOYEE_NAMES, PERSONALITIES, RECIPE_UPGRADES } from '../data/game.js';
+import { INK, ell, circ, text } from '../gfx/draw.js';
+import { RECIPES, BUSINESSES, TRAITS, EMPLOYEE_NAMES, PERSONALITIES, RECIPE_UPGRADES, PREPPED, INGREDIENTS, recipeCost } from '../data/game.js';
 import { visitorLook, employeeLook } from '../data/looks.js';
 import { addXP } from './progress.js';
 import { rand, randi, choice, chance, dist, bus, clamp, rng } from '../core/util.js';
 import { canMake, takeStock, recipeUses, bizRecipes, recipePrice } from './business.js';
-import { PREPPED, INGREDIENTS, recipeCost } from '../data/game.js';
 import { recordSale, recordCost } from './ledger.js';
 import { recordUse } from './economy.js';
 import { eventBoost } from './interact.js';
@@ -101,7 +99,7 @@ export const STAFF_ROLES = ['cook', 'server', 'prep', 'cleaner', 'cashier', 'man
 export const ROLE_PAY = { cook: 1.2, server: 1, prep: 0.85, cleaner: 0.8, cashier: 0.9, manager: 1.7 };
 const KEY_STAT = { cook: 'cooking', server: 'service', prep: 'speed', cleaner: 'speed', cashier: 'reliability', manager: 'reliability' };
 const statTotal = e => e.stats.speed + e.stats.cooking + e.stats.service + e.stats.reliability;
-export const wageOf = (e, role = e.role) => Math.round((36 + statTotal(e) * 8) * (ROLE_PAY[role] || 1));   // v5.3: twice what it was
+export const wageOf = (e, role = e.role) => Math.round((36 + statTotal(e) * 8) * (ROLE_PAY[role] || 1));
 export const feeOf = (e, role = e.role) => wageOf(e, role) * 2;
 export const roleAvailable = (role, e = null) => role !== 'manager' || e?.role === 'manager' || (G.state.story.chapter >= 19 && !bizOf('restaurant').employees.some(x => x.role === 'manager'));
 export const hasManager = () => staffByRole('manager').length > 0;
@@ -133,8 +131,6 @@ export function candidates() {
     r.cands = Array.from({ length: 3 }, (_, i) => {
       const seed = Math.floor(R() * 1e6);
       const st = { speed: 1 + Math.floor(R() * 5), cooking: 1 + Math.floor(R() * 5), service: 1 + Math.floor(R() * 5), reliability: 1 + Math.floor(R() * 5) };
-      const total = st.speed + st.cooking + st.service + st.reliability;
-      void total;
       return { id: 'e' + seed, seed, name: EMPLOYEE_NAMES[Math.floor(R() * EMPLOYEE_NAMES.length)], stats: st, trait: TRAITS[Math.floor(R() * TRAITS.length)].id, role: null };
     });
   }
@@ -323,7 +319,7 @@ function assign(a) {
     if (g) { g.claimed = a; return task(a, 'order', [g.seat.x + (g.seat.dir === 'right' ? 14 : -14), g.seat.y + 14], async () => { a.face(g.actor); a.setAct('write'); await wait(1.6 * speedK); a.setAct(null); if (g.state !== 'ordering') return; g.state = 'waiting-food'; g.claimed = null; r.tickets.push({ guest: g, recipe: g.recipe }); g.actor.showEmote('happy', 1); sfx('page'); }); }
     // 3) help clearing when there's no cleaner
     if (!staffByRole('cleaner').length) { const t = sc.tables.find(t => t.active && t.dirty && !t.claimed); if (t) return cleanTask(a, t, speedK * 1.3); }
-    // 4) seat waiting guests (host duty)
+    // 4) otherwise stand by near the counter
     return idleNear(a, [300, 190]);
   }
   if (role === 'cook') {
@@ -462,4 +458,3 @@ export function resetRestaurantDay() {
   sc?.tables.forEach(t => { t.dirty = false; t.dishes = []; t.seats.forEach(s => s.cust = null); t.claimed = null; });
   for (const a of r.staff.values()) { a.stop(); a.x = 210 + rand(-40, 40); a.y = 250; a.data.busy = false; a.sit = false; a.setAct(null); }
 }
-export { ROLES, TRAITS };

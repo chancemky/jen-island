@@ -3,7 +3,7 @@
 // The restaurant has its own simulation in restaurant.js.
 
 import { G, T, addMoney, addRep, markDirty, pantry, addPantry, unlockAchievement, bizOf } from './state.js';
-import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, PRICE_RANGE, recipeName, bizName, recipeCost } from '../data/game.js';
+import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, PRICE_RANGE, bizName, recipeCost } from '../data/game.js';
 import { RESIDENTS, visitorLook } from '../data/looks.js';
 import { addXP } from './progress.js';
 import { Actor } from '../world/actor.js';
@@ -346,23 +346,12 @@ function regularLine(order, cust, rec, pn) {
   return T(en, viLine);
 }
 function pickLine(cust, n) { return (cust._line ??= Math.floor(Math.random() * n)) % n; }
-export function orderChips(order) {
-  const id = order.recipe, o = order.opts, R = RECIPES[id], chips = [recipeName(id)];
-  if (o.size) chips.push('Size ' + o.size);
-  if (o.sugar !== undefined) chips.push(T(`${o.sugar}% sugar`, `${o.sugar}% đường`));
-  if (o.ice) chips.push(T(OPTIONS.ice.say[o.ice][0], OPTIONS.ice.say[o.ice][1]).replace(/^./, c => c.toUpperCase()));
-  if (o.topping) chips.push(T(OPTIONS.topping.say[o.topping][0], OPTIONS.topping.say[o.topping][1]).replace(/^./, c => c.toUpperCase()));
-  if (o.chili) chips.push(T(OPTIONS.chili.say[o.chili][0], OPTIONS.chili.say[o.chili][1]).replace(/^./, c => c.toUpperCase()));
-  void R;
-  return chips;
-}
 
 // ---------------------------------------------------------------- results
 export function evaluate(order, made, patience = 1) {
   const R = RECIPES[order.recipe];
   const need = R.steps, got = made.steps;
   const sameSet = need.length === got.length && [...need].sort().join() === [...got].sort().join();
-  const exact = sameSet && need.every((s, i) => got[i] === s);
   const mism = [];
   for (const k of R.options) {
     const want = order.opts[k], have = made[k];
@@ -373,7 +362,6 @@ export function evaluate(order, made, patience = 1) {
   if (mism.length) return { q: 'wrong', why: 'options', mism };
   // perfect = everything in it is right (the order you add things in doesn't matter);
   // only a customer who was left waiting until nearly the end calls it just "good"
-  void exact;
   return { q: patience < 0.2 ? 'good' : 'perfect', why: '' };
 }
 
@@ -509,17 +497,16 @@ function nextSpawnDelay(id) {
   const tf = demandAt(id, h);
   const boat = G.runtime.boatBoost > 0 ? 1.5 : 1;
   const special = b.special ? 1.12 : 1;
-  const early = s.story.chapter <= 2 ? 1.15 : 1;            // (v5.3: a gentler head start)
+  const early = s.story.chapter <= 2 ? 1.15 : 1;            // a gentler head start
   const owned = s.property?.[id] ? 1.05 : 1;                      // your own place: you can put a sign out front
   const festive = eventBoost(def.biz);                            // Tết, summer beach days, Mid-Autumn…
   const recs = bizRecipes(id);
   const appeal = recs.length ? recs.reduce((a, r) => a + priceAppeal(r, id), 0) / recs.length : 1;
   const gear = eq(id, 'attract') * (h >= 18 ? eq(id, 'night') : 1);
   const rate = attract * rep * tf * boat * special * early * appeal * gear * owned * festive; // customers per ~34 game-minutes baseline
-  return clamp(rand(32, 52) / rate, 7, 70);                 // v5.3: fewer customers than before
+  return clamp(rand(32, 52) / rate, 7, 70);                 // a steady trickle, not a flood
 }
 
-export function stationStock(bizId, key) { return stockOf(bizId, key); }
 export function ingredientsForBiz(bizId) {
   const set = new Set();
   for (const r of bizRecipes(bizId)) for (const s of RECIPES[r].steps) { const u = STATION[s].uses; if (u) set.add(PREPPED[u] ? PREPPED[u].from : u); }

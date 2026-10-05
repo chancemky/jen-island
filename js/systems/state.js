@@ -4,7 +4,7 @@
 
 import { bus, clamp } from '../core/util.js';
 import { BUSINESSES, RECIPES, ACHIEVEMENTS } from '../data/game.js';
-import { APP_VERSION, CHANGELOG } from '../data/changelog.js';
+import { APP_VERSION } from '../data/changelog.js';
 
 export const SAVE_VERSION = 7;   // 7 = the v5.0 reset (everyone starts over); older saves are ignored
 
@@ -17,7 +17,7 @@ export function defaultState() {
     player: { name: '', look: null },
     island: { name: '' },
     day: 1, time: 7 * 60,
-    money: 380, reputation: 0, lifetime: 0,   // (v5.3: the first repair + first ingredients, with one spare pack's worth left over)
+    money: 380, reputation: 0, lifetime: 0,   // the first repair + first ingredients, with one spare pack's worth left over
     pantry: {},              // raw ingredients: id → portions
     materials: {},           // id → count
     recipes: [],             // discovered recipe ids
@@ -124,10 +124,8 @@ export function learnRecipe(id) {
   if (s.recipes.includes(id)) return false;
   s.recipes.push(id);
   s.recipeLevels[id] ||= 1;
-  const biz = Object.values(s.biz).find(b => BUSINESSES[b.id].biz === RECIPES[id].biz);
   markDirty(true);
   bus.emit('recipe', id);
-  void biz;
   return true;
 }
 
@@ -141,4 +139,3 @@ export function unlockAchievement(id) {
 }
 
 export function bizOf(id) { return G.state.biz[id]; }
-export function bizReady(id) { const b = G.state.biz[id]; return b && b.owned && (b.repair >= 1 || !BUSINESSES[id].repair); }

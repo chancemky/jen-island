@@ -150,4 +150,3 @@ export function caption(main, sub) {
   el.innerHTML = `${main}${sub ? `<small>${sub}</small>` : ''}`;
   el.classList.add('on');
 }
-export { closeDialog };

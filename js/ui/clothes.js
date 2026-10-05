@@ -5,7 +5,7 @@ import { G, T, markDirty, addMoney, canAfford } from '../systems/state.js';
 import { CLOTHES, SLOTS, FREE_CLOTHES, applyOutfit } from '../data/wardrobe.js';
 import { playerLook } from '../data/looks.js';
 import { openSheet, tabs, h, btn } from './sheets.js';
-import { drawHuman, EL } from '../gfx/character.js';
+import { drawHuman } from '../gfx/character.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml } from '../core/util.js';
 import { toast } from './hud.js';
@@ -57,13 +57,13 @@ export function openBoutique() {
       for (const id of ids) {
         const it = CLOTHES[id], own = w.owned.includes(id), locked = level() < (it.lv || 0);
         const note = own ? T('In your wardrobe ✓', 'Đã có trong tủ ✓') : locked ? T(`Unlocks at level ${it.lv}`, `Mở ở cấp ${it.lv}`) : money(it.price) + (it.luxury ? T(' · ✦ Rare piece', ' · ✦ Hàng hiếm') : '');
-        const b = own ? null : btn(money(it.price), (el) => {
+        const b = own ? null : btn(money(it.price), () => {
           if (!canAfford(it.price)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
           addMoney(-it.price, 'clothes'); w.owned.push(id); w[slot] = id; addXP(10, 'clothes');
           markDirty(true); refreshPlayerLook(); sfx('buy');
           toast({ text: T(`${it.en} — you're wearing it!`, `${it.vi} — mặc luôn rồi nè!`), sub: T('Change any time at the wardrobe in your room.', 'Thay đồ bất cứ lúc nào ở tủ quần áo trong phòng.'), icon: 'shirt' });
           if (G.player) fx.burst('spark', G.player.x, G.player.y - 30, 10, { up: 40, col: '#ffd35a' });
-          api.rebuild(); void el;
+          api.rebuild();
         }, 'buy', locked);
         list.appendChild(itemRow(id, b, { dim: locked && !own, note }));
       }

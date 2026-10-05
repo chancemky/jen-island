@@ -5,8 +5,7 @@ export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const invLerp = (a, b, v) => clamp((v - a) / (b - a), 0, 1);
 export const dist = (ax, ay, bx, by) => Math.hypot(bx - ax, by - ay);
-export const approach = (v, target, step) => (v < target ? Math.min(target, v + step) : Math.max(target, v - step));
-// Frame-rate independent exponential smoothing: k is "fraction per second remaining".
+// Frame-rate independent exponential smoothing toward b at `rate` per second.
 export const damp = (a, b, rate, dt) => lerp(a, b, 1 - Math.exp(-rate * dt));
 
 export const ease = {
@@ -31,7 +30,6 @@ export function rng(seed) {
   };
 }
 export const pick = (r, arr) => arr[Math.floor(r() * arr.length) % arr.length];
-export const hash = (str) => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 export const rand = (a, b) => a + Math.random() * (b - a);
 export const randi = (a, b) => Math.floor(rand(a, b + 1));
 export const chance = p => Math.random() < p;
@@ -54,13 +52,8 @@ export function mix(h1, h2, t) {
   const r = Math.round(lerp(a >> 16, b >> 16, t)), g = Math.round(lerp((a >> 8) & 255, (b >> 8) & 255, t)), bl = Math.round(lerp(a & 255, b & 255, t));
   return '#' + ((1 << 24) | (r << 16) | (g << 8) | bl).toString(16).slice(1);
 }
-export function rgba(hex, a) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
-}
 
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
-export const nextFrame = () => new Promise(r => requestAnimationFrame(r));
 
 // Money is stored in thousands of đồng ("k"), the way Vietnamese menus show it.
 export function money(k) {
@@ -85,7 +78,7 @@ export function moneyShort(have, need, translate = null) {
   const en = `Need ${short} more`, vi = `Còn thiếu ${short}`;
   return typeof translate === 'function' ? translate(en, vi) : translate === 'vi' ? vi : en;
 }
-export const pad2 = n => String(n).padStart(2, '0');
+const pad2 = n => String(n).padStart(2, '0');
 export function clock(minutes) {
   const m = Math.floor(minutes) % 1440;
   return pad2(Math.floor(m / 60)) + ':' + pad2(m % 60);
@@ -146,7 +139,7 @@ export function distToLine(line, x, y) {
 }
 
 // Tiny event bus.
-export class Emitter {
+class Emitter {
   constructor() { this.h = new Map(); }
   on(ev, fn) { (this.h.get(ev) || this.h.set(ev, new Set()).get(ev)).add(fn); return () => this.h.get(ev)?.delete(fn); }
   emit(ev, ...a) { this.h.get(ev)?.forEach(fn => { try { fn(...a); } catch (e) { console.error('[bus]', ev, e); } }); }

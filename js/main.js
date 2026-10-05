@@ -1,27 +1,24 @@
 // JEN Island — boot, main loop and the glue between systems.
 
-import { lockInput, releaseInput } from './core/locks.js';
+import { lockInput, releaseInput, inputLocked, lockNames, lockAge } from './core/locks.js';
 import { Renderer, cam, fx, lightingFor } from './world/render.js';
 import { Island, areaAt, areaIdAt, AREAS, BUILDINGS, TRUCK_SPOTS } from './world/island.js';
 import { COUNTS } from './core/counts.js';
-import { unlockAchievement } from './systems/state.js';
+import { unlockAchievement, G, T, defaultState, bizOf, markDirty, flag, setFlag, canAfford, addMoney, learnRecipe } from './systems/state.js';
 import { buildInteriors } from './world/interiors.js';
 import { buildRestaurant, updateRestaurant, initRestaurantRuntime, restRT, guestNeedingOrder, playerTakeOrder, playerServed, playerCookFailed, nextTicketForPlayer, ticketCooked, playerDeliver, collectRegister } from './systems/restaurant.js';
 import { Player } from './systems/player.js';
 import { Actor } from './world/actor.js';
 import { initInput, input, moveVector, releaseJoystick } from './core/input.js';
 import { unlockAudio, audioRunning, sfx, musicTick, setAudio, suspendAudio, setMood } from './core/audio.js';
-import { G, T, setLang, defaultState, bizOf, markDirty, flag, setFlag, hasMats, canAfford, addMoney, learnRecipe } from './systems/state.js';
-import { showReward } from './ui/sheets.js';
+import { showReward, isUiOpen, isPresenting, openSheet, h, btn } from './ui/sheets.js';
 import { scenes, setScene, enterBuilding, exitBuilding, updateDoors, isTransitioning, fadeOut, fadeIn } from './systems/scenes.js';
 import { cs, updateFollow, say, ask, wait, camTo, activity as csActivity } from './systems/cutscene.js';
-import { inputLocked, lockNames, lockAge } from './core/locks.js';
 import { Grid } from './world/scene.js';
 import { enterLighthouse } from './ui/lookout.js';
 import { updateDialogue, dialogue, closeDialog } from './ui/dialogue.js';
 import { initHud, updateHud, showHud, setAction as hudSetAction, setBizButton, triggerAction, toast, updatePointer, showArea, resetArea, renderStars } from './ui/hud.js';
-import { isUiOpen, isPresenting, openSheet, h, btn } from './ui/sheets.js';
-import { openIngredientShop, openMaterialShop, openFurnitureShop, openBag, openBizMenu, openRequirement, openRecipeBook, openJournal, availableRecipes } from './ui/shops.js';
+import { openIngredientShop, openMaterialShop, openFurnitureShop, openBag, openBizMenu, openRequirement, openRecipeBook, openJournal } from './ui/shops.js';
 import { openService, updateService, isServiceOpen, closeService } from './ui/service.js';
 import { openPrep, updatePrep, isPrepOpen } from './ui/prep.js';
 import { showSummary } from './ui/summary.js';
@@ -30,33 +27,29 @@ import { openStaffBoard } from './ui/staff.js';
 import { openMenu } from './ui/menu.js';
 import { showAuth } from './ui/auth.js';
 import { updateBusinesses, openBiz, closeBiz, rt as bizRT } from './systems/business.js';
-import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs } from './systems/npc.js';
-import { updateClock, endDay, specialsInit, timePaused, DAWN } from './systems/time.js';
-import { repairBridge, STEPS , stallHandover } from './systems/story.js';
-import { buildSeaBridge } from './systems/story.js';
-import { runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
+import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs, feedDucks, nearPond } from './systems/npc.js';
+import { updateClock, endDay, specialsInit, DAWN } from './systems/time.js';
+import { repairBridge, STEPS, stallHandover, buildSeaBridge, runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
 import { talkToResident, talkToMerchant, talkToStaff, talkToVisitor } from './systems/talk.js';
 import { questDelivery } from './systems/sidequests.js';
-import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, saveStatus, peekLocalLanguage } from './systems/save.js';
+import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, peekLocalLanguage } from './systems/save.js';
 import * as cloud from './systems/cloud.js';
-import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, MATERIALS, bizName, recipeName, HARBOUR_BRIDGE, COVE_BRIDGE } from './data/game.js';
+import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, bizName, recipeName, HARBOUR_BRIDGE, COVE_BRIDGE, BRIDGE_REPAIR, FESTIVAL_REQ, KEEPER_REQ } from './data/game.js';
 import { applyStaticText, bootText } from './ui/statictext.js';
-import { MERCHANTS, RESIDENTS, playerLook } from './data/looks.js';
+import { MERCHANTS, RESIDENTS } from './data/looks.js';
 import { tapAnimals, react as reactAnimal } from './systems/animals.js';
 import { nearestSeat, sitDown, standUp, updateSeat, clearSeat, inSeat } from './systems/seats.js';
-import { feedDucks, nearPond } from './systems/npc.js';
 import { meoAntic } from './systems/fun.js';
 import { initLedger } from './systems/ledger.js';
 import { initAlbum } from './systems/album.js';
-import { nearbyThing, outdoorAction, morningEvent, updateWorldEvents, lookText } from './systems/interact.js';
+import { nearbyThing, outdoorAction, updateWorldEvents, lookText } from './systems/interact.js';
 import { updateSeasonal } from './systems/growth.js';
 import { fishingAction } from './systems/fishing.js';
 import { plaqueAction } from './systems/garden.js';
-import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, readyMilestones, TRACKS, trackState, claimMilestone } from './systems/progress.js';
-import { BRIDGE_REPAIR, FESTIVAL_REQ, KEEPER_REQ } from './data/game.js';
+import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, TRACKS, trackState, claimMilestone } from './systems/progress.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { showWhatsNew } from './ui/whatsnew.js';
-import { openBoutique, openWardrobe, currentLook, refreshPlayerLook } from './ui/clothes.js';
+import { openBoutique, openWardrobe, currentLook } from './ui/clothes.js';
 import { openSalon } from './ui/salon.js';
 import { spawnVendors, updateVendors, buyFromVendor } from './systems/vendors.js';
 import { updateKeepers, spawnKeepers, keeperActor } from './systems/economy.js';
@@ -717,10 +710,6 @@ async function sleepFlow() {
   closeDialog();
   if (pick !== 0) return;
   await doSleep(false);
-}
-async function passOut() {
-  if (G.runtime.sleeping || cs.active) return;
-  await doSleep(true);
 }
 // Up all night: when the clock reaches 6:00 you nod off for a moment right where you are
 // and wake there to a new day (so waiting in a closed shop for opening time works).

@@ -3,7 +3,7 @@
 
 import { Scene } from './scene.js';
 import { F } from '../gfx/furniture.js';
-import { INK, ell, circ, box, line, text, shadow } from '../gfx/draw.js';
+import { INK, circ, box, line, text } from '../gfx/draw.js';
 import { shade, rng, TAU } from '../core/util.js';
 import { LIGHT } from '../gfx/props.js';
 import * as PR from '../gfx/props.js';
@@ -400,4 +400,3 @@ function buildHomes() {
   }, [[206, 204, 'Coconuts, sorted by size, then by how friendly they look.', 'Dừa, xếp theo kích cỡ, rồi theo độ dễ thương.'], [130, 160, 'A notebook of tide times, and a doodle of Mèo Mây asleep on a coconut.', 'Cuốn sổ ghi giờ thủy triều, và hình vẽ Mèo Mây ngủ trên trái dừa.']]);
   return S;
 }
-export { shadow, text, TAU };

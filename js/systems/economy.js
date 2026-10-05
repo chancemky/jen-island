@@ -6,19 +6,17 @@
 
 import { G, T, addMoney, canAfford, markDirty, bizOf, pantry, addPantry } from './state.js';
 import { BUSINESSES, INGREDIENTS, PREPPED, RECIPES, STATION, bizName, recipeName } from '../data/game.js';
-import { rt, openBiz, makeableRecipes, canMake, completeOrder, customerLeave, isOpenHours, ingredientsForBiz, recipeUses, bizRecipes } from './business.js';
-import { LOCAL_NAMES } from './business.js';
-import { visitorLook } from '../data/looks.js';
+import { rt, openBiz, makeableRecipes, canMake, completeOrder, customerLeave, isOpenHours, ingredientsForBiz, recipeUses, bizRecipes, LOCAL_NAMES } from './business.js';
 import { Actor } from '../world/actor.js';
-import { bus, rand, choice, chance, money } from '../core/util.js';
+import { bus, rand, chance, money } from '../core/util.js';
 import {addXP } from './progress.js';
 import { COUNTS } from '../core/counts.js';
-import { fx } from '../world/render.js';
 import { recordCost } from './ledger.js';
 import { toast } from '../ui/hud.js';
 
 // ---------------------------------------------------------------- places, rent & property
-// payback: how many days of rent the property costs to buy (40–70 days). Owning also
+// payback: how many days of rent the property costs to buy (90–130 days after the
+// multiplier below). Owning also
 // brings a little more custom (+5%, your own sign out front) and 10% cheaper shop upgrades.
 // Small places pay back fastest; the big ones are long-term investments.
 export const PLACES = {
@@ -27,7 +25,7 @@ export const PLACES = {
   nm1: { rent: 55, payback: 55 }, nm2: { rent: 55, payback: 55 }, nm3: { rent: 55, payback: 55 }, nm5: { rent: 55, payback: 55 }, nm6: { rent: 55, payback: 55 },
   restaurant: { rent: 180, payback: 60 }, cafe: { rent: 120, payback: 60 }, grill: { rent: 150, payback: 65 },
 };
-// v5.3: rent is 1.5× and buying the place pays back over about twice as long
+// rent is 1.5× the list above and buying a place pays back over twice as long
 for (const P of Object.values(PLACES)) { P.rent = Math.round(P.rent * 1.5); P.payback = P.payback * 2; }
 COUNTS.places = Object.keys(PLACES).length;
 export const propertyPrice = id => Math.round(PLACES[id].rent * PLACES[id].payback / 10) * 10;
@@ -58,7 +56,7 @@ export function buyProperty(id) {
 // A better shopkeeper costs more. Skill 1–3: faster service and fewer slips, and it grows
 // with experience (and so does the wage). Hiring always costs two days' wages up front —
 // the same rule as restaurant employees.
-export const KEEPER_WAGE = { shed: 100, truck: 135, stall: 110 };   // v5.3: a shopkeeper costs a real share of what the shop makes
+export const KEEPER_WAGE = { shed: 100, truck: 135, stall: 110 };   // a shopkeeper costs a real share of what the shop makes
 export const SKILL_NAMES = [null, ['Learning', 'Đang học'], ['Capable', 'Thạo việc'], ['Expert', 'Lành nghề']];
 export const KEEPER_SKILL_AT = [0, 0, 150, 400];                 // guests served to reach each skill level
 export const keeperSkill = k => Math.max(1, Math.min(3, k?.skill || 1));
@@ -201,7 +199,7 @@ function autoPrep(id) {
 // has already sliced / cooked stays at that shop. A runner looks at what the shop has
 // actually been selling lately (and what's already prepped there) and brings just enough
 // for about a day and a half — no mountains of spoiling stock, no empty shelves.
-export const SUPPLY = { price: id => Math.round(({ shed: 900, truck: 1400, stall: 1050, restaurant: 2800 })[BUSINESSES[id].kind] || 1200), fee: 1.35, days: 1.5 };   // v5.3: runners cost more, and charge more on top
+export const SUPPLY = { price: id => Math.round(({ shed: 900, truck: 1400, stall: 1050, restaurant: 2800 })[BUSINESSES[id].kind] || 1200), fee: 1.35, days: 1.5 };   // runners cost more, and charge more on top
 export const hasSupply = id => !!G.state.supply?.[id];
 export const supplyUnlocked = () => G.state.story.chapter >= 6;
 export function buySupply(id) {
@@ -272,4 +270,3 @@ export function staffedCount() {
   const staffed = list.filter(id => BUSINESSES[id].kind === 'restaurant' ? new Set(s.biz.restaurant.employees.map(e => e.role)).size >= 3 : !!keeperOf(id));
   return { staffed: staffed.length, total: list.length, list, missing: list.filter(id => !staffed.includes(id)) };
 }
-export { money };

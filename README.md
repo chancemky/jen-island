@@ -21,7 +21,7 @@ On `localhost` only:
 
     npm i            # once (Playwright)
     npm test         # everything
-    npm run test:story | test:economy | test:quests | test:world | test:render
+    npm run test:story | test:economy | test:quests | test:world | test:stability | test:clock | test:render
 
 `tests/run.mjs` starts its own server and plays the game in a headless browser:
 
@@ -31,11 +31,12 @@ On `localhost` only:
 | save | a damaged save is recovered from a backup and the bad copy kept aside |
 | story | a fresh game plays Chapters 1→20 with every transition, card, XP reward and achievement |
 | economy | first repair ≈ 231k, margins per tier, property payback, one price per business, a keeper's day of trade and its books |
-| screens | Business / Milestones / Staff screens draw |
+| ui | Business / Milestones / Staff screens draw; the map's close button has a full touch target |
 | quests | every side quest plays start to finish (find, meet, puzzle, deliver, routes) |
 | world | TV, radio, piano, lamp, fish, books, fountain, timetable, fishing and the garden all work; on a busy evening nobody shares a standing spot or walks through anyone; the ferry shuttle's boarding rules |
 | stability | stuck-screen regressions: stacked rewards/achievements/level-ups queue one at a time; cutscene + chapter card + achievements + quest + milestone rewards together (with rapid tapping); duplicate scene requests; overlapping dialogue; sleep with pending popups; doors after a cutscene; the watchdog recovering a hung scene, leaked pause and leaked lock; real finger taps on "Yay!", reward cards and dialogue, also with the click dropped the way iOS sometimes does — then controls, movement and the action button must work |
 | chaos (`npm run test:chaos`, not in `npm test`) | Chapters 1→20 with an impatient player: random taps, mashing the action key, opening/closing the menu around transitions |
+| clock | staying up past dawn in a closed stand, the bed and Talk prompts from every side, the clock and position surviving a reload |
 | render | every look × pose × direction draws pixels, and every figure keeps its big head |
 
 `tests/cast.html` is a contact sheet of the whole cast for art checks against `docs/reference/`. `tests/backview.html` shows every haircut, hat and accessory from behind, three-quarters behind and the side (`?set=hair|hats|gear&hair=pony`), and `tests/hammock.html` shows lying in each kind of hammock.
@@ -43,7 +44,7 @@ On `localhost` only:
 ## Deploy (Cloudflare Workers static assets)
 
     npx wrangler login      # once
-    npx wrangler deploy     # uploads the repo root; .assetsignore excludes tests/, supabase/, docs
+    npx wrangler deploy     # uploads the repo root; .assetsignore excludes tests/, supabase/, docs/
 
 The service worker (`sw.js`) is network-first, so updates land immediately; bump `CACHE` in `sw.js` when the file list changes.
 
@@ -92,7 +93,7 @@ No build step, no framework. Canvas 2D for the world, DOM for UI.
 - **v5.3: a real grind.** The balance knobs live in one block (`ECON` at the end of `js/data/game.js`), with the rest named there: customer flow, shopkeeper wages and supply runners, rent and property, clothes, pets, level and milestone rewards. Owning everything takes many weeks of island days.
 - Margins are thin: early recipes 18–35 %, mid 30–48 %, premium café/grill 37–50 % (ingredients cost 1.25× their list price). The economy test enforces the bands.
 - Rewards are small: level-ups and milestone tiers pay a modest, slowly growing sum (milestones used to grow ×1.6 per tier). Money comes from running shops.
-- Game bonuses (recipe level, shop level, special, register) stack to at most +45 %; only the player's own price goes beyond.
+- Game bonuses (recipe level, shop level, special, register) stack to at most +28 % (`BONUS_CAP`); only the player's own price goes beyond.
 - One acquisition price per business (`BUSINESSES[id].buy`); Mèo Mây's keys read it.
 - Property pays back in 90–130 days of rent; owning adds +5 % custom and 10 % cheaper upgrades. Shopkeepers cost 100–135k a day and still pay for themselves several times over.
 
@@ -113,4 +114,4 @@ No build step, no framework. Canvas 2D for the world, DOM for UI.
 - **One person per spot.** Islanders and visitors claim a standing spot before walking to it (`systems/crowd.js`: plaza rings, clusters round every activity spot, stroll stops beside every path); spots are at least 30 px apart and never shared. Walkers steer round anyone in their way (`steerAround` in `world/actor.js`) and keep right when meeting head on.
 - **The ferry is a shuttle.** The next boat ties up 10 s after the last leaves; everyone in line boards; with five or more aboard it waits 3 s and goes; with nobody to take it leaves. The timetable's visitor boats only decide how many visitors ride in.
 - **Cutscenes never teleport important moments.** Mèo Mây walks you around, turns toward what it's talking about, and walks away afterwards (it has its own daily routine and home).
-- **Time runs at 1 game minute per second** and pauses in menus, dialogue and cutscenes. Your shops close at 23:00 (customers already in line can still be served if you're at the counter); Night Market stalls open at 17:00; you get sleepy after midnight; sleeping ends the day.
+- **A day (6:00 → 24:00) lasts 20 real minutes** (`TIME_SCALE` = 0.9 game minutes per second) and the clock pauses in menus, dialogue and cutscenes. Your shops close at 23:00 (customers already in line can still be served if you're at the counter); Night Market stalls open at 17:00; you get sleepy after midnight; sleeping ends the day.

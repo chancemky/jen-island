@@ -1,7 +1,7 @@
 // Actors: anything that walks, blinks and emotes. Holds animation state that
 // the renderers (gfx/character.js, gfx/cat.js) read every frame.
 
-import { clamp, rand, TAU } from '../core/util.js';
+import { clamp, rand } from '../core/util.js';
 import { drawHuman, drawEmote } from '../gfx/character.js';
 import { drawCat } from '../gfx/cat.js';
 import { G } from '../systems/state.js';
@@ -187,5 +187,3 @@ function steerAround(a, scene, ux, uy, remaining) {
   return [vx, vy];
 }
 
-export const DIRS = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
-export { TAU };

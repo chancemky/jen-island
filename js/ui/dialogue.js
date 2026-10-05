@@ -9,7 +9,7 @@ import { drawCat } from '../gfx/cat.js';
 import { escapeHtml } from '../core/util.js';
 import { RESIDENTS, MERCHANTS } from '../data/looks.js';
 import { releaseJoystick } from '../core/input.js';
-import { applyPronouns, profileOf, customerProfile, playerGender } from '../systems/pronouns.js';
+import { applyPronouns, profileOf, customerProfile } from '../systems/pronouns.js';
 
 const el = id => document.getElementById(id);
 const box = el('dialog'), nameEl = el('dlgName'), textEl = el('dlgText'), nextEl = el('dlgNext'), choicesEl = el('dlgChoices');
@@ -181,4 +181,3 @@ export function updateDialogue(dt, t) {
     pc.restore();
   }
 }
-export function setPortraitEmo(emo) { if (D.portraitActor) D.portraitActor.emo = emo; }

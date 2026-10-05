@@ -6,7 +6,7 @@
 // Units: roughly ±36 wide around the origin; `a` is a 0..1 drop-in animation.
 
 import { TAU } from '../core/util.js';
-import { INK, ell, circ, box, shadow, poly, line } from './draw.js';
+import { INK, ell, circ, box, shadow, line } from './draw.js';
 
 const rngOf = s => () => ((s = (s * 16807) % 2147483647) / 2147483647);
 
@@ -166,7 +166,6 @@ function drawBowl(c, R, asm, t, done) {
         case 'pork_grilled': porkSlices(c, 3, -5, 24, 3); break;
         case 'herbs': leaves(c, 8, -8, -6, 16, 4, 5); break;
         case 'pickles': shreds(c, 9, -3, 12, 3, ['#f2a14e', '#fff1dc']); break;
-        default: void 0;
       }
     });
   });
@@ -225,7 +224,6 @@ function drawPlate(c, R, asm, t, done) {
       case 'pickles': shreds(c, 12, -5, 10, 5, ['#f2a14e', '#fff1dc', '#f7c27a']); break;
       case 'fish_sauce': dipBowl(c, 24, 10); break;
       case 'herbs': leaves(c, 5, 16, -6, 8, 3, 2); break;
-      default: void 0;
     }
   }));
 }
@@ -292,4 +290,3 @@ export function drawAssembly(c, R, asm, t, done, id) {
   }
   c.restore();
 }
-export { poly };

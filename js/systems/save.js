@@ -184,5 +184,3 @@ export async function resetGame() {
   if (G.user) writeRaw(localKey(G.user.id), JSON.stringify(G.state));
   if (G.user && !G.user.local && cloud.hasSession()) { try { await cloud.saveCloud(G.state, { keepalive: true }); } catch (e) { console.warn('reset cloud save failed', e); } }
 }
-export function wipeLocal(user) { try { localStorage.removeItem(localKey(user.id)); } catch {} }
-export { defaultState };

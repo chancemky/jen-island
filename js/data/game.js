@@ -207,7 +207,7 @@ Object.assign(RECIPES, {
 // ---------------------------------------------------------------- pricing philosophy
 // Every base price comes from what goes into the dish (cost of goods, from the
 // per-portion ingredient costs above, after ECON.ingredients) and a target margin
-// that grows with the dish's tier. v5.3 margins are deliberately thin:
+// that grows with the dish's tier. Margins are deliberately thin:
 // early street food (Chapter ≤ 3) keeps 18–35%, mid-game dishes 30–48%, premium
 // café drinks and Cove seafood 37–50%. Premium seafood is expensive to buy, so it
 // is expensive to eat — but no dish is a money printer. Toppings are charged at
@@ -455,7 +455,7 @@ export const FESTIVAL_REQ = { level: 20, lanterns: 16, served: 40 };     // Chap
 export const KEEPER_REQ = { level: 30, regulars: 15 };                     // Chapter 20: Keeper of the Island (and every business owned)
 export const STATUE_COST = { cost: 3500, mats: { paint: 10, tile: 10 } };
 
-// ---------------------------------------------------------------- economy tuning (v5.3 — a real grind)
+// ---------------------------------------------------------------- economy tuning (a real grind)
 // The money balance in one place. Prices written above are list prices; these multipliers
 // make the game's economy. Owning everything (every business, upgrade, property, recipe
 // level, outfit, piece of furniture and pet) is meant to take many weeks of island days,
@@ -463,8 +463,8 @@ export const STATUE_COST = { cost: 3500, mats: { paint: 10, tile: 10 } };
 // supply runners (economy.js), rent & property (economy.js PLACES), clothes (wardrobe.js),
 // pets (pets.js), level and milestone rewards (progress.js).
 export const ECON = {
-  furniture: 5,          // furniture × list price (v5: 2.5)
-  upgrades: 3.5,         // shop upgrades × list price (v5: 1.5)
+  furniture: 5,          // furniture × list price
+  upgrades: 3.5,         // shop upgrades × list price
   businesses: 1.5,       // buying a business (and its key from Mèo Mây) ×
   build: 1.75,           // the bridges, the statue and the Night Market restoration ×
   ingredients: 1.25,     // what ingredients cost × — thinner margins on every sale

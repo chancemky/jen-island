@@ -5,23 +5,21 @@
 import { G, T, unlockAchievement } from './state.js';
 import { Actor } from '../world/actor.js';
 import { RESIDENTS, MERCHANTS, visitorLook } from '../data/looks.js';
-import { initAnimals, updateAnimals, animalDrawables, reactHop, drawReact, tickReact, react } from './animals.js';
-import { POND as POND_C, isOcean } from '../world/island.js';
+import { initAnimals, updateAnimals, animalDrawables, reactHop, drawReact, tickReact } from './animals.js';
+import { POND as POND_C, isOcean, PATHS, BUILDINGS, QUEUES } from '../world/island.js';
 import { ell, circ } from '../gfx/draw.js';
 import { updateBarks, drawBarks } from './fun.js';
 import { seatsIn, hopOnto } from './seats.js';
 import { updateSideQuests, drawSideQuests, sideQuestDrawables } from './sidequests.js';
 import { growthDrawables } from './growth.js';
-import { PATHS, BUILDINGS, QUEUES } from '../world/island.js';
 import { rand, randi, choice, chance, dist, bus, clamp, TAU, smoothLine } from '../core/util.js';
 import { drawBoatTop } from './cinematic.js';
 import { scooter as drawScooter, seagull, duck, wind, LIGHT } from '../gfx/props.js';
-import { cam } from '../world/render.js';
+import { cam, fx } from '../world/render.js';
 const windAt = x => wind(x, G.t);
 const inView = r => { const v = cam.view; return r.x < v.x + v.w && r.x + r.w > v.x && r.y < v.y + v.h && r.y + r.h > v.y; };
 import { drawHuman } from '../gfx/character.js';
 import { sfx } from '../core/audio.js';
-import { fx } from '../world/render.js';
 
 const HOME_OF = Object.fromEntries(BUILDINGS.filter(b => b.home).map(b => [b.home, b]));
 // family households: Bé Na lives with her grandma, Minh rooms with Anh Tuấn
@@ -108,7 +106,7 @@ export function initNPCs(island) {
   npcs.gulls = Array.from({ length: 5 }, (_, i) => ({ cx: rand(200, 1600), cy: rand(300, 2500), r: rand(80, 200), a: rand(0, TAU), sp: rand(0.25, 0.5) * (i % 2 ? 1 : -1), seed: i * 3, h: rand(60, 110) }));
   npcs.butterflies = Array.from({ length: 26 }, (_, i) => ({ x: rand(300, 1500), y: rand(500, 2100), vx: 0, vy: 0, t: rand(0, 10), col: choice(['#fff4b8', '#ffc0d8', '#c9e8ff', '#ffe0a8']) }));
   npcs.ferry = { state: 'away', x: BERTH.x, y: 2950, speed: 0, next: nextFerryTime(), gap: 10, pax: 0, t: 0, boarded: 0, sinceBoard: 0, unloadFor: 0 };
-  initAnimals(island);
+  initAnimals();
   npcs.ducks = [0, 1, 2, 3].map(i => ({ a: i * 1.6, r: 26 + i * 9, sp: 0.12 + i * 0.03, seed: i * 3, col: i === 3 ? '#f7de8c' : '#fffaf0', x: 0, y: 0 }));
 }
 
@@ -396,11 +394,8 @@ function updateScooter(sc, dt) {
   let target = 72;
   if (pl && G.scene === G.scenes.island && dist(pl.x, pl.y, sc.x, sc.y) < 50) {
     // only brake if the player is actually ahead, on the road
-    const i = sc.segs.findIndex((_, k) => true);
-    const hx = sc.flip ? -1 : 1, ahead = (pl.x - sc.x) * hx * (Math.abs(sc.hx ?? 1)) + 0;
-    const vx = sc.vx || hx, vy = sc.vy || 0, l = Math.hypot(vx, vy) || 1;
+    const vx = sc.vx || (sc.flip ? -1 : 1), vy = sc.vy || 0, l = Math.hypot(vx, vy) || 1;
     const along = ((pl.x - sc.x) * vx + (pl.y - sc.y) * vy) / l, side = Math.abs(((pl.x - sc.x) * vy - (pl.y - sc.y) * vx) / l);
-    void i; void ahead;
     if (along > 0 && side < 18) { sc.wait = (sc.wait || 0) + dt; target = sc.wait > 1.6 ? 36 : 0; if (sc.beep <= 0) { sc.beep = 3; sfx('beep'); } }
     else sc.wait = 0;
   } else sc.wait = 0;

@@ -6,7 +6,7 @@
 // ("Discoveries").
 
 import { lockInput, releaseInput } from '../core/locks.js';
-import { G, T, markDirty, addMoney, canAfford, unlockAchievement } from './state.js';
+import { G, T, markDirty, addMoney, canAfford } from './state.js';
 import { say } from '../ui/dialogue.js';
 import { toast } from '../ui/hud.js';
 import { openSheet, h } from '../ui/sheets.js';
@@ -14,7 +14,6 @@ import { sfx, setRoomMusic, roomMusic, playNote } from '../core/audio.js';
 import { fx } from '../world/render.js';
 import { choice, dist, rand, clock, bus } from '../core/util.js';
 import { PLAZA, PIER, PIER_END, isOcean } from '../world/island.js';
-import { CHAPTERS } from '../data/game.js';
 import { COUNTS } from '../core/counts.js';
 import { npcs } from './npc.js';
 

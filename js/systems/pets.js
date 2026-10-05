@@ -11,7 +11,7 @@ import { INK, ell, circ, poly, shadow, heart } from '../gfx/draw.js';
 import { F } from '../gfx/furniture.js';
 import { say, ask } from '../ui/dialogue.js';
 import { sfx } from '../core/audio.js';
-import { rand, choice, dist, sleep, TAU } from '../core/util.js';
+import { rand, dist, sleep } from '../core/util.js';
 import { fx } from '../world/render.js';
 import {addXP } from './progress.js';
 import { COUNTS } from '../core/counts.js';
@@ -29,9 +29,8 @@ export const PETS = {
 };
 COUNTS.pets = Object.keys(PETS).length;
 export const PET_FOOD = { price: 30, n: 5 };
-// v4.3: pets cost more
 // pets are a big, happy goal; their food is cheap so caring for them never hurts
-for (const v of Object.values(PETS)) if (v.price) v.price = Math.round(v.price * 4 / 10) * 10;   // v5.3
+for (const v of Object.values(PETS)) if (v.price) v.price = Math.round(v.price * 4 / 10) * 10;
 const S = () => { const s = G.state; s.pets ||= []; s.petFood ??= 0; return s; };
 export const myPets = () => S().pets;
 export const followerUid = () => S().petFollow || null;

@@ -15,7 +15,6 @@ import { TAU } from '../core/util.js';
 const DOOR = { x: 900, y: 330 };
 let L = null;
 
-export const inLookout = () => !!L;
 
 export async function enterLighthouse() {
   if (L || !G.player) return;

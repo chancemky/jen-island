@@ -3,7 +3,7 @@
 
 import { h, present } from './sheets.js';
 import { T, tr } from '../systems/state.js';
-import { bizName } from '../data/game.js';
+import { bizName, CHAPTERS, ROLES } from '../data/game.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml } from '../core/util.js';
 
@@ -24,7 +24,6 @@ function walletTrail(sum) {
     w ? row(T('Wallet this morning', 'Ví sáng nay'), `<b>${money(w.end)}</b>`) : '',
   ].join('')}</ul>${w && w.bills > w.start ? `<div style="margin-top:6px;font-weight:800;color:#ffb38a">${T(`Tonight's bills (${money(w.bills)}) were more than you had (${money(w.start)}).`, `Chi phí đêm nay (${money(w.bills)}) nhiều hơn số tiền bạn có (${money(w.start)}).`)}</div>` : ''}</div>`;
 }
-import { BUSINESSES, ACHIEVEMENTS, CHAPTERS, ROLES } from '../data/game.js';
 import { catName } from '../systems/ledger.js';
 
 export function showSummary(sum) { return present(() => summaryCard(sum)); }
@@ -74,4 +73,3 @@ function summaryCard(sum) {
     el.querySelector('button').onclick = () => { if (done) return; done = true; el.style.pointerEvents = 'none'; sfx('bell'); el.style.transition = 'opacity .5s'; el.style.opacity = 0; setTimeout(() => { el.remove(); res(); }, 450); };
   });
 }
-export { ACHIEVEMENTS };

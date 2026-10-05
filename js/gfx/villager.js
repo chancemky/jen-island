@@ -21,7 +21,6 @@ const HIP_Y = 8.6, HIP_X = 2.45, THIGH = 4.1, SHIN = 3.9, FOOT_L = 2.8;
 const WAIST_Y = 9.0, CHEST_Y = 17.2, SHO_X = 5.3, SHO_Y = 16.3, UPPER = 3.9, FORE = 3.7;
 // the big head sits right on the shoulders (overlapping the top of the body) — no neck
 const NECK_Y = 17.4, HEAD_Y = 26.6, HR = 10.6;
-export const HEAD_CENTER_Y = HEAD_Y;
 
 // ---------------------------------------------------------------- math
 const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
@@ -366,7 +365,7 @@ function drawHat(c, L, S, yawFace, t) {
   const col = L.hatColor || '#f2d894', hc = proj(S.head);
   const top = proj(add(S.head, [0, HR * 0.97, 0]));
   // brims: flat ellipses whose front edge sits on the upper forehead (never over the eyes)
-  const brimRing = (y, r, fill, stroke = INK) => { const ry = r * 0.2 + 1, cyS = hc[1] - HR * 0.3 - ry, cy = [hc[0], cyS]; void y; ell(c, cy[0], cy[1], r, ry, fill, stroke, 1); return cy; };
+  const brimRing = (y, r, fill, stroke = INK) => { const ry = r * 0.2 + 1, cyS = hc[1] - HR * 0.3 - ry, cy = [hc[0], cyS]; ell(c, cy[0], cy[1], r, ry, fill, stroke, 1); return cy; };
   if (h === 'nonla') {
     const by = brimRing(HR * 0.3, HR * 1.55, shade(col, -18));
     const apex = [by[0], by[1] - HR * 1.05];
@@ -534,11 +533,8 @@ function drawTorso(c, L, S, a, t) {
     box(c, px - 1.8, bot[1] - 1, 3.6, 3.6, 0.6, '#a8763f', INK, 0.6);
     line(c, px + 0.6, bot[1] - 1, px + 0.9, bot[1] + 4.4, '#c9955e', 1); box(c, px - 0.8, bot[1] + 3.8, 3.4, 1.4, 0.3, '#8f9aa3', INK, 0.4);
   }
-  // neck
-  void neck;
 }
-function drawLeg(c, L, lg, P) {
-  const C = cols(L), far = false;
+function drawLeg(c, L, lg) {
   const skin = L.legs || L.skin;
   capsule(c, [lg.hip, lg.knee, lg.ankle], 3.5, skin);
   const pants = L.bottomLen ? Math.min(1, L.bottomLen / 5) : 0;
@@ -551,7 +547,6 @@ function drawLeg(c, L, lg, P) {
     capsule(c, pts, 4.2, L.bottom);
   }
   drawFoot(c, L, lg);
-  void C; void far; void P;
 }
 // A real foot: an egg-shaped footprint (narrow heel, wide ball, round toe)
 // in the ground plane, extruded upward into a shoe. Stacked layers give the
@@ -617,7 +612,6 @@ function drawFoot(c, L, lg) {
   if (st === 'sneaker' || st === 'loafer' || st === 'slipper') { const o = T(-A * 0.55, 0); ell(c, o[0], o[1], 1.25 * tk, 0.55, shade(sc, -38), null); }
 }
 function drawArm(c, L, arm) {
-  const C = cols(L);
   capsule(c, [arm.sho, arm.elbow, arm.hand], 3.0, L.armSkin || L.skin);
   const sleeve = L.coat ? 0.92 : L.sleeve ?? 0.55;
   if (sleeve > 0) {
@@ -629,7 +623,6 @@ function drawArm(c, L, arm) {
   }
   const h = proj(arm.hand);
   circ(c, h[0], h[1], 1.85, L.skin, INK, 0.9);
-  void C;
   return h;
 }
 // tote bag: strap over the right shoulder, the bag at the right hip
@@ -698,9 +691,8 @@ export function drawVillager(c, a, t) {
   // gather parts with depth, draw back to front
   const parts = [];
   const depth = p => p[2];
-  const L2 = { ...L };
   // legs come out from under the shorts: always behind the body, unless seated (thighs on the lap)
-  for (const lg of S.legs) parts.push({ z: P.seat !== undefined ? (depth(lg.knee) + depth(lg.ankle)) / 2 + 2 : -100 + depth(lg.ankle), draw: () => drawLeg(c, L, lg, P) });
+  for (const lg of S.legs) parts.push({ z: P.seat !== undefined ? (depth(lg.knee) + depth(lg.ankle)) / 2 + 2 : -100 + depth(lg.ankle), draw: () => drawLeg(c, L, lg) });
   // Arm layering. Relaxed arms hang at the sides: seen from the front both are
   // drawn over the body edge, from the back both behind it, and from the side the
   // near arm is in front and the far arm behind, no matter which way it swings.
@@ -779,7 +771,6 @@ export function drawVillager(c, a, t) {
     else { base = add(S.head, rotY([0, 2.4, -HR * 0.97], yaw)); pts = [base, add(base, rotY([0, -2.6, -2.6], yaw)), add(base, rotY([0, -8 * n, -2.8], yaw)), add(base, rotY([0, -14 * n, -1.6], yaw))]; }   // tied at the back of the head, hanging past the nape
     parts.push({ z: nearSide(base) ? 100 + depth(base) : depth(base), overHead: nearSide(base), draw: () => hairTail(c, pts, o.braid ? 4.4 : 6.4, L.hair, o.braid, tie) });
   }
-  void covered;
   // neck then head (+ hair + face + hat)
   parts.push({ z: 0.5, head: true, draw: () => {
     drawHead(c, a, L, S, yaw, t, P, H);
@@ -809,7 +800,6 @@ export function drawVillager(c, a, t) {
     }
   }
   c.restore();
-  void L2;
 }
 
 // Which way the face points. Cartoon three-quarter cheat: seen from the side the face
@@ -959,8 +949,6 @@ function box2(c, x, y, w, h, fill) { c.beginPath(); c.roundRect ? c.roundRect(x,
 function strokeLine(c, pts) { if (pts.length < 2) return; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (const p of pts) c.lineTo(p[0], p[1]); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke(); }
 
 // Where emotes should float above this character.
-export const villagerTop = L => -(HEAD_Y + HR + 6) * (L?.scale || 1);
-export { clamp };
 
 // Draw a character framed on their face: head centred at (cx, cy), about
 // `size` across. Used for portraits and the little queue faces.

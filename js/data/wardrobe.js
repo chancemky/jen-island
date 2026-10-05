@@ -110,6 +110,6 @@ export function applyOutfit(base, wardrobe) {
   return L;
 }
 
-// v5: everyday clothes are affordable; the rare, premium pieces are the luxury goal
-// v5.3: a full wardrobe is a long-term goal
+// everyday clothes are affordable; the rare, premium pieces (list price ≥ 250) are the
+// luxury goal, so a full wardrobe is a long-term one
 for (const v of Object.values(CLOTHES)) if (v.price) { v.luxury = v.price >= 250; v.price = Math.round(v.price * (v.luxury ? 8 : 3.5) / 10) * 10; }

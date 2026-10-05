@@ -7,9 +7,9 @@
 // businesses, staff, property, time of day and clock speed, customers, collections,
 // bridges and festivals, side quests, teleporting and walking speed.
 
-import { G, T, markDirty, addMoney, learnRecipe, unlockAchievement } from '../systems/state.js';
+import { G, markDirty, addMoney, learnRecipe, unlockAchievement } from '../systems/state.js';
 import { STEPS, setStep, checkStory, refreshQuest } from '../systems/story.js';
-import { BUSINESSES, RECIPES, MATERIALS, FURNITURE, INGREDIENTS, ACHIEVEMENTS, NIGHT_MARKET_RESTORE, FESTIVAL_REQ, KEEPER_REQ } from '../data/game.js';
+import { BUSINESSES, RECIPES, MATERIALS, FURNITURE, INGREDIENTS, ACHIEVEMENTS, FESTIVAL_REQ, KEEPER_REQ } from '../data/game.js';
 import { CLOTHES } from '../data/wardrobe.js';
 import { PETS } from '../systems/pets.js';
 import { PLACES } from '../systems/economy.js';

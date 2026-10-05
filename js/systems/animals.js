@@ -5,7 +5,7 @@
 
 import { G } from './state.js';
 import { rand, choice, dist, TAU } from '../core/util.js';
-import { INK, ell, circ, shadow, poly, box, stext } from '../gfx/draw.js';
+import { INK, ell, circ, shadow, poly, stext } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
 
 const A = [];
@@ -20,7 +20,7 @@ const HOMES = {
   goat: [[1660, 1180], [1360, 1120]],
 };
 
-export function initAnimals(island) {
+export function initAnimals() {
   A.length = 0;
   const add = (kind, x, y, o = {}) => A.push({ kind, x, y, hx: x, hy: y, vx: 0, vy: 0, t: rand(0, 10), state: 'idle', until: rand(1, 4), face: choice([-1, 1]), seed: Math.random() * 99, ...o });
   for (const [x, y] of HOMES.chicken) { add('chicken', x, y, { col: choice(['#fffaf0', '#f3c27a', '#c98f5a']) }); add('chicken', x + 14, y + 8, { col: '#fffaf0', chick: true }); }
@@ -31,7 +31,6 @@ export function initAnimals(island) {
   for (const [x, y] of HOMES.goat) add('goat', x, y);
   fish = Array.from({ length: 5 }, () => ({ x: rand(200, 1600), y: rand(2480, 2580), t: rand(0, 8), next: rand(3, 9) }));
   G.animals = A;
-  void island;
 }
 
 const SPEED = { chicken: 26, dog: 58, cat: 30, crab: 30, pigeon: 22, goat: 20 };
@@ -137,8 +136,6 @@ export function tickReact(a, dt) { if (a.react) { a.react.t += dt; if (a.react.t
 // ---------------------------------------------------------------- drawing
 // point (x, y) after rotating by `ang` about (px, py): used so heads stay on
 // their necks when a body tilts (sitting, stretching)
-const rot = (x, y, px, py, ang) => { const c = Math.cos(ang), s = Math.sin(ang), dx = x - px, dy = y - py; return [px + dx * c - dy * s, py + dx * s + dy * c]; };
-const neck = (c, x0, y0, x1, y1, w, col) => { c.lineCap = 'round'; c.strokeStyle = INK; c.lineWidth = w + 1.8; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); c.strokeStyle = col; c.lineWidth = w; c.stroke(); };
 function chicken(c, t, a) {
   const walk = Math.hypot(a.vx, a.vy) > 3, peck = a.state === 'idle' && a.idle === 'peck' && Math.sin(a.t * 7) > 0.2;
   const s = a.chick ? 0.6 : 1, bob = walk ? Math.abs(Math.sin(a.t * 14)) * 1.2 : 0;
@@ -302,6 +299,4 @@ export function animalDrawables() {
   }
   return out;
 }
-export { box };
-
 export { DRAW as ANIMAL_DRAW };

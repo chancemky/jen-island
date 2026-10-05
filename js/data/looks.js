@@ -5,15 +5,15 @@ import { rng, pick } from '../core/util.js';
 import { HAIRCUTS } from './hair.js';
 import { T } from '../systems/state.js';
 
-export const EYES = ['#8a5a40', '#4f9f7a', '#5f8fd0', '#c9803a', '#8a6ad0', '#3f6f5a'];
-export const SKIN = ['#fde5d2', '#f8d6bd', '#f1c6a4', '#e3b08b', '#cf9772', '#b67e5b'];
-export const HAIR = ['#4a322b', '#2f2a30', '#6e4430', '#9a6443', '#c9895b', '#8f8494', '#e59aac', '#3d3550'];
-export const TOPS = ['#a9cf9a', '#f4a9b8', '#a9d4f0', '#c9b6e8', '#f7de8c', '#f8c0a0', '#9fd8c8', '#fff1dc', '#f28f7c', '#b9d7a0', '#e8b4d8', '#8fb7e0'];
-export const BOTTOMS = ['#6d7fa8', '#8b6b5a', '#f4efe6', '#556b8a', '#c98f6b', '#7aa38a', '#3f4a5e', '#d8c3a5'];
-export const SHOES = ['#f0e6da', '#7a5040', '#e9848f', '#5f6b86', '#f5d06a', '#fff'];
+const EYES = ['#8a5a40', '#4f9f7a', '#5f8fd0', '#c9803a', '#8a6ad0', '#3f6f5a'];
+const SKIN = ['#fde5d2', '#f8d6bd', '#f1c6a4', '#e3b08b', '#cf9772', '#b67e5b'];
+const HAIR = ['#4a322b', '#2f2a30', '#6e4430', '#9a6443', '#c9895b', '#8f8494', '#e59aac', '#3d3550'];
+const TOPS = ['#a9cf9a', '#f4a9b8', '#a9d4f0', '#c9b6e8', '#f7de8c', '#f8c0a0', '#9fd8c8', '#fff1dc', '#f28f7c', '#b9d7a0', '#e8b4d8', '#8fb7e0'];
+const BOTTOMS = ['#6d7fa8', '#8b6b5a', '#f4efe6', '#556b8a', '#c98f6b', '#7aa38a', '#3f4a5e', '#d8c3a5'];
+const SHOES = ['#f0e6da', '#7a5040', '#e9848f', '#5f6b86', '#f5d06a', '#fff'];
 const FEMALE_HAIR = Object.keys(HAIRCUTS).filter(k => HAIRCUTS[k].g === 'f');
 const MALE_HAIR = Object.keys(HAIRCUTS).filter(k => HAIRCUTS[k].g === 'm' && k !== 'bald');
-export const isFemCut = id => HAIRCUTS[id]?.g === 'f';
+const isFemCut = id => HAIRCUTS[id]?.g === 'f';
 
 export const PLAYER_OPTIONS = {
   hairStyle: ['bob', 'long', 'pony', 'lob', 'curtain', 'highpony', 'wavy', 'buns', 'short', 'quiff', 'curtains', 'messy', 'crop', 'spiky'],
@@ -42,8 +42,7 @@ export const RESIDENTS = {
   anh_tuan: { name: 'Anh Tuấn', role: 'Scooter taxi driver', look: { skin: '#e3b08b', eyeCol: '#8a6ad0', hair: '#2f2a30', hairStyle: 'crop', top: '#9fd8c8', topStyle: 'shirt', bottom: '#3f4a5e', bottomLen: 5, shoe: '#7a5040', hat: 'bucket', hatColor: '#7aa38a' }, personality: 'regular' },
   chi_mai: { get name() { return T('Doctor An', 'Bác sĩ An'); }, role: 'Island doctor', look: { skin: '#f1c6a4', eyeCol: '#8a5a40', hair: '#2f2a30', hairStyle: 'gentpart', top: '#a9d4f0', topStyle: 'shirt', coat: '#fdfdfb', steth: true, bottom: '#3f4a5e', bottomLen: 5, shoe: '#5f4a40', glasses: '#5b3f36', badge: '#3fae5c' }, personality: 'rushed' },
 };
-// Lives on Firefly Islet; appears once the Long Bridge is fixed.
-// Harbour Town and Coconut Cove folks: they appear once their bridge is built.
+// Harbour Town, Coconut Cove and Firefly Islet folks appear once their bridge is built.
 RESIDENTS.ong_loc = { name: 'Ông Lộc', role: 'Net-mender & old harbour master', region: 'harbourBridge', look: { skin: '#c98f6a', eyeCol: '#5a4a3a', hair: '#e6e2dc', hairStyle: 'crew', top: '#6f8fa8', topStyle: 'shirt', bottom: '#5f5a52', bottomLen: 3, shoe: '#6b5040', scale: 0.96, glasses: '#6a5a4a', tote: '#b98a5a' }, personality: 'patient' };
 RESIDENTS.chi_ngoc = { name: 'Chị Ngọc', role: 'Runs the harbour guesthouse', region: 'harbourBridge', look: { skin: '#f1c6a4', eyeCol: '#6a4a3a', hair: '#2f2a30', hairStyle: 'bun', top: '#f7de8c', topStyle: 'shirt', bottom: '#6d7fa8', bottomLen: 4, shoe: '#fff', lashes: true, lanyard: '#e8584e' }, personality: 'excited' };
 RESIDENTS.co_dua = { name: 'Cô Dừa', role: 'Coconut seller at the cove', region: 'coveBridge', look: { skin: '#d9a07a', eyeCol: '#4f3a2a', hair: '#3a2a26', hairStyle: 'long', top: '#9fd8c8', topStyle: 'floral', top2: '#fff', bottom: '#e9c46f', bottomLen: 4, shoe: '#c9955e', lashes: true, hat: 'nonla', hatColor: '#efd69a', tote: '#c9a26a' }, personality: 'regular' };
@@ -59,8 +58,6 @@ export const MERCHANTS = {
   co_bong: { name: 'Cô Bông', role: 'Pet shop owner', look: { skin: '#f1c6a4', eyeCol: '#4f9f7a', hair: '#9a6443', hairStyle: 'messybun', top: '#f7de8c', topStyle: 'tee', apron: '#f2a14e', badge: '#f08ca0', bottom: '#556b8a', bottomLen: 5, shoe: '#e9848f', lashes: true, glasses: '#8a6a5a' } },
   captain: { name: 'Thuyền trưởng Vũ', role: 'Ferry captain', look: { skin: '#cf9772', eyeCol: '#3f6f5a', hair: '#2f2a30', hairStyle: 'gentpart', top: '#fff1dc', topStyle: 'shirt', bottom: '#3f4a5e', bottomLen: 5, shoe: '#2f2a30', hat: 'cap', hatColor: '#fffdf6', badge: '#f2c14e', top2: '#3f4a5e' } },
 };
-
-export const MEO_LOOK = { cat: true, scale: 1 };
 
 const TOURIST_EXTRAS = ['backpack', 'camera', 'hat'];
 export function visitorLook(seed, personality = 'patient') {
@@ -99,7 +96,6 @@ export function visitorLook(seed, personality = 'patient') {
   return L;
 }
 
-export const STAFF_OUTFIT = { apron: '#fff6e6', top: '#f28f7c', topStyle: 'tee' };
 export function employeeLook(seed, role) {
   const L = visitorLook(seed, 'regular');
   delete L.backpack; delete L.camera; delete L.lanyard; delete L.flower; delete L.tote; delete L.surf; delete L.guitar; delete L.suitcase; L.scale = 1;

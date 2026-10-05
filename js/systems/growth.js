@@ -10,7 +10,7 @@ import { PLAZA } from '../world/island.js';
 import { eventOn } from './interact.js';
 import { npcs } from './npc.js';
 import { RESIDENTS } from '../data/looks.js';
-import { rand, choice } from '../core/util.js';
+import { rand } from '../core/util.js';
 
 const ch = () => G.state.story.chapter || 1;
 const flag = k => !!G.state.story.flags[k];

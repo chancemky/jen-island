@@ -1,7 +1,7 @@
 // Renderer + camera + world-space effects.
 
 import { G } from '../systems/state.js';
-import { clamp, damp, lerp, TAU, rand, invLerp } from '../core/util.js';
+import { clamp, damp, lerp, TAU, invLerp } from '../core/util.js';
 import { LIGHT, glows } from '../gfx/props.js';
 import { INK, ell, circ, text, heart, star, line } from '../gfx/draw.js';
 import { drawSpark } from '../gfx/character.js';
@@ -191,4 +191,3 @@ export class Renderer {
   toScreen(x, y) { const v = cam.view, z = cam.zoom; return [(x - v.x) * z, (y - v.y) * z]; }
   toWorld(sx, sy) { const v = cam.view, z = cam.zoom; return [sx / z + v.x, sy / z + v.y]; }
 }
-export { rand };

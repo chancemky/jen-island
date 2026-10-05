@@ -8,18 +8,16 @@ import { MORE_QUESTS } from '../data/quests.js';
 import { RESIDENTS, MERCHANTS } from '../data/looks.js';
 import { friendLevel, befriend, FRIEND_LEVELS } from './friends.js';
 import { cs, camTo } from './cutscene.js';
-import { ask } from '../ui/dialogue.js';
-import { say } from '../ui/dialogue.js';
+import { ask, say } from '../ui/dialogue.js';
 import { showReward } from '../ui/sheets.js';
 import { toast, setGuide } from '../ui/hud.js';
 import { sfx } from '../core/audio.js';
 import { dist, TAU, sleep, clock, bus } from '../core/util.js';
 import { fx } from '../world/render.js';
-import { ell, circ, box, poly, line } from '../gfx/draw.js';
+import { ell, circ, box, poly, line, INK } from '../gfx/draw.js';
 import { ANIMAL_DRAW } from './animals.js';
 import * as P from '../gfx/props.js';
 import { ICONS } from '../gfx/food.js';
-import { INK } from '../gfx/draw.js';
 import {addXP } from './progress.js';
 import { COUNTS } from '../core/counts.js';
 
@@ -336,7 +334,6 @@ export function refreshGuide() {
 }
 // where a lost item (or meeting place) is right now (the letter blows around)
 export function questSpot(q) { const r = RT[q.id]; return { x: q.x + (r?.dx || 0), y: q.y + (r?.dy || 0) }; }
-export const foundQuestFor = rid => SIDE_QUESTS.find(q => deliverTarget(q) === rid && Q()[q.id] === 'found');
 
 // ---------------------------------------------------------------- drawing
 export function drawSideQuests(c, t) {

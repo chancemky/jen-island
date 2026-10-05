@@ -3,8 +3,8 @@
 // the island grows on the horizon until the dock is close, then we cut to
 // the top-down world for the docking.
 
-import { TAU, clamp, lerp, ease, rng, invLerp } from '../core/util.js';
-import { INK, ell, circ, box, poly, line, limb, text } from '../gfx/draw.js';
+import { TAU, clamp, lerp, ease, rng } from '../core/util.js';
+import { INK, ell, circ, box, poly, line, limb } from '../gfx/draw.js';
 import { drawHuman } from '../gfx/character.js';
 import { sfx } from '../core/audio.js';
 import { G, T } from './state.js';

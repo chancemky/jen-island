@@ -4,12 +4,12 @@
 // seconds. "Prep all" unlocks after the first batch.
 
 import { G, T, bizOf, pantry, addPantry, markDirty, flag, setFlag } from '../systems/state.js';
-import { INGREDIENTS, PREPPED, PREP_BATCH, BUSINESSES, PREP_VERB, ingName, bizName } from '../data/game.js';
+import { INGREDIENTS, PREP_BATCH, PREP_VERB, ingName, bizName } from '../data/game.js';
 import { ingredientsForBiz } from '../systems/business.js';
 import { ICONS, iconURL } from '../gfx/food.js';
-import { INK, circ, ell } from '../gfx/draw.js';
+import { INK, circ } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
-import { escapeHtml, TAU, bus, clock } from '../core/util.js';
+import { escapeHtml, bus, clock } from '../core/util.js';
 import { h, flyIcon } from './sheets.js';
 import { toast } from './hud.js';
 import { releaseJoystick } from '../core/input.js';

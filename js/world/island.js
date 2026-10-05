@@ -3,7 +3,7 @@
 
 import { MORE_QUESTS } from '../data/quests.js';
 import { BRAND_COLOURS } from '../data/game.js';
-import { smoothLoop, smoothLine, inPoly, distToLine, rng, clamp, TAU, shade, dist } from '../core/util.js';
+import { smoothLoop, smoothLine, inPoly, distToLine, rng, clamp, TAU, dist } from '../core/util.js';
 import { Scene } from './scene.js';
 import { INK, ell, circ, box, poly, line, text, star, flower } from '../gfx/draw.js';
 import { drawHuman } from '../gfx/character.js';
@@ -30,7 +30,7 @@ export const GRASS = insetPoly(SAND, (x, y) => 46 + 110 * clamp((y - 1980) / 280
 const FOAM2 = insetPoly(SAND, () => -16);
 const SHALLOW = insetPoly(SAND, () => -44);
 
-// Firefly Islet, east across the long bridge (opens in Chapter 8)
+// Firefly Islet, east across the long bridge (opens in Chapter 14)
 const ICX = 2240, ICY = 1500;
 const ISLET_CP = [[2240, 1080], [2420, 1130], [2540, 1280], [2570, 1480], [2530, 1700], [2400, 1860], [2230, 1920], [2060, 1860], [1960, 1700], [1930, 1520], [1960, 1320], [2070, 1160]];
 export const ISLET_SAND = smoothLoop(ISLET_CP, 10);
@@ -52,7 +52,6 @@ export const SEA_BRIDGES = [
   { id: 'harbour', x: 1612, y: 681, w: 400, h: 38, fixed: () => !!G.state?.story?.flags?.harbourBridge, label: ['NOT BUILT YET', 'CHƯA XÂY'] },
   { id: 'cove', x: 1626, y: 2061, w: 320, h: 38, fixed: () => !!G.state?.story?.flags?.coveBridge, label: ['NOT BUILT YET', 'CHƯA XÂY'] },
 ];
-export const SEA_BRIDGE = SEA_BRIDGES[0];
 export const LANDS = [
   { sand: SAND, grass: GRASS, foam: FOAM2, shallow: SHALLOW, cx: CX, cy: CY },
   { sand: ISLET_SAND, grass: ISLET_GRASS, foam: ISLET_FOAM, shallow: ISLET_SHALLOW, cx: ICX, cy: ICY },

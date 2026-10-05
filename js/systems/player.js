@@ -1,6 +1,6 @@
 // Player movement: analog joystick → smoothed velocity → collision-aware move.
 
-import { lockInput, releaseInput, inputLocked } from '../core/locks.js';
+import { inputLocked } from '../core/locks.js';
 import { damp, clamp } from '../core/util.js';
 import { moveVector } from '../core/input.js';
 import { Actor } from '../world/actor.js';
@@ -16,7 +16,6 @@ export class Player extends Actor {
   }
   // Can the player move? Only when no system holds an input lock (core/locks.js).
   get control() { return !inputLocked(); }
-  set control(v) { console.warn('[input] player.control set directly — use lockInput/unlockInput'); if (v) releaseInput('legacy'); else lockInput('legacy'); }
   // Called every frame before Actor.update.
   drive(dt, scene, sfx) {
     if (this.seat) { this.vx = this.vy = 0; this.moving = 0; return; }   // seated: the joystick stands you up (systems/seats.js)

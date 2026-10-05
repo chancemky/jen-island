@@ -2,7 +2,7 @@
 
 import { G, T } from '../systems/state.js';
 import { sfx } from '../core/audio.js';
-import { escapeHtml, clock } from '../core/util.js';
+import { escapeHtml } from '../core/util.js';
 import { iconURL } from '../gfx/food.js';
 import { drawHuman, EL } from '../gfx/character.js';
 import { drawCat } from '../gfx/cat.js';

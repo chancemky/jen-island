@@ -2,11 +2,10 @@
 // toast, off-screen quest pointer, action button and toasts.
 
 import { G, T, repStars } from '../systems/state.js';
-import { bus, clock, money, clamp, escapeHtml } from '../core/util.js';
+import { bus, clock, money, escapeHtml } from '../core/util.js';
 import { iconURL } from '../gfx/food.js';
 import { ACHIEVEMENTS } from '../data/game.js';
 import { sfx } from '../core/audio.js';
-import { cam } from '../world/render.js';
 import { input, joystickActive, startJoystick } from '../core/input.js';
 
 const $ = id => document.getElementById(id);
@@ -223,5 +222,3 @@ export function moneyShortfall(required) {
   });
 }
 
-export function screenPosOfMoney() { const r = $('moneyChip').getBoundingClientRect(); return [r.left + 18, r.top + r.height / 2]; }
-export { cam };

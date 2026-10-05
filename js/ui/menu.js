@@ -1,25 +1,20 @@
 // Main menu: island map, journal, settings, save status, account.
 
 import { G, T, setLang, markDirty } from '../systems/state.js';
-import { openSheet, tabs, h, btn } from './sheets.js';
+import { openSheet, tabs, h, btn, showReward } from './sheets.js';
 import { DEV_TOOLS } from '../dev/flag.js';
-import { SAND, GRASS, RIVER, POND, PATHS, BUILDINGS, PLAZA, NM_PLAZA, PIER, W, H, LANDS, ISLET_SAND, PADDIES } from '../world/island.js';
-import { activeQuests } from '../systems/sidequests.js';
 import { saveStatus, saveLocal, saveCloudNow, resetGame } from '../systems/save.js';
 import { setAudio, sfx } from '../core/audio.js';
-import { escapeHtml, clock, TAU, money, moneyPair, moneyShort } from '../core/util.js';
+import { escapeHtml, clock, money, moneyPair, moneyShort } from '../core/util.js';
 import { openJournal } from './shops.js';
-import { currentStep } from '../systems/story.js';
-import { CHAPTERS, BUSINESSES } from '../data/game.js';
-import { TRACKS, trackState, claimMilestone, xpNeed, trackGift } from '../systems/progress.js';
-import { FURNITURE } from '../data/game.js';
+import { CHAPTERS, FURNITURE } from '../data/game.js';
+import { TRACKS, trackState, claimMilestone, xpNeed, trackGift, leaderboardRow } from '../systems/progress.js';
 import { CLOTHES } from '../data/wardrobe.js';
 import { renderChangelog } from './whatsnew.js';
 import { iconURL } from '../gfx/food.js';
 import { mountMap } from './worldmap.js';
 import { renderOffice } from './office.js';
 import * as cloud from '../systems/cloud.js';
-import { showReward } from './sheets.js';
 
 function renderMilestones(pane, api) {
   const s = G.state;
@@ -81,7 +76,6 @@ function renderLeaderboard(pane) {
   pane.append(seg, box);
   load();
 }
-import { leaderboardRow } from '../systems/progress.js';
 const leaderboardRowNow = () => leaderboardRow(G.state);
 
 export function openMenu({ onLogout, tab = 0 } = {}) {
@@ -140,8 +134,6 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
   } });
 }
 
-export { BUSINESSES };
-
 // "Are you sure?" before wiping everything
 function confirmReset(api) {
   sfx('ui');
@@ -159,13 +151,3 @@ function confirmReset(api) {
   };
 }
 
-// a small in-game yes/no card
-export function confirmBox(title, text, yes, no = T('Cancel', 'Hủy')) {
-  return new Promise(res => {
-    const el = h('div', 'modal');
-    el.innerHTML = `<div class="card"><h2>${title}</h2><p style="font-weight:800;line-height:1.4">${text}</p><div style="display:flex;gap:8px;margin-top:12px"><button type="button" class="btn ghost" data-a="no" style="flex:1">${no}</button><button type="button" class="btn pink" data-a="yes" style="flex:1">${yes}</button></div></div>`;
-    document.getElementById('app').appendChild(el);
-    el.querySelector('[data-a="no"]').onclick = () => { sfx('back'); el.remove(); res(false); };
-    el.querySelector('[data-a="yes"]').onclick = () => { el.remove(); res(true); };
-  });
-}

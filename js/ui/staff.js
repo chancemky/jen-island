@@ -1,7 +1,7 @@
 // Restaurant staff board: current team (role, stats, trait, wage) and today's
 // three applicants. Employees exist only in the restaurant.
 
-import { G, T, canAfford, bizOf } from '../systems/state.js';
+import { T, canAfford, bizOf } from '../systems/state.js';
 import { ROLES, TRAITS } from '../data/game.js';
 import { candidates, hire, fire, setRole, restaurantAutomated, dailyWages, staffByRole, STAFF_ROLES, roleAvailable, wageOf, feeOf } from '../systems/restaurant.js';
 import { employeeLook } from '../data/looks.js';

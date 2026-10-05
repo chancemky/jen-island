@@ -1,9 +1,9 @@
 // Shop lists and inventory screens.
 
-import { G, T, addMoney, canAfford, addPantry, addMat, mats, pantry, hasMats, markDirty, repStars } from '../systems/state.js';
-import { INGREDIENTS, AISLES, MATERIALS, FURNITURE, RECIPES, STATION, BUSINESSES, RECIPE_UPGRADES, ACHIEVEMENTS, CHAPTERS, PREP_VERB, ingName, matName, recipeName, bizName, furnName } from '../data/game.js';
-import { MERCHANTS } from '../data/looks.js';
-import { openSheet, tabs, rowEl, btn, h, flyIcon, showReward } from './sheets.js';
+import { G, T, addMoney, canAfford, addPantry, addMat, mats, pantry, hasMats, markDirty } from '../systems/state.js';
+import { INGREDIENTS, AISLES, MATERIALS, FURNITURE, RECIPES, STATION, BUSINESSES, RECIPE_UPGRADES, ACHIEVEMENTS, CHAPTERS, ingName, matName, recipeName, bizName, furnName, EQUIPMENT, SHOP_LEVEL_REQ, PRICE_RANGE, recipeUpgradeCost, BRAND_COLOURS, SIGN_STYLES, BRAND_RECOLOUR } from '../data/game.js';
+import { MERCHANTS, RESIDENTS } from '../data/looks.js';
+import { openSheet, tabs, rowEl, btn, h, flyIcon } from './sheets.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml, bus, clock } from '../core/util.js';
 import { iconURL } from '../gfx/food.js';
@@ -14,8 +14,6 @@ import { activeQuests, SIDE_QUESTS, deliverTarget } from '../systems/sidequests.
 import { MEO_MEMORIES } from '../data/lore.js';
 import { DISCOVERIES } from '../systems/interact.js';
 import { albumPhotos } from '../systems/album.js';
-import { RESIDENTS } from '../data/looks.js';
-import { EQUIPMENT, SHOP_LEVEL_REQ, PRICE_RANGE, recipeUpgradeCost, BRAND_COLOURS, SIGN_STYLES, BRAND_RECOLOUR } from '../data/game.js';
 import { upgradeCost, shopNeed } from '../systems/economy.js';
 import { toast, moneyShortfall } from './hud.js';
 import { STEPS, STEP_TEACHES } from '../systems/story.js';
@@ -534,4 +532,3 @@ export function openJournal() {
     if ((s.story.flags.meoMem || 0) < MEO_MEMORIES.length) list.appendChild(h('div', 'empty-note', T('Ask Mèo Mây to "tell me something" — there\'s more to hear as the island grows.', 'Hỏi Mèo Mây “kể chuyện đi” — hòn đảo càng lớn, Mèo Mây càng có nhiều chuyện kể.')));
   } });
 }
-export { repStars, showReward };

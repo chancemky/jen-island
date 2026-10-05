@@ -7,7 +7,7 @@ import { G, T, markDirty, addPantry } from './state.js';
 import { sfx } from '../core/audio.js';
 import { toast } from '../ui/hud.js';
 import { fx } from '../world/render.js';
-import { rand, choice, dist } from '../core/util.js';
+import { rand } from '../core/util.js';
 import { PIER_END } from '../world/island.js';
 import { discover } from './interact.js';
 
@@ -65,4 +65,3 @@ function cast() {
   };
   el.querySelector('button').onclick = () => { if (!game || game.done) return; if (game.bite) finish(true); else finish(false, T('Too early — the fish swam off', 'Sớm quá — cá bơi mất rồi')); };
 }
-export const fishCount = () => Object.values(G.state.fishBag || {}).reduce((a, b) => a + b, 0);

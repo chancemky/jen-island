@@ -750,7 +750,7 @@ if (only === 'all' || only === 'stability') {
   // 6) doors right after a cutscene
   await p.evaluate(() => { const J = window.__jen; J.cs.run('short', () => new Promise(r => setTimeout(r, 400))); });
   await settle(5000);
-  const door = await p.evaluate(async () => { const J = window.__jen; J.setScene('island', 1260, 1790, 'up'); const t = J.scenes.island.triggers.find(t => t.kind === 'door' && t.building === 'house'); J.G.player.x = t.doorX; J.G.player.y = t.doorY + 20; return [t.doorX, t.doorY]; });
+  await p.evaluate(async () => { const J = window.__jen; J.setScene('island', 1260, 1790, 'up'); const t = J.scenes.island.triggers.find(t => t.kind === 'door' && t.building === 'house'); J.G.player.x = t.doorX; J.G.player.y = t.doorY + 20; return [t.doorX, t.doorY]; });
   await p.keyboard.down('ArrowUp'); await p.waitForTimeout(1600); await p.keyboard.up('ArrowUp');
   await settle(6000);
   const inside = await p.evaluate(() => window.__jen.G.scene.id);
@@ -759,7 +759,6 @@ if (only === 'all' || only === 'stability') {
   await settle(6000);
   const outside = await p.evaluate(() => window.__jen.G.scene.id);
   if (outside !== 'island') fail('stability', `leaving the house went to "${outside}"`); else if (inside === 'house') pass('stability', 'doors work right after a cutscene (in and out)');
-  void door;
   await clean('after doors');
 
   // 6b) pause in free roam: freezes, resumes from a tap outside the card; a scene takes over from it; a card-less pause is released
