@@ -11,24 +11,44 @@ export const input = {
   keys: new Set(),
   actionPressed: false,         // consumed by the game loop
   onAction: null,
+  tapOverrideAt: null,          // HUD controls can claim a tap even when the touch layer won hit-testing
   lastTouch: 0,
 };
 
 let base, knob, zone, active = null, ox = 0, oy = 0;
 let downX = 0, downY = 0, downT = 0, dragMax = 0; // a quick touch without dragging is a tap
 let tapOverride = null;             // a HUD control can yield a drag to the stick, but keep an unmoved tap
+let lastMoveRead = performance.now();
 const R = 46;
+const STALE_MS = 250;
+const stale = e => { const age = performance.now() - e.timeStamp; return age > STALE_MS && age < 60000; };
 
 export function initInput(zoneEl, baseEl, knobEl) {
   zone = zoneEl; base = baseEl; knob = knobEl;
   zone.addEventListener('pointerdown', onDown, { passive: false });
-  window.addEventListener('pointermove', onMove, { passive: false });
-  window.addEventListener('pointerup', onUp);
-  window.addEventListener('pointercancel', onUp);
-  window.addEventListener('blur', () => { onUp({ pointerId: active }); input.keys.clear(); });
+  window.addEventListener('pointermove', onMove, { passive: false, capture: true });
+  window.addEventListener('pointerup', onUp, true);
+  window.addEventListener('pointercancel', onUp, true);
+  window.addEventListener('lostpointercapture', onUp, true);
+  const resetInput = () => { releaseJoystick(); input.keys.clear(); };
+  window.addEventListener('blur', resetInput);
+  window.addEventListener('pagehide', resetInput);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) resetInput(); });
+  // Canvas taps can leave browser focus in a dead target (notably after closing the map).
+  // Keep keyboard events rooted in the play surface and discard any key/pointer state lost during the focus change.
+  zone.tabIndex = -1;
+  const reclaimsFocus = e => e.target === zone || !!e.target.closest?.('.map-wrap');
+  const focusPlaySurface = () => { try { zone.focus({ preventScroll: true }); } catch { zone.focus(); } };
+  document.addEventListener('pointerdown', e => {
+    if (!reclaimsFocus(e)) return;
+    resetInput();
+  }, true);
+  document.addEventListener('pointerup', e => { if (reclaimsFocus(e)) focusPlaySurface(); }, true);
   window.addEventListener('keydown', e => {
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-    input.keys.add(e.key.toLowerCase());
+    const key = e.key.toLowerCase();
+    if (stale(e)) { input.keys.delete(key); return; }
+    input.keys.add(key);
     if (e.key === ' ' || e.key === 'e' || e.key === 'Enter') { input.actionPressed = true; input.onAction?.(); e.preventDefault(); }
   });
   window.addEventListener('keyup', e => input.keys.delete(e.key.toLowerCase()));
@@ -62,7 +82,7 @@ export function initInput(zoneEl, baseEl, knobEl) {
 }
 
 export function startJoystick(e, onTap = null) {
-  if (!input.enabled || active !== null) return false;
+  if (!input.enabled || active !== null || stale(e)) return false;
   e.preventDefault();
   active = e.pointerId;
   tapOverride = onTap;
@@ -76,9 +96,13 @@ export function startJoystick(e, onTap = null) {
   knob.style.transform = 'translate(-50%,-50%)';
   return true;
 }
-function onDown(e) { startJoystick(e); }
+function onDown(e) { startJoystick(e, input.tapOverrideAt?.(e.clientX, e.clientY) || null); }
 function onMove(e) {
   if (e.pointerId !== active) return;
+  if (stale(e)) { onUp({ pointerId: e.pointerId, type: 'pointercancel' }); return; }
+  // Browsers occasionally lose pointerup when focus or pointer capture changes. A mouse/pen
+  // move with no button held is an implicit release, never a continuing joystick drag.
+  if ((e.pointerType === 'mouse' || e.pointerType === 'pen') && e.buttons === 0) { onUp({ pointerId: e.pointerId, type: 'pointercancel' }); return; }
   e.preventDefault();
   let dx = e.clientX - ox, dy = e.clientY - oy;
   const d = Math.hypot(dx, dy);
@@ -99,8 +123,11 @@ function onMove(e) {
 }
 function onUp(e) {
   if (e.pointerId !== active) return;
-  const tapped = dragMax < 12 && e.clientX !== undefined;
-  const override = tapOverride;
+  const tapped = e.type !== 'pointercancel' && e.type !== 'lostpointercapture' && !stale(e) && dragMax < 12 && e.clientX !== undefined;
+  let override = tapOverride;
+  // If the action appeared after pointerdown (or the browser cached the old hit target),
+  // a release over its now-visible hit box still belongs to the button.
+  if (tapped && !override) override = input.tapOverrideAt?.(e.clientX, e.clientY) || null;
   active = null;
   tapOverride = null;
   input.x = input.y = input.mag = 0;
@@ -115,10 +142,14 @@ function resetKnob() {
   knob.style.transform = 'translate(-50%,-50%)';
 }
 export function releaseJoystick() { if (active !== null) onUp({ pointerId: active }); }
+export const joystickActive = () => active !== null;
 
 // Combined movement vector (joystick or keys).
 export function moveVector() {
   if (!input.enabled) return [0, 0, 0];
+  const now = performance.now(), gap = now - lastMoveRead; lastMoveRead = now;
+  // Never replay held input after the main thread was blocked: the next fresh key/pointer event resumes it.
+  if (gap > STALE_MS) { releaseJoystick(); input.keys.clear(); input.x = input.y = input.mag = 0; return [0, 0, 0]; }
   let x = input.x, y = input.y;
   const k = input.keys;
   const kx = (k.has('arrowright') || k.has('d') ? 1 : 0) - (k.has('arrowleft') || k.has('a') ? 1 : 0);

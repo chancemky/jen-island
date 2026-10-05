@@ -7,7 +7,7 @@ import { iconURL } from '../gfx/food.js';
 import { ACHIEVEMENTS } from '../data/game.js';
 import { sfx } from '../core/audio.js';
 import { cam } from '../world/render.js';
-import { startJoystick } from '../core/input.js';
+import { input, joystickActive, startJoystick } from '../core/input.js';
 
 const $ = id => document.getElementById(id);
 const hud = $('hud'), actions = $('actions');
@@ -132,6 +132,9 @@ export function resetArea() { lastArea = ''; }
 const actBtn = $('actBtn'), actLabel = $('actLabel'), actIcon = $('actIcon');
 let actHandler = null;
 export function setAction(label, handler, icon = null) {
+  // The gesture owns this corner until release. Do not let a newly-near shore/NPC/door
+  // replace the stick with Skip-a-stone, Talk or another action under the held pointer.
+  if (joystickActive()) return;
   actHandler = handler;
   actLabel.textContent = label || '';
   actBtn.classList.toggle('idle', !handler);
@@ -148,12 +151,22 @@ export function triggerAction(handler = actHandler) {
   sfx('tap');
   try { const r = handler(); if (r?.catch) r.catch(e => console.error('[action]', e)); } catch (e) { console.error('[action]', e); }
 }
+const actionTapAt = (x, y) => {
+  if (!actHandler || actions.classList.contains('hidden')) return null;
+  const style = getComputedStyle(actBtn);
+  if (style.display === 'none' || style.visibility === 'hidden' || style.pointerEvents === 'none') return null;
+  const r = actBtn.getBoundingClientRect();
+  if (x < r.left || x > r.right || y < r.top || y > r.bottom) return null;
+  const handler = actHandler;
+  return () => triggerAction(handler);
+};
+input.tapOverrideAt = actionTapAt;
 actBtn.addEventListener('pointerdown', e => {
   e.stopPropagation();
   // A tap is the action; a drag that begins on the pink button still belongs to the floating stick.
   // Keep direct synthetic pointerdowns working for the browser test harness.
-  const handler = actHandler;
-  if (!e.isTrusted || !startJoystick(e, () => triggerAction(handler))) { e.preventDefault(); triggerAction(handler); }
+  const action = actionTapAt(e.clientX, e.clientY);
+  if (!e.isTrusted || !startJoystick(e, action)) { e.preventDefault(); action?.(); }
 });
 // Keyboard activation and element.click() do not emit pointer events.
 actBtn.addEventListener('click', e => { if (!e.detail) triggerAction(); });
