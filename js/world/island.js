@@ -259,6 +259,10 @@ export const QUEUES = {
   nm6: [[486, 762], [466, 770], [446, 776]],
 };
 
+// how tall each building draws above its base line (measured from the art): the band behind the footprint is its roof
+const ROOF_H = { shed: 75, truck: 84, restaurant: 134, meo: 102, dinh: 104, kiosk: 79, shop: 79, house: 92 };
+const roofH = b => (b.type === 'house' && { player: 109, florist: 97, tin: 83 }[b.style]) || (b.type === 'shop' && { materials: 91, furniture: 94 }[b.kind]) || ROOF_H[b.type] || 0;
+
 // ---------------------------------------------------------------- terrain tests
 const inRect = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 export function onBridge(x, y) { return BRIDGES.some(b => inRect(b, x, y)); }
@@ -517,6 +521,16 @@ export class Island extends Scene {
   }
 
   terrain(x, y) { return !isWater(x, y) && !isPaddy(x, y) && x > 0 && y > 0 && x < W && y < H; }
+  // nowhere free nearby (deep inside a roof, say): the front step of the closest door
+  safeFallback(x, y, r = 5) {
+    let best = null, bd = Infinity;
+    for (const t of this.triggers) {
+      if (t.kind !== 'door' || t.off) continue;
+      const fx = t.x + t.w / 2, fy = t.y + t.h + 6, d = Math.hypot(fx - x, fy - y);
+      if (d < bd && this.canStand(fx, fy, r)) { bd = d; best = [fx, fy]; }
+    }
+    return best;
+  }
 
   add2(kind, x, y, o = {}) {
     if (OFFROAD.has(kind) && !o.onRoad) { const q = offRoad(x, y, o.solidR || 8); if (!q) return null; if (Math.hypot(q[0] - x, q[1] - y) > 40) return null; [x, y] = q; }
@@ -652,6 +666,7 @@ export class Island extends Scene {
       if (PADDIES.some(p => x > p.x - r - 8 && x < p.x + p.w + r + 8 && y > p.y - r - 8 && y < p.y + p.h + r + 16)) return true;
       return false;
     };
+    const planted = [];
     const place = (kind, n, r, o = {}, filt = null) => {
       let tries = 0, made = 0;
       while (made < n && tries++ < n * 60) {
@@ -660,7 +675,8 @@ export class Island extends Scene {
         if (avoid(x, y, r)) continue;
         // tall trees: keep the canopy (drawn up to ~110px above the trunk) off the roads too
         if (TALL.has(kind) && Object.values(PATHS).some(pts => { const f = pts.flat(); return distToLine(f, x, y - 55) < PATH_W / 2 + 34 || distToLine(f, x, y - 95) < PATH_W / 2 + 30; })) continue;
-        this.add2(kind, x, y, { ...o, s: o.s ? o.s * (0.85 + R() * 0.3) : undefined, solidR: o.trunk ?? 6, cullR: o.cullR || 70, cullH: o.cullH || 130 });
+        const p = this.add2(kind, x, y, { ...o, s: o.s ? o.s * (0.85 + R() * 0.3) : undefined, solidR: o.trunk ?? 6, cullR: o.cullR || 70, cullH: o.cullH || 130 });
+        if (p) { p.trunk = this.circles[this.circles.length - 1]; planted.push(p); }
         made++;
       }
     };
@@ -679,6 +695,12 @@ export class Island extends Scene {
     place('frangipani', 8, 16, { trunk: 5, cullR: 40, cullH: 60 });
     place('bush', 12, 14, { trunk: 6, flowers: '#ff5a5a', col: '#5fae57', cullR: 30, cullH: 40 }); // hibiscus
     place('rock', 14, 12, { trunk: 8, cullR: 20, cullH: 20 });
+    // a tree or bush squeezed beside a building (footprint or roof) leaves a slit too narrow to walk but wide enough to wedge into: clear it
+    const SLIT = 26, slit = c => this.solids.some(s => s.building && (
+      (c.y + c.r / 1.4 > s.y && c.y - c.r / 1.4 < s.y + s.h && [s.x - (c.x + c.r), c.x - c.r - (s.x + s.w)].some(g => g > 0 && g < SLIT))
+      || (c.x + c.r > s.x && c.x - c.r < s.x + s.w && [s.y - (c.y + c.r / 1.4), c.y - c.r / 1.4 - (s.y + s.h)].some(g => g > 0 && g < SLIT * 0.7))));
+    const wedged = new Set(planted.filter(p => p.trunk && slit(p.trunk)));
+    if (wedged.size) { this.props = this.props.filter(p => !wedged.has(p)); const gone = new Set([...wedged].map(p => p.trunk)); this.circles = this.circles.filter(c => !gone.has(c)); }
     // life on the ground: tall grass, mushrooms, stumps, pebbles
     const scatter = (kind, n, r, o = {}, flat = false, filt = null) => {
       let made = 0, tries = 0;
@@ -710,7 +732,29 @@ export class Island extends Scene {
       this.prop(p);
     }
     this.dressNewLands(R);
+    this.sealSlits();
     this.buildNav();
+  }
+  // a gap beside a building narrower than a walker (two houses almost touching, a lamp or a wood pile
+  // against a wall) is somewhere to wedge, not a path: fill it. (The food truck moves, so it's left out.)
+  sealSlits() {
+    const SLIT = 26, S = this.solids.filter(s => s.building && s.building !== 'truck'), fill = [];
+    const yOver = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0);
+    for (const a of S) for (const b of S) {
+      const g = b.x - (a.x + a.w), lo = Math.max(a.y, b.y), hi = Math.min(a.y + a.h, b.y + b.h);
+      if (a.building !== b.building && g > 0 && g < SLIT && hi > lo) fill.push([a.x + a.w, lo, g, hi - lo]);
+    }
+    for (const c of this.circles) {
+      if (c.soft) continue;
+      const cy0 = c.y - c.r / 1.4, cy1 = c.y + c.r / 1.4;
+      for (const s of S) {
+        if (yOver(cy0, cy1, s.y, s.y + s.h) <= 0) continue;
+        const lo = Math.max(cy0, s.y), hi = Math.min(cy1, s.y + s.h);
+        if (s.x - c.x - c.r > 0 && s.x - c.x - c.r < SLIT) fill.push([c.x, lo, s.x - c.x, hi - lo]);
+        if (c.x - c.r - s.x - s.w > 0 && c.x - c.r - s.x - s.w < SLIT) fill.push([s.x + s.w, lo, c.x - s.x - s.w, hi - lo]);
+      }
+    }
+    for (const [x, y, w, h] of fill) this.solid(x, y, w, Math.max(2, h), { seal: true });
   }
 
   // Harbour Town and Coconut Cove: landmarks placed by hand, greenery scattered
@@ -775,6 +819,9 @@ export class Island extends Scene {
     this.prop(bld);
     this.buildings[b.id] = bld;
     this.solid(b.x - b.w / 2, b.y - b.fp, b.w, b.fp - 2, { building: b.id });
+    // the walls and roof rise behind the footprint: anyone standing there would be up on the roof, so that band is solid too (doors are on the front)
+    const roof = roofH(b) - b.fp;
+    if (roof > 0) this.solid(b.x - b.w / 2, b.y - b.fp - roof, b.w, roof, { building: b.id, roof: true });
     if (b.interior) {
       const dx = b.door[0];
       this.trigger({ id: 'door:' + b.id, kind: 'door', x: b.x + dx - 17, y: b.y - 6, w: 34, h: 26, building: b.id, interior: b.interior, doorX: b.x + dx, doorY: b.y });

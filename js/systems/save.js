@@ -31,7 +31,12 @@ export const saveStatus = { cloudAt: 0, localAt: 0, offline: false, error: '', r
 function snapshot() {
   const s = G.state;
   s.savedAt = Date.now();
-  if (G.scene && G.player && !G.runtime.inCutscene) s.pos = { scene: G.scene.id, x: Math.round(G.player.x), y: Math.round(G.player.y) };
+  if (G.scene && G.player && !G.runtime.inCutscene) {
+    // never keep a spot nobody can stand on (a roof, inside a bush or a cart): save the nearest free floor instead, or keep the last good place
+    const sc = G.scene, r = G.player.radius || 5, x = Math.round(G.player.x), y = Math.round(G.player.y);
+    const q = sc.canStand?.(x, y, r) ? [x, y] : sc.nearestStand?.(x, y, r);
+    if (q) s.pos = { scene: sc.id, x: Math.round(q[0]), y: Math.round(q[1]) };
+  }
   s.money = Math.round(s.money * 100) / 100;
   // a cutscene that shows other hours of the day (the automation montage) saves the real clock
   return G.runtime.realTime != null ? { ...s, time: G.runtime.realTime } : s;

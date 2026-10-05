@@ -44,15 +44,21 @@ export class Scene {
     return null;
   }
   canStand(x, y, r = 5) { return this.terrain(x, y) && this.terrainEdge(x, y, r) && !this.blocked(x, y, r); }
-  // the free spot closest to x,y (rings outward up to `max` px), or null
+  // the free spot closest to x,y (rings outward up to `max` px), or null. A spot with room to walk
+  // away wins over a closer one wedged between a bush, a cart and a wall; failing that, the island
+  // falls back to the nearest door front (see Island.safeFallback)
   nearestStand(x, y, r = 5, max = 96) {
-    if (this.canStand(x, y, r)) return [x, y];
+    let first = null;
+    const ok = (px, py) => { if (!this.canStand(px, py, r)) return false; if (this.roomy(px, py, r)) return true; first ??= [px, py]; return false; };
+    if (ok(x, y)) return [x, y];
     for (let d = 4; d <= max; d += 4) {
       const n = Math.max(8, Math.round(d * 0.8));
-      for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, nx = x + Math.cos(a) * d, ny = y + Math.sin(a) * d; if (this.canStand(nx, ny, r)) return [nx, ny]; }
+      for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, nx = x + Math.cos(a) * d, ny = y + Math.sin(a) * d; if (ok(nx, ny)) return [nx, ny]; }
     }
-    return null;
+    return first || this.safeFallback?.(x, y, r) || null;
   }
+  // room to walk away: free ground 12px and 24px off in at least one direction (a pocket has none)
+  roomy(x, y, r = 5) { return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => this.canStand(x + a * 12, y + b * 12, r) && this.canStand(x + a * 24, y + b * 24, r)); }
   terrainEdge(x, y, r) { return this.terrain(x - r, y) && this.terrain(x + r, y) && this.terrain(x, y - r * 0.5) && this.terrain(x, y + r * 0.5); }
 
   // Move with sliding along obstacles. Returns the new position.
@@ -73,9 +79,9 @@ export class Scene {
       let ex = x - hit.x, ey = (y - hit.y) * 1.4; const el = Math.hypot(ex, ey) || 1; ex /= el; ey /= el;
       const vy = dy * 1.4, dot = dx * ex + vy * ey;
       let tx = dx - dot * ex, ty = vy - dot * ey; const tl = Math.hypot(tx, ty), sp = Math.hypot(dx, vy);
-      if (tl > 1e-4) {
-        tx = tx / tl * sp; ty = ty / tl * sp;
-        const gx = x + tx + ex * 0.4, gy = y + (ty + ey * 0.4) / 1.4;
+      // head-on (no sideways part to the push): try going round either side
+      for (const [ux, uy] of tl > 1e-4 ? [[tx / tl, ty / tl]] : [[-ey, ex], [ey, -ex]]) {
+        const gx = x + ux * sp + ex * 0.4, gy = y + (uy * sp + ey * 0.4) / 1.4;
         if (this.canStand(gx, gy, r)) return [gx, gy];
       }
     }
