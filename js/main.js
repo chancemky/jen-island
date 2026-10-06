@@ -42,7 +42,7 @@ import { nearestSeat, sitDown, standUp, updateSeat, clearSeat, inSeat } from './
 import { meoAntic } from './systems/fun.js';
 import { initLedger } from './systems/ledger.js';
 import { initAlbum } from './systems/album.js';
-import { nearbyThing, outdoorAction, updateWorldEvents, lookText } from './systems/interact.js';
+import { nearbyThing, outdoorAction, updateWorldEvents, lookText, realEvent } from './systems/interact.js';
 import { updateSeasonal } from './systems/growth.js';
 import { fishingAction } from './systems/fishing.js';
 import { plaqueAction } from './systems/garden.js';
@@ -51,6 +51,10 @@ import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { syncPurchases, purchaseReturn } from './systems/store.js';
 import { initTelemetry, track } from './systems/telemetry.js';
 import { initBadges, grantServerBadge, FOUNDER_BEFORE } from './systems/badges.js';
+import { morningMail } from './systems/daily.js';
+import { initSocial } from './systems/social.js';
+import { CLOTHES } from './data/wardrobe.js';
+import { initAds } from './systems/ads.js';
 import { showWhatsNew } from './ui/whatsnew.js';
 import { openBoutique, openWardrobe, currentLook } from './ui/clothes.js';
 import { openSalon } from './ui/salon.js';
@@ -58,7 +62,7 @@ import { spawnVendors, updateVendors, buyFromVendor } from './systems/vendors.js
 import { updateKeepers, spawnKeepers, keeperActor } from './systems/economy.js';
 import { rebuildPets, updatePets, petMenu, followerUid, setFollower } from './systems/pets.js';
 import { openPetShop } from './ui/petshop.js';
-import { bus, dist, clamp, sleep, choice, money, rand, clock } from './core/util.js';
+import { bus, dist, clamp, sleep, choice, money, rand, clock, devHost, nativeApp } from './core/util.js';
 import { LIGHT } from './gfx/props.js';
 
 const $ = id => document.getElementById(id);
@@ -76,7 +80,7 @@ G.markDirty = markDirty;
 
 // ---------------------------------------------------------------- boot
 async function boot() {
-  initTelemetry();
+  initTelemetry(); initAds();
   applyStaticText();
   if (await ensureLatest()) return; // an update is live: reload once onto it
   progress(0.1, bootText('fonts'));
@@ -109,7 +113,7 @@ async function boot() {
   initHud(); initSaveHooks(); initLedger(); initAlbum();
   progress(0.85, bootText('net'));
   let user = null;
-  const dev = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).has('dev');
+  const dev = devHost() && new URLSearchParams(location.search).has('dev');
   if (dev) user = { id: 'dev-' + (new URLSearchParams(location.search).get('dev') || 'local'), email: 'dev@localhost', local: true };
   else {
     const link = await cloud.takeLinkSession();            // (opened from a reset / confirmation email)
@@ -131,6 +135,9 @@ async function boot() {
   syncPurchases(); purchaseReturn();
   if (!G.user.local && G.user.createdAt && G.user.createdAt < FOUNDER_BEFORE) grantServerBadge('founder');
   initBadges();
+  initSocial();
+  showMorningMail();
+  festivalGift();
   const s = G.state;
   track('session_start', { account: !G.user.local, guest: !!G.user.guest, chapter: s.story.chapter, step: s.story.step, day: s.day, level: s.level, lang: G.lang, touch: matchMedia('(pointer: coarse)').matches, installed: matchMedia('(display-mode: standalone)').matches });
   bus.on('step', step => track('step', { step, chapter: G.state.story.chapter, day: G.state.day }));
@@ -138,6 +145,19 @@ async function boot() {
   bus.on('dayEnd', sum => track('day_end', { day: sum.day, chapter: sum.chapter, served: sum.served, revenue: sum.revenue, net: sum.net, level: G.state.level }));                    // (cosmetic store: whatever the server says this player bought)
 }
 
+// A real-world festival is on: everyone gets its hat, once
+function festivalGift() {
+  const ev = realEvent(), w = G.state.wardrobe;
+  if (!ev?.hat || !CLOTHES[ev.hat] || w.owned.includes(ev.hat) || !G.state.story.flags.freeRoam) return;
+  w.owned.push(ev.hat); markDirty(true); track('festival_gift', { event: ev.id });
+  showReward({ kicker: T(ev.en, ev.vi), title: T('A festival gift!', 'Quà lễ hội!'), sub: T(CLOTHES[ev.hat].en, CLOTHES[ev.hat].vi), icon: 'shirt', text: T(`${ev.line[0]} Wear it from the wardrobe in your room.`, `${ev.line[1]} Mặc nó từ tủ quần áo trong phòng nhé.`), button: T('Thank you!', 'Cảm ơn!') });
+}
+// Morning mail: today's gift (and tomorrow's, if you come back)
+function showMorningMail() {
+  const m = morningMail(); if (!m) return;
+  track('daily_gift', { day: m.day, streak: m.streak });
+  showReward({ kicker: T('Morning mail', 'Thư buổi sáng'), title: T(`Day ${m.day} of 7`, `Ngày ${m.day} / 7`), sub: '●'.repeat(m.day) + '○'.repeat(7 - m.day), icon: m.day === 7 ? 'heart' : 'note', text: `${m.line}. ${m.next}`, button: T('Thank you!', 'Cảm ơn!') });
+}
 // The soundtrack follows the place and the hour (songs: data/songs.js).
 const COZY = new Set(['restaurant', 'boutique', 'salon', 'petshop', 'furniture']);
 function songNow() {
@@ -733,7 +753,7 @@ function updateBizButton() {
     const z = bizOf(bizId);
     if (z.owned && z.repair >= 1) { setBizButton(z.open ? T('Close', 'Đóng cửa') : T('OPEN', 'MỞ CỬA'), () => toggleBiz(bizId), z.open); return; }
   }
-  if (sc.id === 'house') { setBizButton(T('Decorate', 'Trang trí'), () => startDecorate()); return; }
+  if (sc.id === 'house' && !G.runtime.visit) { setBizButton(T('Decorate', 'Trang trí'), () => startDecorate()); return; }
   setBizButton(null, null);
 }
 function statueSheet() {
@@ -932,8 +952,8 @@ async function logout() {
 // pause audio when hidden (and time stops by itself)
 document.addEventListener('visibilitychange', () => suspendAudio(document.hidden));
 
-// Test hooks on localhost only.
-if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__jen = { G, scenes, cam, cs, setStep, checkStory, openBiz, bizRT, npcs, restRT, sleepFlow, doSleep, toggleBiz, discoverRecipe, triggerAction, setScene, STEPS, FESTIVAL_REQ, KEEPER_REQ, restoreNightMarket, buildStatue, NIGHT_MARKET_RESTORE, STATUE_COST };
+// Test hooks on a developer's local copy only.
+if (devHost()) window.__jen = { G, scenes, cam, cs, setStep, checkStory, openBiz, bizRT, npcs, restRT, sleepFlow, doSleep, toggleBiz, discoverRecipe, triggerAction, setScene, STEPS, FESTIVAL_REQ, KEEPER_REQ, restoreNightMarket, buildStatue, NIGHT_MARKET_RESTORE, STATUE_COST };
 if (window.__jen) {
   window.__jen.endDay = endDay;
   // stability tests: everything that can hold the screen or the player
@@ -947,12 +967,13 @@ if (window.__jen) {
   Promise.all([import('./data/game.js'), import('./systems/economy.js'), import('./systems/business.js'), import('./systems/ledger.js'), import('./systems/progress.js')])
     .then(([g, e, b, l, pr]) => { Object.assign(window.__jen, { spawnCustomer: b.spawnCustomer, bizRecipes: b.bizRecipes }); window.__jen.econ = { ...g, ...e, ...b, ...l, GATES: pr.GATES, levelReward: pr.levelReward, milestoneReward: pr.milestoneReward }; });
 }
-// localhost only: check the game's content for broken references at boot
-if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) import('./dev/validate.js').then(async m => { while (!scenes.island || !scenes.shed1) await new Promise(r => setTimeout(r, 250)); const issues = m.validateContent(scenes); window.__jen.validate = () => m.validateContent(scenes); if (issues.length) console.warn(`[validate] ${issues.length} content issue(s):\n` + issues.join('\n')); else console.info('[validate] content OK'); });
+// a local copy only: check the game's content for broken references at boot
+if (devHost()) import('./dev/validate.js').then(async m => { while (!scenes.island || !scenes.shed1) await new Promise(r => setTimeout(r, 250)); const issues = m.validateContent(scenes); window.__jen.validate = () => m.validateContent(scenes); if (issues.length) console.warn(`[validate] ${issues.length} content issue(s):\n` + issues.join('\n')); else console.info('[validate] content OK'); });
 
 // testing builds wear a ribbon, so a dev build can never be mistaken for the real thing (js/dev/flag.js)
 import('./dev/flag.js').then(m => { if (m.DEV_TOOLS) { const r = document.createElement('div'); r.id = 'devRibbon'; r.textContent = 'DEV BUILD'; document.body.appendChild(r); } }).catch(() => {});
 boot().catch(e => { console.error(e); $('bootMsg').textContent = bootText('err'); });
 
-// Offline support + "Add to Home Screen" (skip on localhost so tests always get fresh files).
-if ('serviceWorker' in navigator && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) navigator.serviceWorker.register('./sw.js').catch(() => {});
+// Offline support + "Add to Home Screen" on the website (not on a local copy, so tests always
+// get fresh files, and not in the store app, which carries its files inside)
+if ('serviceWorker' in navigator && !devHost() && !nativeApp()) navigator.serviceWorker.register('./sw.js').catch(() => {});

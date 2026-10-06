@@ -76,6 +76,14 @@ export const CLOTHES = {
   lantern_bow:   { slot: 'hat', store: true, price: 0, en: 'Golden Lantern Bow', vi: 'Nơ lồng đèn vàng', look: { hat: 'bow', hatColor: '#ffc94a' } },
   nonla_painted: { slot: 'hat', store: true, price: 0, en: 'Painted Nón Lá', vi: 'Nón lá vẽ hoa', look: { hat: 'nonla', hatColor: '#f7c6d0' } },
   nonla_gold:    { slot: 'hat', store: true, price: 0, en: 'Festival Gold Nón Lá', vi: 'Nón lá vàng lễ hội', look: { hat: 'nonla', hatColor: '#ffd35a' } },
+  // real-world festivals (systems/interact.js REAL): free to everyone who plays during one
+  lucky_nonla:   { slot: 'hat', store: true, price: 0, en: 'Lucky Red Nón Lá', vi: 'Nón lá đỏ may mắn', look: { hat: 'nonla', hatColor: '#d9433a' } },
+  moon_bow:      { slot: 'hat', store: true, price: 0, en: 'Full Moon Bow', vi: 'Nơ trăng rằm', look: { hat: 'bow', hatColor: '#ffd35a' } },
+  black_cat_ears:{ slot: 'hat', store: true, price: 0, en: 'Black Cat Ears', vi: 'Tai mèo đen', look: { hat: 'catears', hatColor: '#3a3440' } },
+  snow_beanie:   { slot: 'hat', store: true, price: 0, en: 'Snowy Pom Beanie', vi: 'Mũ len tuyết', look: { hat: 'beanie', hatColor: '#d9433a', hatRibbon: '#ffffff' } },
+  // a seven-day play streak (systems/daily.js)
+  streak_bow:    { slot: 'hat', store: true, price: 0, en: 'Sunrise Bow', vi: 'Nơ bình minh', look: { hat: 'bow', hatColor: '#ff9a6b' } },
+  streak_beret:  { slot: 'hat', store: true, price: 0, en: 'Seven-Day Beret', vi: 'Mũ nồi bảy ngày', look: { hat: 'beret', hatColor: '#6fbfb0' } },
   // ---- shoes
   basic_shoes:  { slot: 'shoes', price: 0,  en: 'My Sneakers', vi: 'Giày thể thao của mình', look: {} },
   sneaker_pink: { slot: 'shoes', price: 60, en: 'Pink Sneakers', vi: 'Giày thể thao hồng', look: { shoe: '#f4a9b8', shoeStyle: 'sneaker' } },

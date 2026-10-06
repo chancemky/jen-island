@@ -6,7 +6,9 @@ import { MERCHANTS, RESIDENTS } from '../data/looks.js';
 import { openSheet, tabs, rowEl, btn, h, flyIcon } from './sheets.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml, bus, clock } from '../core/util.js';
-import { iconURL } from '../gfx/food.js';
+import { iconURL, hasIcon } from '../gfx/food.js';
+import { CLOTHES, FREE_CLOTHES } from '../data/wardrobe.js';
+import { FISH } from '../systems/fishing.js';
 import { drawFurniturePreview } from '../gfx/furniture.js';
 import { bizRecipes, ingredientsForBiz, canMake, recipePrice, priceMul, priceAppeal, stockOf } from '../systems/business.js';
 import { level } from '../systems/progress.js';
@@ -211,10 +213,27 @@ function bagRecipeDetail(id, bizId, lv) {
   return detail;
 }
 
+// The collection book: every fish caught, dish discovered and boutique piece owned — the
+// rest are question marks waiting to be found.
+function renderCollection(pane) {
+  const s = G.state;
+  const shelf = (title, items) => {
+    const got = items.filter(x => x.got).length;
+    pane.appendChild(h('div', 'section-title', `${escapeHtml(title)} · ${got} / ${items.length}`));
+    const bar = h('div', 'ms-bar'); bar.innerHTML = `<i style="width:${Math.round(got / items.length * 100)}%"></i>`; pane.appendChild(bar);
+    const grid = h('div', 'coll-grid'); pane.appendChild(grid);
+    for (const x of items) grid.appendChild(h('div', 'coll' + (x.got ? '' : ' locked'), x.got ? `<img src="${iconURL(x.icon, 44)}" alt=""><small>${escapeHtml(x.name)}</small>` : '<b>?</b><small>???</small>'));
+  };
+  shelf(T('Fish & finds', 'Cá & đồ câu được'), Object.entries(FISH).map(([id, f]) => ({ got: !!s.fishSeen?.[id], icon: hasIcon(id) ? id : f.ing && hasIcon(f.ing) ? f.ing : 'fish', name: T(f.en, f.vi) })));
+  shelf(T('Dishes', 'Món ăn'), Object.entries(RECIPES).map(([id, r]) => ({ got: s.recipes.includes(id), icon: r.icon || id, name: recipeName(id) })));
+  shelf(T('Boutique pieces', 'Đồ ở tiệm thời trang'), Object.entries(CLOTHES).filter(([id, c]) => !FREE_CLOTHES.includes(id) && !c.store).map(([id, c]) => ({ got: s.wardrobe.owned.includes(id), icon: 'shirt', name: T(c.en, c.vi) })));
+  pane.appendChild(h('div', 'empty-note', T('Badges for full shelves are in Menu → Goals.', 'Huy hiệu cho kệ đầy đủ ở Menu → Mục tiêu.')));
+}
 export function openBag() {
   const s = G.state;
   openSheet({ title: T('Bag', 'Túi đồ'), full: true, build: (body, api) => {
-    tabs(body, [T('Ingredients', 'Nguyên liệu'), T('Materials', 'Vật liệu'), T('Recipes', 'Công thức'), T('Regulars', 'Khách quen'), T('Achievements', 'Thành tựu')], (i, pane) => {
+    tabs(body, [T('Ingredients', 'Nguyên liệu'), T('Materials', 'Vật liệu'), T('Recipes', 'Công thức'), T('Regulars', 'Khách quen'), T('Achievements', 'Thành tựu'), T('Collection', 'Bộ sưu tập')], (i, pane) => {
+      if (i === 5) return renderCollection(pane);
       const list = h('div', 'list'); pane.appendChild(list);
       if (i === 0) {
         const ids = Object.keys(INGREDIENTS).filter(k => pantry(k) > 0);

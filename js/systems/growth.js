@@ -48,6 +48,22 @@ function boat(c, t, x, y, col) {
   c.restore();
 }
 
+// a carved pumpkin lantern, for Pumpkin Nights
+function pumpkin(c, t, x, y) {
+  if (night()) { c.fillStyle = 'rgba(255,170,80,.28)'; c.beginPath(); c.arc(x, y - 6, 15, 0, Math.PI * 2); c.fill(); }
+  for (const dx of [-4, 4]) ell(c, x + dx, y - 6, 6, 6.5, '#f08a2c', INK, 0.8);
+  ell(c, x, y - 6, 6.5, 7, '#f7a03c', INK, 0.8); line(c, x, y - 13, x + 1.5, y - 17, '#6b8a3a', 1.6);
+  const glow = night() ? '#fff1a8' : '#5b3f36';
+  poly(c, [x - 4, y - 8, x - 2, y - 10, x - 1, y - 7], glow, null); poly(c, [x + 4, y - 8, x + 2, y - 10, x + 1, y - 7], glow, null);
+  poly(c, [x - 4, y - 4, x + 4, y - 4, x + 2, y - 2, x - 2, y - 2], glow, null);
+}
+// a little decorated tree with twinkling lights, for Christmas
+function xmasTree(c, t, x, y) {
+  box(c, x - 3, y - 6, 6, 6, 1, '#8a5f3e', INK, 0.7);
+  for (const [w, top, base] of [[22, -30, -6], [17, -42, -22], [11, -52, -36]]) poly(c, [x - w, y + base, x + w, y + base, x, y + top], '#3f8f5a', INK, 0.9);
+  for (let i = 0; i < 12; i++) { const k = (i * 37) % 11, px = x + (k - 5) * 3.2, py = y - 12 - (i % 6) * 6; circ(c, px, py, 1.4, ['#ffd35a', '#f08ca0', '#8fd3f0'][i % 3] + ((Math.sin(t * 3 + i) > 0 || !night()) ? '' : '66'), null); }
+  poly(c, [x, y - 58, x + 2, y - 53, x + 6, y - 53, x + 3, y - 50, x + 4, y - 45, x, y - 48, x - 4, y - 45, x - 3, y - 50, x - 6, y - 53, x - 2, y - 53], '#ffd35a', INK, 0.6);
+}
 // apricot blossom (hoa mai) in a pot, for Tết
 function maiPot(c, t, x, y) {
   box(c, x - 8, y - 10, 16, 10, 2, '#c9674a', INK, 0.9);
@@ -94,6 +110,15 @@ export function growthDrawables() {
   if (ev?.id === 'midautumn') {
     for (const [x, y] of [[PLAZA.x - 100, PLAZA.y - 50], [PLAZA.x + 100, PLAZA.y - 50], [PLAZA.x - 110, PLAZA.y + 60], [PLAZA.x + 110, PLAZA.y + 60], [380, 610], [480, 610], [380, 720], [480, 720]]) add(x, y, y + 40, (c, t) => starLantern(c, t, x, y - 40));
     add(430, 560, 820, (c, t) => { lanternString(c, t, 300, 580, 560, 580, 64); });
+  }
+  if (ev?.id === 'halloween') {
+    for (const [x, y] of [[PLAZA.x - 110, PLAZA.y + 50], [PLAZA.x + 110, PLAZA.y + 50], [PLAZA.x - 40, PLAZA.y + 170], [PLAZA.x + 40, PLAZA.y + 170], [380, 640], [480, 640], [560, 2240], [700, 2240]]) add(x, y, y, (c, t) => pumpkin(c, t, x, y));
+    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#f08a2c', '#4a3a60', '#f7de8c']); });
+  }
+  if (ev?.id === 'christmas') {
+    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#d9433a', '#3f8f5a', '#fff5df']); });
+    add(900, 1100, 1300, (c, t) => { bunting(c, t, 700, 1098, 1100, 1098, 58, ['#d9433a', '#3f8f5a', '#fff5df', '#f2c14e']); });
+    add(PLAZA.x + 150, PLAZA.y + 120, PLAZA.y + 120, (c, t) => xmasTree(c, t, PLAZA.x + 150, PLAZA.y + 120));
   }
   if (ev?.id === 'summer') {
     for (const [x, y, col] of [[640, 2330, '#f28f7c'], [760, 2350, '#8fcfc0'], [1180, 2360, '#f2c14e'], [1300, 2320, '#f28f7c'], [2420, 2330, '#8fcfc0'], [2540, 2300, '#f2c14e']]) add(x, y, y, (c, t) => beachUmbrella(c, t, x, y, col));

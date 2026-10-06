@@ -54,6 +54,10 @@ export function mix(h1, h2, t) {
 }
 
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
+// the App Store / Google Play build (Capacitor) — it is served from "localhost" too
+export const nativeApp = () => !!globalThis.Capacitor?.isNativePlatform?.();
+// a developer's local copy (tests, dev tools), never the store app
+export const devHost = () => typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !nativeApp();
 
 // Numbers follow the language: 1,500k / 2.5M in English, 1.500k / 2,5M in Vietnamese
 // (state.js tells us how to read the current language).

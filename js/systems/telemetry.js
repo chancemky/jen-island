@@ -6,13 +6,14 @@
 import { G } from './state.js';
 import { CLOUD } from './cloud.js';
 import { APP_VERSION } from '../data/changelog.js';
+import { devHost } from '../core/util.js';
 
 const DEVICE_KEY = 'jenisland.device';
 const rand = () => crypto.randomUUID?.() || Math.random().toString(36).slice(2) + Date.now().toString(36);
 let device = 'unknown';
 try { device = localStorage.getItem(DEVICE_KEY) || (localStorage.setItem(DEVICE_KEY, rand()), localStorage.getItem(DEVICE_KEY)) || rand(); } catch { device = rand(); }
 const session = rand();
-const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);     // (tests and local copies never send anything)
+const local = devHost();     // (tests and local copies never send anything)
 const on = () => !local && G.state?.settings?.stats !== false;
 let queue = [], timer = 0, errors = 0;
 const seenErrors = new Set();

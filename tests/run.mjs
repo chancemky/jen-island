@@ -72,7 +72,7 @@ function makePump(p, chaos = false) {
         const m = document.querySelector('.modal'); if (m) { const i = m.querySelector('input'); if (i && !i.value) i.value = 'Test'; m.querySelector('.btn')?.click(); }
         document.querySelector('#skipBtn:not(.hidden)')?.click();
         const r = document.querySelector('.reward button'); if (r) r.click();
-        for (const b of document.querySelectorAll('button')) if (/^(Yay!|Tuyệt!|Next day ☀|Ngày mới ☀|Let.s play!?|Chơi thôi!?)$/.test(b.textContent.trim())) b.click();
+        for (const b of document.querySelectorAll('button')) if (/^(Yay!|Tuyệt!|Next day ☀|Ngày mới ☀|Let.s play!?|Chơi thôi!?|Thank you!|Cảm ơn!)$/.test(b.textContent.trim())) b.click();
       }).catch(() => {});
       const dlg = await p.evaluate(() => { const d = document.getElementById('dialog'); return d && !d.classList.contains('hidden') && !d.classList.contains('out') ? (document.querySelector('.dlg-choices button') ? 'choice' : 'text') : ''; }).catch(() => '');
       if (dlg === 'text') await p.keyboard.press('e');

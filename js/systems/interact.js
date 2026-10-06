@@ -244,7 +244,25 @@ export const EVENTS = [
   { id: 'summer', from: 20, to: 22, en: 'Summer Beach Days', vi: 'Những ngày hè trên biển', boost: { drinks: 1.4, truck: 1.3 }, line: ['The beach is full! Everyone wants something cold.', 'Bãi biển kín người! Ai cũng muốn thứ gì đó mát lạnh.'] },
   { id: 'midautumn', from: 40, to: 41, en: 'Mid-Autumn Festival', vi: 'Tết Trung Thu', boost: { night: 1.35, cafe: 1.2 }, line: ['Children parade with star lanterns, and the moon is enormous tonight.', 'Trẻ con rước đèn ông sao, và trăng đêm nay to tròn.'] },
 ];
+// Real-world festivals: everyone celebrates together, on the real dates (Tết and
+// Mid-Autumn follow the lunar calendar). While one is on it takes over the island calendar.
+const LUNAR = { tet: ['2027-02-06', '2028-01-26', '2029-02-13', '2030-02-03', '2031-01-23'], midautumn: ['2026-09-25', '2027-09-15', '2028-10-03', '2029-09-22', '2030-09-12', '2031-10-01'] };
+const REAL = [
+  { id: 'tet', span: [-6, 6], days: () => LUNAR.tet, ...EVENTS[0], hat: 'lucky_nonla' },
+  { id: 'midautumn', span: [-5, 2], days: () => LUNAR.midautumn, ...EVENTS[2], hat: 'moon_bow' },
+  { id: 'halloween', span: [-7, 0], days: y => [`${y}-10-31`], en: 'Pumpkin Nights', vi: 'Đêm Bí Ngô', boost: { night: 1.3, all: 1.1 }, line: ['Pumpkin lanterns all over the island, and the Night Market is spooky tonight!', 'Đèn bí ngô khắp đảo, và Chợ Đêm tối nay rùng rợn lắm!'], hat: 'black_cat_ears' },
+  { id: 'christmas', span: [-6, 1], days: y => [`${y}-12-25`], en: 'Christmas Lights', vi: 'Đèn Giáng Sinh', boost: { cafe: 1.3, all: 1.15 }, tip: 1.15, line: ['Fairy lights over the plaza and hot drinks everywhere.', 'Đèn lấp lánh trên quảng trường và đồ uống nóng khắp nơi.'], hat: 'snow_beanie' },
+];
+export function realEvent(now = new Date()) {
+  const y = now.getFullYear(), day = Date.UTC(y, now.getMonth(), now.getDate()) / 864e5;
+  for (const e of REAL) for (const ds of [...e.days(y), ...e.days(y + 1)]) {
+    const d = Date.parse(ds + 'T00:00:00Z') / 864e5;
+    if (day >= d + e.span[0] && day <= d + e.span[1]) return { ...e, real: true };
+  }
+  return null;
+}
 export function eventOn(day = G.state.day) {
+  if (day === G.state.day) { const r = realEvent(); if (r) return r; }
   const d = ((day - 1) % YEAR) + 1;
   const ev = EVENTS.find(e => d >= e.from && d <= e.to);
   if (ev) return ev;

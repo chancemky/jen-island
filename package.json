@@ -20,9 +20,17 @@
     "deploy:launch": "node tests/launch-check.mjs && npx wrangler deploy",
     "test:quick": "node tests/run.mjs quick",
     "test:ui": "node tests/run.mjs ui",
-    "sw": "node tools/sw-shell.mjs"
+    "sw": "node tools/sw-shell.mjs",
+    "app": "node tools/app-web.mjs && npx cap sync"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.6.9",
     "playwright": "1.63.0"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.6.9",
+    "@capacitor/core": "^7.6.9",
+    "@capacitor/ios": "^7.6.9",
+    "cordova-plugin-applovin-max": "^2.1.0"
   }
 }

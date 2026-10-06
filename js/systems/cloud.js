@@ -2,7 +2,9 @@
 // row-level security on the jen_island_* tables restricts every row to its
 // owner (see supabase/migrations). This game never touches other tables.
 
-export const CLOUD = { url: 'https://cgbaigeergwvbmghrakb.supabase.co', key: 'sb_publishable_w1-MKpH0ysDz_nXEt25cXA_n_1H5DBo' };
+import { nativeApp } from '../core/util.js';
+
+export const CLOUD = { url: 'https://cgbaigeergwvbmghrakb.supabase.co', key: 'sb_publishable_w1-MKpH0ysDz_nXEt25cXA_n_1H5DBo', site: 'https://jen-island.jen-simulator.workers.dev/' };
 const SESSION_KEY = 'jenisland.session';
 let session = null, refreshing = null;
 
@@ -47,7 +49,8 @@ export async function signIn(email, password) {
 }
 // Forgot password: Supabase emails a link back to the game, which opens the reset form.
 export async function requestPasswordReset(email) {
-  await raw('/auth/v1/recover?redirect_to=' + encodeURIComponent(location.origin + location.pathname), { method: 'POST', body: JSON.stringify({ email }) });
+  const back = nativeApp() ? CLOUD.site : location.origin + location.pathname;     // (from the app, the link opens the website)
+  await raw('/auth/v1/recover?redirect_to=' + encodeURIComponent(back), { method: 'POST', body: JSON.stringify({ email }) });
 }
 // Links from our emails (password reset, account confirmation) arrive with a session in
 // the URL hash. Returns 'recovery' or 'signup' after signing in with it, else null.
@@ -154,4 +157,27 @@ export async function fetchLeaderboard(sort = 'level') {
 export async function deleteAccount() {
   return api('/rest/v1/rpc/jen_island_delete_account', { method: 'POST', body: '{}' });
 }
+// ---- friends (systems/social.js): showcases, friend codes, visits and daily gifts
+const SHOW = 'user_id,code,player_name,island_name,level,day,chapter,badge,updated_at';
+export async function publishShowcase(row) {
+  const rows = await api('/rest/v1/jen_island_showcase?on_conflict=user_id&select=code', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify({ user_id: session.user.id, ...row }) });
+  return rows?.[0]?.code || null;
+}
+export async function addFriend(code) { return api('/rest/v1/rpc/jen_island_add_friend', { method: 'POST', body: JSON.stringify({ friend_code: code }) }); }
+export async function removeFriend(id) { await api(`/rest/v1/jen_island_friends?user_id=eq.${session.user.id}&friend_id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }); }
+export async function listFriends() {
+  const rows = await api(`/rest/v1/jen_island_friends?select=friend_id&user_id=eq.${session.user.id}`);
+  if (!rows?.length) return [];
+  return api(`/rest/v1/jen_island_showcase?select=${SHOW}&user_id=in.(${rows.map(r => r.friend_id).join(',')})&order=updated_at.desc`);
+}
+export async function friendHome(id) { return (await api(`/rest/v1/jen_island_showcase?select=player_name,island_name,look,home,badge&user_id=eq.${encodeURIComponent(id)}`))?.[0] || null; }
+export async function giftsSentToday() { return api(`/rest/v1/jen_island_gifts?select=to_id&from_id=eq.${session.user.id}&sent_on=eq.${new Date().toISOString().slice(0, 10)}`); }
+export async function sendGift(to, kind) { await api('/rest/v1/jen_island_gifts', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ from_id: session.user.id, to_id: to, kind }) }); }
+export async function giftsWaiting() {
+  const rows = await api(`/rest/v1/jen_island_gifts?select=id,kind,from_id&to_id=eq.${session.user.id}&claimed=eq.false&limit=20`);
+  if (!rows?.length) return [];
+  const names = await api(`/rest/v1/jen_island_showcase?select=user_id,player_name&user_id=in.(${[...new Set(rows.map(r => r.from_id))].join(',')})`);
+  return rows.map(r => ({ ...r, from: names.find(n => n.user_id === r.from_id)?.player_name || 'A friend' }));
+}
+export async function claimGift(id) { const rows = await api(`/rest/v1/jen_island_gifts?id=eq.${id}&claimed=eq.false&select=id`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ claimed: true }) }); return !!rows?.length; }
 export const hasSession = () => !!session;

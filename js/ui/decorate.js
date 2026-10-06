@@ -11,7 +11,7 @@ import { FURN_DRAW, F, drawFurniturePreview, SIDE, drawSide } from '../gfx/furni
 import { drawHuman } from '../gfx/character.js';
 import { h } from './sheets.js';
 import { sfx } from '../core/audio.js';
-import { clamp } from '../core/util.js';
+import { clamp, devHost } from '../core/util.js';
 import { toast } from './hud.js';
 import { cam, fx } from '../world/render.js';
 import { input, releaseJoystick } from '../core/input.js';
@@ -55,12 +55,15 @@ const drawSel = (c, t, sel, x, y, rot) => drawTurned(c, t, keyOf(sel), rot, () =
 });
 
 // Build props for placed furniture and the built-ins (called on load and after edits).
-export function rebuildHouseFurniture() {
+// `home` is another player's layout when visiting a friend: then the bed, wardrobe and
+// kitchen are just furniture (nothing to use in someone else's house).
+export function rebuildHouseFurniture(home = null) {
   const sc = house();
   sc.props = sc.props.filter(p => !p.homeFurn && !p.builtin);
   sc.solids = sc.solids.filter(s => !s.homeFurn && !s.builtin);
   sc.triggers = sc.triggers.filter(t => !t.builtin);
-  const bs = builtinState();
+  const visit = !!home;
+  const bs = visit ? Object.fromEntries(Object.entries(BUILTINS).map(([k, b]) => [k, home.builtins?.[k] || { x: b.x, y: b.y, rot: 0 }])) : builtinState();
   for (const [k, b] of Object.entries(BUILTINS)) {
     if (D?.lifted?.key === k) continue;                  // being carried right now
     const st = bs[k], rot = st.rot || 0, fp = footprint(b.w, b.h, rot, b.kind);
@@ -70,15 +73,15 @@ export function rebuildHouseFurniture() {
     if (b.floor) p.flat = true;
     sc.prop(p);
     if (!b.floor) sc.solid(st.x - fp.w / 2, st.y - fp.h, fp.w, fp.h, { builtin: k });
-    const tr = b.trig;
+    const tr = visit ? null : b.trig;
     // the action spot follows the piece: in front of it, or beside it when it's turned.
     // The bed is the exception: anywhere next to it (either side, the foot, however it's
     // turned) offers Sleep, so walking up to it from any direction works.
-    if (k === 'bed') sc.trigger({ ...tr, kind: 'act', x: st.x - fp.w / 2 - 14, y: st.y - fp.h, w: fp.w + 28, h: fp.h + 22, builtin: k });
+    if (k === 'bed' && tr) sc.trigger({ ...tr, kind: 'act', x: st.x - fp.w / 2 - 14, y: st.y - fp.h, w: fp.w + 28, h: fp.h + 22, builtin: k });
     else if (tr) sc.trigger({ ...tr, kind: 'act', x: rot % 2 ? st.x + (rot === 1 ? fp.w / 2 : -fp.w / 2 - 22) : st.x + tr.dx, y: rot % 2 ? st.y - fp.h / 2 : st.y + tr.dy, w: rot % 2 ? 22 : tr.w, h: rot % 2 ? Math.min(40, fp.h) : tr.h, builtin: k });
-    if (k === 'bed') sc.bedPos = { x: st.x - 2, y: st.y - 30 };
+    if (k === 'bed' && !visit) sc.bedPos = { x: st.x - 2, y: st.y - 30 };
   }
-  for (const f of G.state.home.furniture) if (D?.lifted?.f !== f) addFurnProp(sc, f);
+  for (const f of (visit ? home.furniture : G.state.home.furniture) || []) if (D?.lifted?.f !== f) addFurnProp(sc, f);
 }
 function addFurnProp(sc, f) {
   const def = FURNITURE[f.id]; if (!def) return;
@@ -196,7 +199,7 @@ export function startDecorate() {
   window.addEventListener('pointerup', D.onUp, true);
   window.addEventListener('pointercancel', D.onUp, true);
   G.runtime.decoOverlay = drawOverlay;
-  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__deco = () => D;   // (tests)
+  if (devHost()) window.__deco = () => D;   // (tests)
   const tick = () => { if (!D) return; placeTools(); D.raf = requestAnimationFrame(tick); }; tick();
 }
 function toWorld(e) { const r = document.getElementById('game').getBoundingClientRect(); return G.renderer.toWorld(e.clientX - r.left, e.clientY - r.top); }

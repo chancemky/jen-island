@@ -11,3 +11,7 @@ wrangler.toml
 docs
 tools
 package-lock.json
+www
+ios
+android
+capacitor.config.json

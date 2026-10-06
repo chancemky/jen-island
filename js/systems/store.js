@@ -10,12 +10,12 @@
 // set STORE.payments and fill in STORE.checkout with each product's checkout link.
 
 import { G, T, markDirty } from './state.js';
-import { bus } from '../core/util.js';
+import { bus, devHost, nativeApp } from '../core/util.js';
 import { CLOTHES } from '../data/wardrobe.js';
 import * as cloud from './cloud.js';
 import { grantServerBadge } from './badges.js';
 
-const local = ['localhost', '127.0.0.1'].includes(location.hostname);
+const local = devHost();
 export const STORE = {
   payments: false,   // live purchases: turn on once the live Stripe account's links are below
   checkout: { supporter: '', pass_s1: '' },   // live Payment Links (the player's id is added as client_reference_id)
@@ -24,7 +24,8 @@ export const STORE = {
 };
 // the store screen shows on the live site once payments are on; before that only
 // on a local copy, so it can be checked
-export const storeVisible = () => STORE.payments || local;
+// (not in the store apps: Apple and Google need their own in-app purchases for these)
+export const storeVisible = () => !nativeApp() && (STORE.payments || local);
 
 export const PRODUCTS = {
   supporter: {

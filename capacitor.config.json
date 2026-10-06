@@ -1,0 +1,8 @@
+{
+  "appId": "com.jenisland.app",
+  "appName": "JEN Island",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "ios": { "contentInset": "never", "backgroundColor": "#fff4de" },
+  "android": { "backgroundColor": "#fff4de" }
+}

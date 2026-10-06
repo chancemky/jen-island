@@ -23,7 +23,62 @@ import { renderStore } from './store.js';
 import { toast } from './hud.js';
 import { BADGES, TIER_ORDER } from '../data/badges.js';
 import { hasBadge, showcaseBadge, setShowcase } from '../systems/badges.js';
+import { weeklyGoals, claimGoal, goalReward } from '../systems/weekly.js';
+import { myCode, visitFriend, sendGift, GIFTS } from '../systems/social.js';
 
+// Friends: your code, add a friend, visit their home, send a daily gift
+function renderFriends(pane, api) {
+  if (!cloud.hasSession() || G.user?.local) { pane.appendChild(h('div', 'empty-note', T('Make a free account in Menu → Account to add friends, visit their homes and send gifts.', 'Tạo tài khoản miễn phí ở Menu → Tài khoản để kết bạn, thăm nhà nhau và tặng quà.'))); return; }
+  const code = myCode();
+  const me = h('div', 'row', `<div class="info"><b>${T('Your friend code', 'Mã kết bạn của bạn')}: <span class="friend-code">${escapeHtml(code || '…')}</span></b><small>${T('Share it with a friend so they can add you.', 'Gửi mã cho bạn bè để họ kết bạn với bạn.')}</small></div>`);
+  if (code) me.appendChild(btn(T('Copy', 'Sao chép'), b => { navigator.clipboard?.writeText(code).then(() => { b.textContent = T('Copied ✓', 'Đã chép ✓'); }).catch(() => {}); sfx('ui'); }, 'buy alt'));
+  pane.appendChild(me);
+  const add = h('div', 'row', `<div class="info"><b>${T('Add a friend', 'Thêm bạn')}</b><label class="field" style="margin:6px 0 0"><input class="fcode" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="${T('Their code', 'Mã của bạn ấy')}"></label></div>`);
+  add.appendChild(btn(T('Add', 'Thêm'), async b => {
+    const v = add.querySelector('.fcode').value.trim().toUpperCase(); if (v.length !== 6) { sfx('error'); return; }
+    b.disabled = true;
+    const id = await cloud.addFriend(v).catch(() => null);
+    if (id) { sfx('success'); toast({ text: T('Friend added!', 'Đã kết bạn!'), icon: 'heart' }); api.rebuild(); } else { sfx('error'); toast({ text: T('No island with that code', 'Không có đảo nào với mã này'), bad: true }); b.disabled = false; }
+  }, 'buy'));
+  pane.appendChild(add);
+  const list = h('div', 'list'); list.innerHTML = `<div class="empty-note">${T('Loading your friends…', 'Đang tải bạn bè…')}</div>`; pane.appendChild(list);
+  Promise.all([cloud.listFriends(), cloud.giftsSentToday()]).then(([friends, sent]) => {
+    list.innerHTML = '';
+    if (!friends?.length) { list.appendChild(h('div', 'empty-note', T('No friends yet. Share your code!', 'Chưa có bạn bè. Chia sẻ mã của bạn nhé!'))); return; }
+    const gave = new Set((sent || []).map(r => r.to_id));
+    for (const f of friends) {
+      const b = f.badge && BADGES[f.badge];
+      const ago = Math.round((Date.now() - Date.parse(f.updated_at)) / 36e5), seen = ago < 1 ? T('online recently', 'vừa chơi gần đây') : ago < 48 ? T(`${ago}h ago`, `${ago} giờ trước`) : T(`${Math.round(ago / 24)} days ago`, `${Math.round(ago / 24)} ngày trước`);
+      const r = h('div', 'row', `<div class="info"><b>${b ? `<span class="badge-mini t-${b.tier}">${b.glyph}</span>` : ''}${escapeHtml(f.player_name || '?')}</b><small>${escapeHtml(f.island_name || '')} · ${T('Lv', 'Cấp')} ${f.level} · ${T('Day', 'Ngày')} ${f.day} · ${seen}</small></div>`);
+      const col = h('div'); col.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+      col.appendChild(btn(T('Visit', 'Thăm'), async () => { api.close(true); if (!(await visitFriend(f.user_id))) toast({ text: T('Could not reach their island', 'Không tới được đảo của bạn ấy'), bad: true }); }, 'buy'));
+      col.appendChild(btn(gave.has(f.user_id) ? T('Gift sent ✓', 'Đã tặng ✓') : T('Send gift', 'Tặng quà'), async gb => {
+        const kinds = Object.keys(GIFTS), kind = kinds[Math.floor(Math.random() * kinds.length)];
+        gb.disabled = true;
+        try { await sendGift(f.user_id, kind); sfx('success'); gb.textContent = T('Gift sent ✓', 'Đã tặng ✓'); toast({ text: T(`You sent ${f.player_name} ${GIFTS[kind].en}`, `Bạn đã tặng ${f.player_name} ${GIFTS[kind].vi}`), icon: GIFTS[kind].icon }); }
+        catch { sfx('error'); toast({ text: T('One gift per friend each day', 'Mỗi ngày một món quà cho mỗi người bạn'), bad: true }); }
+      }, 'buy alt', gave.has(f.user_id)));
+      r.appendChild(col); list.appendChild(r);
+    }
+  }).catch(() => { list.innerHTML = `<div class="empty-note">${T('Could not reach the server. Check your connection.', 'Không kết nối được máy chủ. Kiểm tra mạng nhé.')}</div>`; });
+}
+// this week's three island goals (systems/weekly.js)
+function renderWeekly(pane, api) {
+  const goals = weeklyGoals(), r = goalReward();
+  pane.appendChild(h('div', 'section-title', T('This week\'s island goals', 'Mục tiêu tuần này')));
+  for (const g of goals) {
+    const fmt = n => g.money ? money(n) : n, pct = Math.round(g.have / g.target * 100);
+    const row = h('div', 'ms-row' + (g.done && !g.claimed ? ' ready' : ''), `<img src="${iconURL(g.icon, 48)}" alt=""><div class="ms-info"><b>${escapeHtml(g.label(fmt(g.target)))}</b><small>${g.claimed ? T('Claimed ✓', 'Đã nhận ✓') : `${fmt(g.have)} / ${fmt(g.target)} · ${T(`reward ${money(r.money)} + ${r.xp} XP`, `thưởng ${money(r.money)} + ${r.xp} KN`)}`}</small><div class="ms-bar"><i style="width:${pct}%"></i></div></div>`);
+    if (g.done && !g.claimed) row.appendChild(btn(T('Claim', 'Nhận'), () => {
+      const got = claimGoal(g.id); if (!got) return;
+      sfx('coin'); toast({ text: T(`+${money(got.money)} · +${got.xp} XP`, `+${money(got.money)} · +${got.xp} KN`), icon: 'coin' });
+      if (got.chest) { sfx('fanfare'); toast({ text: got.chest, icon: 'heart', cls: 'ach', ms: 4200 }); }
+      api.rebuild();
+    }, 'buy'));
+    pane.appendChild(row);
+  }
+  pane.appendChild(h('div', 'empty-note', T('New goals every Monday. Finish all three for a weekly chest.', 'Mục tiêu mới mỗi thứ Hai. Hoàn thành cả ba để nhận rương tuần.')));
+}
 // badges: earned ones in colour, the rest greyed with what they need; tap one you've
 // earned to show it beside your name on the leaderboard
 function renderBadges(pane, api) {
@@ -45,6 +100,7 @@ function renderMilestones(pane, api) {
   const lv = s.level || 1;
   const head = h('div', 'ms-row', `<img src="${iconURL('trophy', 48)}" alt=""><div class="ms-info"><b>${T(`Level ${lv}`, `Cấp ${lv}`)}</b><small>${T(`${Math.floor(s.xp || 0)} / ${xpNeed(lv)} XP to level ${lv + 1}`, `${Math.floor(s.xp || 0)} / ${xpNeed(lv)} KN để lên cấp ${lv + 1}`)}</small><div class="ms-bar"><i style="width:${Math.min(100, (s.xp || 0) / xpNeed(lv) * 100)}%"></i></div></div>`);
   pane.appendChild(head);
+  renderWeekly(pane, api);
   renderBadges(pane, api);
   const list = TRACKS.map(tr => ({ tr, st: trackState(tr) })).sort((a, b) => b.st.ready - a.st.ready || a.st.completed - b.st.completed);
   const done = list.filter(x => x.st.completed).length;
@@ -108,9 +164,10 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
   openSheet({ title: s.island.name || 'JEN Island', sub: T(`Day ${s.day} · ${clock(s.time)} · Chapter ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.title || ''}`, `Ngày ${s.day} · ${clock(s.time)} · Chương ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.vi || ''}`), full: true, build: (body, api) => {
     const shop = storeVisible();
     const ti = (label, icon) => ({ label, icon });
-    tabs(body, [ti(T('Map', 'Bản đồ'), 'map'), ti(T('Business', 'Kinh doanh'), 'coin'), ti(T('Goals', 'Mục tiêu'), 'trophy'), ti(T('Ranks', 'Xếp hạng'), 'star'), ti(T('Settings', 'Cài đặt'), 'menu'), ti(T('Account', 'Tài khoản'), 'person'), ...(shop ? [ti(T('Support', 'Ủng hộ'), 'heart')] : []), ...(DEV_TOOLS ? [ti('Dev', 'hammer')] : [])], (i, pane) => {
-      if (shop && i === 6) return renderStore(pane);
-      if (DEV_TOOLS && i === (shop ? 7 : 6)) { import('../dev/devtools.js').then(m => m.renderDevPane(pane, api)); return; }   // testing only — see js/dev/flag.js
+    tabs(body, [ti(T('Map', 'Bản đồ'), 'map'), ti(T('Business', 'Kinh doanh'), 'coin'), ti(T('Goals', 'Mục tiêu'), 'trophy'), ti(T('Ranks', 'Xếp hạng'), 'star'), ti(T('Settings', 'Cài đặt'), 'menu'), ti(T('Account', 'Tài khoản'), 'person'), ti(T('Friends', 'Bạn bè'), 'talk'), ...(shop ? [ti(T('Support', 'Ủng hộ'), 'heart')] : []), ...(DEV_TOOLS ? [ti('Dev', 'hammer')] : [])], (i, pane) => {
+      if (i === 6) return renderFriends(pane, api);
+      if (shop && i === 7) return renderStore(pane);
+      if (DEV_TOOLS && i === (shop ? 8 : 7)) { import('../dev/devtools.js').then(m => m.renderDevPane(pane, api)); return; }   // testing only — see js/dev/flag.js
       if (i === 1) return renderOffice(pane, api);
       if (i === 2) return renderMilestones(pane, api);
       if (i === 3) return renderLeaderboard(pane);

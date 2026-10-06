@@ -78,7 +78,7 @@ function summaryCard(sum) {
     if (ad) ad.onclick = async () => {
       ad.disabled = true; f.adDay = sum.day;
       track('ad_offer_taken', { day: sum.day });
-      if (await showRewarded('double_tips')) { addMoney(sum.tips, 'ad'); markDirty(true); sfx('coin'); track('ad_rewarded', { day: sum.day, tips: sum.tips }); ad.textContent = T(`Tips doubled! +${money(sum.tips)}`, `Đã nhân đôi tiền boa! +${money(sum.tips)}`); }
+      if (await showRewarded()) { addMoney(sum.tips, 'ad'); markDirty(true); sfx('coin'); track('ad_rewarded', { day: sum.day, tips: sum.tips }); ad.textContent = T(`Tips doubled! +${money(sum.tips)}`, `Đã nhân đôi tiền boa! +${money(sum.tips)}`); }
       else ad.textContent = T('No ad right now. Try again tomorrow!', 'Chưa có quảng cáo. Mai thử lại nhé!');
     };
     el.querySelector('.sum-next').onclick = () => { if (done) return; done = true; el.style.pointerEvents = 'none'; sfx('bell'); el.style.transition = 'opacity .5s'; el.style.opacity = 0; setTimeout(() => { el.remove(); res(); }, 450); };
