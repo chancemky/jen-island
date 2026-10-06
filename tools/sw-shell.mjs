@@ -4,7 +4,7 @@
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const STATIC = ['./', './index.html', './css/game.css', './manifest.webmanifest', './assets/icon-180.png', './assets/icon-192.png', './assets/icon-512.png'];
+const STATIC = ['./', './index.html', './css/game.css', './manifest.webmanifest', './assets/icon-180.png', './assets/icon-192.png', './assets/icon-512.png', './assets/fonts/nunito-latin.woff2', './assets/fonts/nunito-latin-ext.woff2', './assets/fonts/nunito-vietnamese.woff2'];
 const mods = [];
 const walk = d => { for (const f of fs.readdirSync(d).sort()) { const fp = path.join(d, f); if (fs.statSync(fp).isDirectory()) walk(fp); else if (f.endsWith('.js')) mods.push('./' + path.relative(ROOT, fp).split(path.sep).join('/')); } };
 walk(path.join(ROOT, 'js'));

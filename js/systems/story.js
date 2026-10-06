@@ -422,12 +422,33 @@ export async function runArrival() {
     sfx('sparkle'); fx.burst('confetti', 900, 2330, 24, { up: 90, speed: 70, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 60, life: 1.6 });
     await say('meo', T(`*${isl}*… Hehe. The welcome gate already likes it.`, `*${isl}*… Hì hì. Cổng chào thích cái tên này lắm đó.`), { emo: 'happy' });
     await camTo((m.x + pl.x) / 2, pl.y - 20, { zoom: 1.25 });
+    const tour = await ask('meo', T('Want me to show you around? It takes a few minutes.', 'Muốn mình dẫn đi một vòng không? Mất vài phút thôi.'), [T('Show me around!', 'Dẫn mình đi nào!'), T('I\'ll explore on my own', 'Mình tự khám phá')], { emo: 'happy' });
+    if (tour === 1) { S().flags.quickStart = true; markDirty(true); return; }
     await say('meo', T('Okay! Follow me — I\'ll show you around. Stay close, the gulls here steal hats.', 'Được rồi! Đi theo mình nào — mình dẫn bạn đi một vòng. Đi sát nha, hải âu ở đây hay giật nón lắm.'), { emo: 'happy', act: 'point' });
     S().step = 'tour'; markDirty(true);
   });
   G.runtime.introBoat = false;
   f.state = 'docked'; f.t = 0; f.boarded = 0; f.sinceBoard = 0; f.unloadFor = 0;
-  await runTour();
+  if (S().flags.quickStart) await quickStart(); else await runTour();
+}
+// The short way in: the three things you need to know, then the island is yours (the
+// quest arrow shows the way to everything the tour would have).
+async function quickStart() {
+  const m = G.meo;
+  await cs.run('quickstart', async () => {
+    G.runtime.inCutscene = true;
+    await say('meo', T('Then just three things! Your first business is the *broken shed on the beach* — fix it with wood, metal and paint from *Ben Vung Materials*.', 'Vậy chỉ ba điều thôi! Quán đầu tiên của bạn là *căn chòi hỏng trên bãi biển* — sửa nó bằng gỗ, tôn và sơn ở *VLXD Bền Vững*.'), { emo: 'happy' });
+    await say('meo', T(`Your house is rented: ${money(PLACES.house.rent)} a day from *day 3*, paid when you sleep. *Sleep in your bed* to end each day.`, `Nhà của bạn là nhà thuê: ${money(PLACES.house.rent)} mỗi ngày từ *ngày 3*, trả khi bạn đi ngủ. *Ngủ trên giường* để kết thúc mỗi ngày.`));
+    await say('meo', T('Follow the gold arrow, and come find me at the plaza if you get lost. Good luck!', 'Cứ đi theo mũi tên vàng, lạc thì ra quảng trường tìm mình nha. Chúc may mắn!'), { emo: 'happy' });
+    m.setAct('wave'); await hop(m, 1); m.setAct(null);
+    walk(m, 970, 1650, { speed: 70 }).then(() => { m.sit = true; releaseMeo('plaza'); });
+  });
+  G.runtime.inCutscene = false;
+  setFlag('freeRoam');
+  setStep('materials');
+  toast({ text: T('Chapter 1: A New Arrival', 'Chương 1: Người Mới Đến'), sub: T('Explore the island freely!', 'Tự do khám phá hòn đảo!'), icon: 'lantern' });
+  document.body.classList.add('show-joy-hint');
+  showHud(true);
 }
 
 export async function runTour() {

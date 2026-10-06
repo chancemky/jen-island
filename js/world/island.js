@@ -267,6 +267,13 @@ const inRect = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y +
 export function onBridge(x, y) { return BRIDGES.some(b => inRect(b, x, y)); }
 // dry footing round each river bridge: a little past the rails, and the bank shoulders at both ends so a side approach isn't water (mid-river stays wet)
 const BRIDGE_RAIL_PAD = 8, BRIDGE_BANK_PAD = 20, BRIDGE_BANK_DRY = 10;
+// the river's bounding box (plus its width): points outside it can't be in the river,
+// which skips the distance-to-polyline sum for almost every check on the island
+let riverBox = null;
+const nearRiver = (x, y) => {
+  if (!riverBox) { const xs = RIVER.filter((_, i) => i % 2 === 0), ys = RIVER.filter((_, i) => i % 2 === 1), m = RIVER_W; riverBox = [Math.min(...xs) - m, Math.min(...ys) - m, Math.max(...xs) + m, Math.max(...ys) + m]; }
+  return x > riverBox[0] && x < riverBox[2] && y > riverBox[1] && y < riverBox[3];
+};
 function bridgeFooting(x, y) {
   return BRIDGES.some(b => inRect({ x: b.x - BRIDGE_RAIL_PAD, y: b.y, w: b.w + BRIDGE_RAIL_PAD * 2, h: b.h }, x, y)
     || (inRect({ x: b.x - BRIDGE_BANK_PAD, y: b.y - BRIDGE_BANK_PAD, w: b.w + BRIDGE_BANK_PAD * 2, h: b.h + BRIDGE_BANK_PAD * 2 }, x, y) && distToLine(RIVER, x, y) > RIVER_W / 2 - BRIDGE_BANK_DRY));
@@ -276,7 +283,7 @@ export function isWater(x, y) {
   for (const sb of SEA_BRIDGES) if (inRect(sb, x, y)) return !sb.fixed() && x > sb.x + 70 && x < sb.x + sb.w - 70; // unbuilt: only the stubs at each end
   if (!onSand(x, y)) return true;
   if (bridgeFooting(x, y)) return false;
-  if (distToLine(RIVER, x, y) < RIVER_W / 2) return true;
+  if (nearRiver(x, y) && distToLine(RIVER, x, y) < RIVER_W / 2) return true;
   const px = (x - POND.x) / POND.rx, py = (y - POND.y) / POND.ry;
   if (px * px + py * py < 1) return true;
   return false;

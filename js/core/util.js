@@ -59,7 +59,8 @@ export const sleep = ms => new Promise(r => setTimeout(r, ms));
 // (state.js tells us how to read the current language).
 let langOf = () => 'en';
 export const useLanguage = fn => { langOf = fn; };
-const num = (v, digits = 0) => v.toLocaleString(langOf() === 'vi' ? 'vi-VN' : 'en-US', { maximumFractionDigits: digits });
+const fmts = {};   // (number formatters are slow to make, and money is drawn every frame)
+const num = (v, digits = 0) => { const k = langOf() + digits; return (fmts[k] ||= new Intl.NumberFormat(langOf() === 'vi' ? 'vi-VN' : 'en-US', { maximumFractionDigits: digits })).format(v); };
 // Money is stored in thousands of đồng ("k"), the way Vietnamese menus show it.
 const unitFor = magnitude => magnitude >= 1000000 ? v => num(Math.round(v / 100000) / 10, 1) + 'B' : magnitude >= 10000 ? v => num(Math.round(v / 100) / 10, 1) + 'M' : v => num(v) + 'k';
 export function money(k) {
