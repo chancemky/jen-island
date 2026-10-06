@@ -22,7 +22,7 @@ function walletTrail(sum) {
     w ? row(T('Wallet tonight', 'Ví tối nay'), money(w.start)) : '',
     ...lines.map(([label, v]) => row(label, '−' + money(v))),
     w ? row(T('Wallet this morning', 'Ví sáng nay'), `<b>${money(w.end)}</b>`) : '',
-  ].join('')}</ul>${w && w.bills > w.start ? `<div style="margin-top:6px;font-weight:800;color:#ffb38a">${T(`Tonight's bills (${money(w.bills)}) were more than you had (${money(w.start)}).`, `Chi phí đêm nay (${money(w.bills)}) nhiều hơn số tiền bạn có (${money(w.start)}).`)}</div>` : ''}</div>`;
+  ].join('')}</ul>${w && w.bills > w.start ? `<div style="margin-top:6px;font-weight:800;color:#ffb38a">${T(`Tonight's bills (${money(w.bills)}) were more than you had (${money(w.start)}).`, `Chi phí đêm nay (${money(w.bills)}) nhiều hơn số tiền bạn có (${money(w.start)}).`)}${w.end < 0 ? '<br>' + T('You\'re in debt. Sales pay it back first. To spend less each night, pause a supply runner or let a shopkeeper go in Menu → Business.', 'Bạn đang nợ. Tiền bán hàng sẽ trả nợ trước. Muốn bớt chi mỗi đêm, hãy tạm dừng người giao hàng hoặc cho người trông quán nghỉ trong Menu → Kinh doanh.') : ''}</div>` : ''}</div>`;
 }
 import { catName } from '../systems/ledger.js';
 

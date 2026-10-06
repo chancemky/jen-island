@@ -6,7 +6,13 @@ import { bus, clamp } from '../core/util.js';
 import { BUSINESSES, RECIPES, ACHIEVEMENTS } from '../data/game.js';
 import { APP_VERSION } from '../data/changelog.js';
 
-export const SAVE_VERSION = 7;   // 7 = the v5.0 reset (everyone starts over); older saves are ignored
+// SAVE_VERSION: the shape of a save today. When it changes, bump it and add a step to
+// UPGRADES below so older saves are carried forward (never wiped).
+// OLDEST_SAVE: saves older than this are ignored (7 = the v5.0 reset, when everyone
+// started over). Only raise it on purpose, to reset every player.
+export const SAVE_VERSION = 7, OLDEST_SAVE = 7;
+// one function per version: UPGRADES[n] turns a version n−1 save into version n
+const UPGRADES = {};
 
 export function defaultState() {
   const biz = {};
@@ -51,6 +57,7 @@ export function freshDay() { return { revenue: 0, served: 0, perfect: 0, tips: 0
 export function migrate(raw) {
   const d = defaultState();
   if (!raw || typeof raw !== 'object') return d;
+  for (let v = (raw.v || OLDEST_SAVE) + 1; v <= SAVE_VERSION; v++) if (UPGRADES[v]) raw = UPGRADES[v](raw) || raw;
   const s = { ...d, ...raw };
   s.player = { ...d.player, ...(raw.player || {}) };
   s.island = { ...d.island, ...(raw.island || {}) };
@@ -63,6 +70,7 @@ export function migrate(raw) {
   s.biz = { ...d.biz };
   for (const id of Object.keys(d.biz)) s.biz[id] = { ...d.biz[id], ...(raw.biz?.[id] || {}), open: false };
   for (const b of Object.values(s.biz)) { b.equip ||= {}; b.prepped ||= {}; b.employees ||= []; b.stats ||= { served: 0, revenue: 0 }; b.decor ||= []; }
+  for (const e of s.biz.restaurant?.employees || []) e.stats = { speed: 3, cooking: 3, service: 3, reliability: 3, ...(e.stats || {}) };   // (a damaged employee never breaks the nightly bills)
   s.recipes = (raw.recipes || []).filter(r => RECIPES[r]);
   s.achievements = (raw.achievements || []).filter(a => ACHIEVEMENTS[a]);
   s.money = Number.isFinite(+raw.money) ? +raw.money : d.money;

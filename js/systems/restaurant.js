@@ -21,6 +21,7 @@ import { recordUse } from './economy.js';
 import { eventBoost } from './interact.js';
 import { sfx } from '../core/audio.js';
 import { fx } from '../world/render.js';
+import { seasonServed } from './store.js';
 
 const TABLES = [[84, 214], [176, 214], [268, 214], [84, 290], [176, 290], [268, 290], [352, 214], [352, 290]];
 const STOVES = [[96, 112], [156, 112]];
@@ -221,7 +222,7 @@ function guestLeave(g, happy) {
   g.actor.walkTo(sc.grid.path(g.actor.x, g.actor.y, 210, 372).concat([[210, 400]])).then(() => { sc.remove(g.actor); g.state = 'gone'; });
   // someone waiting can take the seat
   const w = restRT().guests.find(x => x.state === 'waiting-table');
-  if (w && !g.table?.dirty) setTimeout(() => seatGuest(w), 300);
+  if (w && !g.table?.dirty) wait(0.3).then(() => seatGuest(w));
 }
 function pay(g) {
   const s = G.state, b = bizOf('restaurant');
@@ -233,7 +234,7 @@ function pay(g) {
   const cashierK = staffByRole('cashier')[0] ? 1.05 + staffByRole('cashier')[0].data.emp.stats.reliability * 0.01 : 1;
   const tip = Math.round(g.price * (0.05 + 0.04 * svc + (cheerful ? 0.05 : 0)) * P.tip * (lv?.tip || 1) * quality * cashierK * (0.5 + g.patience / g.patienceMax * 0.5));
   const total = g.price + tip;
-  s.stats.served++; s.today.served++; if (g.perfect) { s.stats.perfect++; s.today.perfect++; }
+  s.stats.served++; s.today.served++; seasonServed(); if (g.perfect) { s.stats.perfect++; s.today.perfect++; }
   addXP(g.perfect ? 10 : 6, 'serve');
   const tb = (s.today.biz.restaurant ||= { served: 0, revenue: 0, perfect: 0 }); tb.served++; tb.revenue += total; if (g.perfect) tb.perfect++;
   b.stats.served++; b.stats.revenue += total;
@@ -396,13 +397,19 @@ async function task(a, name, [x, y], fn) {
   finally { d.busy = false; d.task = null; }
 }
 function walkGrid(a, x, y) { const sc = scene(); return a.walkTo(sc.grid.path(a.x, a.y, x, y)); }
-const wait = s => new Promise(r => setTimeout(r, s * 1000 / Math.max(0.2, G.runtime.simSpeed || 1)));
+// staff timers run on the game loop (updateRestaurant), so they stop while the game is paused
+const timers = [];
+const wait = s => new Promise(r => timers.push({ left: s, r }));
+function tickTimers(dt) {
+  for (let i = timers.length - 1; i >= 0; i--) if ((timers[i].left -= dt) <= 0) { const { r } = timers[i]; timers.splice(i, 1); r(); }
+}
 
 // ---------------------------------------------------------------- per frame
 let staffTick = 0;
 export function updateRestaurant(dt, gameMin) {
   const b = bizOf('restaurant');
   if (!b.owned || b.repair < 1 || !scene()) return;
+  tickTimers(dt);
   const r = restRT(), sc = scene();
   if (sc !== G.scene) sc.update(dt, G.t);   // keep simulating while the player is elsewhere
   // guests arrive while open

@@ -110,13 +110,16 @@ export function initNPCs(island) {
   npcs.ducks = [0, 1, 2, 3].map(i => ({ a: i * 1.6, r: 26 + i * 9, sp: 0.12 + i * 0.03, seed: i * 3, col: i === 3 ? '#f7de8c' : '#fffaf0', x: 0, y: 0 }));
 }
 
-function nextFerryTime() {
-  const t = G.state.time;
+// today's visitor boats (the timetable at the pier reads this too)
+export function visitorBoatTimes() {
   const times = [...FERRY_TIMES];
   if (G.state.nightMarket.restored) times.push(19 * 60 + 30);
   if (G.state.story.chapter >= 3) times.push(12 * 60 + 30, 15 * 60 + 30);
-  times.sort((a, b) => a - b);
-  return times.find(x => x > t + 1) ?? 99999;
+  return times.sort((a, b) => a - b);
+}
+function nextFerryTime() {
+  const t = G.state.time;
+  return visitorBoatTimes().find(x => x > t + 1) ?? 99999;
 }
 
 // Choose (and claim) where someone goes next: a free standing spot nobody else has

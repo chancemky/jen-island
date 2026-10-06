@@ -21,7 +21,9 @@ On `localhost` only:
 
     npm i            # once (Playwright)
     npm test         # everything
-    npm run test:story | test:economy | test:quests | test:world | test:stability | test:clock | test:render
+    npm run test:quick     # content, save, economy, ui, clock (a few minutes)
+    npm run test:story | test:economy | test:quests | test:world | test:stability | test:clock | test:ui | test:render
+    node tests/run.mjs story,ui   # any comma list of suites
 
 `tests/run.mjs` starts its own server and plays the game in a headless browser:
 
@@ -44,9 +46,9 @@ On `localhost` only:
 ## Deploy (Cloudflare Workers static assets)
 
     npx wrangler login      # once
-    npx wrangler deploy     # uploads the repo root; .assetsignore excludes tests/, supabase/, docs/
+    npx wrangler deploy     # uploads the repo root; .assetsignore excludes tests/, tools/, supabase/, docs/
 
-The service worker (`sw.js`) is network-first, so updates land immediately; bump `CACHE` in `sw.js` when the file list changes.
+The service worker (`sw.js`) is network-first, so updates land immediately. After adding or removing a file, run `npm run sw` to rewrite its offline file list, and bump `CACHE`.
 
 ## Launch checklist (dev tools)
 
@@ -113,5 +115,5 @@ No build step, no framework. Canvas 2D for the world, DOM for UI.
 - **Everything is physical.** Customers walk to queues; restaurant staff walk to stoves, tables, the register and the break chair; nothing is a hidden timer.
 - **One person per spot.** Islanders and visitors claim a standing spot before walking to it (`systems/crowd.js`: plaza rings, clusters round every activity spot, stroll stops beside every path); spots are at least 30 px apart and never shared. Walkers steer round anyone in their way (`steerAround` in `world/actor.js`) and keep right when meeting head on.
 - **The ferry is a shuttle.** The next boat ties up 10 s after the last leaves; everyone in line boards; with five or more aboard it waits 3 s and goes; with nobody to take it leaves. The timetable's visitor boats only decide how many visitors ride in.
-- **Cutscenes never teleport important moments.** Mèo Mây walks you around, turns toward what it's talking about, and walks away afterwards (it has its own daily routine and home).
+- **Cutscenes never teleport important moments.** Mèo Mây walks you around, turns toward what she's talking about, and walks away afterwards (she has her own daily routine and home).
 - **A day (6:00 → 24:00) lasts 20 real minutes** (`TIME_SCALE` = 0.9 game minutes per second) and the clock pauses in menus, dialogue and cutscenes. Your shops close at 23:00 (customers already in line can still be served if you're at the counter); Night Market stalls open at 17:00; you get sleepy after midnight; sleeping ends the day.

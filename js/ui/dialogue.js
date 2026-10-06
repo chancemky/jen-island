@@ -24,7 +24,7 @@ export const dialogue = D;
 function whoProfile(who) {
   if (!who || who === 'player' || who === 'meo') return null;
   if (typeof who === 'string') return profileOf(who);
-  const id = who.data?.rid || who.data?.mid || { icecream: 'ba_nam', sugarcane: 'ba_hai', banhmi: 'ba_ut' }[who.data?.cart];
+  const id = who.data?.rid || who.data?.mid || { icecream: 'ba_nam', sugarcane: 'ba_hai', banhtrang: 'ba_ut' }[who.data?.cart];
   if (who.data?.emp) return customerProfile({ look: who.look });
   if (id) return profileOf(id);
   if (who.data?.tourist || who.data?.cust) return customerProfile(who.data.cust || { look: who.look, personality: who.data.tourist ? 'tourist' : 'regular' });

@@ -37,7 +37,7 @@ function preview(cv, look, focus, id) {
   drawHuman(c, { look, dir: 'down', moving: 0, walkPh: 0, seed: 2, blinkAmt: 0, emo: 'happy', act: null, yawOverride }, 1);
   c.restore();
 }
-function itemRow(id, right, { dim = false, note = '' } = {}) {
+export function itemRow(id, right, { dim = false, note = '' } = {}) {
   const it = CLOTHES[id], w = wardrobe();
   const r = h('div', 'row cl-row' + (dim ? ' dim' : ''));
   const cv = document.createElement('canvas'); cv.width = 96; cv.height = 112;
@@ -53,7 +53,7 @@ export function openBoutique() {
     tabs(body, SLOTS.map(sl => T(sl.en, sl.vi)), (i, pane) => {
       const slot = SLOTS[i].id, w = wardrobe();
       const list = h('div', 'list'); pane.appendChild(list);
-      const ids = Object.keys(CLOTHES).filter(k => CLOTHES[k].slot === slot && !FREE_CLOTHES.includes(k)).sort((a, b) => (CLOTHES[a].lv || 0) - (CLOTHES[b].lv || 0) || CLOTHES[a].price - CLOTHES[b].price);
+      const ids = Object.keys(CLOTHES).filter(k => CLOTHES[k].slot === slot && !FREE_CLOTHES.includes(k) && !CLOTHES[k].store).sort((a, b) => (CLOTHES[a].lv || 0) - (CLOTHES[b].lv || 0) || CLOTHES[a].price - CLOTHES[b].price);
       for (const id of ids) {
         const it = CLOTHES[id], own = w.owned.includes(id), locked = level() < (it.lv || 0);
         const note = own ? T('In your wardrobe ✓', 'Đã có trong tủ ✓') : locked ? T(`Unlocks at level ${it.lv}`, `Mở ở cấp ${it.lv}`) : money(it.price) + (it.luxury ? T(' · ✦ Rare piece', ' · ✦ Hàng hiếm') : '');

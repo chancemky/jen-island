@@ -8,12 +8,18 @@ import { HAIRCUTS } from '../data/hair.js';
 import { drawHuman, EL } from '../gfx/character.js';
 import { G, T } from '../systems/state.js';
 
+// Names show on the global leaderboard, so a few words aren't allowed (the server
+// checks the same list: supabase/migrations/004_fair_play.sql).
+const BLOCKED = /(fuck|fuk|shit|bitch|cunt|nigg|faggot|whore|slut|pussy|penis|vagina|rapist|nazi|hitler|retard|porn|đụ|địt|lồn|cặc|buồi|đéo|dume|duma|vcl|vkl|clgt|đmm)/;
+const SWAP = { 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', '@': 'a', $: 's', '!': 'i' };
+export const nameBlocked = name => BLOCKED.test(String(name || '').toLowerCase().replace(/[\s._\-*]+/g, '').replace(/[013457@$!]/g, c => SWAP[c]));
+
 export function askText({ title, sub = '', placeholder = '', max = 16, value = '', ok = null }) {
   ok ||= T('Done', 'Xong');
   return new Promise(res => {
     G.runtime.pause++;
     const el = h('div', 'modal');
-    el.innerHTML = `<div class="card"><h2>${escapeHtml(title)}</h2>${sub ? `<p>${escapeHtml(sub)}</p>` : ''}<label class="field"><input type="text" maxlength="${max}" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(value)}"></label><button class="btn big pink" type="button">${escapeHtml(ok)}</button></div>`;
+    el.innerHTML = `<div class="card"><h2>${escapeHtml(title)}</h2>${sub ? `<p>${escapeHtml(sub)}</p>` : ''}<label class="field"><input type="text" maxlength="${max}" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(value)}"></label><p class="name-err" style="display:none;color:#e0605a;font-weight:800;margin:6px 0 0">${T('Please pick a different name.', 'Bạn chọn tên khác nhé.')}</p><button class="btn big pink" type="button">${escapeHtml(ok)}</button></div>`;
     document.getElementById('app').appendChild(el);
     const inp = el.querySelector('input'), b = el.querySelector('button');
     setTimeout(() => inp.focus(), 250);
@@ -21,7 +27,9 @@ export function askText({ title, sub = '', placeholder = '', max = 16, value = '
     const done = () => {
       if (closed) return;
       const v = inp.value.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
-      if (!v) { sfx('error'); inp.parentElement.animate([{ transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'none' }], { duration: 240 }); inp.focus(); return; }
+      const blocked = nameBlocked(v);
+      el.querySelector('.name-err').style.display = blocked ? '' : 'none';
+      if (!v || blocked) { sfx('error'); inp.parentElement.animate([{ transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'none' }], { duration: 240 }); inp.focus(); return; }
       closed = true; sfx('success'); inp.blur(); G.runtime.pause--;
       el.style.transition = 'opacity .2s'; el.style.opacity = 0;
       setTimeout(() => { el.remove(); window.scrollTo(0, 0); res(v); }, 200);

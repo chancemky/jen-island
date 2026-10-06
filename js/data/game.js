@@ -245,19 +245,19 @@ export const BUSINESSES = {
            upgrades: [null, null, { cost: 220, mats: { wood: 8, paint: 2 }, label: 'Striped awning & lanterns', labelVi: 'Mái hiên sọc & lồng đèn', queue: 4, attract: 1.25 }, { cost: 480, mats: { tile: 10, wood: 6 }, label: 'Tiled roof & string lights', labelVi: 'Mái ngói & dây đèn', queue: 5, attract: 1.5, price: 1.1 }] },
   truck: { kind: 'truck', biz: 'truck', name: 'Xe Cuốn', en: 'Roll Truck', interior: 'truck', chapter: 7, buy: 3000, queueMax: 4, tolerance: 1.05,
            upgrades: [null, null, { cost: 350, mats: { paint: 4, metal: 4 }, label: 'Fresh paint & awning', labelVi: 'Sơn mới & mái hiên', queue: 5, attract: 1.3 }, { cost: 700, mats: { cable: 1, metal: 6 }, label: 'Night lights & speakers', labelVi: 'Đèn đêm & loa nhạc', queue: 6, attract: 1.6, price: 1.1 }] },
-  night: { kind: 'stall', biz: 'night', name: 'Sạp Đêm', en: 'Night Stall', interior: 'night', chapter: 8, buy: 2000, queueMax: 5, hours: [17 * 60, 24 * 60], menu: ['banh_trang_nuong', 'che_ba_mau'], tolerance: 1.05 },
+  night: { kind: 'stall', biz: 'night', name: 'Sạp Đêm', en: 'Night Stall', interior: 'night', chapter: 8, buy: 2000, queueMax: 5, hours: [17 * 60, 23 * 60], menu: ['banh_trang_nuong', 'che_ba_mau'], tolerance: 1.05 },
   // outdoor kiosks: bought (no repair), run from the counter
   cafe: { kind: 'stall', biz: 'cafe', name: 'Cà Phê Bến Cảng', en: 'Harbour Café', chapter: 13, buy: 5000, queueMax: 5, hours: [6 * 60, 22 * 60], tolerance: 1.12 },
-  grill: { kind: 'stall', biz: 'grill', name: 'Quán Nướng Vịnh Dừa', en: 'Coconut Cove Grill', chapter: 17, buy: 9000, queueMax: 5, hours: [10 * 60, 24 * 60], tolerance: 1.12 },
+  grill: { kind: 'stall', biz: 'grill', name: 'Quán Nướng Vịnh Dừa', en: 'Coconut Cove Grill', chapter: 17, buy: 9000, queueMax: 5, hours: [10 * 60, 23 * 60], tolerance: 1.12 },
   // the other Night Market stalls, bought one by one from their owners
   // Each has its own menu and personality (pace: customers per hour; serve: time per order; tolerance: how
   // much a pricier menu is forgiven). Chè is quick and cheap; sugarcane is quicker and cheaper still; snails are
   // slow but pricey; skewers fill up late in the evening; Bà Sáu's stall is famous for her bánh tráng.
-  nm2: { kind: 'stall', biz: 'night', name: 'Sạp Chè', en: 'Sweet Soup Stall', chapter: 9, buy: 2600, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true, menu: ['che_ba_mau'], pace: 1.25, serve: 0.75 },
-  nm3: { kind: 'stall', biz: 'night', name: 'Sạp Ốc', en: 'Snail Stall', chapter: 9, buy: 3200, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true, menu: ['oc_luoc'], pace: 0.8, serve: 1.4, tolerance: 1.1 },
-  nm5: { kind: 'stall', biz: 'night', name: 'Sạp Nước Mía', en: 'Sugarcane Stall', chapter: 18, buy: 4200, queueMax: 5, hours: [17 * 60, 24 * 60], stall: true, menu: ['nuoc_mia'], pace: 1.6, serve: 0.55 },
-  nm6: { kind: 'stall', biz: 'night', name: 'Sạp Xiên Que', en: 'Skewer Stall', chapter: 18, buy: 5200, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true, menu: ['xien_nuong'], serve: 0.9, late: true },
-  nm1: { kind: 'stall', biz: 'night', name: 'Sạp Bà Sáu', en: 'Grandma Sáu\'s Stall', chapter: 18, buy: 6500, queueMax: 4, hours: [17 * 60, 24 * 60], stall: true, menu: ['banh_trang_nuong', 'xien_nuong'], pace: 1.15, tolerance: 1.15 },
+  nm2: { kind: 'stall', biz: 'night', name: 'Sạp Chè', en: 'Sweet Soup Stall', chapter: 9, buy: 2600, queueMax: 4, hours: [17 * 60, 23 * 60], stall: true, menu: ['che_ba_mau'], pace: 1.25, serve: 0.75 },
+  nm3: { kind: 'stall', biz: 'night', name: 'Sạp Ốc', en: 'Snail Stall', chapter: 9, buy: 3200, queueMax: 4, hours: [17 * 60, 23 * 60], stall: true, menu: ['oc_luoc'], pace: 0.8, serve: 1.4, tolerance: 1.1 },
+  nm5: { kind: 'stall', biz: 'night', name: 'Sạp Nước Mía', en: 'Sugarcane Stall', chapter: 18, buy: 4200, queueMax: 5, hours: [17 * 60, 23 * 60], stall: true, menu: ['nuoc_mia'], pace: 1.6, serve: 0.55 },
+  nm6: { kind: 'stall', biz: 'night', name: 'Sạp Xiên Que', en: 'Skewer Stall', chapter: 18, buy: 5200, queueMax: 4, hours: [17 * 60, 23 * 60], stall: true, menu: ['xien_nuong'], serve: 0.9, late: true },
+  nm1: { kind: 'stall', biz: 'night', name: 'Sạp Bà Sáu', en: 'Grandma Sáu\'s Stall', chapter: 18, buy: 6500, queueMax: 4, hours: [17 * 60, 23 * 60], stall: true, menu: ['banh_trang_nuong', 'xien_nuong'], pace: 1.15, tolerance: 1.15 },
   restaurant: { kind: 'restaurant', biz: 'restaurant', name: 'Nhà Hàng', en: 'Restaurant', interior: 'restaurant', chapter: 10, buy: 10000,
            repair: { wood: 30, metal: 12, paint: 8, tile: 20 }, tables: 4,
            upgrades: [null, null, { cost: 900, mats: { wood: 12, paint: 4 }, label: 'Balcony flowers & two more tables', labelVi: 'Hoa ban công & thêm hai bàn', tables: 6, attract: 1.3 }, { cost: 1800, mats: { cable: 2, lantern: 6 }, label: 'Lantern terrace & string lights', labelVi: 'Sân lồng đèn & dây đèn', tables: 8, attract: 1.6, price: 1.1 }] },

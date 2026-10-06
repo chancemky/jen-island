@@ -14,14 +14,15 @@
 //    as a backup either way
 //  • quota errors: old backups are dropped to make room, then the save is retried
 
-import { G, T, migrate, defaultState, SAVE_VERSION } from './state.js';
+import { G, T, migrate, defaultState, OLDEST_SAVE } from './state.js';
 import * as cloud from './cloud.js';
 import { bus } from '../core/util.js';
 import { leaderboardRow, shouldPushLeaderboard } from './progress.js';
 import { toast } from '../ui/hud.js';
 
-// saves from before the current SAVE_VERSION are not loaded — everyone starts fresh after a reset
-const localKey = uid => `jenisland.save${SAVE_VERSION}.${uid}`;
+// saves from before OLDEST_SAVE are not loaded (everyone started fresh at that reset);
+// newer saves keep this key and are upgraded by migrate()
+const localKey = uid => `jenisland.save${OLDEST_SAVE}.${uid}`;
 const bakKey = uid => localKey(uid) + '.backups';
 const BACKUPS = 4;
 let lastLocal = 0, lastCloud = 0, lastBackup = 0, cloudDirty = false, cloudBusy = false;
@@ -44,7 +45,7 @@ function snapshot() {
 // a save must at least look like an island before we trust it
 export function validSave(s) {
   return !!(s && typeof s === 'object' && s.player && typeof s.player === 'object' && s.story && typeof s.story.step === 'string' && s.story.flags && typeof s.story.flags === 'object'
-    && s.biz && typeof s.biz === 'object' && Number.isFinite(+s.day) && Number.isFinite(+s.money) && (s.v || 0) >= SAVE_VERSION);
+    && s.biz && typeof s.biz === 'object' && Number.isFinite(+s.day) && Number.isFinite(+s.money) && (s.v || 0) >= OLDEST_SAVE);
 }
 const progressOf = s => (s?.story?.chapter || 0) * 1e6 + (s?.day || 0) * 1e3 + Math.min(999, Math.floor((s?.lifetime || 0) / 1000));
 function readJSON(key) {
@@ -145,7 +146,7 @@ export async function loadGame(user) {
   const L = readJSON(localKey(user.id));
   let local = L.ok ? L.data : null;
   if (!L.ok || (local && !validSave(local))) {
-    if (L.txt && (local?.v || SAVE_VERSION) >= SAVE_VERSION) { try { localStorage.setItem(localKey(user.id) + '.corrupt', L.txt); } catch {} note.push('local save was damaged'); }
+    if (L.txt && (local?.v || OLDEST_SAVE) >= OLDEST_SAVE) { try { localStorage.setItem(localKey(user.id) + '.corrupt', L.txt); } catch {} note.push('local save was damaged'); }
     local = null;
   }
   // cloud copy, or the newest valid cloud snapshot if the main row is damaged
@@ -153,7 +154,7 @@ export async function loadGame(user) {
   if (!user.local) {
     try {
       remote = await cloud.loadCloud(); saveStatus.offline = false;
-      if (remote && !validSave(remote) && (remote.v || 0) >= SAVE_VERSION) { note.push('cloud save was damaged'); remote = null; for (const snap of await cloud.loadSnapshots().catch(() => [])) if (validSave(snap)) { remote = snap; note.push('used a cloud snapshot'); break; } }
+      if (remote && !validSave(remote) && (remote.v || 0) >= OLDEST_SAVE) { note.push('cloud save was damaged'); remote = null; for (const snap of await cloud.loadSnapshots().catch(() => [])) if (validSave(snap)) { remote = snap; note.push('used a cloud snapshot'); break; } }
       else if (remote && !validSave(remote)) remote = null;                // older version: not loaded (reset)
     } catch (e) { saveStatus.offline = true; saveStatus.error = e.message; console.warn('cloud load failed', e); }
   }
@@ -176,6 +177,10 @@ export async function loadGame(user) {
   return state;
 }
 // Settings → Reset game: a brand-new island (back on the boat), keeping only your settings
+// After deleting an account: forget everything this device keeps for that player.
+export function forgetLocal(uid) {
+  try { for (const k of Object.keys(localStorage)) if (k.startsWith('jenisland.') && k.includes(uid)) localStorage.removeItem(k); } catch {}
+}
 export async function resetGame() {
   backupNow('before-reset');
   const keep = { ...G.state.settings };

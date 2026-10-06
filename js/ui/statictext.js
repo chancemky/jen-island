@@ -2,7 +2,7 @@
 import { G, T } from '../systems/state.js';
 const TEXT = {
   tagline: ['A cozy Vietnamese island life', 'Một hòn đảo nhỏ, một cuộc sống êm đềm'],
-  login: ['Log in', 'Đăng nhập'], signup: ['New account', 'Tạo tài khoản'],
+  login: ['Log in', 'Đăng nhập'], signup: ['New account', 'Tạo tài khoản'], privacy: ['Privacy', 'Bảo mật'], terms: ['Terms', 'Điều khoản'],
   email: ['Email', 'Email'], password: ['Password', 'Mật khẩu'], play: ['Play', 'Lên đảo'],
   joyhint: ['Touch & drag anywhere to walk', 'Chạm và kéo để đi'],
   skip: ['Skip ›', 'Bỏ qua ›'],

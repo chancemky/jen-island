@@ -1,10 +1,10 @@
-// Island clock: 1 real second = 1 game minute while playing. Time pauses in
+// Island clock: a day (6:00 → 24:00) lasts 20 real minutes. Time pauses in
 // menus, dialogue and cutscenes. Sleeping ends the day with a summary.
 
-import { dailyCosts, morningDeliveries, rollUsage } from './economy.js';
+import { dailyCosts, morningDeliveries, rollUsage, rentToday, keeperWage } from './economy.js';
 import { recordCost, daySheet } from './ledger.js';
 import { pantry, addPantry, G, T, freshDay, addMoney, markDirty, unlockAchievement } from './state.js';
-import { bus, choice } from '../core/util.js';
+import { bus, choice, money } from '../core/util.js';
 import { BUSINESSES } from '../data/game.js';
 import { closeBiz, bizRecipes } from './business.js';
 import { dailyWages, resetRestaurantDay, staffReport } from './restaurant.js';
@@ -21,7 +21,14 @@ export const DAY_START = 6 * 60, LATE = 24 * 60, DAWN = 30 * 60, TIME_SCALE = 10
 export function timePaused() {
   return G.runtime.pause > 0 || G.runtime.inCutscene || document.hidden || !G.state.story.flags.freeRoam;
 }
-let lastHour = -1, warned = false;
+// what tonight's bills will come to (rent + every wage), for the evening heads-up
+export function billsDue() {
+  const s = G.state;
+  let wages = s.biz.restaurant.owned ? dailyWages() : 0;
+  for (const id of Object.keys(s.keepers || {})) if (s.biz[id]?.owned) wages += keeperWage(id);
+  return rentToday() + wages;
+}
+let lastHour = -1, warned = false, billWarned = false;
 export function updateClock(dt) {
   if (timePaused()) return 0;
   const s = G.state;
@@ -31,9 +38,14 @@ export function updateClock(dt) {
   const hr = Math.floor(s.time / 60);
   if (hr !== lastHour) { lastHour = hr; bus.emit('hour', hr); setMood(s.time >= 18.5 * 60 || s.time < 6 * 60 ? 'night' : 'day'); }
   if (s.time >= LATE && !warned) { warned = true; bus.emit('late'); }
+  if (s.time >= 20 * 60 && !billWarned) {
+    billWarned = true;
+    const due = billsDue();
+    if (due > 0 && s.money < due) bus.emit('toast', { text: T(`Tonight's bills: ${money(due)}`, `Chi phí đêm nay: ${money(due)}`), sub: T(`You have ${money(s.money)}. Sell a little more before bed, or the bills will put you in debt.`, `Bạn đang có ${money(s.money)}. Bán thêm chút nữa trước khi ngủ, không thì sẽ bị nợ.`), icon: 'coin', bad: true, ms: 4200 });
+  }
   return gm;
 }
-export function resetWarnings() { warned = false; lastHour = -1; }
+export function resetWarnings() { warned = false; billWarned = false; lastHour = -1; }
 
 // Build the day's summary and roll everything over to the next morning.
 export function endDay() {
@@ -68,7 +80,7 @@ export function endDay() {
   for (const id of Object.keys(BUSINESSES)) { const recs = bizRecipes(id); s.biz[id].special = recs.length > 1 ? choice(recs) : null; }
   const del = morningDeliveries(); sum.deliveries = del.total;
   sum.wallet = { start: Math.round(walletStart), end: Math.round(s.money), bills: Math.round(wages + costs.rent + costs.keeperWages + del.total) };
-  sum.gift = starterHelp();
+  sum.gift = starterHelp() || debtHelp();
   // how long each chapter takes (for pacing)
   const cd = (s.chapterDays ||= {}); cd[s.story.chapter] = (cd[s.story.chapter] || 0) + 1;
   if (s.day >= 7) unlockAchievement('day_7');
@@ -90,6 +102,16 @@ function starterHelp() {
   f.starterGifts = (f.starterGifts || 0) + 1;
   addPantry('tea', 8); addPantry('kumquat', 6); addPantry('sugar', 6); addPantry('ice', 6);
   return T('Bà Tư left a basket at your door: tea, kumquats, sugar and ice. "Everyone needs a little help at the start, con."', 'Bà Tư để một giỏ trước cửa: trà, tắc, đường và đá. "Ai mới bắt đầu cũng cần giúp một chút, con à."');
+}
+// In debt with nothing left to sell (any chapter): a basket for the drink stand so you
+// can always earn your way back. At most once every three days.
+function debtHelp() {
+  const s = G.state, f = s.story.flags;
+  if (s.money >= 0 || !s.biz.shed1?.owned || s.biz.shed1.repair < 1 || s.day - (f.debtHelpDay ?? -99) < 3) return null;
+  if (['tea', 'kumquat'].every(k => pantry(k) > 0)) return null;
+  f.debtHelpDay = s.day;
+  addPantry('tea', 10); addPantry('kumquat', 8); addPantry('sugar', 8); addPantry('ice', 8);
+  return T('Bà Tư heard business was hard and left a basket at your door: tea, kumquats, sugar and ice. "Sell a few drinks and you\'ll be back on your feet, con."', 'Bà Tư nghe nói dạo này buôn bán khó khăn nên để một giỏ trước cửa: trà, tắc, đường và đá. "Bán vài ly là con đứng dậy được thôi."');
 }
 function meoNightLine(t) {
   const q = s => 'Mèo Mây: “' + s + '”';

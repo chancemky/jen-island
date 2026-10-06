@@ -15,7 +15,7 @@ import { fx } from '../world/render.js';
 import { choice, dist, rand, clock, bus } from '../core/util.js';
 import { PLAZA, PIER, PIER_END, isOcean } from '../world/island.js';
 import { COUNTS } from '../core/counts.js';
-import { npcs } from './npc.js';
+import { npcs, visitorBoatTimes } from './npc.js';
 
 // ---------------------------------------------------------------- discoveries
 export const DISCOVERIES = {
@@ -210,8 +210,8 @@ async function timetable() {
   await say(null, ferryStatusText());
 }
 function ferryStatusText(atBoat = false) {
-  const times = [8, 11, 14, 17].map(h => clock(h * 60)), nxt = [8, 11, 14, 17].find(h => h * 60 > G.state.time);
-  return T(`FERRY — a shuttle boat runs back and forth all day: a new one pulls in a few moments after the last one leaves. Big visitor boats: ${times.join(' · ')}. ${nxt ? `Next visitor boat: ${clock(nxt * 60)}.` : 'No more visitor boats today.'} ${atBoat ? 'This boat is for visitors.' : 'Someone has crossed out "twice a week" and written "EVERY DAY" in marker.'}`, `TÀU — tàu con thoi chạy qua lại cả ngày: chuyến trước vừa đi một lát là có chuyến mới cập bến. Tàu chở khách lớn: ${times.join(' · ')}. ${nxt ? `Chuyến khách kế: ${clock(nxt * 60)}.` : 'Hôm nay hết tàu khách.'} ${atBoat ? 'Chiếc tàu này dành cho khách.' : 'Có ai gạch chữ “hai lần một tuần” rồi ghi “MỖI NGÀY” bằng bút lông.'}`);
+  const boats = visitorBoatTimes(), times = boats.map(m => clock(m)), nxt = boats.find(m => m > G.state.time);
+  return T(`FERRY — a shuttle boat runs back and forth all day: a new one pulls in a few moments after the last one leaves. Big visitor boats: ${times.join(' · ')}. ${nxt ? `Next visitor boat: ${clock(nxt)}.` : 'No more visitor boats today.'} ${atBoat ? 'This boat is for visitors.' : 'Someone has crossed out "twice a week" and written "EVERY DAY" in marker.'}`, `TÀU — tàu con thoi chạy qua lại cả ngày: chuyến trước vừa đi một lát là có chuyến mới cập bến. Tàu chở khách lớn: ${times.join(' · ')}. ${nxt ? `Chuyến khách kế: ${clock(nxt)}.` : 'Hôm nay hết tàu khách.'} ${atBoat ? 'Chiếc tàu này dành cho khách.' : 'Có ai gạch chữ “hai lần một tuần” rồi ghi “MỖI NGÀY” bằng bút lông.'}`);
 }
 async function ferryStatus() { await say(null, ferryStatusText(true)); }
 async function waveFerry() {

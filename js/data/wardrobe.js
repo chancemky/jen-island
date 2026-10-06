@@ -28,6 +28,10 @@ export const CLOTHES = {
   fisher:       { slot: 'outfit', price: 120, en: 'Fisher Stripes', vi: 'Áo sọc ngư dân', look: { top: '#8fb7e0', top2: '#fff', topStyle: 'stripe', sleeve: 0.5, bottom: '#8b6b5a', bottomLen: 3, shoe: '#5f6b86' } },
   raincoat:     { slot: 'outfit', price: 160, lv: 5, en: 'Yellow Raincoat', vi: 'Áo mưa vàng', look: { top: '#ffd35a', topStyle: 'hoodie', sleeve: 1, bottom: '#556b8a', bottomLen: 5, shoe: '#e8584e' } },
   night_hoodie: { slot: 'outfit', price: 170, lv: 5, en: 'Night Market Hoodie', vi: 'Hoodie Chợ Đêm', look: { top: '#3d3550', topStyle: 'hoodie', sleeve: 1, bottom: '#2f2a30', bottomLen: 5, shoe: '#f0e6da', scarf: '#e8584e' } },
+  ao_dai_rose:   { slot: 'outfit', store: true, price: 0, en: 'Rose Áo Dài', vi: 'Áo dài hồng', look: { top: '#e8607a', topStyle: 'dress', sleeve: 1, shoe: '#fffaf0' } },
+  ao_dai_jade:   { slot: 'outfit', store: true, price: 0, en: 'Jade Áo Dài', vi: 'Áo dài ngọc bích', look: { top: '#3fa58e', topStyle: 'dress', sleeve: 1, shoe: '#fffaf0', scarf: '#ffd35a' } },
+  lantern_tee:   { slot: 'outfit', store: true, price: 0, en: 'Lantern Season Tee', vi: 'Áo thun mùa lồng đèn', look: { top: '#e8584e', top2: '#ffd35a', topStyle: 'stripe', sleeve: 0.5, bottom: '#3f4a5e', bottomLen: 3, shoe: '#fff' } },
+  firefly_hoodie: { slot: 'outfit', store: true, price: 0, en: 'Firefly Night Hoodie', vi: 'Hoodie đêm đom đóm', look: { top: '#2f3a5e', topStyle: 'hoodie', sleeve: 1, bottom: '#2f2a30', bottomLen: 5, shoe: '#f7de8c', scarf: '#d7f27a' } },
   pajamas:      { slot: 'outfit', price: 140, lv: 5, en: 'Cloud Pajamas', vi: 'Đồ ngủ đám mây', look: { top: '#dfe8ff', top2: '#fff', topStyle: 'stripe', sleeve: 1, bottom: '#dfe8ff', bottomLen: 5, shoe: '#fff' } },
   aodai_pink:   { slot: 'outfit', price: 260, lv: 6, en: 'Pink Áo Dài', vi: 'Áo dài hồng', look: { top: '#f4a9b8', topStyle: 'aodai', sleeve: 1, bottom: '#fff', bottomLen: 5, shoe: '#f0e6da' } },
   aodai_blue:   { slot: 'outfit', price: 260, lv: 6, en: 'Sky Áo Dài', vi: 'Áo dài xanh trời', look: { top: '#8fb7e0', topStyle: 'aodai', sleeve: 1, bottom: '#fff', bottomLen: 5, shoe: '#f0e6da' } },
@@ -67,6 +71,11 @@ export const CLOTHES = {
   flower_ring:  { slot: 'hat', price: 130, lv: 5, en: 'Flower Crown', vi: 'Vòng hoa', look: { hat: 'flowercrown' } },
   boater:       { slot: 'hat', price: 160, lv: 7, en: 'Straw Boater', vi: 'Mũ cói dẹt', look: { hat: 'boater', hatColor: '#f3dcae', hatRibbon: '#3f4a5e' } },
   crown:        { slot: 'hat', price: 2000, lv: 25, en: 'Island Crown', vi: 'Vương miện đảo', look: { hat: 'crown' } },
+  // ---- store pieces (systems/store.js): cosmetic only, never sold in the boutique,
+  // never counted for milestones
+  lantern_bow:   { slot: 'hat', store: true, price: 0, en: 'Golden Lantern Bow', vi: 'Nơ lồng đèn vàng', look: { hat: 'bow', hatColor: '#ffc94a' } },
+  nonla_painted: { slot: 'hat', store: true, price: 0, en: 'Painted Nón Lá', vi: 'Nón lá vẽ hoa', look: { hat: 'nonla', hatColor: '#f7c6d0' } },
+  nonla_gold:    { slot: 'hat', store: true, price: 0, en: 'Festival Gold Nón Lá', vi: 'Nón lá vàng lễ hội', look: { hat: 'nonla', hatColor: '#ffd35a' } },
   // ---- shoes
   basic_shoes:  { slot: 'shoes', price: 0,  en: 'My Sneakers', vi: 'Giày thể thao của mình', look: {} },
   sneaker_pink: { slot: 'shoes', price: 60, en: 'Pink Sneakers', vi: 'Giày thể thao hồng', look: { shoe: '#f4a9b8', shoeStyle: 'sneaker' } },
@@ -82,6 +91,7 @@ export const CLOTHES = {
   hightops:     { slot: 'shoes', price: 150, lv: 2, en: 'Red High-Tops', vi: 'Giày cổ cao đỏ', look: { shoe: '#e8584e', shoeStyle: 'hightop' } },
   // ---- accessories
   no_extra:     { slot: 'extra', price: 0, en: 'Nothing', vi: 'Không có', look: {} },
+  supporter_scarf: { slot: 'extra', store: true, price: 0, en: 'Supporter\'s Gold Scarf', vi: 'Khăn vàng người ủng hộ', look: { scarf: '#ffc94a' } },
   backpack:     { slot: 'extra', price: 90,  en: 'Mint Backpack', vi: 'Ba lô bạc hà', look: { backpack: '#9fd8c8' } },
   backpack_pk:  { slot: 'extra', price: 90,  en: 'Pink Backpack', vi: 'Ba lô hồng', look: { backpack: '#f4a9b8' } },
   tote:         { slot: 'extra', price: 60,  en: 'Canvas Tote', vi: 'Túi vải', look: { tote: '#fff5df' } },

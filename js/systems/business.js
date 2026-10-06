@@ -15,6 +15,7 @@ import { fx } from '../world/render.js';
 import { recordSale } from './ledger.js';
 import { recordUse } from './economy.js';
 import { eventBoost } from './interact.js';
+import { seasonServed } from './store.js';
 
 export const LOCAL_NAMES = ['Chị Thu', 'Anh Nam', 'Cô Ba', 'Bác Tâm', 'Em Bi', 'Chú Lộc', 'Chị Hằng', 'Anh Khôi', 'Cô Duyên', 'Bác Hòa', 'Em Tí', 'Chị Loan', 'Anh Phong', 'Cô Mận', 'Chú Tư', 'Chị Vân', 'Anh Hùng', 'Em Su', 'Cô Nga', 'Bác Sang', 'Chị Ánh', 'Anh Tín', 'Em Cốm', 'Cô Liên'];
 const TOURIST_NAMES = ['Emma', 'Kenji', 'Lucas', 'Aiko', 'Mia', 'Noah', 'Hana', 'Leo', 'Sofia', 'Min-jun', 'Ava', 'Oliver', 'Chloé', 'Mateo', 'Yuki', 'Sam'];
@@ -381,7 +382,7 @@ export function completeOrder(c, quality) {
   // a bargain gets talked about
   const rep = (quality === 'perfect' ? 2 + (order.special ? 1 : 0) : 1) + (priceMul(order.recipe) < 0.95 && chance(0.5) ? 1 : 0);
   addRep(rep);
-  s.stats.served++; s.today.served++;
+  s.stats.served++; s.today.served++; seasonServed();
   if (quality === 'perfect') { s.stats.perfect++; s.today.perfect++; }
   const b = bizOf(c.bizId);
   b.stats.served++; b.stats.revenue += price + tip;

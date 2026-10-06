@@ -48,6 +48,7 @@ import { fishingAction } from './systems/fishing.js';
 import { plaqueAction } from './systems/garden.js';
 import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, TRACKS, trackState, claimMilestone } from './systems/progress.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
+import { syncPurchases } from './systems/store.js';
 import { showWhatsNew } from './ui/whatsnew.js';
 import { openBoutique, openWardrobe, currentLook } from './ui/clothes.js';
 import { openSalon } from './ui/salon.js';
@@ -120,6 +121,7 @@ async function boot() {
   if (dev && new URLSearchParams(location.search).has('fresh')) G.state = defaultState();
   $('boot').classList.add('gone');
   startGame();
+  syncPurchases();                    // (cosmetic store: whatever the server says this player bought)
 }
 
 // If the browser is still holding the sound back (no tap yet), say so — gently, until it plays.
@@ -577,7 +579,7 @@ async function driveTruck() {
 const KIOSK_ICON = { night: 'banh_trang_nuong', cafe: 'coffee', grill: 'squid' };
 function stallSheet(id = 'night') {
   const z = bizOf(id), def = BUSINESSES[id];
-  const hrs = def.hours ? `${clock(def.hours[0])}–${clock(def.hours[1] % (24 * 60)) === '00:00' ? '24:00' : clock(def.hours[1])}` : '';
+  const hrs = def.hours ? `${clock(def.hours[0])}–${clock(def.hours[1])}` : '';
   openSheet({ title: bizName(id), sub: T(`Open ${hrs}`, `Mở cửa ${hrs}`), build: (body, api) => {
     const list = h('div', 'list'); body.appendChild(list);
     const row = (label, fn, cls = 'btn big') => { const b = btn(label, () => { api.close(true); fn(); }, cls); list.appendChild(b); };
@@ -715,14 +717,14 @@ async function sleepFlow() {
 // and wake there to a new day (so waiting in a closed shop for opening time works).
 async function dawnDoze() {
   if (G.runtime.sleeping || cs.active) return;
-  await doSleep('dawn');
+  await doSleep(true);
 }
-async function doSleep(passedOut) {
+async function doSleep(dawn) {
   if (G.runtime.sleeping) return;
   G.runtime.sleeping = true;
   closeService();
   const pl = G.player;
-  const dawn = passedOut === 'dawn', here = dawn ? { id: G.scene.id, x: pl.x, y: pl.y, dir: pl.dir } : null;
+  const here = dawn ? { id: G.scene.id, x: pl.x, y: pl.y, dir: pl.dir } : null;
   try {
     await cs.run('sleep', async () => {
       G.runtime.inCutscene = true;
@@ -732,13 +734,6 @@ async function doSleep(passedOut) {
         document.getElementById('caption').innerHTML = T('The sky is getting light… you nod off for a moment.', 'Trời hửng sáng… bạn chợp mắt một lát.');
         document.getElementById('caption').classList.add('on');
         await wait(1.8); document.getElementById('caption').classList.remove('on');
-      } else if (passedOut) {
-        pl.setEmo('sleepy', 3); pl.showEmote('zzz', 2); await wait(1.2);
-        await fadeOut(1000, true);
-        document.getElementById('caption').innerHTML = T('You dozed off…', 'Bạn ngủ gục mất rồi…');
-        document.getElementById('caption').classList.add('on');
-        await wait(1.8); document.getElementById('caption').classList.remove('on');
-        setScene('house', 135, 170, 'down');
       } else {
         const bed = scenes.house.bedPos;
         await pl.walkTo([[70, 130], [bed.x + 30, bed.y + 34]], { speed: 70 });

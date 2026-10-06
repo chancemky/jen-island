@@ -3,9 +3,31 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.3.18';
+export const APP_VERSION = '5.4.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.4.0', date: '2026-10-05T22:28:04Z',
+    title: ['Fair Island', 'Đảo Công Bằng'],
+    items: [
+      ['Night Market stalls and the Coconut Cove Grill now say what they do: open until 23:00, everywhere you see their hours', 'Các sạp Chợ Đêm và Quán Nướng Vịnh Dừa giờ ghi đúng giờ mở cửa: tới 23:00, ở mọi nơi'],
+      ['Mèo Mây has a helpful hint for every part of the story, all the way to Chapter 20', 'Mèo Mây có lời gợi ý cho mọi phần của câu chuyện, tới tận Chương 20'],
+      ['Mèo Mây\'s chatter now follows your language when you switch between English and Tiếng Việt', 'Lời trò chuyện của Mèo Mây giờ đổi theo ngôn ngữ khi bạn chuyển giữa tiếng Anh và tiếng Việt'],
+      ['The ferry timetable at the pier lists every visitor boat, including the extra afternoon and evening boats', 'Lịch tàu ở bến giờ ghi đủ mọi chuyến tàu khách, kể cả các chuyến thêm buổi chiều và buổi tối'],
+      ['At 20:00 you get a heads-up when tonight\'s rent and wages are more than you have', 'Lúc 20:00 bạn sẽ được nhắc khi tiền thuê và lương đêm nay nhiều hơn số tiền bạn có'],
+      ['In debt with nothing left to sell? Bà Tư leaves a basket of tea and kumquats so you can always earn your way back', 'Đang nợ mà hết hàng để bán? Bà Tư sẽ để một giỏ trà và tắc để bạn luôn có thể kiếm tiền trở lại'],
+      ['The day\'s summary explains what to do when the bills put you in debt', 'Bảng tổng kết ngày giải thích cần làm gì khi chi phí khiến bạn bị nợ'],
+      ['Restaurant staff now stop working while the game is paused, instead of finishing jobs in the background', 'Nhân viên nhà hàng giờ dừng làm việc khi game tạm dừng, thay vì vẫn làm xong việc ở chế độ nền'],
+      ['Bà Út at the rice paper salad cart now speaks to you the right way in Tiếng Việt', 'Bà Út ở xe bánh tráng trộn giờ xưng hô đúng kiểu trong tiếng Việt'],
+      ['Chị Ngọc at the harbour guesthouse finally has her messy bun', 'Chị Ngọc ở nhà nghỉ bến cảng cuối cùng cũng có búi tóc rối của mình'],
+      ['Fair leaderboard: scores that aren\'t possible through normal play are corrected automatically', 'Bảng xếp hạng công bằng: điểm không thể đạt được khi chơi bình thường sẽ tự động được điều chỉnh'],
+      ['Names with rude words can\'t be used, and are hidden from the leaderboard', 'Không thể dùng tên có từ ngữ thô tục, và các tên đó bị ẩn khỏi bảng xếp hạng'],
+      ['New in Menu → Account: Delete account, which permanently erases your island from our servers and this device', 'Mới trong Menu → Tài khoản: Xóa tài khoản, xóa vĩnh viễn hòn đảo của bạn khỏi máy chủ và thiết bị này'],
+      ['A privacy policy and terms of play, linked from the sign-in screen and Menu → Account', 'Chính sách bảo mật và điều khoản chơi, có liên kết ở màn hình đăng nhập và Menu → Tài khoản'],
+      ['Sharing the game\'s link now shows a picture of the island and Mèo Mây', 'Chia sẻ đường dẫn game giờ hiện hình hòn đảo và Mèo Mây'],
+      ['Behind the scenes: future updates will carry your save forward instead of starting over, and a long list of small fixes', 'Hậu trường: các bản cập nhật sau sẽ giữ nguyên dữ liệu lưu của bạn thay vì chơi lại từ đầu, cùng nhiều sửa lỗi nhỏ'],
+    ],
+  },
   {
     v: '5.3.18', date: '2026-10-05T16:13:13Z',
     title: ['Tidy Workshop', 'Xưởng Gọn Gàng'],

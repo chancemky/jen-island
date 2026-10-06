@@ -11,6 +11,7 @@ import { SIDE_QUESTS } from '../systems/sidequests.js';
 import { PLACES } from '../systems/economy.js';
 import { TRACKS } from '../systems/progress.js';
 import { CLOTHES } from '../data/wardrobe.js';
+import { HAIRCUTS } from '../data/hair.js';
 import { LATER } from '../systems/interact.js';
 import { FISH } from '../systems/fishing.js';
 import { BUILDINGS } from '../world/island.js';
@@ -84,6 +85,7 @@ export function validateContent(scenes = null) {
   let lastCh = 0; for (const id of order) { const c = STEPS[id]?.ch || 0; if (c < lastCh) bad('story', `chapter goes backwards at ${id} (${lastCh} → ${c})`); lastCh = Math.max(lastCh, c); }
   // ---- people
   const people = new Set([...Object.keys(RESIDENTS), ...Object.keys(MERCHANTS)]);
+  for (const [id, p] of Object.entries({ ...RESIDENTS, ...MERCHANTS })) if (p.look?.hairStyle && !HAIRCUTS[p.look.hairStyle]) bad('people', `${id} uses unknown haircut ${p.look.hairStyle}`);
   const qids = new Set(SIDE_QUESTS.map(q => q.id));
   if (qids.size !== SIDE_QUESTS.length) bad('sidequest', 'two side quests share an id');
   for (const q of SIDE_QUESTS) {

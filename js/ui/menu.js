@@ -3,7 +3,7 @@
 import { G, T, setLang, markDirty } from '../systems/state.js';
 import { openSheet, tabs, h, btn, showReward } from './sheets.js';
 import { DEV_TOOLS } from '../dev/flag.js';
-import { saveStatus, saveLocal, saveCloudNow, resetGame } from '../systems/save.js';
+import { saveStatus, saveLocal, saveCloudNow, resetGame, forgetLocal } from '../systems/save.js';
 import { setAudio, sfx } from '../core/audio.js';
 import { escapeHtml, clock, money, moneyPair, moneyShort } from '../core/util.js';
 import { openJournal } from './shops.js';
@@ -15,6 +15,8 @@ import { iconURL } from '../gfx/food.js';
 import { mountMap } from './worldmap.js';
 import { renderOffice } from './office.js';
 import * as cloud from '../systems/cloud.js';
+import { storeVisible } from '../systems/store.js';
+import { renderStore } from './store.js';
 
 function renderMilestones(pane, api) {
   const s = G.state;
@@ -81,8 +83,10 @@ const leaderboardRowNow = () => leaderboardRow(G.state);
 export function openMenu({ onLogout, tab = 0 } = {}) {
   const s = G.state;
   openSheet({ title: s.island.name || 'JEN Island', sub: T(`Day ${s.day} · ${clock(s.time)} · Chapter ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.title || ''}`, `Ngày ${s.day} · ${clock(s.time)} · Chương ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.vi || ''}`), full: true, build: (body, api) => {
-    tabs(body, [T('Map', 'Bản đồ'), T('Business', 'Kinh doanh'), T('Milestones', 'Cột mốc'), T('Leaderboard', 'Xếp hạng'), T('Settings', 'Cài đặt'), T('Account', 'Tài khoản'), ...(DEV_TOOLS ? ['🛠 Dev'] : [])], (i, pane) => {
-      if (DEV_TOOLS && i === 6) { import('../dev/devtools.js').then(m => m.renderDevPane(pane, api)); return; }   // testing only — see js/dev/flag.js
+    const shop = storeVisible();
+    tabs(body, [T('Map', 'Bản đồ'), T('Business', 'Kinh doanh'), T('Milestones', 'Cột mốc'), T('Leaderboard', 'Xếp hạng'), T('Settings', 'Cài đặt'), T('Account', 'Tài khoản'), ...(shop ? [T('Support ✦', 'Ủng hộ ✦')] : []), ...(DEV_TOOLS ? ['🛠 Dev'] : [])], (i, pane) => {
+      if (shop && i === 6) return renderStore(pane);
+      if (DEV_TOOLS && i === (shop ? 7 : 6)) { import('../dev/devtools.js').then(m => m.renderDevPane(pane, api)); return; }   // testing only — see js/dev/flag.js
       if (i === 1) return renderOffice(pane, api);
       if (i === 2) return renderMilestones(pane, api);
       if (i === 3) return renderLeaderboard(pane);
@@ -129,9 +133,34 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
         pane.appendChild(sv);
         if (saveStatus.recovered) pane.appendChild(h('div', 'empty-note', T(`Save recovery: ${saveStatus.recovered}.`, `Khôi phục dữ liệu: ${saveStatus.recovered}.`)));
         if (onLogout) { const lo = btn(T('Sign out', 'Đăng xuất'), () => { api.close(true); onLogout(); }, 'btn ghost'); lo.style.marginTop = '10px'; pane.appendChild(lo); }
+        if (G.user && !G.user.local && cloud.hasSession()) { const del = btn(T('Delete account…', 'Xóa tài khoản…'), () => confirmDelete(api), 'btn ghost danger'); del.style.marginTop = '10px'; pane.appendChild(del); }
+        const legal = h('div', 'empty-note', `<a href="privacy.html" target="_blank" rel="noopener">${T('Privacy policy', 'Chính sách bảo mật')}</a> · <a href="terms.html" target="_blank" rel="noopener">${T('Terms', 'Điều khoản')}</a>`); legal.style.marginTop = '12px'; pane.appendChild(legal);
       }
     }, tab, api);
   } });
+}
+
+// Delete account: erases the island from the cloud and this device, then signs out.
+function confirmDelete(api) {
+  sfx('ui');
+  const el = h('div', 'modal');
+  el.innerHTML = `<div class="card"><h2>${T('Delete your account?', 'Xóa tài khoản?')}</h2>
+    <p style="font-weight:800;line-height:1.4">${T('Your island, your saves, your daily history and your leaderboard place will be permanently erased from our servers and this device. This cannot be undone.', 'Hòn đảo, dữ liệu lưu, lịch sử từng ngày và thứ hạng của bạn sẽ bị xóa vĩnh viễn khỏi máy chủ và thiết bị này. Không thể hoàn tác.')}</p>
+    <p class="del-err" style="display:none;color:#e0605a;font-weight:800"></p>
+    <div style="display:flex;gap:8px;margin-top:12px"><button type="button" class="btn ghost" data-a="no" style="flex:1">${T('Keep my account', 'Giữ tài khoản')}</button><button type="button" class="btn pink" data-a="yes" style="flex:1">${T('Delete forever', 'Xóa vĩnh viễn')}</button></div></div>`;
+  document.getElementById('app').appendChild(el);
+  el.querySelector('[data-a="no"]').onclick = () => { sfx('back'); el.remove(); };
+  el.querySelector('[data-a="yes"]').onclick = async (e) => {
+    const b = e.target; b.disabled = true; b.textContent = T('Deleting…', 'Đang xóa…');
+    const uid = G.user.id;
+    try { await cloud.deleteAccount(); }
+    catch { b.disabled = false; b.textContent = T('Delete forever', 'Xóa vĩnh viễn'); const err = el.querySelector('.del-err'); err.textContent = T('Could not reach the server. Check your connection and try again.', 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.'); err.style.display = ''; return; }
+    G.user = null;                                    // (stops every save from here on)
+    forgetLocal(uid);
+    await cloud.signOut();
+    api.close(true);
+    location.reload();
+  };
 }
 
 // "Are you sure?" before wiping everything

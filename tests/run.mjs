@@ -22,6 +22,10 @@ import { moneyPair, moneyShort } from '../js/core/util.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const only = process.argv[2] || 'all';
+// suites: one name, a comma list (story,ui) or `quick` (the fast ones, ~2 min)
+const QUICK = ['content', 'save', 'economy', 'ui', 'clock'];
+const wanted = new Set(only === 'quick' ? QUICK : only.split(','));
+const run = name => (only === 'all' && name !== 'chaos') || wanted.has(name);
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2' };
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
@@ -83,7 +87,7 @@ async function reachFreeRoam(p, pump = makePump(p)) {
 }
 
 // ---------------------------------------------------------------- content
-if (only === 'all' || only === 'content') {
+if (run('content')) {
   console.log('content');
   const pair = moneyPair(500, 15000), debt = moneyShort(-23200, 7500), partial = moneyShort(2000, 7500);
   if (pair === '0.5M / 15M' && debt === 'Need 30.7M more' && partial === 'Need 5,500k more') pass('content', 'money goals keep one unit and show the full shortfall');
@@ -107,18 +111,18 @@ if (only === 'all' || only === 'content') {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   const shell = JSON.parse(sw.match(/const SHELL = (\[[^\]]*\])/)[1]);
   const gone = shell.filter(f => f !== './' && !fs.existsSync(path.join(ROOT, f)));
-  if (gone.length) fail('content', 'service worker lists missing files: ' + gone.join(', ')); else pass('content', `all ${shell.length} cached files exist`);
+  if (gone.length) fail('content', 'service worker lists missing files (run npm run sw): ' + gone.join(', ')); else pass('content', `all ${shell.length} cached files exist`);
   // every module under js/ that the game imports is cached for offline play
   const mods = []; const walk2 = d => { for (const f of fs.readdirSync(d)) { const fp = path.join(d, f); if (fs.statSync(fp).isDirectory()) { if (f !== 'dev') walk2(fp); } else if (f.endsWith('.js')) mods.push('./' + path.relative(ROOT, fp)); } };
   walk2(path.join(ROOT, 'js'));
   const uncached = mods.filter(m => !shell.includes(m));
-  if (uncached.length) fail('content', 'modules missing from the service worker cache: ' + uncached.join(', ')); else pass('content', 'every game module is cached for offline play');
+  if (uncached.length) fail('content', 'modules missing from the service worker cache (run npm run sw): ' + uncached.join(', ')); else pass('content', 'every game module is cached for offline play');
   if (errors.length) errors.forEach(e => fail('content', e));
   await ctx.close();
 }
 
 // ---------------------------------------------------------------- save recovery
-if (only === 'all' || only === 'save') {
+if (run('save')) {
   console.log('save recovery');
   const ctx = await browser.newContext({ ...devices['iPhone 13'] });
   const p = await ctx.newPage();
@@ -141,8 +145,8 @@ if (only === 'all' || only === 'save') {
 }
 
 // ---------------------------------------------------------------- story
-if (only === 'all' || only === 'story' || only === 'chaos') {
-  const chaos = only === 'chaos';
+if (run('story') || run('chaos')) {
+  const chaos = wanted.has('chaos');
   console.log(chaos ? 'story with an impatient player (Chapters 1–20)' : 'story (Chapters 1–20)');
   const { p, errors, ctx } = await openGame('story');
   // count chapter title cards as they appear
@@ -185,7 +189,7 @@ if (only === 'all' || only === 'story' || only === 'chaos') {
         restoreNM: () => { s.keys.night = true; const R = J.NIGHT_MARKET_RESTORE; s.money = Math.max(s.money, R.cost + 100); for (const [k, n] of Object.entries(R.mats)) s.materials[k] = (s.materials[k] || 0) + n; J.restoreNightMarket(); }, nightServe: () => { B('night').stats.served += 20; },
         buyStall: () => own('nm2'), stallServe: () => { B('nm2').stats.served += 15; K('nm2'); },
         buyResto: () => { s.keys.restaurant = true; B('restaurant').owned = true; B('restaurant').unlocked = true; }, repairResto: () => { B('restaurant').repair = 1; },
-        hire: () => { B('restaurant').employees = [{ id: 'e0', role: 'cook', name: 'A', trait: 'steady' }]; }, restoServe: () => { B('restaurant').stats.served += 30; },
+        hire: () => { B('restaurant').employees = [{ id: 'e0', role: 'cook', name: 'A', trait: 'steady', seed: 3, stats: { speed: 3, cooking: 3, service: 3, reliability: 3 } }]; }, restoServe: () => { B('restaurant').stats.served += 30; },
         team: () => staffResto(),
         destination: () => { s.reputation = Math.max(s.reputation, 400); B('shed1').level = 3; const C = J.STATUE_COST; s.money = Math.max(s.money, C.cost + 100); for (const [k, n] of Object.entries(C.mats)) s.materials[k] = (s.materials[k] || 0) + n; J.buildStatue(); },
         harbour: () => { s.story.flags.harbourBridge = true; }, adopt: () => { s.pets = [{ uid: 'x1', id: 'shiba', name: 'Mochi', love: 0 }]; s.petFollow = 'x1'; },
@@ -246,7 +250,7 @@ if (only === 'all' || only === 'story' || only === 'chaos') {
 
 // ---------------------------------------------------------------- economy
 // The rules the economy promises, checked against the real data and a real day of trade.
-if (only === 'all' || only === 'economy') {
+if (run('economy')) {
   console.log('economy');
   const { p, errors, ctx } = await openGame('econ');
   await p.waitForFunction(() => window.__jen?.econ, null, { timeout: 20000 });
@@ -329,7 +333,7 @@ if (only === 'all' || only === 'economy') {
 
 // ---------------------------------------------------------------- screens
 // Open every screen the economy and milestones feed, on a well-developed island, and make sure they draw.
-if (only === 'all' || only === 'ui') {
+if (run('ui')) {
   console.log('screens');
   const { p, errors, ctx } = await openGame('ui');
   if (!(await reachFreeRoam(p))) fail('ui', 'never reached free roam');
@@ -397,7 +401,7 @@ if (only === 'all' || only === 'ui') {
 // ---------------------------------------------------------------- side quests
 // Play every side quest from start to finish: accept it, find / meet / solve it,
 // deliver it (every stop of a route), and check it ends in the scrapbook.
-if (only === 'all' || only === 'quests') {
+if (run('quests')) {
   console.log('side quests');
   const { p, errors, ctx } = await openGame('quests');
   if (!(await reachFreeRoam(p))) fail('quests', 'never reached free roam');
@@ -461,7 +465,7 @@ if (only === 'all' || only === 'quests') {
 // ---------------------------------------------------------------- world interactions
 // Walk up to things and use them: furniture at home, the fountain, the pier, the shore,
 // fishing. Each should offer an action, run without errors and count as a discovery.
-if (only === 'all' || only === 'world') {
+if (run('world')) {
   console.log('world interactions');
   const { p, errors, ctx } = await openGame('world');
   if (!(await reachFreeRoam(p))) fail('world', 'never reached free roam');
@@ -583,7 +587,7 @@ if (only === 'all' || only === 'world') {
 // ---------------------------------------------------------------- stability (stuck screens)
 // Everything that can hold the screen or the player, triggered on purpose — often all at
 // once — and then: is the island exactly as free as before?
-if (only === 'all' || only === 'stability') {
+if (run('stability')) {
   console.log('stability');
   // 0) the pause menu before the boat: typing names with a "p" in them must never pause the game
   {
@@ -850,7 +854,7 @@ if (only === 'all' || only === 'stability') {
 }
 
 // ---------------------------------------------------------------- clock, bed, reload, action button
-if (only === 'all' || only === 'clock') {
+if (run('clock')) {
   console.log('clock & saves');
   const { p, errors, ctx } = await openGame('clock');
   if (!(await reachFreeRoam(p))) fail('clock', 'never reached free roam');
@@ -947,7 +951,7 @@ if (only === 'all' || only === 'clock') {
 }
 
 // ---------------------------------------------------------------- render
-if (only === 'all' || only === 'render') {
+if (run('render')) {
   console.log('render');
   const ctx = await browser.newContext({ viewport: { width: 900, height: 700 } });
   const p = await ctx.newPage();

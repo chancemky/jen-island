@@ -166,7 +166,7 @@ export const STEPS = {
   // ---- Chapter 8: the Night Market
   nightIntro: { ch: 8, next: 'restoreNM' },          // (nightMarketIntro moves on by itself)
   restoreNM: { ch: 8, text: () => { const r = NIGHT_MARKET_RESTORE; if (!gatePaid('night')) return T(`Get the Night Market key from Mèo Mây (${gateText('night')})`, `Lấy chìa khóa Chợ Đêm từ Mèo Mây (${gateText('night')})`); return T(`Restore the Night Market: ${moneyGoal(G.state.money, r.cost)}, wood ${mats('wood')}/${r.mats.wood}, metal ${mats('metal')}/${r.mats.metal}, paint ${mats('paint')}/${r.mats.paint}, lanterns ${mats('lantern')}/${r.mats.lantern}, light strings ${mats('cable')}/${r.mats.cable}`, `Khôi phục Chợ Đêm: ${moneyGoal(G.state.money, r.cost)}, gỗ ${mats('wood')}/${r.mats.wood}, tôn ${mats('metal')}/${r.mats.metal}, sơn ${mats('paint')}/${r.mats.paint}, lồng đèn ${mats('lantern')}/${r.mats.lantern}, dây đèn ${mats('cable')}/${r.mats.cable}`); }, target: () => !gatePaid('night') ? meoTarget() : ({ scene: 'island', x: 520, y: 700 }), _t0: () => ({ scene: 'island', x: 430, y: 780 }), done: () => G.state.nightMarket.restored, next: 'nightServe' },
-  nightServe: { ch: 8, text: () => T(`Sell ${Math.min(20, bizServedSince('night', 'nightServe'))}/20 dishes at your night stall (open 17:00–24:00)`, `Bán ${Math.min(20, bizServedSince('night', 'nightServe'))}/20 món ở Sạp Đêm (mở 17:00–24:00)`), target: () => ({ scene: 'island', x: 520, y: 700 }), done: () => bizServedSince('night', 'nightServe') >= 20, next: 'buyStall', scene: () => newChapter(9) },
+  nightServe: { ch: 8, text: () => T(`Sell ${Math.min(20, bizServedSince('night', 'nightServe'))}/20 dishes at your night stall (open 17:00–23:00)`, `Bán ${Math.min(20, bizServedSince('night', 'nightServe'))}/20 món ở Sạp Đêm (mở 17:00–23:00)`), target: () => ({ scene: 'island', x: 520, y: 700 }), done: () => bizServedSince('night', 'nightServe') >= 20, next: 'buyStall', scene: () => newChapter(9) },
   // ---- Chapter 10: the restaurant
   restoIntro: { ch: 10, next: 'buyResto' },          // (restaurantIntro moves on by itself)
   buyResto: { ch: 10, text: () => T(`Buy the restaurant's key from Mèo Mây (${gateText('restaurant')})`, `Mua chìa khóa nhà hàng từ Mèo Mây (${gateText('restaurant')})`), target: () => meoTarget(), done: () => bizOf('restaurant').owned, next: 'repairResto' },
@@ -189,7 +189,7 @@ export const STEPS = {
 };
 function freeText() {
   const av = availableRecipes();
-  if (av.length) return T('Mèo Mây has a new recipe for you — visit its house!', 'Mèo Mây có công thức mới! Ghé nhà Mèo Mây nhé');
+  if (av.length) return T('Mèo Mây has a new recipe for you — visit her house!', 'Mèo Mây có công thức mới! Ghé nhà Mèo Mây nhé');
   const up = Object.entries(G.state.biz).find(([id, b]) => b.owned && b.level < 3 && BUSINESSES[id].upgrades);
   if (up) return T(`Upgrade ${bizName(up[0])} and keep growing your island`, `Nâng cấp ${bizName(up[0])} và tiếp tục phát triển đảo`);
   // after the story: the families who left, the neighbours' own stories, the island's secrets
@@ -1271,7 +1271,8 @@ async function epilogue() {
 
 
 // ---------------------------------------------------------------- talking to Mèo Mây
-const MEO_LINES = [
+// a function so the lines follow the current language setting
+const MEO_LINES = () => [
   T('Did you know the banyan tree is older than the lighthouse? It told me. Trees talk if you nap near them long enough.', 'Bạn biết cây đa còn già hơn ngọn hải đăng không? Nó kể mình nghe đó. Ngủ gần cây đủ lâu là nghe cây nói.'),
   T('Chú Hải says it\'s going to rain. Chú Hải always says it\'s going to rain.', 'Chú Hải nói sắp mưa. Chú Hải lúc nào cũng nói sắp mưa.'),
   T('Bé Na asked me if cats like sweet chè. I said yes. I have never tried chè.', 'Bé Na hỏi mèo có thích chè không. Mình bảo có. Mình chưa ăn chè bao giờ.'),
@@ -1303,8 +1304,7 @@ export async function talkToMeo() {
     if (fishy) { if (p === 0) { G.state.fishForMeo--; markDirty(true); m.doHop(90); sfx('meow'); fx.burst('heart', m.x, m.y - 30, 8, { up: 40 }); await say('meo', choice([T('A FISH. For ME. This is the best day of my life. (Until tomorrow\'s fish.)', 'CÁ. Cho MÌNH. Hôm nay là ngày đẹp nhất đời mình. (Cho tới con cá ngày mai.)'), T('*happy crunching noises* …Chú Hải taught you well.', '*tiếng nhai rộp rộp sung sướng* …Chú Hải dạy bạn giỏi ghê.'), T('You know the way to a cat\'s heart. It\'s through the fish.', 'Bạn biết đường tới trái tim mèo rồi đó. Đi qua con cá.')]), { emo: 'love' }); addXP(15, 'meo'); p = -1; } else p--; }
     if (p >= 0 && qo) { if (p === 0) { await questTalk(m, 'meo'); p = -1; } else p--; }
     if (p >= 0 && gate) { if (p === 0) { await keyTalk(gate); p = -1; } else p--; }
-    if (p === -1) { /* already answered above */ }
-    else if (p === 0) {
+    if (p === 0) {
       if (avail.length) await say('meo', T('I wrote a new recipe in my notebook! Come to my house and have a look.', 'Mình vừa ghi công thức mới vào sổ tay! Qua nhà mình xem nhé.'), { emo: 'happy' });
       if (st?.text) await say('meo', hintFor(S().step));
       else await say('meo', T('Upgrade your shops, try new recipes, make everyone a regular. And visit me!', 'Nâng cấp quán, thử công thức mới, biến ai cũng thành khách quen. Và ghé thăm mình nữa!'));
@@ -1315,11 +1315,11 @@ export async function talkToMeo() {
         for (const [en, vi] of mem.lines) await say('meo', T(en, vi), { tilt: 0.12 });
         S().flags.meoMem = i + 1; markDirty(true);
         if (i === 0) toast({ text: T('Mèo Mây has more stories', 'Mèo Mây còn nhiều chuyện lắm'), sub: T('Ask again as the island grows.', 'Hỏi lại khi hòn đảo lớn dần nhé.'), icon: 'notebook' });
-      } else await say('meo', choice(MEO_LINES), { tilt: 0.15 });
+      } else await say('meo', choice(MEO_LINES()), { tilt: 0.15 });
     }
     else if (p === 2) { await say('meo', Math.random() < 0.6 ? meoJoke() : randomJoke(), { emo: 'happy', tilt: 0.2 }); meoAntic(m); }
     else if (p === 3) await playRPS(m, 'meo');
-    else { m.setAct('wave'); await say('meo', T('See you around!', 'Hẹn gặp lại nha!'), { emo: 'happy' }); m.setAct(null); }
+    else if (p !== -1) { m.setAct('wave'); await say('meo', T('See you around!', 'Hẹn gặp lại nha!'), { emo: 'happy' }); m.setAct(null); }
     m.data.busy = false;
     if (wasNapping) { m.data.napping = false; }
   }, { bars: false, keepHud: true });
@@ -1368,6 +1368,33 @@ function hintFor(step) {
     restoServe: T('Open the restaurant and look after the guests. Staff will help with whatever they\'re assigned.', 'Mở cửa nhà hàng và chăm sóc khách. Nhân viên sẽ làm những việc được giao.'),
     team: T('Hire a cook and a server, and the restaurant runs itself while you\'re away.', 'Thuê một đầu bếp và một phục vụ, nhà hàng sẽ tự chạy khi bạn vắng mặt.'),
     destination: T('Grow your reputation and fully upgrade a shop. Then come see me at the plaza!', 'Tăng danh tiếng và nâng cấp tối đa một quán. Rồi tới quảng trường gặp mình!'),
+    tour: T('Follow me! I\'ll show you around the island.', 'Đi theo mình nào! Mình dẫn bạn đi một vòng đảo.'),
+    settle: T('Keep your drink stand busy: serve customers, aim for perfect orders and sleep each night. The goals are in your quest bar.', 'Giữ quán nước thật đông: phục vụ khách, cố làm món hoàn hảo và ngủ mỗi tối. Mục tiêu ở thanh nhiệm vụ.'),
+    regulars: T('Customers who visit three times become regulars. Come learn a recipe at my house, and upgrade the drink stand from its counter.', 'Khách ghé ba lần sẽ thành khách quen. Ghé nhà mình học công thức, và nâng cấp quán nước ngay tại quầy.'),
+    hireKeeper: T('Open Menu → Business and hire a shopkeeper for the drink stand. They open, prep and serve while you\'re away.', 'Mở Menu → Kinh doanh và thuê người trông quán nước. Họ tự mở cửa, sơ chế và bán khi bạn đi vắng.'),
+    keeperRun: T('Let your shopkeeper run the drink stand while you sell bánh mì yourself in West Village.', 'Để người trông quán lo quán nước, còn bạn tự bán bánh mì ở Xóm Tây.'),
+    supplies: T('In Menu → Business you can hire a supply runner to restock a shop. Upgrade the bánh mì shed and save some cash.', 'Trong Menu → Kinh doanh bạn có thể thuê người giao hàng để bổ sung nguyên liệu. Nâng cấp quán bánh mì và để dành ít tiền.'),
+    nightIntro: T('Come with me to the Night Market across the river!', 'Đi với mình tới Chợ Đêm bên kia sông nào!'),
+    buyStall: T('The Night Market has empty stalls for sale. Walk up to the sweet soup or snail stall to buy it.', 'Chợ Đêm còn sạp trống để bán. Đi tới sạp chè hoặc sạp ốc để mua.'),
+    stallServe: T('Sell at your new stall after 17:00, and hire a stall keeper for one of your night stalls in Menu → Business.', 'Bán ở sạp mới sau 17:00, và thuê người trông một sạp đêm trong Menu → Kinh doanh.'),
+    restoIntro: T('Come see the old restaurant with me!', 'Đi xem nhà hàng cũ với mình nào!'),
+    harbour: T('Chú Bảy sells wood, metal and paint. Bring them with the money to the bridge site on the east coast.', 'Chú Bảy bán gỗ, tôn và sơn. Mang chúng cùng tiền tới chỗ xây cầu ở bờ đông.'),
+    adopt: T('Cô Bông\'s pet shop is in Harbour Town, over the new bridge. Pick a friend to bring home!', 'Tiệm thú cưng của Cô Bông ở Phố Cảng, qua cây cầu mới. Chọn một bé mang về nhà nhé!'),
+    cafe: T('The Harbour Café kiosk is in Harbour Town. Save up from your other shops, then walk up to it to buy it.', 'Ki-ốt Cà Phê Bến Cảng ở Phố Cảng. Để dành tiền từ các quán khác, rồi tới đó để mua.'),
+    cafeServe: T('Stock coffee and milk, open the café and serve from its counter.', 'Chuẩn bị cà phê và sữa, mở quán rồi bán ở quầy.'),
+    rest7: T('Learn egg coffee at my house, hire a café shopkeeper, and keep the café busy while you level up.', 'Học cà phê trứng ở nhà mình, thuê người trông quán cà phê, và giữ quán đông khách trong lúc lên cấp.'),
+    bridge: T('The Long Bridge is east of the plaza. Chú Bảy has the wood, metal and paint it needs.', 'Cây Cầu Dài ở phía đông quảng trường. Chú Bảy có đủ gỗ, tôn và sơn cần dùng.'),
+    islet: T('Cross the Long Bridge to Firefly Islet. Someone is painting out there!', 'Qua Cây Cầu Dài tới Cù Lao Đom Đóm. Có ai đó đang vẽ tranh ngoài đó!'),
+    vyViews: T('Follow the marker to each view and stand there for a moment. Vy wants three of them.', 'Theo dấu chỉ tới từng cảnh đẹp và đứng đó một chút. Vy muốn ba cảnh.'),
+    landlord: T('In Menu → Business you can buy the places you rent. Owned places pay no rent and bring a few more customers.', 'Trong Menu → Kinh doanh bạn có thể mua đứt nơi đang thuê. Nơi đã mua không phải trả tiền thuê và có thêm khách.'),
+    festival: T('Reach the level, buy silk lanterns from Chú Bảy, and serve a big crowd in a single day.', 'Đạt đủ cấp, mua lồng đèn lụa ở Chú Bảy, và phục vụ thật đông khách trong một ngày.'),
+    cove: T('The Cove Bridge goes past the east beach. It needs roof tiles as well as wood, metal and paint.', 'Cầu Vịnh Dừa ở sau bãi đông. Cần ngói, cùng với gỗ, tôn và sơn.'),
+    grill: T('The Coconut Cove Grill is across the Cove Bridge. Walk up to it to buy it.', 'Quán Nướng Vịnh Dừa ở bên kia Cầu Vịnh Dừa. Đi tới đó để mua.'),
+    grillServe: T('Stock seafood for the grill, open it and grill from the counter.', 'Chuẩn bị hải sản cho quán nướng, mở cửa rồi nướng ở quầy.'),
+    allStalls: T('Every empty stall at the Night Market is for sale. Walk up to each one to buy it.', 'Mọi sạp trống ở Chợ Đêm đều đang bán. Đi tới từng sạp để mua.'),
+    allStaff: T('Open Menu → Business: hire a keeper for every shop and stall, and a team for the restaurant.', 'Mở Menu → Kinh doanh: thuê người trông cho mọi quán và sạp, và một đội cho nhà hàng.'),
+    keeper: T('Own every business, keep levelling up and make lots of regulars. The island is almost yours!', 'Sở hữu mọi quán, tiếp tục lên cấp và có thật nhiều khách quen. Hòn đảo gần như là của bạn rồi!'),
+    free: T('The island is yours! Upgrade shops, try new recipes, decorate your home, and visit me.', 'Hòn đảo là của bạn! Nâng cấp quán, thử món mới, trang trí nhà, và ghé thăm mình nhé.'),
   })[step] || T('Just enjoy the island for a bit!', 'Cứ tận hưởng hòn đảo một chút đi!');
 }
 

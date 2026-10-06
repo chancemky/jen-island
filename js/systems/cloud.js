@@ -76,6 +76,11 @@ export async function saveSnapshot(state) {
   const old = await api('/rest/v1/jen_island_save_snapshots?select=id&user_id=eq.' + encodeURIComponent(uid) + '&order=created_at.desc&offset=7');
   if (old?.length) await api('/rest/v1/jen_island_save_snapshots?id=in.(' + old.map(r => r.id).join(',') + ')', { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
 }
+// cosmetic purchases (written only by the payment webhook)
+export async function loadPurchases() {
+  const uid = session.user.id;
+  return api('/rest/v1/jen_island_purchases?select=product_id&user_id=eq.' + encodeURIComponent(uid));
+}
 export async function loadSnapshots() {
   const uid = session.user.id;
   const rows = await api('/rest/v1/jen_island_save_snapshots?select=save_data,created_at&user_id=eq.' + encodeURIComponent(uid) + '&order=created_at.desc&limit=7');
@@ -96,5 +101,10 @@ export async function pushLeaderboard(row) {
 }
 export async function fetchLeaderboard(sort = 'level') {
   return api('/rest/v1/rpc/jen_island_leaderboard_top', { method: 'POST', body: JSON.stringify({ sort, lim: 50 }) });
+}
+// Delete account: erases every JEN Island row for this player (and the login itself when
+// no other JEN game uses it). Returns 'account' or 'game'.
+export async function deleteAccount() {
+  return api('/rest/v1/rpc/jen_island_delete_account', { method: 'POST', body: '{}' });
 }
 export const hasSession = () => !!session;
