@@ -2,7 +2,7 @@
 // Only durable data lives here; walking NPCs, queues and animations are
 // runtime-only and rebuilt on load.
 
-import { bus, clamp } from '../core/util.js';
+import { bus, clamp, useLanguage } from '../core/util.js';
 import { BUSINESSES, RECIPES, ACHIEVEMENTS } from '../data/game.js';
 import { APP_VERSION } from '../data/changelog.js';
 
@@ -41,7 +41,7 @@ export function defaultState() {
     usage: {},               // shop → ingredient → portions used per day (running average)
     nightMarket: { restored: false },
     statue: false,
-    settings: { music: true, sfx: true, arrow: true, lang: null, smooth: false },
+    settings: { music: true, sfx: true, arrow: true, lang: null, smooth: false, stats: true },
     pos: null,               // {scene, x, y} last position for resume
     level: 1, xp: 0, xpTotal: 0, // uncapped levels (systems/progress.js)
     milestones: {},          // track id → tiers claimed
@@ -98,6 +98,7 @@ const LANG_KEY = 'jenisland.lang';
 let deviceLang = 'en';
 try { deviceLang = localStorage.getItem(LANG_KEY) === 'vi' ? 'vi' : 'en'; } catch {}
 Object.defineProperty(G, 'lang', { get() { return G.state?.settings?.lang || deviceLang; } });
+useLanguage(() => G.lang);
 export function setLang(l) { deviceLang = l; if (G.state?.settings) G.state.settings.lang = l; try { localStorage.setItem(LANG_KEY, l); } catch {} bus.emit('lang', l); markDirty(true); }
 export const T = (en, vi) => (G.lang === 'vi' ? vi : en);
 // Resolve a label that may be a [en, vi] pair, a function, or a plain string.

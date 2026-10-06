@@ -206,8 +206,11 @@ export function toast({ text, sub = '', icon = null, cls = '', bad = false, ms =
   el.className = 'toast ' + cls + (bad ? ' bad' : '');
   el.innerHTML = `${icon ? `<img src="${iconURL(icon, 40)}" alt="">` : ''}<div>${escapeHtml(text)}${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</div>`;
   if (onClick) { el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer'; el.addEventListener('click', onClick); }
+  // just below the quest bar, however many lines it has
+  const q = $('questPill'), qr = q?.offsetParent ? q.getBoundingClientRect() : null;
+  if (qr?.height) box.style.setProperty('--toast-top', `${qr.bottom - $('app').getBoundingClientRect().top + 8}px`); else box.style.removeProperty('--toast-top');
   box.appendChild(el);
-  while (box.children.length > 3) box.firstElementChild.remove();
+  while (box.children.length > 2) box.firstElementChild.remove();
   if (cls === 'ach') sfx('fanfare'); else if (bad) sfx('error'); else sfx('pop');
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, ms);
 }

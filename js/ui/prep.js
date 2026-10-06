@@ -31,7 +31,7 @@ export function openPrep(bizId, { onClose } = {}) {
     <div class="prep-bowls"></div>`;
   document.getElementById('sheets').appendChild(el);
   G.runtime.pause++;
-  document.body.classList.add('sheet-open');
+  document.body.classList.add('sheet-open', 'svc-open');
   P = { bizId, el, raws, onClose, item: null, stage: 'empty', anim: 0, chopT: 0, cuts: 0, parts: [], t: 0 };
   P.cv = el.querySelector('canvas'); P.c = P.cv.getContext('2d');
   el.querySelector('.svc-close').onclick = closePrep;
@@ -46,7 +46,7 @@ export function closePrep() {
   if (!P) return;
   const p = P; P = null;
   G.runtime.pause--;
-  document.body.classList.remove('sheet-open');
+  document.body.classList.remove('sheet-open', 'svc-open');
   sfx('back');
   p.el.classList.add('out'); setTimeout(() => p.el.remove(), 210);
   p.onClose?.();

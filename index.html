@@ -82,15 +82,39 @@
     <div class="auth-card card">
       <div class="logo"><span class="logo-jen">JEN</span><span class="logo-island">Island</span></div>
       <p class="tagline" data-t="tagline"></p>
-      <div class="seg" id="authTabs"><button type="button" class="on" data-tab="login" data-t="login"></button><button type="button" data-tab="signup" data-t="signup"></button></div>
-      <form id="authForm" autocomplete="on" novalidate>
-        <label class="field"><span data-t="email"></span><input id="authEmail" type="email" autocomplete="email" inputmode="email" required></label>
-        <label class="field"><span data-t="password"></span><input id="authPass" type="password" autocomplete="current-password" minlength="6" required></label>
-        <p class="auth-msg" id="authMsg"></p>
-        <button class="btn big" id="authSubmit" type="submit" data-t="play"></button>
-        <p class="auth-legal" style="text-align:center;font-size:13px;font-weight:700;margin:10px 0 0;opacity:.85"><a href="privacy.html" target="_blank" rel="noopener" data-t="privacy"></a> · <a href="terms.html" target="_blank" rel="noopener" data-t="terms"></a></p>
-        <div class="lang-pick" id="langPick"><button type="button" data-lang="en">English</button><button type="button" data-lang="vi">Tiếng Việt</button></div>
+      <!-- welcome: what the game is, and play straight away -->
+      <div id="authLanding">
+        <ul class="auth-feats">
+          <li><img data-icon="coffee" alt=""><span data-t="feat1"></span></li>
+          <li><img data-icon="sofa" alt=""><span data-t="feat2"></span></li>
+          <li><img data-icon="lantern" alt=""><span data-t="feat3"></span></li>
+          <li><img data-icon="heart" alt=""><span data-t="feat4"></span></li>
+        </ul>
+        <button class="btn big pink" id="playGuest" type="button" data-t="playfree"></button>
+        <button class="btn ghost" id="showLogin" type="button" data-t="haveaccount"></button>
+        <p class="auth-note" data-t="guestnote"></p>
+      </div>
+      <!-- log in / create account -->
+      <div id="authFormWrap" hidden>
+        <div class="seg" id="authTabs"><button type="button" class="on" data-tab="login" data-t="login"></button><button type="button" data-tab="signup" data-t="signup"></button></div>
+        <form id="authForm" autocomplete="on" novalidate>
+          <label class="field"><span data-t="email"></span><input id="authEmail" type="email" autocomplete="email" inputmode="email" required></label>
+          <label class="field pw-field"><span data-t="password"></span><input id="authPass" type="password" autocomplete="current-password" minlength="8" required><button type="button" class="pw-eye" id="pwEye" data-t-aria="showpw">👁</button></label>
+          <p class="auth-msg" id="authMsg"></p>
+          <button class="btn big" id="authSubmit" type="submit" data-t="play"></button>
+          <button class="link-btn" id="forgotBtn" type="button" data-t="forgot"></button>
+          <button class="link-btn" id="authBack" type="button" data-t="back"></button>
+        </form>
+      </div>
+      <!-- a password reset link from email lands here -->
+      <form id="authReset" hidden novalidate>
+        <p class="auth-note" data-t="newpwnote"></p>
+        <label class="field"><span data-t="newpw"></span><input id="resetPass" type="password" autocomplete="new-password" minlength="8" required></label>
+        <p class="auth-msg" id="resetMsg"></p>
+        <button class="btn big" id="resetSubmit" type="submit" data-t="savepw"></button>
       </form>
+      <div class="lang-pick" id="langPick"><button type="button" data-lang="en">English</button><button type="button" data-lang="vi">Tiếng Việt</button></div>
+      <p class="auth-legal"><a href="privacy.html" target="_blank" rel="noopener" data-t="privacy"></a> · <a href="terms.html" target="_blank" rel="noopener" data-t="terms"></a></p>
     </div>
   </section>
 

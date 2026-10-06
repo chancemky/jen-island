@@ -55,21 +55,20 @@ export function mix(h1, h2, t) {
 
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+// Numbers follow the language: 1,500k / 2.5M in English, 1.500k / 2,5M in Vietnamese
+// (state.js tells us how to read the current language).
+let langOf = () => 'en';
+export const useLanguage = fn => { langOf = fn; };
+const num = (v, digits = 0) => v.toLocaleString(langOf() === 'vi' ? 'vi-VN' : 'en-US', { maximumFractionDigits: digits });
 // Money is stored in thousands of đồng ("k"), the way Vietnamese menus show it.
+const unitFor = magnitude => magnitude >= 1000000 ? v => num(Math.round(v / 100000) / 10, 1) + 'B' : magnitude >= 10000 ? v => num(Math.round(v / 100) / 10, 1) + 'M' : v => num(v) + 'k';
 export function money(k) {
   const v = Math.round(k);
-  if (Math.abs(v) >= 1000000) return (v / 1000000).toFixed(1).replace('.0', '') + 'B';
-  if (Math.abs(v) >= 10000) return (v / 1000).toFixed(1).replace('.0', '') + 'M';
-  return v.toLocaleString('en-US') + 'k';
+  return unitFor(Math.abs(v))(v);
 }
 export function moneyPair(a, b) {
   const av = Math.round(a), bv = Math.round(b);
-  const magnitude = Math.max(Math.abs(av), Math.abs(bv));
-  const fmt = magnitude >= 1000000
-    ? v => (v / 1000000).toFixed(1).replace('.0', '') + 'B'
-    : magnitude >= 10000
-      ? v => (v / 1000).toFixed(1).replace('.0', '') + 'M'
-      : v => v.toLocaleString('en-US') + 'k';
+  const fmt = unitFor(Math.max(Math.abs(av), Math.abs(bv)));
   return `${fmt(av)} / ${fmt(bv)}`;
 }
 export function moneyShort(have, need, translate = null) {

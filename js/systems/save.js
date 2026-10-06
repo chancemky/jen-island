@@ -18,12 +18,18 @@ import { G, T, migrate, defaultState, OLDEST_SAVE } from './state.js';
 import * as cloud from './cloud.js';
 import { bus } from '../core/util.js';
 import { leaderboardRow, shouldPushLeaderboard } from './progress.js';
+import { chooseIsland } from '../ui/conflict.js';
 import { toast } from '../ui/hud.js';
 
 // saves from before OLDEST_SAVE are not loaded (everyone started fresh at that reset);
 // newer saves keep this key and are upgraded by migrate()
 const localKey = uid => `jenisland.save${OLDEST_SAVE}.${uid}`;
 const bakKey = uid => localKey(uid) + '.backups';
+// what this device last synced with the cloud: the server's time of that cloud copy, and
+// the island's savedAt at that moment (so we know if either side changed since)
+const syncKey = uid => localKey(uid) + '.sync';
+const readSync = uid => { try { return JSON.parse(localStorage.getItem(syncKey(uid)) || 'null'); } catch { return null; } };
+const writeSync = (uid, savedAt) => { const at = cloud.cloudSyncedAt(); if (at) try { localStorage.setItem(syncKey(uid), JSON.stringify({ at, savedAt })); } catch {} };
 const BACKUPS = 4;
 let lastLocal = 0, lastCloud = 0, lastBackup = 0, cloudDirty = false, cloudBusy = false;
 let keptAt = null;     // the clock and position in the last local save (see tickSave)
@@ -107,10 +113,13 @@ export async function saveCloudNow({ keepalive = false } = {}) {
   if (!G.user || G.user.local || cloudBusy || !cloud.hasSession()) return;
   cloudBusy = true;
   try {
-    await cloud.saveCloud(snapshot(), { keepalive }); saveStatus.cloudAt = Date.now(); saveStatus.offline = false; saveStatus.error = ''; cloudDirty = false;
+    const snap = snapshot();
+    await cloud.saveCloud(snap, { keepalive }); writeSync(G.user.id, snap.savedAt);
+    saveStatus.cloudAt = Date.now(); saveStatus.offline = false; saveStatus.error = ''; cloudDirty = false;
     if (G.state.player.name && (keepalive || shouldPushLeaderboard())) cloud.pushLeaderboard(leaderboardRow(G.state)).catch(e => console.warn('leaderboard', e.message));
   }
   catch (e) {
+    if (e.conflict) { cloudBusy = false; await otherDevice(); return; }
     // say so once per outage while you're playing (it retries quietly; the game is still saved on this device)
     if (!saveStatus.offline && !keepalive && G.state?.player?.name) toast({ text: T('Cloud save failed', 'Lưu đám mây thất bại'), sub: T('Saved on this device · retrying', 'Đã lưu trên máy · đang thử lại'), bad: true });
     saveStatus.offline = true; saveStatus.error = e.message; console.warn('cloud save failed', e);
@@ -118,6 +127,18 @@ export async function saveCloudNow({ keepalive = false } = {}) {
   finally { cloudBusy = false; lastCloud = performance.now(); }
 }
 
+// Another device saved this island while we were playing: ask which one to keep.
+let asking = false;
+async function otherDevice() {
+  if (asking) return; asking = true; cloudBusy = true;     // (no more cloud writes until the player answers)
+  try {
+    const remote = await cloud.loadCloud();
+    const c = remote ? await chooseIsland(G.state, remote) : 'here';
+    if (c === 'here') { const snap = snapshot(); await cloud.saveCloud(snap, { force: true }); writeSync(G.user.id, snap.savedAt); cloudDirty = false; }
+    else { writeRaw(localKey(G.user.id), JSON.stringify(remote)); writeSync(G.user.id, remote.savedAt); location.reload(); }
+  } catch (e) { console.warn('cloud conflict', e); }
+  finally { asking = false; cloudBusy = false; }
+}
 export function tickSave() {
   const now = performance.now();
   if (G.dirty && now - lastLocal > 1500) { lastLocal = now; saveLocal(); }
@@ -160,7 +181,17 @@ export async function loadGame(user) {
   }
   // pick: newer wins, unless it is behind in the story without having been reset on purpose
   let pick = null, other = null;
-  if (local && remote) {
+  const sync = readSync(user.id), at = remote && cloud.cloudSyncedAt();
+  if (local && remote && sync?.at && at) {
+    const cloudMoved = at !== sync.at, localMoved = (local.savedAt || 0) > (sync.savedAt || 0) && local.savedAt !== remote.savedAt;
+    if (!cloudMoved) { pick = local; other = remote; }                 // nobody else saved: this device is up to date (or ahead)
+    else if (!localMoved) { pick = remote; other = local; }            // another device played; nothing new here
+    else {                                                             // both played since the last sync: the player decides
+      const c = await chooseIsland(local, remote);
+      [pick, other] = c === 'here' ? [local, remote] : [remote, local];
+      note.push('both devices had changes · kept ' + (c === 'here' ? 'this device' : 'the other device'));
+    }
+  } else if (local && remote) {
     const [newer, older] = (remote.savedAt || 0) >= (local.savedAt || 0) ? [remote, local] : [local, remote];
     const intentional = (newer.resetAt || 0) > (older.savedAt || 0);
     if (!intentional && progressOf(newer) < progressOf(older) && (older.story?.chapter || 0) > (newer.story?.chapter || 0)) { pick = older; other = newer; note.push('kept the save that was further along'); }
@@ -172,20 +203,30 @@ export async function loadGame(user) {
   if (!state) state = defaultState();
   // the copy that lost the conflict is kept as a backup, never thrown away
   if (other && other !== pick && validSave(other) && other.player?.name) { const prevState = G.state; G.state = state; backupNow('other-device', other); G.state = prevState; }
+  if (remote && pick === remote) writeSync(user.id, remote.savedAt);
   saveStatus.recovered = note.join(' · ');
   if (note.length) console.info('[save]', saveStatus.recovered);
   return state;
 }
-// Settings → Reset game: a brand-new island (back on the boat), keeping only your settings
+// A guest who makes an account brings their island along: the device copy (and its
+// backups) move from the guest's key to the account's key, and it is uploaded on the next load.
+export function adoptLocalSave(fromId, toId) {
+  G.state.resetAt = Date.now();          // (chosen on purpose: it wins over the account's older island)
+  saveLocal();
+  for (const [from, to] of [[localKey(fromId), localKey(toId)], [bakKey(fromId), bakKey(toId)]]) {
+    try { const txt = localStorage.getItem(from); if (txt) { localStorage.setItem(to, txt); localStorage.removeItem(from); } } catch {}
+  }
+}
 // After deleting an account: forget everything this device keeps for that player.
 export function forgetLocal(uid) {
   try { for (const k of Object.keys(localStorage)) if (k.startsWith('jenisland.') && k.includes(uid)) localStorage.removeItem(k); } catch {}
 }
+// Settings → Reset game: a brand-new island (back on the boat), keeping only your settings
 export async function resetGame() {
   backupNow('before-reset');
   const keep = { ...G.state.settings };
   G.state = defaultState(); G.state.settings = { ...G.state.settings, ...keep };
   G.state.savedAt = Date.now(); G.state.resetAt = Date.now();
   if (G.user) writeRaw(localKey(G.user.id), JSON.stringify(G.state));
-  if (G.user && !G.user.local && cloud.hasSession()) { try { await cloud.saveCloud(G.state, { keepalive: true }); } catch (e) { console.warn('reset cloud save failed', e); } }
+  if (G.user && !G.user.local && cloud.hasSession()) { try { await cloud.saveCloud(G.state, { keepalive: true, force: true }); } catch (e) { console.warn('reset cloud save failed', e); } }
 }

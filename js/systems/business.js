@@ -132,6 +132,7 @@ export function openBiz(bizId) {
   if (!bizRecipes(bizId).length) return { ok: false, why: T('You don\'t know a recipe for this shop yet.', 'Bạn chưa biết món nào cho quán này.') };
   if (!makeableRecipes(bizId).length) return { ok: false, why: T('Not enough ingredients!\nBuy supplies and prep them first.', 'Hết nguyên liệu!\nMua và sơ chế nguyên liệu trước nhé.') };
   b.open = true;
+  (G.state.today.opened ||= {})[bizId] = true;      // (restaurant staff are paid in full only on days it opens)
   const r = rt(bizId);
   r.spawnT = r.first ? 1 : rand(2, 5);
   r.noStockWarned = false;
@@ -461,8 +462,7 @@ export function updateBusinesses(dt, gameMin) {
     for (const c of [...r.queue]) {
       // the timer only runs once they've reached the counter (slot 0 and standing there)
       if (c.state === 'walking' || c.slot !== 0 || c.actor.path) continue;
-      const k = 1;
-      c.patience -= dt * k * (G.runtime.serviceOpen === id ? 1 : 0.85);
+      c.patience -= dt * (G.runtime.serviceOpen === id ? 1 : 0.85);
       if (c.patienceRatio < 0.35 && !c._warned) { c._warned = true; c.actor.showEmote('sweat', 1.2); c.actor.setAct('wait'); }
       if (c.patience <= 0) timeoutCustomer(c);
     }

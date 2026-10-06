@@ -31,6 +31,7 @@ export function openStaffBoard() {
     const status = h('div', 'row', `<div class="info"><b>${auto ? T('Runs on its own ✓', 'Nhà hàng tự vận hành ✓') : T('Not automated yet', 'Chưa tự vận hành')}</b><small>${auto ? T('Your cook and server keep it running while you are away.', 'Đầu bếp và phục vụ giữ nhà hàng hoạt động khi bạn vắng mặt.') : T('Hire at least a cook and a server so it runs without you.', 'Thuê ít nhất một đầu bếp và một phục vụ để nhà hàng tự chạy.')} ${T('Wages', 'Lương')}: ${money(dailyWages())}/${T('day', 'ngày')}</small></div>`);
     status.style.background = auto ? '#effae9' : '#fff7e0';
     body.appendChild(status);
+    body.appendChild(h('div', 'empty-note', T('Wages are paid each night. On a day the restaurant stays closed, the team gets 30% as a retainer.', 'Lương trả mỗi tối. Ngày nhà hàng đóng cửa, đội ngũ nhận 30% để giữ chỗ.')));
     tabs(body, [T('Team', 'Đội ngũ'), T('Applicants', 'Ứng viên'), T('Roles', 'Vai trò')], (i, pane) => {
       const list = h('div', 'list'); pane.appendChild(list);
       if (i === 0) {

@@ -51,9 +51,10 @@ export function playCinematic(canvas, { onCaption, skipSignal } = {}) {
         cl.x -= cl.sp * dt * (1 + k * 2);
         if (cl.x < -0.3) cl.x = 1.3;
         const x = cl.x * W, y = cl.y * H, s = cl.s * 26;
-        c.fillStyle = 'rgba(255,255,255,.92)';
-        for (const [dx, dy, r] of [[0, 0, 1], [0.9, 0.15, 0.8], [-0.9, 0.2, 0.7], [0.3, -0.45, 0.8]]) { c.beginPath(); c.arc(x + dx * s, y + dy * s, r * s, 0, TAU); c.fill(); }
-        c.fillRect(x - s * 1.5, y, s * 3, s * 0.9);
+        // one path, one fill: overlapping puffs never show seams, and the base stays round
+        c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath();
+        for (const [dx, dy, r] of [[0, 0, 1], [0.9, 0.15, 0.8], [-0.9, 0.2, 0.7], [0.3, -0.45, 0.8], [-0.4, 0.45, 0.6], [0.5, 0.45, 0.6]]) { c.moveTo(x + dx * s + r * s, y + dy * s); c.arc(x + dx * s, y + dy * s, r * s, 0, TAU); }
+        c.fill();
       }
       // island on the horizon: grows as we approach
       const approach = ease.inOutCubic(clamp((T - 1) / (DUR - 2.4), 0, 1));

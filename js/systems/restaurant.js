@@ -121,7 +121,7 @@ function workDone(a, name) {
 // what each employee did today, for the evening summary ("Hạnh served 34 guests today")
 export function staffReport() {
   const out = [];
-  for (const e of bizOf('restaurant').employees) { out.push({ name: e.name, role: e.role, did: { ...(e.today || {}) }, wage: wageOf(e) }); e.today = {}; }
+  for (const e of bizOf('restaurant').employees) { out.push({ name: e.name, role: e.role, did: { ...(e.today || {}) }, wage: Math.round(wageOf(e) * payToday()) }); e.today = {}; }
   return out;
 }
 export function candidates() {
@@ -457,7 +457,10 @@ export function collectRegister() {
 }
 export function restaurantAutomated() { return ['cook', 'server'].every(r => staffByRole(r).length); }
 // staff are paid every night once the restaurant is repaired (closed days too); nothing before that
-export function dailyWages() { const z = bizOf('restaurant'); return z.repair < 1 ? 0 : z.employees.reduce((s, e) => s + wageOf(e), 0); }
+// On a day the restaurant stays closed the team is kept on a retainer, not a full day's pay.
+export const RETAINER = 0.3;
+const payToday = () => G.state.today.opened?.restaurant ? 1 : RETAINER;
+export function dailyWages() { const z = bizOf('restaurant'); return z.repair < 1 ? 0 : Math.round(z.employees.reduce((s, e) => s + wageOf(e), 0) * payToday()); }
 export function resetRestaurantDay() {
   const r = restRT(), sc = scene();
   for (const g of r.guests) sc?.remove(g.actor);

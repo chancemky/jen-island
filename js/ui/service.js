@@ -42,7 +42,7 @@ export function openService(bizId, { onClose, tutorial = false, single = null } 
     </div>`;
   root.appendChild(el);
   G.runtime.serviceOpen = bizId;
-  document.body.classList.add('sheet-open');
+  document.body.classList.add('sheet-open', 'svc-open');
   S = {
     bizId, el, onClose, tutorial, cust: null, asm: null, t: 0, react: null, talkT: 0,
     portrait: el.querySelector('.svc-portrait canvas'), board: el.querySelector('.svc-board canvas'),
@@ -65,7 +65,7 @@ export function closeService() {
   if (!S) return;
   const s = S; S = null;
   G.runtime.serviceOpen = null;
-  document.body.classList.remove('sheet-open');
+  document.body.classList.remove('sheet-open', 'svc-open');
   sfx('back');
   s.el.classList.add('out');
   setTimeout(() => s.el.remove(), 210);

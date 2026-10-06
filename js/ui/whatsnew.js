@@ -42,9 +42,8 @@ export function showWhatsNew() {
 
 // Settings: the last 20 updates (only those since the account was created).
 export function renderChangelog(pane) {
-  const s = G.state;
-  const list = CHANGELOG.filter(e => Date.parse(e.date) > (s.createdAt || 0)).slice(0, 20);
+  const list = CHANGELOG.slice(0, 20);
   const box = h('div', 'wn-list');
-  box.innerHTML = list.length ? list.map((e, i) => entryHtml(e, i === 0)).join('') : `<div class="empty-note">${T('No updates since you joined yet. New ones will show up here!', 'Chưa có bản cập nhật nào kể từ khi bạn tham gia. Bản mới sẽ hiện ở đây!')}</div>`;
+  box.innerHTML = list.map((e, i) => entryHtml(e, i === 0)).join('');
   pane.appendChild(box);
 }

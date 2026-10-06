@@ -174,25 +174,36 @@ function draw(cv, view) {
   c.imageSmoothingQuality = 'high';
   c.drawImage(b, 0, 0, W, H);
   const k = 1 / view.s * Math.min(2, devicePixelRatio || 1);           // screen-constant sizes
+  // every label claims its rectangle so later ones never overlap it; labels near the
+  // edge are slid back inside the visible map instead of being cut off
+  const placed = [], vis = { l: view.x - cv.width / 2 / view.s, r: view.x + cv.width / 2 / view.s, t: view.y - cv.height / 2 / view.s, b: view.y + cv.height / 2 / view.s };
+  const fits = (text, x, y, size, weight = '900') => {
+    c.font = `${weight} ${size}px Nunito, sans-serif`;
+    const tw = c.measureText(text).width + size * 0.6, th = size * 1.3, m = 6 * k;
+    x = clamp(x, vis.l + tw / 2 + m, vis.r - tw / 2 - m); y = clamp(y, vis.t + th / 2 + 50 * k, vis.b - th / 2 - 30 * k);
+    const rect = [x - tw / 2, y - th / 2, tw, th];
+    if (placed.some(q => rect[0] < q[0] + q[2] && rect[0] + rect[2] > q[0] && rect[1] < q[1] + q[3] && rect[1] + rect[3] > q[1])) return null;
+    placed.push(rect); return [x, y];
+  };
   // locked regions: soft fog with a padlock and the chapter they open in
   for (const l of LANDS) {
     const rid = landRegion(l); if (!rid || regionOpen(rid)) continue;
     const R = REGIONS[rid];
     c.save(); trace(c, l.shallow); c.fillStyle = 'rgba(70,110,130,.45)'; c.fill(); c.restore();
-    label(c, '🔒 ' + T(R.en, R.vi), R.x, R.y, 15 * k, '#fff', 'rgba(40,60,80,.85)');
-    label(c, T(`Opens in Chapter ${R.ch}`, `Mở ở Chương ${R.ch}`), R.x, R.y + 22 * k, 11 * k, '#fff', 'rgba(40,60,80,.85)');
+    const name = '🔒 ' + T(R.en, R.vi), when = T(`Opens in Chapter ${R.ch}`, `Mở ở Chương ${R.ch}`);
+    const a = fits(name, R.x, R.y, 15 * k); if (a) label(c, name, a[0], a[1], 15 * k, '#fff', 'rgba(40,60,80,.85)');
+    const b2 = fits(when, a ? a[0] : R.x, (a ? a[1] : R.y) + 22 * k, 11 * k); if (b2) label(c, when, b2[0], b2[1], 11 * k, '#fff', 'rgba(40,60,80,.85)');
   }
   // area names
   c.globalAlpha = 0.55;
   for (const [x, y, en, vi, reg] of [[520, 1760, 'West Village', 'Xóm Tây'], [1330, 1880, 'East Village', 'Xóm Đông'], [900, 2350, 'Sunny Beach', 'Bãi Biển'], [1460, 1180, 'Rice Paddies', 'Ruộng Lúa'], [900, 1080, 'Market Street', 'Phố Chợ'], [430, 450, 'Night Market', 'Chợ Đêm'], [900, 1700, 'Wind Plaza', 'Quảng trường gió'], [2690, 820, 'Harbour Town', 'Phố Cảng', 'harbour'], [2330, 2420, 'Coconut Cove', 'Vịnh Dừa', 'cove'], [2250, 1760, 'Firefly Islet', 'Cù Lao Đom Đóm', 'islet']]) {
     if (reg && !regionOpen(reg)) continue;
-    label(c, T(en, vi), x, y, 13 * k, '#5b3f36', null, 'italic 900');
+    const at = fits(T(en, vi), x, y, 13 * k, 'italic 900'); if (at) label(c, T(en, vi), at[0], at[1], 13 * k, '#5b3f36', null, 'italic 900');
   }
   const nightMarketBridge = BRIDGES.find(b => b.x === 424 && b.y === 900);
-  if (nightMarketBridge) label(c, T('Bridge to Night Market', 'Cầu vào Chợ Đêm'), nightMarketBridge.x + nightMarketBridge.w / 2, nightMarketBridge.y + nightMarketBridge.h / 2, 13 * k, '#5b3f36', null, 'italic 900');
+  if (nightMarketBridge) { const t = T('Bridge to Night Market', 'Cầu vào Chợ Đêm'), at = fits(t, nightMarketBridge.x + nightMarketBridge.w / 2, nightMarketBridge.y + nightMarketBridge.h / 2, 13 * k, 'italic 900'); if (at) label(c, t, at[0], at[1], 13 * k, '#5b3f36', null, 'italic 900'); }
   c.globalAlpha = 1;
   // building badges with icons
-  const placed = [];
   for (const bd of BUILDINGS) {
     const lab = LABEL[bd.id], ic = ICON[bd.id] || (bd.home ? 'person' : null);
     if (bd.region && !regionOpen(bd.region)) continue;
@@ -250,6 +261,8 @@ function draw(cv, view) {
   c.fillStyle = '#5b3f36'; c.font = '900 9px Nunito, sans-serif'; c.textAlign = 'center'; c.fillText(T('N', 'B'), 0, -22 + 2);
   c.restore();
   c.save(); c.scale(d, d); c.font = '900 11px Nunito, sans-serif'; c.fillStyle = '#fff'; c.textAlign = 'left'; c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 3;
+  const legend = T('● You  ● Mèo Mây  ○ Goal  ★ Lost item · drag / pinch to zoom', '● Bạn  ● Mèo Mây  ○ Mục tiêu  ★ Đồ thất lạc · kéo / chụm để phóng to');
+  c.font = `900 ${Math.min(11, 11 * (cw - 70) / c.measureText(legend).width)}px Nunito, sans-serif`;   // shrinks to fit beside the compass
   c.fillText(T('● You  ● Mèo Mây  ○ Goal  ★ Lost item · drag / pinch to zoom', '● Bạn  ● Mèo Mây  ○ Mục tiêu  ★ Đồ thất lạc · kéo / chụm để phóng to'), 10, ch - 10);
   c.restore();
 }

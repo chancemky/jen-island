@@ -216,6 +216,7 @@ export function pendingGate() { const id = GATE_STEP[S().step]; return id && !ga
 export function setStep(id) {
   const st = S();
   st.step = id;
+  bus.emit('step', id);
   st.flags['served@' + id] = G.state.stats.served;
   st.flags['perf@' + id] = G.state.stats.perfect; st.flags['life@' + id] = G.state.lifetime || 0;
   const bizFor = { keeperRun: 'shed2', banhmi: 'shed2', truckServe: 'truck', nightServe: 'night', restoServe: 'restaurant', cafeServe: 'cafe', grillServe: 'grill' }[id];

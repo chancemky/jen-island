@@ -49,6 +49,7 @@ import { plaqueAction } from './systems/garden.js';
 import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, TRACKS, trackState, claimMilestone } from './systems/progress.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { syncPurchases } from './systems/store.js';
+import { initTelemetry, track } from './systems/telemetry.js';
 import { showWhatsNew } from './ui/whatsnew.js';
 import { openBoutique, openWardrobe, currentLook } from './ui/clothes.js';
 import { openSalon } from './ui/salon.js';
@@ -74,6 +75,7 @@ G.markDirty = markDirty;
 
 // ---------------------------------------------------------------- boot
 async function boot() {
+  initTelemetry();
   applyStaticText();
   if (await ensureLatest()) return; // an update is live: reload once onto it
   progress(0.1, bootText('fonts'));
@@ -108,7 +110,11 @@ async function boot() {
   let user = null;
   const dev = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).has('dev');
   if (dev) user = { id: 'dev-' + (new URLSearchParams(location.search).get('dev') || 'local'), email: 'dev@localhost', local: true };
-  else user = await cloud.resume();
+  else {
+    const link = await cloud.takeLinkSession();            // (opened from a reset / confirmation email)
+    user = await cloud.resume() || cloud.guestUser();       // an account, or a guest coming back
+    if (link === 'recovery' && user && !user.guest) { $('boot').classList.add('gone'); user = await showAuth({ start: 'reset' }); }
+  }
   progress(1, bootText('ready'));
   $('boot').classList.add('gone');
   if (!user) user = await showAuth();
@@ -121,9 +127,22 @@ async function boot() {
   if (dev && new URLSearchParams(location.search).has('fresh')) G.state = defaultState();
   $('boot').classList.add('gone');
   startGame();
-  syncPurchases();                    // (cosmetic store: whatever the server says this player bought)
+  syncPurchases();
+  const s = G.state;
+  track('session_start', { account: !G.user.local, guest: !!G.user.guest, chapter: s.story.chapter, step: s.story.step, day: s.day, level: s.level, lang: G.lang, touch: matchMedia('(pointer: coarse)').matches, installed: matchMedia('(display-mode: standalone)').matches });
+  bus.on('step', step => track('step', { step, chapter: G.state.story.chapter, day: G.state.day }));
+  bus.on('chapterCard', n => track('chapter', { chapter: n, day: G.state.day }));
+  bus.on('dayEnd', sum => track('day_end', { day: sum.day, chapter: sum.chapter, served: sum.served, revenue: sum.revenue, net: sum.net, level: G.state.level }));                    // (cosmetic store: whatever the server says this player bought)
 }
 
+// Islands that fell into debt before the nightly-bill help existed get one fresh start.
+const DEBT_HELP_RELEASE = Date.parse('2026-10-07T00:00:00Z');
+function debtRelief(s) {
+  const f = s.story.flags;
+  if (s.money >= 0 || f.debtRelief || (s.createdAt || 0) >= DEBT_HELP_RELEASE) return;
+  f.debtRelief = Math.round(-s.money); s.money = 0; markDirty(true);
+  setTimeout(() => toast({ text: T('The islanders cleared your debt', 'Bà con trên đảo đã trả hết nợ giúp bạn'), sub: T(`${money(f.debtRelief)} of old bills, forgiven. A fresh start!`, `${money(f.debtRelief)} tiền nợ cũ đã được xóa. Bắt đầu lại nào!`), icon: 'heart', ms: 6000 }), 4000);
+}
 // If the browser is still holding the sound back (no tap yet), say so — gently, until it plays.
 function soundHint(wanted) {
   if (!wanted || audioRunning() || $('soundHint')) return;
@@ -136,6 +155,7 @@ function startGame() {
   if (G.runtime.paused) { G.runtime.paused = false; document.getElementById('pauseCard')?.remove(); }   // a new start is never paused
   setAudio({ music: s.settings.music, sfx: s.settings.sfx });
   soundHint(s.settings.music || s.settings.sfx);
+  debtRelief(s);
   const look = currentLook(); // base look + clothes from the wardrobe
   G.player = new Player(look);
   G.player.name = s.player.name;
@@ -311,10 +331,13 @@ function loop(now) {
   updateWorldEvents(dt);
   updateSeasonal(dt);
   if (G.scene === scenes.island) updateVendors(dt);
-  updateBusinesses(dt, gm);
-  updateKeepers(dt);
+  // shops stand still while a menu or the prep table has the clock paused (no new
+  // customers, no lost patience), so checking your bag never costs you a sale
+  const shopDt = G.runtime.pause > 0 ? 0 : dt;
+  updateBusinesses(shopDt, gm);
+  updateKeepers(shopDt);
   updatePets(dt);
-  updateRestaurant(dt, gm);
+  updateRestaurant(shopDt, gm);
   updateMeo(dt);
   updateDoors(dt);
   fx.update(dt);

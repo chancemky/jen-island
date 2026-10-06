@@ -45,6 +45,34 @@ export async function signIn(email, password) {
   storeSession(d);
   return currentUser();
 }
+// Forgot password: Supabase emails a link back to the game, which opens the reset form.
+export async function requestPasswordReset(email) {
+  await raw('/auth/v1/recover?redirect_to=' + encodeURIComponent(location.origin + location.pathname), { method: 'POST', body: JSON.stringify({ email }) });
+}
+// Links from our emails (password reset, account confirmation) arrive with a session in
+// the URL hash. Returns 'recovery' or 'signup' after signing in with it, else null.
+export async function takeLinkSession() {
+  const q = new URLSearchParams(location.hash.slice(1));
+  const token = q.get('access_token'), type = q.get('type');
+  if (!token) return null;
+  history.replaceState(null, '', location.pathname + location.search);      // (never leave a token in the address bar)
+  session = { access_token: token, refresh_token: q.get('refresh_token'), expires_at: Date.now() + (+q.get('expires_in') || 3600) * 1000 };
+  try { session.user = await raw('/auth/v1/user', {}, token); } catch { session = null; return null; }
+  storeSession({ access_token: token, refresh_token: session.refresh_token, expires_in: +q.get('expires_in') || 3600, user: session.user });
+  return type === 'recovery' ? 'recovery' : 'signup';
+}
+export async function setNewPassword(password) {
+  await api('/auth/v1/user', { method: 'PUT', body: JSON.stringify({ password }) });
+}
+// Guests play without an account: their island lives on this device only.
+const GUEST_KEY = 'jenisland.guest';
+export function guestUser(create = false) {
+  let id = null;
+  try { id = localStorage.getItem(GUEST_KEY); } catch {}
+  if (!id && create) { id = 'guest-' + (crypto.randomUUID?.() || Math.random().toString(36).slice(2)); try { localStorage.setItem(GUEST_KEY, id); } catch {} }
+  return id ? { id, email: null, local: true, guest: true } : null;
+}
+export function forgetGuest() { try { localStorage.removeItem(GUEST_KEY); } catch {} }
 export async function resume() {
   session = readSession();
   if (!session?.refresh_token || !session.user) { session = null; return null; }
@@ -59,15 +87,34 @@ export async function signOut() {
   session = null; try { localStorage.removeItem(SESSION_KEY); } catch {}
 }
 
+// Two devices, one island: the server stamps every cloud save with its own clock. A device
+// only overwrites the cloud copy it last saw (`lastAt`); if another device saved in
+// between, the write is refused with err.conflict so the player can choose.
+let lastAt = null;
+export const cloudSyncedAt = () => lastAt;
 export async function loadCloud() {
   const uid = session.user.id;
   const rows = await api('/rest/v1/jen_island_saves?select=save_data,updated_at&user_id=eq.' + encodeURIComponent(uid));
-  return rows[0]?.save_data && Object.keys(rows[0].save_data).length ? rows[0].save_data : null;
+  const row = rows[0];
+  lastAt = row?.updated_at || null;
+  return row?.save_data && Object.keys(row.save_data).length ? row.save_data : null;
 }
-export async function saveCloud(state, { keepalive = false } = {}) {
-  const uid = session.user.id;
-  const body = { user_id: uid, save_version: state.v || 1, game_day: state.day, coins: Math.round(state.money), reputation: Math.round(state.reputation), save_data: state, updated_at: new Date().toISOString() };
-  await api('/rest/v1/jen_island_saves?on_conflict=user_id', { method: 'POST', keepalive, headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(body) });
+const conflict = () => { const e = new Error('This island was saved from another device'); e.conflict = true; return e; };
+// force: overwrite whatever is there (the player chose this device's island, or reset)
+export async function saveCloud(state, { keepalive = false, force = false } = {}) {
+  const uid = session.user.id, q = 'user_id=eq.' + encodeURIComponent(uid);
+  const body = JSON.stringify({ user_id: uid, save_version: state.v || 1, game_day: state.day, coins: Math.round(state.money), reputation: Math.round(state.reputation), save_data: state });
+  if (!force && lastAt) {
+    const rows = await api(`/rest/v1/jen_island_saves?${q}&updated_at=eq.${encodeURIComponent(lastAt)}&select=updated_at`, { method: 'PATCH', keepalive, headers: { Prefer: 'return=representation' }, body });
+    if (!rows?.length) throw conflict();
+    lastAt = rows[0].updated_at; return lastAt;
+  }
+  if (!force) {                                      // never loaded the cloud copy: only write if there isn't one
+    const rows = await api(`/rest/v1/jen_island_saves?select=updated_at&${q}`);
+    if (rows?.length) throw conflict();
+  }
+  const rows = await api('/rest/v1/jen_island_saves?on_conflict=user_id&select=updated_at', { method: 'POST', keepalive, headers: { Prefer: 'resolution=merge-duplicates,return=representation' }, body });
+  lastAt = rows?.[0]?.updated_at || lastAt; return lastAt;
 }
 // Daily snapshots (the last 7 are kept) so a damaged save can be recovered.
 export async function saveSnapshot(state) {

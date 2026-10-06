@@ -3,7 +3,10 @@
 import { G, T, setLang, markDirty } from '../systems/state.js';
 import { openSheet, tabs, h, btn, showReward } from './sheets.js';
 import { DEV_TOOLS } from '../dev/flag.js';
-import { saveStatus, saveLocal, saveCloudNow, resetGame, forgetLocal } from '../systems/save.js';
+import { saveStatus, saveLocal, saveCloudNow, resetGame, forgetLocal, adoptLocalSave } from '../systems/save.js';
+import { askText } from './naming.js';
+import { showAuth } from './auth.js';
+import { chooseIsland } from './conflict.js';
 import { setAudio, sfx } from '../core/audio.js';
 import { escapeHtml, clock, money, moneyPair, moneyShort } from '../core/util.js';
 import { openJournal } from './shops.js';
@@ -40,7 +43,7 @@ function renderMilestones(pane, api) {
     const progress = tr.money
       ? st.val < st.target ? moneyShort(st.val, st.target, T) : moneyPair(Math.min(st.val, st.target), st.target)
       : `${fmt(Math.min(st.val, st.target))} / ${fmt(st.target)}`;
-    const row = h('div', 'ms-row' + (st.ready ? ' ready' : ''), `<img src="${iconURL(tr.icon, 48)}" alt=""><div class="ms-info"><b>${escapeHtml(T(tr.en, tr.vi))}</b><small>${T('Next goal', 'Mục tiêu kế tiếp')}: ${progress} · ${tierTxt}${giftName ? ` · 🎁 ${escapeHtml(giftName)}` : ''}${earnedNote}</small><div class="ms-bar"><i style="width:${(Math.max(0, k) * 100).toFixed(1)}%"></i></div></div>`);
+    const row = h('div', 'ms-row' + (st.ready ? ' ready' : ''), `<img src="${iconURL(tr.icon, 48)}" alt=""><div class="ms-info"><b>${escapeHtml(T(tr.en, tr.vi))}</b><small>${st.ready ? T('Goal reached — claim your reward!', 'Đã đạt mục tiêu — nhận thưởng nào!') : `${T('Next goal', 'Mục tiêu kế tiếp')}: ${progress}`} · ${tierTxt}${giftName ? ` · 🎁 ${escapeHtml(giftName)}` : ''}${earnedNote}</small><div class="ms-bar"><i style="width:${(Math.max(0, k) * 100).toFixed(1)}%"></i></div></div>`);
     if (st.ready) row.appendChild(btn(T('Claim', 'Nhận'), () => {
       const r = claimMilestone(tr.id); if (!r) return; sfx('fanfare');
       const extra = [r.gift ? T(`🎁 ${r.gift}`, `🎁 ${r.gift}`) : '', r.completed ? T('✓ Completed!', '✓ Hoàn thành!') : ''].filter(Boolean).join(' · ');
@@ -66,7 +69,7 @@ function renderLeaderboard(pane) {
   const load = async () => {
     [...seg.children].forEach((b, i) => b.classList.toggle('on', sorts[i][0] === cur));
     box.innerHTML = `<div class="empty-note">${T('Loading the island rankings…', 'Đang tải bảng xếp hạng…')}</div>`;
-    if (!cloud.hasSession()) { box.innerHTML = `<div class="empty-note">${T('Sign in to see the global leaderboard.', 'Đăng nhập để xem bảng xếp hạng toàn cầu.')}</div>`; return; }
+    if (!cloud.hasSession()) { box.innerHTML = `<div class="empty-note">${(G.user?.guest ? T('Create a free account in Menu → Account to join the global leaderboard.', 'Tạo tài khoản miễn phí ở Menu → Tài khoản để lên bảng xếp hạng toàn cầu.') : T('Sign in to see the global leaderboard.', 'Đăng nhập để xem bảng xếp hạng toàn cầu.'))}</div>`; return; }
     try {
       await cloud.pushLeaderboard(leaderboardRowNow()).catch(() => {});
       const rows = await cloud.fetchLeaderboard(cur);
@@ -115,6 +118,7 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
         toggle(T('Sound effects', 'Âm thanh'), 'sfx', () => setAudio({ sfx: s.settings.sfx }));
         toggle(T('Quest arrow', 'Mũi tên chỉ đường'), 'arrow');
         toggle(T('Smooth 60 FPS (uses more battery)', 'Mượt 60 FPS (tốn pin hơn)'), 'smooth', () => G.renderer?.resize());
+        toggle(T('Share anonymous stats & error reports', 'Gửi thống kê ẩn danh & báo lỗi'), 'stats');
         // start over: a brand-new island, back on the boat (with a confirmation)
         const rs = btn(T('Reset game…', 'Chơi lại từ đầu…'), () => confirmReset(api), 'btn ghost danger'); rs.style.marginTop = '10px'; pane.appendChild(rs);
         pane.appendChild(h('div', 'section-title', T("What's new (last 20 updates)", 'Có gì mới (20 bản cập nhật gần nhất)')));
@@ -122,7 +126,25 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
       } else {
         const list = h('div', 'list'); pane.appendChild(list);
         const ago = t => t ? T(`${Math.max(0, Math.round((Date.now() - t) / 1000))}s ago`, `${Math.max(0, Math.round((Date.now() - t) / 1000))} giây trước`) : '—';
-        list.appendChild(h('div', 'row', `<div class="info"><b>${escapeHtml(G.user?.email || T('Local player', 'Người chơi cục bộ'))}</b><small>${G.user?.local ? T('Offline test profile (localhost only)', 'Hồ sơ thử nghiệm ngoại tuyến') : T('Signed in · progress saves to the cloud', 'Đã đăng nhập · tiến trình được lưu lên mây')}</small></div>`));
+        const guest = !!G.user?.guest;
+        list.appendChild(h('div', 'row', `<div class="info"><b>${escapeHtml(guest ? T('Guest island', 'Đảo khách') : G.user?.email || T('Local player', 'Người chơi cục bộ'))}</b><small>${guest ? T('Saved on this device only. Make an account to keep it safe and join the leaderboard.', 'Chỉ lưu trên máy này. Tạo tài khoản để giữ an toàn và lên bảng xếp hạng.') : G.user?.local ? T('Offline test profile (localhost only)', 'Hồ sơ thử nghiệm ngoại tuyến') : T('Signed in · progress saves to the cloud', 'Đã đăng nhập · tiến trình được lưu lên mây')}</small></div>`));
+        if (guest) {
+          const mk = btn(T('Create account — keep my island', 'Tạo tài khoản — giữ hòn đảo của tôi'), () => linkAccount(api, 'signup'), 'btn big pink'); pane.appendChild(mk);
+          const li = btn(T('Log in to an existing account', 'Đăng nhập tài khoản có sẵn'), () => linkAccount(api, 'login'), 'btn ghost'); li.style.marginTop = '8px'; pane.appendChild(li);
+        }
+        // names (shown on your house, your island and the leaderboard)
+        const names = h('div', 'list'); names.style.marginTop = '10px'; pane.appendChild(names);
+        for (const [key, label, max] of [['player', T('Your name', 'Tên của bạn'), 14], ['island', T('Island name', 'Tên hòn đảo'), 16]]) {
+          const r = h('div', 'row', `<div class="info"><b>${escapeHtml(label)}</b><small>${escapeHtml(G.state[key].name || '—')}</small></div>`);
+          r.appendChild(btn(T('Change', 'Đổi'), async () => {
+            const v = await askText({ title: label, max, value: G.state[key].name || '' });
+            G.state[key].name = v; if (key === 'player' && G.player) G.player.name = v;
+            markDirty(true); sfx('success');
+            if (cloud.hasSession()) cloud.saveProfile(G.state.player.name, G.state.island.name).catch(() => {});
+            api.rebuild();
+          }, 'buy alt'));
+          names.appendChild(r);
+        }
         const saveRow = h('div', 'row');
         const renderSaveRow = () => {
           const cloudState = saveStatus.error ? escapeHtml(saveStatus.error) : saveStatus.offline ? T('offline — will retry', 'mất kết nối — sẽ thử lại') : saveStatus.cloudAt ? ago(saveStatus.cloudAt) : T('not saved to cloud', 'chưa lưu lên mây');
@@ -140,6 +162,20 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
   } });
 }
 
+// A guest makes (or logs in to) an account. A new account takes this island along; an
+// existing account that already has an island asks which one to keep.
+async function linkAccount(api, start) {
+  const guestId = G.user.id;
+  api.close(true);
+  const user = await showAuth({ start, cancellable: true });
+  if (!user) return;
+  let keepThis = true;
+  const remote = await cloud.loadCloud().catch(() => null);
+  if (remote) keepThis = await chooseIsland(G.state, remote, { why: T('This account already has an island. The one you don\'t pick will be replaced.', 'Tài khoản này đã có một hòn đảo. Hòn đảo bạn không chọn sẽ bị thay thế.'), cloudLabel: T('The account\'s island', 'Đảo trong tài khoản') }) === 'here';
+  if (keepThis) adoptLocalSave(guestId, user.id);
+  cloud.forgetGuest();
+  location.reload();
+}
 // Delete account: erases the island from the cloud and this device, then signs out.
 function confirmDelete(api) {
   sfx('ui');

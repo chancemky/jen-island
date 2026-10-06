@@ -68,7 +68,7 @@ export function openIngredientShop() {
     if (needs.length) {
       const total = needs.reduce((s, [k, n]) => s + INGREDIENTS[k].price * n, 0);
       const r = highlightRow();
-      r.innerHTML = `<div class="ico"><img src="${iconURL('bag', 44)}" alt=""></div><div class="info"><b>${T('Stock up · about 1½ days of what you sell', 'Mua đủ · khoảng 1,5 ngày bán hàng')}</b><small>${needs.map(([k, n]) => `${escapeHtml(ingName(k))} ×${n}`).join(', ')}</small></div>`;
+      r.innerHTML = `<div class="ico"><img src="${iconURL('bag', 44)}" alt=""></div><div class="info"><b>${T('Stock up · about 1½ days of what you sell', 'Mua đủ · khoảng 1,5 ngày bán hàng')}</b><div class="mini-chips">${needs.slice(0, 12).map(([k, n]) => `<span class="mini-chip" title="${escapeHtml(ingName(k))}"><img src="${iconURL(k, 28)}" alt="${escapeHtml(ingName(k))}">×${n}</span>`).join('')}${needs.length > 12 ? `<span class="mini-chip more">${T(`+${needs.length - 12} more`, `+${needs.length - 12} món`)}</span>` : ''}</div></div>`;
       r.appendChild(btn(money(total), (b) => {
         if (!canAfford(total)) return moneyShortfall(total);
         addMoney(-total, 'ingredients');
@@ -231,7 +231,7 @@ export function openBag() {
         for (const id of s.recipes) {
           const r = RECIPES[id], lv = s.recipeLevels[id] || 1;
           const bid = recipeShopId(id, r), shop = bid ? bizName(bid) : '—';
-          const row = rowEl({ icon: r.icon, title: `${escapeHtml(recipeName(id))} <span class="pill lv">Lv ${lv}</span>`, sub: `${money(bid ? recipePrice(bid, id) : r.price)} · ${escapeHtml(shop)}` });
+          const row = rowEl({ icon: r.icon, title: `${escapeHtml(recipeName(id))} <span class="pill lv">${T('Lv', 'Cấp')} ${lv}</span>`, sub: `${money(bid ? recipePrice(bid, id) : r.price)} · ${escapeHtml(shop)}` });
           const detail = bagRecipeDetail(id, bid, lv), detailId = `bag-recipe-${id}`;
           const arrow = h('span', 'recipe-arrow', '⌄'); arrow.style.cssText = 'font-size:22px;font-weight:900;transition:transform .18s;';
           row.classList.add('recipe-row'); row.tabIndex = 0; row.setAttribute('role', 'button'); row.setAttribute('aria-controls', detailId); row.style.cursor = 'pointer';
@@ -292,7 +292,7 @@ export function openBizMenu(bizId, { onUpgrade } = {}) {
           const cost = upgradeCost(bizId, lv), need = needChips(u.mats, cost);
           const perk = u.tables ? T(`${u.tables} tables`, `${u.tables} bàn`) : T(`queue of ${u.queue}`, `hàng chờ ${u.queue}`);
           const r = rowEl({ icon: lv === 2 ? 'lantern' : lv === 3 ? 'cable' : 'star', dim: locked && !done, title: T(`Level ${lv}: ${u.label}`, `Cấp ${lv}: ${u.labelVi || u.label}`), sub: done ? T('Done', 'Đã nâng cấp') : locked ? T(`Needs island level ${req}`, `Cần đảo cấp ${req}`) : T(`${perk} · attracts more customers${u.price ? ` · prices +${Math.round((u.price - 1) * 100)}%` : ''}`, `${perk} · hút khách hơn${u.price ? ` · giá +${Math.round((u.price - 1) * 100)}%` : ''}`) });
-          r.querySelector('.info').appendChild(need);
+          if (!done) r.querySelector('.info').appendChild(need);   // (a finished upgrade doesn't list what it cost)
           if (!done) r.appendChild(btn(T('Upgrade', 'Nâng cấp'), () => {
             if (s.money < cost || !hasMats(u.mats)) { sfx('error'); toast({ text: T('Not enough yet', 'Chưa đủ'), sub: T('You need more money or materials — tap a material to see where to buy it (Ben Vung Materials).', 'Cần thêm tiền hoặc vật liệu — chạm vào vật liệu để xem nơi mua (VLXD Bền Vững).'), bad: true }); return; }
             api.close(true); onUpgrade?.(lv);
@@ -424,7 +424,7 @@ export function openRecipeBook({ onDiscover } = {}) {
     list.appendChild(h('div', 'section-title', T('Upgrade recipes', 'Nâng cấp công thức')));
     for (const id of s.recipes) {
       const R = RECIPES[id], lv = s.recipeLevels[id] || 1, next = RECIPE_UPGRADES[lv + 1];
-      const r = rowEl({ icon: R.icon, title: `${escapeHtml(recipeName(id))} <span class="pill lv">Lv ${lv}</span>`, sub: next ? T(`${next.label}: +${Math.round((next.price - 1) * 100)}% price, calmer customers, bigger tips`, `${next.labelVi}: giá +${Math.round((next.price - 1) * 100)}%, khách kiên nhẫn hơn, boa nhiều hơn`) : T('Perfect! Fully upgraded.', 'Hoàn hảo! Đã nâng cấp tối đa.') });
+      const r = rowEl({ icon: R.icon, title: `${escapeHtml(recipeName(id))} <span class="pill lv">${T('Lv', 'Cấp')} ${lv}</span>`, sub: next ? T(`${next.label}: +${Math.round((next.price - 1) * 100)}% price, calmer customers, bigger tips`, `${next.labelVi}: giá +${Math.round((next.price - 1) * 100)}%, khách kiên nhẫn hơn, boa nhiều hơn`) : T('Perfect! Fully upgraded.', 'Hoàn hảo! Đã nâng cấp tối đa.') });
       const nextCost = next ? recipeUpgradeCost(id, lv + 1) : 0;
       if (next) r.appendChild(btn(money(nextCost), () => {
         if (!canAfford(nextCost)) return moneyShortfall(nextCost);
