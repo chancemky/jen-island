@@ -107,8 +107,8 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
   const s = G.state;
   openSheet({ title: s.island.name || 'JEN Island', sub: T(`Day ${s.day} · ${clock(s.time)} · Chapter ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.title || ''}`, `Ngày ${s.day} · ${clock(s.time)} · Chương ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.vi || ''}`), full: true, build: (body, api) => {
     const shop = storeVisible();
-    const tab = (label, icon) => ({ label, icon });
-    tabs(body, [tab(T('Map', 'Bản đồ'), 'map'), tab(T('Business', 'Kinh doanh'), 'coin'), tab(T('Goals', 'Mục tiêu'), 'trophy'), tab(T('Ranks', 'Xếp hạng'), 'star'), tab(T('Settings', 'Cài đặt'), 'menu'), tab(T('Account', 'Tài khoản'), 'person'), ...(shop ? [tab(T('Support', 'Ủng hộ'), 'heart')] : []), ...(DEV_TOOLS ? [tab('Dev', 'hammer')] : [])], (i, pane) => {
+    const ti = (label, icon) => ({ label, icon });
+    tabs(body, [ti(T('Map', 'Bản đồ'), 'map'), ti(T('Business', 'Kinh doanh'), 'coin'), ti(T('Goals', 'Mục tiêu'), 'trophy'), ti(T('Ranks', 'Xếp hạng'), 'star'), ti(T('Settings', 'Cài đặt'), 'menu'), ti(T('Account', 'Tài khoản'), 'person'), ...(shop ? [ti(T('Support', 'Ủng hộ'), 'heart')] : []), ...(DEV_TOOLS ? [ti('Dev', 'hammer')] : [])], (i, pane) => {
       if (shop && i === 6) return renderStore(pane);
       if (DEV_TOOLS && i === (shop ? 7 : 6)) { import('../dev/devtools.js').then(m => m.renderDevPane(pane, api)); return; }   // testing only — see js/dev/flag.js
       if (i === 1) return renderOffice(pane, api);

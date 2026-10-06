@@ -10,7 +10,7 @@ import { buildRestaurant, updateRestaurant, initRestaurantRuntime, restRT, guest
 import { Player } from './systems/player.js';
 import { Actor } from './world/actor.js';
 import { initInput, input, moveVector, releaseJoystick } from './core/input.js';
-import { unlockAudio, audioRunning, sfx, musicTick, setAudio, suspendAudio, setMood } from './core/audio.js';
+import { unlockAudio, audioRunning, sfx, musicTick, setAudio, suspendAudio, setMood, setSongChooser } from './core/audio.js';
 import { showReward, isUiOpen, isPresenting, openSheet, h, btn } from './ui/sheets.js';
 import { scenes, setScene, enterBuilding, exitBuilding, updateDoors, isTransitioning, fadeOut, fadeIn } from './systems/scenes.js';
 import { cs, updateFollow, say, ask, wait, camTo, activity as csActivity } from './systems/cutscene.js';
@@ -138,6 +138,25 @@ async function boot() {
   bus.on('dayEnd', sum => track('day_end', { day: sum.day, chapter: sum.chapter, served: sum.served, revenue: sum.revenue, net: sum.net, level: G.state.level }));                    // (cosmetic store: whatever the server says this player bought)
 }
 
+// The soundtrack follows the place and the hour (songs: data/songs.js).
+const COZY = new Set(['restaurant', 'boutique', 'salon', 'petshop', 'furniture']);
+function songNow() {
+  const s = G.state, sc = G.scene, h = s.time / 60 % 24, night = h >= 18.5 || h < 5.5;
+  if (G.runtime.cinematic || !sc) return 'title';
+  if (cs.name === 'festival' || cs.name === 'keeper' || cs.name === 'statue') return 'festival';
+  if (sc.id === 'meo') return 'meo';
+  if (sc.id === 'house' || sc.id.startsWith('home_')) return 'home';
+  if (COZY.has(sc.id)) return 'cafe';
+  if (sc.id === 'night') return 'nightmarket';
+  const area = sc === scenes.island && G.player ? areaIdAt(G.player.x, G.player.y) : '';
+  if (area === 'Firefly Islet') return 'islet';
+  if (night) return area === 'Night Market' && s.nightMarket.restored ? 'nightmarket' : 'night';
+  if (area === 'Harbour Town') return 'harbour';
+  if (area === 'Coconut Cove' || area === 'Sunny Beach' || area === 'Ferry Dock') return 'beach';
+  if (area === 'Lighthouse Point') return 'title';
+  return h < 10.5 ? 'morning' : 'day';
+}
+setSongChooser(songNow);
 // Islands that fell into debt before the nightly-bill help existed get one fresh start.
 const DEBT_HELP_RELEASE = Date.parse('2026-10-07T00:00:00Z');
 function debtRelief(s) {

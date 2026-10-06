@@ -1,6 +1,9 @@
 // Synthesized audio (no files to fail loading). iOS Safari only allows audio
 // after a user gesture, so the context is created/resumed on first touch.
-// Music is a soft generative pentatonic loop with a day and a night mood.
+// Music: composed songs (core/music.js, data/songs.js) chosen by the game for the place
+// and the time of day; a radio or record player in a room plays its own little tune.
+
+import { initMusic, musicFrame } from './music.js';
 
 let ctx = null, master = null, musicGain = null, sfxGain = null, started = false;
 const state = { music: true, sfx: true, mood: 'day', nextNote: 0, step: 0, lastBlip: 0 };
@@ -14,6 +17,7 @@ export function unlockAudio() {
       master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
       musicGain = ctx.createGain(); musicGain.gain.value = state.music ? 0.22 : 0; musicGain.connect(master);
       sfxGain = ctx.createGain(); sfxGain.gain.value = state.sfx ? 0.55 : 0; sfxGain.connect(master);
+      initMusic(ctx, musicGain);
     }
     if (ctx.state !== 'running') ctx.resume?.().catch?.(() => {});
     // iOS needs a sound started inside the gesture to fully unlock
@@ -29,6 +33,9 @@ export function setAudio(opts) {
 }
 export function suspendAudio(on) { if (!ctx) return; if (on) ctx.suspend?.(); else ctx.resume?.(); }
 export function setMood(m) { state.mood = m; }
+// which song should play right now (main.js decides from the place and the time)
+let chooseSong = () => state.mood === 'night' ? 'night' : 'day';
+export function setSongChooser(fn) { chooseSong = fn; }
 // a radio or record player playing in the room you're in (null = the island's own music)
 const ROOM = { radio: { bpm: 104, scale: [0, 2, 4, 5, 7, 9, 11, 12], root: 62, wave: 'square', vol: 0.035 }, record: { bpm: 66, scale: [0, 3, 5, 7, 10, 12, 14, 15], root: 55, wave: 'sine', vol: 0.09 }, tv: { bpm: 120, scale: [0, 2, 4, 7, 9, 12], root: 64, wave: 'triangle', vol: 0.05 } };
 export function setRoomMusic(style) { state.room = ROOM[style] ? style : null; }
@@ -142,36 +149,19 @@ export function sfx(name, opt = {}) {
 }
 
 // ---------------------------------------------------------------- music
-const SCALES = { day: [0, 2, 4, 7, 9, 12, 14, 16], night: [0, 3, 5, 7, 10, 12, 15, 17] };
-const PROG = { day: [0, 5, 3, 4], night: [0, 3, 5, 4] };
 export function musicTick() {
-  if (!ctx || !started || !state.music || ctx.state !== 'running') return;
+  if (!ctx || !started || ctx.state !== 'running') return;
+  const radio = ROOM[state.room];
+  musicFrame(state.music && !radio ? chooseSong() : null);
+  if (!state.music || !radio) return;
+  // the room's radio / record player: a little tune on its own wavelength
   const now = ctx.currentTime;
   if (state.nextNote < now - 1) state.nextNote = now + 0.1;
   while (state.nextNote < now + 0.4) {
-    const R = ROOM[state.room];
-    if (R) {                                         // the room's radio / record player
-      const beat = 60 / R.bpm / 2, when = state.nextNote - now, hz = n => 440 * Math.pow(2, (n - 69) / 12), s = state.step;
-      if (s % 8 === 0) tone(hz(R.root - 24 + [0, 5, 7, 5][Math.floor(s / 8) % 4]), beat * 6, { type: 'sine', vol: 0.1, attack: 0.05, decay: beat * 6, dest: musicGain, when });
-      if (Math.random() < (s % 2 ? 0.5 : 0.85)) { state.mel = Math.max(0, Math.min(R.scale.length - 1, (state.mel ?? 3) + Math.round((Math.random() - 0.5) * 3))); tone(hz(R.root + R.scale[state.mel]), beat * 1.4, { type: R.wave, vol: R.vol, attack: 0.004, decay: beat * 1.5, dest: musicGain, when }); }
-      if (s % 2 === 1) noise(0.02, { vol: 0.015, freq: 6000, q: 1, when });
-      state.nextNote += beat; state.step++; continue;
-    }
-    const beat = 60 / (state.mood === 'night' ? 76 : 88) / 2;
-    const s = state.step, bar = Math.floor(s / 8) % 4;
-    const root = (state.mood === 'night' ? 57 : 60) + [0, 5, 3, 4][bar] * (PROG[state.mood][bar] === 0 ? 0 : 1);
-    const scale = SCALES[state.mood] || SCALES.day;
-    const hz = n => 440 * Math.pow(2, (n - 69) / 12);
-    const when = state.nextNote - now;
-    if (s % 8 === 0) { tone(hz(root - 24), beat * 7, { type: 'sine', vol: 0.12, attack: 0.08, decay: beat * 7, dest: musicGain, when }); tone(hz(root - 12 + 7), beat * 6, { type: 'triangle', vol: 0.05, attack: 0.1, decay: beat * 6, dest: musicGain, when }); }
-    // plucked melody on a gentle random walk, with rests
-    if (Math.random() < (s % 2 ? 0.45 : 0.75)) {
-      state.mel = Math.max(0, Math.min(scale.length - 1, (state.mel ?? 3) + Math.round((Math.random() - 0.5) * 3)));
-      const n = root + scale[state.mel];
-      tone(hz(n), beat * 1.6, { type: 'triangle', vol: 0.07, attack: 0.004, decay: beat * 1.8, dest: musicGain, when });
-      tone(hz(n + 12), beat, { type: 'sine', vol: 0.02, attack: 0.004, decay: beat * 1.2, dest: musicGain, when });
-    }
-    if (s % 4 === 2) noise(0.03, { vol: 0.02, freq: 7000, q: 1, when });
+    const R = radio, beat = 60 / R.bpm / 2, when = state.nextNote - now, hz = n => 440 * Math.pow(2, (n - 69) / 12), st = state.step;
+    if (st % 8 === 0) tone(hz(R.root - 24 + [0, 5, 7, 5][Math.floor(st / 8) % 4]), beat * 6, { type: 'sine', vol: 0.1, attack: 0.05, decay: beat * 6, dest: musicGain, when });
+    if (Math.random() < (st % 2 ? 0.5 : 0.85)) { state.mel = Math.max(0, Math.min(R.scale.length - 1, (state.mel ?? 3) + Math.round((Math.random() - 0.5) * 3))); tone(hz(R.root + R.scale[state.mel]), beat * 1.4, { type: R.wave, vol: R.vol, attack: 0.004, decay: beat * 1.5, dest: musicGain, when }); }
+    if (st % 2 === 1) noise(0.02, { vol: 0.015, freq: 6000, q: 1, when });
     state.nextNote += beat; state.step++;
   }
 }

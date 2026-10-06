@@ -7,6 +7,7 @@ import { iconURL } from '../gfx/food.js';
 import { ACHIEVEMENTS } from '../data/game.js';
 import { sfx } from '../core/audio.js';
 import { input, joystickActive, startJoystick } from '../core/input.js';
+import { onSongStart } from '../core/music.js';
 
 const $ = id => document.getElementById(id);
 const hud = $('hud'), actions = $('actions');
@@ -33,7 +34,16 @@ export function showHud(on) {
   hud.classList.toggle('hidden', !on); actions.classList.toggle('hidden', !on); $('pointer').classList.toggle('hidden', !on);
 }
 
+// "♪ Night Market" when a song starts (each song at most once every ten minutes)
+const sungAt = {};
+function announceSong(id, S) {
+  const now = performance.now();
+  if (G.runtime.cinematic || !G.state.story.flags.freeRoam || now - (sungAt[id] ?? -1e9) < 600000) return;
+  sungAt[id] = now;
+  toast({ text: '♪ ' + T(S.en, S.vi), cls: 'song', quiet: true, ms: 2600 });
+}
 export function initHud() {
+  onSongStart(announceSong);
   const mi = document.getElementById('mapIco'); if (mi) mi.src = iconURL('map', 40);
   bus.on('money', (k) => {
     moneyTarget = G.state.money;
@@ -200,7 +210,7 @@ export function setBizButton(label, handler, closing = false) {
 bizBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (bizHandler) { sfx('ui'); bizHandler(); } });
 
 // ---------------------------------------------------------------- toasts
-export function toast({ text, sub = '', icon = null, cls = '', bad = false, ms = 2800, onClick = null }) {
+export function toast({ text, sub = '', icon = null, cls = '', bad = false, ms = 2800, onClick = null, quiet = false }) {
   const box = $('toasts');
   const el = document.createElement('div');
   el.className = 'toast ' + cls + (bad ? ' bad' : '');
@@ -211,7 +221,7 @@ export function toast({ text, sub = '', icon = null, cls = '', bad = false, ms =
   if (qr?.height) box.style.setProperty('--toast-top', `${qr.bottom - $('app').getBoundingClientRect().top + 8}px`); else box.style.removeProperty('--toast-top');
   box.appendChild(el);
   while (box.children.length > 2) box.firstElementChild.remove();
-  if (cls === 'ach') sfx('fanfare'); else if (bad) sfx('error'); else sfx('pop');
+  if (!quiet) sfx(cls === 'ach' ? 'fanfare' : bad ? 'error' : 'pop');
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, ms);
 }
 
