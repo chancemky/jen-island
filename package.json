@@ -1,6 +1,6 @@
 {
   "name": "jen-island",
-  "version": "5.4.0",
+  "version": "5.5.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -21,7 +21,8 @@
     "test:quick": "node tests/run.mjs quick",
     "test:ui": "node tests/run.mjs ui",
     "sw": "node tools/sw-shell.mjs",
-    "app": "node tools/app-web.mjs && npx cap sync"
+    "app": "node tools/app-web.mjs && npx cap sync",
+    "test:features": "node tests/run.mjs features"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.6.9",

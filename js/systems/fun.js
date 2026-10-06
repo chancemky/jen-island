@@ -8,7 +8,7 @@ import { G, T, tr, markDirty, addMoney, addPantry, addMat } from './state.js';
 import { say, ask } from '../ui/dialogue.js';
 import { showReward } from '../ui/sheets.js';
 import { sfx } from '../core/audio.js';
-import { choice, rand, dist, TAU } from '../core/util.js';
+import { choice, rand, dist } from '../core/util.js';
 import { INK } from '../gfx/draw.js';
 import { ingName, matName, INGREDIENTS } from '../data/game.js';
 import { addXP } from './progress.js';
@@ -247,18 +247,4 @@ export function meoAntic(m) {
   if (a.act === 'sneeze') sfx('pop'); else if (a.act === 'faint') sfx('sad'); else sfx('meow');
   bark(m, tr(a.say), a.dur + 1);
   setTimeout(() => { if (m.act === a.act) m.setAct(null); }, a.dur * 1000);
-}
-// transform for the antics, applied in drawCat before the body is drawn
-export function anticTransform(c, a) {
-  const at = a.actT || 0;
-  switch (a.act) {
-    case 'spin': { const k = Math.cos(at * 14); c.translate(0, -Math.abs(Math.sin(at * 7)) * 3); c.scale(Math.sign(k) * Math.max(0.15, Math.abs(k)), 1); break; }
-    case 'dance': c.translate(Math.sin(at * 8) * 3, -Math.abs(Math.sin(at * 8)) * 4); c.rotate(Math.sin(at * 8) * 0.18); break;
-    case 'faint': { const k = Math.min(1, at / 0.35); c.rotate(-k * Math.PI / 2 * 0.95); c.translate(-k * 3, 0); break; }
-    case 'roll': c.translate(0, -8); c.rotate(at / 1.6 * TAU); c.translate(0, 8); break;
-    case 'sneeze': { const k = at < 0.5 ? at / 0.5 : 1 - (at - 0.5) / 0.7; c.rotate(-k * 0.2); c.scale(1 + k * 0.06, 1 - k * 0.06); break; }
-    case 'pounce': { const k = Math.min(1, at / 0.5); c.translate(k * 10, -Math.sin(k * Math.PI) * 12); break; }
-    case 'stretch': { const k = Math.sin(Math.min(1, at / 2) * Math.PI); c.scale(1 + k * 0.18, 1 - k * 0.12); break; }
-    case 'loaf': c.scale(1.12, 0.84); c.translate(0, 2); break;
-  }
 }

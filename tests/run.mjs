@@ -23,7 +23,7 @@ import { moneyPair, moneyShort, useLanguage } from '../js/core/util.js';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const only = process.argv[2] || 'all';
 // suites: one name, a comma list (story,ui) or `quick` (the fast ones, ~2 min)
-const QUICK = ['content', 'save', 'economy', 'ui', 'clock'];
+const QUICK = ['content', 'save', 'economy', 'ui', 'clock', 'features'];
 const wanted = new Set(only === 'quick' ? QUICK : only.split(','));
 const run = name => (only === 'all' && name !== 'chaos') || wanted.has(name);
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2' };
@@ -335,6 +335,50 @@ if (run('economy')) {
 
 // ---------------------------------------------------------------- screens
 // Open every screen the economy and milestones feed, on a well-developed island, and make sure they draw.
+if (run('features')) {
+  console.log('features');
+  const { p, errors, ctx } = await openGame('features');
+  if (!(await reachFreeRoam(p))) fail('features', 'never reached free roam');
+  const r = await p.evaluate(async () => {
+    const J = window.__jen, s = J.G.state, out = {};
+    const imp = m => import(m);
+    const [time, badges, weekly, daily, interact, wardrobe, progress, music] = await Promise.all(['/js/systems/time.js', '/js/systems/badges.js', '/js/systems/weekly.js', '/js/systems/daily.js', '/js/systems/interact.js', '/js/data/wardrobe.js', '/js/systems/progress.js', '/js/core/music.js'].map(imp));
+    // the 20:00 heads-up when tonight's bills are more than you have
+    const toasts = () => document.getElementById('toasts').innerText;
+    s.biz.shed1.owned = true; s.biz.shed1.repair = 1; s.day = Math.max(s.day, 4); s.money = 1; s.time = 19.9 * 60;
+    time.resetWarnings(); out.due = time.billsDue(); time.updateClock(1); await new Promise(r => setTimeout(r, 50));
+    J.G.state.time = 20.01 * 60; time.updateClock(0.5); await new Promise(r => setTimeout(r, 100));
+    out.warned = /Tonight's bills|Chi phí đêm nay/.test(toasts());
+    // in debt with nothing to sell: Bà Tư's basket
+    for (const k of ['tea', 'kumquat']) s.pantry[k] = 0;
+    s.money = -500; s.story.flags.debtHelpDay = -99; const sum = time.endDay();
+    out.basket = !!sum.gift && s.pantry.tea > 0;
+    // badges: award, showcase, no paid item counts for the wardrobe milestone
+    s.stats.served = Math.max(s.stats.served, 1); badges.checkBadges(); out.badge = badges.hasBadge('first_cup') && !!badges.showcaseBadge();
+    const outfits = progress.TRACKS.find(t => t.id === 'outfits');
+    const before = outfits.get(s); s.wardrobe.owned.push('ao_dai_rose'); out.storeNotCounted = outfits.get(s) === before;
+    // weekly goals: three of them, and claiming works once done
+    const goals = weekly.weeklyGoals(); s.stats.served += 10000; const g = weekly.weeklyGoals().find(x => x.id === 'serve');
+    out.weekly = goals.length === 3 && (!g || (g.done && !!weekly.claimGoal('serve') && !weekly.claimGoal('serve')));
+    // morning mail once a day
+    s.dailyGift = null; const m1 = daily.morningMail(), m2 = daily.morningMail(); out.mail = !!m1 && !m2;
+    // real festivals on their dates, nothing on an ordinary day
+    out.festivals = [interact.realEvent(new Date(2027, 1, 6))?.id, interact.realEvent(new Date(2026, 9, 31))?.id, interact.realEvent(new Date(2026, 11, 25))?.id, interact.realEvent(new Date(2027, 4, 10))?.id];
+    out.festivalHats = ['lucky_nonla', 'moon_bow', 'black_cat_ears', 'snow_beanie'].every(id => wardrobe.CLOTHES[id]?.store);
+    out.songs = music.checkSongs();
+    return out;
+  });
+  if (r.warned && r.due > 0) pass('features', `the 20:00 bill warning shows (tonight: ${r.due}k)`); else fail('features', `no bill warning (${JSON.stringify(r)})`);
+  if (r.basket) pass('features', 'in debt with nothing to sell, Bà Tư leaves a basket'); else fail('features', 'no debt basket');
+  if (r.badge) pass('features', 'badges are awarded and one is shown'); else fail('features', 'badge not awarded');
+  if (r.storeNotCounted) pass('features', 'store clothes never count for milestones'); else fail('features', 'a store item counted for a milestone');
+  if (r.weekly) pass('features', 'three weekly goals; a finished goal pays out once'); else fail('features', 'weekly goals wrong');
+  if (r.mail) pass('features', 'morning mail comes once a day'); else fail('features', 'morning mail wrong');
+  if (r.festivals.join() === 'tet,halloween,christmas,') pass('features', 'real festivals fall on their dates'); else fail('features', `festival dates wrong: ${r.festivals.join()}`);
+  if (r.festivalHats && r.songs >= 12) pass('features', `festival hats exist; ${r.songs} songs all valid`); else fail('features', 'festival hats or songs missing');
+  if (errors.length) fail('features', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('features', 'no errors');
+  await ctx.close();
+}
 if (run('ui')) {
   console.log('screens');
   const { p, errors, ctx } = await openGame('ui');

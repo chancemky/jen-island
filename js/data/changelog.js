@@ -3,9 +3,27 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.4.0';
+export const APP_VERSION = '5.5.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.5.0', date: '2026-10-06T15:05:16Z',
+    title: ['Island Life', 'Cuộc Sống Trên Đảo'],
+    items: [
+      ['A brand-new soundtrack: 12 songs for mornings, Market Street, the Night Market, the beach, Harbour Town, Firefly Islet, your home, the café, festivals and Mèo Mây', 'Nhạc nền hoàn toàn mới: 12 bài cho buổi sáng, Phố Chợ, Chợ Đêm, bãi biển, Phố Cảng, Cù Lao Đom Đóm, nhà bạn, quán cà phê, lễ hội và Mèo Mây'],
+      ['Play right away as a guest, and make an account any time to keep your island', 'Chơi ngay với tư cách khách, tạo tài khoản bất cứ lúc nào để giữ hòn đảo'],
+      ['Forgot your password? Reset it from the sign-in screen', 'Quên mật khẩu? Đặt lại ngay ở màn hình đăng nhập'],
+      ['Friends: share your code, visit each other\'s homes and send a gift every day', 'Bạn bè: chia sẻ mã, thăm nhà nhau và tặng quà mỗi ngày'],
+      ['Morning mail: a gift every day you play, with exclusive hats for a 7-day streak', 'Thư buổi sáng: quà mỗi ngày bạn chơi, và mũ độc quyền khi chơi 7 ngày liền'],
+      ['Weekly island goals and 25 badges to earn, from easy to legendary; show one beside your name', 'Mục tiêu tuần và 25 huy hiệu, từ dễ tới huyền thoại; chọn một để hiện cạnh tên'],
+      ['Real-world festivals: Tết, Mid-Autumn, Pumpkin Nights and Christmas Lights, each with a free hat', 'Lễ hội theo ngày thật: Tết, Trung Thu, Đêm Bí Ngô và Đèn Giáng Sinh, mỗi lễ có một chiếc mũ miễn phí'],
+      ['A collection book in your Bag for fish, dishes and outfits', 'Bộ sưu tập trong Túi đồ: cá, món ăn và trang phục'],
+      ['Shops wait while you\'re in a menu; pop-ups never cover a screen\'s title; tidier map labels', 'Quán đứng yên khi bạn mở menu; thông báo không che tiêu đề; nhãn bản đồ gọn gàng hơn'],
+      ['Restaurant staff get a 30% retainer on days it stays closed; old debts from before the bill help are forgiven', 'Nhân viên nhà hàng nhận 30% vào ngày đóng cửa; nợ cũ từ trước khi có trợ giúp được xóa'],
+      ['Playing on two devices? The game now asks which island to keep instead of overwriting', 'Chơi trên hai thiết bị? Game sẽ hỏi bạn giữ đảo nào thay vì ghi đè'],
+      ['A quick-start option instead of the island tour, plus a wide layout on computers', 'Chọn bắt đầu nhanh thay cho chuyến tham quan, và bố cục rộng trên máy tính'],
+    ],
+  },
   {
     v: '5.4.0', date: '2026-10-05T22:28:04Z',
     title: ['Fair Island', 'Đảo Công Bằng'],
