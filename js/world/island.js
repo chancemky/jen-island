@@ -568,7 +568,7 @@ export class Island extends Scene {
     }
     for (const [x, y] of [[268, 560], [268, 700], [590, 560], [590, 700]]) { const p = this.add2('lampPost', x, y, { solidR: 3, cullR: 40, cullH: 60 }); Object.defineProperty(p, 'broken', { get: nmBroken }); }
     // ---- decorations
-    this.add2('welcomeGate', 900, 2396, { w: 104, cullR: 90, cullH: 110, label: () => (G.state.island.name || 'JEN Island').toUpperCase() });
+    this.add2('welcomeGate', 900, 2396, { w: 104, cullR: 90, cullH: 110, label: () => (G.state.island.name || 'Bistro Island').toUpperCase() });
     this.circle(848, 2394, 7); this.circle(952, 2394, 7);
     this.add2('lighthouse', 900, 300, { cullR: 40, cullH: 160, solidR: 16 });
     this.trigger({ id: 'lighthouse', kind: 'act', x: 886, y: 302, w: 28, h: 26, label: 'Lên hải đăng', en: 'Climb up', icon: 'star', action: 'lighthouse' });   // the gallery view (ui/lookout.js)
@@ -1024,7 +1024,7 @@ export function bizSign(id) {
   if (id === 'shed1') return T('TEA & COFFEE', 'TRÀ & CÀ PHÊ');
   if (id === 'shed2') return 'BÁNH MÌ';
   if (id === 'truck') return T('ROLL TRUCK', 'XE CUỐN');
-  if (id === 'restaurant') return T((s.island.name || 'JEN').toUpperCase() + ' RESTAURANT', 'NHÀ HÀNG ' + (s.island.name || 'JEN').toUpperCase());
+  if (id === 'restaurant') return T((s.island.name || 'BISTRO').toUpperCase() + ' RESTAURANT', 'NHÀ HÀNG ' + (s.island.name || 'BISTRO').toUpperCase());
   if (id === 'night') return T('NIGHT STALL', 'SẠP ĐÊM');
   return '';
 }

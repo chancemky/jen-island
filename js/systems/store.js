@@ -17,8 +17,8 @@ import { grantServerBadge } from './badges.js';
 
 const local = devHost();
 export const STORE = {
-  payments: false,   // live purchases: turn on once the live Stripe account's links are below
-  checkout: { supporter: '', pass_s1: '' },   // live Payment Links (the player's id is added as client_reference_id)
+  payments: false,   // live purchases: turn on once Stripe's live webhook is set up (see README → Payments)
+  checkout: { supporter: 'https://buy.stripe.com/6oU6oH0q4dGyghvckxeEo00', pass_s1: 'https://buy.stripe.com/3cI6oHc8M9qi5CR3O1eEo01' },   // live Payment Links (the player's id is added as client_reference_id)
   // Stripe sandbox links: used on a local copy, so the whole flow can be tried with test cards
   test: { supporter: 'https://buy.stripe.com/test_6oU6oH0q4dGyghvckxeEo00', pass_s1: 'https://buy.stripe.com/test_3cI6oHc8M9qi5CR3O1eEo01' },
 };
@@ -30,7 +30,7 @@ export const storeVisible = () => !nativeApp() && (STORE.payments || local);
 export const PRODUCTS = {
   supporter: {
     en: 'Island Supporter Pack', vi: 'Gói Ủng Hộ Đảo', price: '$4.99',
-    blurb: ['Help keep JEN Island growing. A thank-you outfit set, yours forever.', 'Giúp JEN Island tiếp tục phát triển. Một bộ trang phục cảm ơn, của bạn mãi mãi.'],
+    blurb: ['Help keep Bistro Island growing. A thank-you outfit set, yours forever.', 'Giúp Bistro Island tiếp tục phát triển. Một bộ trang phục cảm ơn, của bạn mãi mãi.'],
     clothes: ['ao_dai_rose', 'lantern_bow', 'supporter_scarf'],
   },
   pass_s1: {
@@ -111,6 +111,6 @@ export function purchaseReturn() {
   const q = new URLSearchParams(location.search), id = q.get('purchase');
   if (!id || !PRODUCTS[id]) return;
   history.replaceState(null, '', location.pathname);
-  bus.emit('toast', { text: T('Thank you for supporting JEN Island!', 'Cảm ơn bạn đã ủng hộ JEN Island!'), sub: T('Your items are on their way to your wardrobe.', 'Món đồ đang được gửi tới tủ quần áo của bạn.'), icon: 'heart', ms: 5000 });
+  bus.emit('toast', { text: T('Thank you for supporting Bistro Island!', 'Cảm ơn bạn đã ủng hộ Bistro Island!'), sub: T('Your items are on their way to your wardrobe.', 'Món đồ đang được gửi tới tủ quần áo của bạn.'), icon: 'heart', ms: 5000 });
   let tries = 0; const poll = async () => { if ((await syncPurchases()).length || ++tries > 10) return; setTimeout(poll, 3000); }; setTimeout(poll, 1500);
 }

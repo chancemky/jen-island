@@ -1,6 +1,6 @@
 {
-  "appId": "com.jenisland.app",
-  "appName": "JEN Island",
+  "appId": "com.bistroisland.app",
+  "appName": "Bistro Island",
   "webDir": "www",
   "server": { "androidScheme": "https" },
   "ios": { "contentInset": "never", "backgroundColor": "#fff4de" },

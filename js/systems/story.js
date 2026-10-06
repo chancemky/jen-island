@@ -414,7 +414,7 @@ export async function runArrival() {
     m.tiltTarget = 0.2;
     await say('meo', T('Since you\'re staying, would you give it a name?', 'Bạn ở lại đây rồi, đặt cho đảo một cái tên nhé?'));
     m.tiltTarget = 0;
-    const isl = await askText({ title: T('Name your island', 'Đặt tên cho hòn đảo'), placeholder: T('Island name', 'Tên hòn đảo'), max: 16, value: T('Cloud Island', 'Đảo Mây') });
+    const isl = await askText({ title: T('Name your island', 'Đặt tên cho hòn đảo'), placeholder: T('Island name', 'Tên hòn đảo'), max: 16, value: T('Bistro Island', 'Đảo Bistro') });
     G.state.island.name = isl;
     markDirty(true);
     cloud.hasSession() && cloud.saveProfile(name, isl).catch(() => {});

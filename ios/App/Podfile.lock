@@ -1,0 +1,35 @@
+PODS:
+  - AppLovinSDK (13.2.0)
+  - Capacitor (7.6.9):
+    - CapacitorCordova
+  - CapacitorCordova (7.6.9)
+  - CordovaPluginsStatic (7.6.9):
+    - AppLovinSDK (= 13.2.0)
+    - CapacitorCordova
+
+DEPENDENCIES:
+  - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - CordovaPluginsStatic (from `../capacitor-cordova-ios-plugins`)
+
+SPEC REPOS:
+  trunk:
+    - AppLovinSDK
+
+EXTERNAL SOURCES:
+  Capacitor:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorCordova:
+    :path: "../../node_modules/@capacitor/ios"
+  CordovaPluginsStatic:
+    :path: "../capacitor-cordova-ios-plugins"
+
+SPEC CHECKSUMS:
+  AppLovinSDK: 1eb88a82b4feea9f3696ce9cc1e3343c4997ee12
+  Capacitor: 1194c38ae1cc820671aefd94c59ebcbca2f33b26
+  CapacitorCordova: 2080fc0d6bfbc9dcc0e6d88e77fa624190d343ca
+  CordovaPluginsStatic: f298de1a7d977d9c56a2a4d909a044d6346c45b5
+
+PODFILE CHECKSUM: 85c737bece4f0d0dfecdb71e6628c588a48425ee
+
+COCOAPODS: 1.15.2

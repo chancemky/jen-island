@@ -254,7 +254,7 @@ function draw(cv, view) {
   const cw = cv.width / d, ch = cv.height / d;
   c.fillStyle = 'rgba(255,248,234,.92)'; c.strokeStyle = '#5b3f36'; c.lineWidth = 2;
   c.beginPath(); c.roundRect ? c.roundRect(10, 10, 150, 34, 12) : c.rect(10, 10, 150, 34); c.fill(); c.stroke();
-  c.fillStyle = '#5b3f36'; c.font = '900 14px Nunito, sans-serif'; c.textAlign = 'left'; c.fillText(G.state.island.name || 'JEN Island', 20, 32);
+  c.fillStyle = '#5b3f36'; c.font = '900 14px Nunito, sans-serif'; c.textAlign = 'left'; c.fillText(G.state.island.name || 'Bistro Island', 20, 32);
   // compass
   c.translate(cw - 34, ch - 60); c.fillStyle = 'rgba(255,248,234,.9)'; c.beginPath(); c.arc(0, 0, 20, 0, TAU); c.fill(); c.stroke();
   c.fillStyle = '#e8584e'; c.beginPath(); c.moveTo(0, -16); c.lineTo(5, 0); c.lineTo(-5, 0); c.closePath(); c.fill(); c.fillStyle = '#9aa3ad'; c.beginPath(); c.moveTo(0, 16); c.lineTo(5, 0); c.lineTo(-5, 0); c.closePath(); c.fill();

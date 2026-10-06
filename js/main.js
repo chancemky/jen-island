@@ -1,4 +1,4 @@
-// JEN Island — boot, main loop and the glue between systems.
+// Bistro Island — boot, main loop and the glue between systems.
 
 import { lockInput, releaseInput, inputLocked, lockNames, lockAge } from './core/locks.js';
 import { Renderer, cam, fx, lightingFor } from './world/render.js';

@@ -6,8 +6,8 @@ import { G, T, markDirty } from './state.js';
 import { bus } from '../core/util.js';
 import { BADGES, TIER_ORDER } from '../data/badges.js';
 
-// Accounts created before this date are Founding Islanders. Set it to the launch day.
-export const FOUNDER_BEFORE = Date.parse('2027-01-01T00:00:00Z');
+// Accounts created by launch day (31 October 2026) are Founding Islanders.
+export const FOUNDER_BEFORE = Date.parse('2026-11-01T00:00:00Z');
 const server = new Set();
 export function grantServerBadge(id) { if (BADGES[id]?.server) { server.add(id); pickShowcase(); } }
 export const hasBadge = id => server.has(id) || !!G.state.badges?.includes(id);

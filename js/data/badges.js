@@ -42,6 +42,6 @@ export const BADGES = {
   year:          { tier: 'legend', glyph: '🎋', en: 'A Year on the Island', vi: 'Một năm trên đảo', need: ['Reach day 365', 'Đến ngày thứ 365'], got: s => s.day >= 365 },
   // ---- from the server
   supporter:   { tier: 'gold', glyph: '💖', en: 'Supporter', vi: 'Người ủng hộ', need: ['Support the game in the store', 'Ủng hộ game ở cửa hàng'], server: true },
-  founder:     { tier: 'gold', glyph: '🌅', en: 'Founding Islander', vi: 'Cư dân khai đảo', need: ['Played before the official launch', 'Chơi từ trước ngày ra mắt chính thức'], server: true },
+  founder:     { tier: 'gold', glyph: '🌅', en: 'Founding Islander', vi: 'Cư dân khai đảo', need: ['Joined by launch day, 31 October 2026', 'Tham gia trước hoặc đúng ngày ra mắt, 31/10/2026'], server: true },
 };
 export const TIER_ORDER = ['legend', 'gold', 'silver', 'bronze'];

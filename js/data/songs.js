@@ -1,4 +1,4 @@
-// JEN Island's soundtrack, written out note by note and played by core/music.js.
+// Bistro Island's soundtrack, written out note by note and played by core/music.js.
 //
 // Lines: notes as "<note><octave>-<16ths>" ("E5-4" is a quarter note, "r-2" an eighth
 // rest), chords as "C4+E4-8", "~" bends into a note (đàn bầu), "^" accents it; bars are

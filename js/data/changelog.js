@@ -10,6 +10,7 @@ export const CHANGELOG = [
     v: '5.5.0', date: '2026-10-06T15:05:16Z',
     title: ['Island Life', 'Cuộc Sống Trên Đảo'],
     items: [
+      ['JEN Island has a new name: welcome to Bistro Island!', 'JEN Island có tên mới: chào mừng tới Bistro Island!'],
       ['A brand-new soundtrack: 12 songs for mornings, Market Street, the Night Market, the beach, Harbour Town, Firefly Islet, your home, the café, festivals and Mèo Mây', 'Nhạc nền hoàn toàn mới: 12 bài cho buổi sáng, Phố Chợ, Chợ Đêm, bãi biển, Phố Cảng, Cù Lao Đom Đóm, nhà bạn, quán cà phê, lễ hội và Mèo Mây'],
       ['Play right away as a guest, and make an account any time to keep your island', 'Chơi ngay với tư cách khách, tạo tài khoản bất cứ lúc nào để giữ hòn đảo'],
       ['Forgot your password? Reset it from the sign-in screen', 'Quên mật khẩu? Đặt lại ngay ở màn hình đăng nhập'],

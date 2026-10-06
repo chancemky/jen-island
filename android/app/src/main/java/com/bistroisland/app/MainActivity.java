@@ -1,4 +1,4 @@
-package com.jenisland.app;
+package com.bistroisland.app;
 
 import com.getcapacitor.BridgeActivity;
 

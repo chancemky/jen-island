@@ -12,7 +12,7 @@ set search_path = ''
 as $$
   select case b
     when 'supporter' then exists (select 1 from public.jen_island_purchases p where p.user_id = uid)
-    when 'founder' then exists (select 1 from auth.users u where u.id = uid and u.created_at < '2027-01-01')
+    when 'founder' then exists (select 1 from auth.users u where u.id = uid and u.created_at < '2026-11-01')
     when 'legend_crowd' then served >= 10000
     when 'crowd' then served >= 1000
     when 'tycoon' then lifetime >= 100000

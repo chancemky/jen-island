@@ -517,7 +517,7 @@ export function welcomeGate(c, t, p) {
   c.beginPath(); c.moveTo(-w / 2 - 18, -70); c.quadraticCurveTo(0, -80, w / 2 + 18, -70); c.lineTo(w / 2 + 22, -76); c.quadraticCurveTo(0, -90, -w / 2 - 22, -76); c.closePath();
   c.fillStyle = '#d9784f'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke();
   box(c, -w / 2 + 2, -64, w - 4, 16, 3, '#f2c14e');
-  stext(c, p.label?.() || 'JEN ISLAND', 0, -55.6, Math.min(9, 150 / Math.max(6, (p.label?.() || '').length)), '#9a3a2e', 900);
+  stext(c, p.label?.() || 'BISTRO ISLAND', 0, -55.6, Math.min(9, 150 / Math.max(6, (p.label?.() || '').length)), '#9a3a2e', 900);
   stext(c, T('Welcome', 'Chào mừng'), 0, -42, 5.5, '#fff5df', 900, 'center', INK, 2);
   lanternShape(c, -w / 2 + 12, -48, 0.7, '#ea5a4f', t, 1); lanternShape(c, w / 2 - 12, -48, 0.7, '#ea5a4f', t, 2);
   if (LIGHT.night > 0.05) { glowLater(p, -w / 2 + 12, -40, 30, 'rgba(255,190,110,.55)'); glowLater(p, w / 2 - 12, -40, 30, 'rgba(255,190,110,.55)'); }

@@ -15,7 +15,7 @@ const TEXT = {
   joyhint: ['Touch & drag anywhere to walk', 'Chạm và kéo để đi'],
   keyhint: ['Arrow keys or WASD to walk · E or Space to act', 'Phím mũi tên hoặc WASD để đi · E hoặc Space để tương tác'],
   skip: ['Skip ›', 'Bỏ qua ›'],
-  rotate: ['Please turn your phone upright', 'Xoay dọc điện thoại nhé!'], rotate2: ['JEN Island is played in portrait.', 'JEN Island được chơi theo chiều dọc.'],
+  rotate: ['Please turn your phone upright', 'Xoay dọc điện thoại nhé!'], rotate2: ['Bistro Island is played in portrait.', 'Bistro Island được chơi theo chiều dọc.'],
 };
 export function applyStaticText() {
   document.documentElement.lang = G.lang;

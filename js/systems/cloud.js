@@ -152,8 +152,7 @@ export async function pushLeaderboard(row) {
 export async function fetchLeaderboard(sort = 'level') {
   return api('/rest/v1/rpc/jen_island_leaderboard_top', { method: 'POST', body: JSON.stringify({ sort, lim: 50 }) });
 }
-// Delete account: erases every JEN Island row for this player (and the login itself when
-// no other JEN game uses it). Returns 'account' or 'game'.
+// Delete account: erases every row this game keeps for the player, and the login.
 export async function deleteAccount() {
   return api('/rest/v1/rpc/jen_island_delete_account', { method: 'POST', body: '{}' });
 }

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">JEN Island</string>
-    <string name="title_activity_main">JEN Island</string>
-    <string name="package_name">com.jenisland.app</string>
-    <string name="custom_url_scheme">com.jenisland.app</string>
+    <string name="app_name">Bistro Island</string>
+    <string name="title_activity_main">Bistro Island</string>
+    <string name="package_name">com.bistroisland.app</string>
+    <string name="custom_url_scheme">com.bistroisland.app</string>
 </resources>

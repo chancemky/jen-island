@@ -161,7 +161,7 @@ const leaderboardRowNow = () => ({ ...leaderboardRow(G.state), badge: showcaseBa
 
 export function openMenu({ onLogout, tab = 0 } = {}) {
   const s = G.state;
-  openSheet({ title: s.island.name || 'JEN Island', sub: T(`Day ${s.day} · ${clock(s.time)} · Chapter ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.title || ''}`, `Ngày ${s.day} · ${clock(s.time)} · Chương ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.vi || ''}`), full: true, build: (body, api) => {
+  openSheet({ title: s.island.name || 'Bistro Island', sub: T(`Day ${s.day} · ${clock(s.time)} · Chapter ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.title || ''}`, `Ngày ${s.day} · ${clock(s.time)} · Chương ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.vi || ''}`), full: true, build: (body, api) => {
     const shop = storeVisible();
     const ti = (label, icon) => ({ label, icon });
     tabs(body, [ti(T('Map', 'Bản đồ'), 'map'), ti(T('Business', 'Kinh doanh'), 'coin'), ti(T('Goals', 'Mục tiêu'), 'trophy'), ti(T('Ranks', 'Xếp hạng'), 'star'), ti(T('Settings', 'Cài đặt'), 'menu'), ti(T('Account', 'Tài khoản'), 'person'), ti(T('Friends', 'Bạn bè'), 'talk'), ...(shop ? [ti(T('Support', 'Ủng hộ'), 'heart')] : []), ...(DEV_TOOLS ? [ti('Dev', 'hammer')] : [])], (i, pane) => {

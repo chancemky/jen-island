@@ -1,4 +1,4 @@
-# JEN Island
+# Bistro Island
 
 A cozy Vietnamese island business-life game for portrait mobile Safari. You arrive on a quiet island by boat, meet **Mèo Mây** (the island's cloud cat), repair a broken tea shed, and over **20 chapters** grow sheds, a food truck, the Night Market, a restaurant with a visible staff, Harbour Town's café, Firefly Islet and Coconut Cove's grill — until the island runs itself and you become its Keeper. Free play continues after the story.
 
@@ -49,6 +49,32 @@ On `localhost` only:
     npx wrangler deploy     # uploads the repo root; .assetsignore excludes tests/, tools/, supabase/, docs/
 
 The service worker (`sw.js`) is network-first, so updates land immediately. After adding or removing a file, run `npm run sw` to rewrite its offline file list, and bump `CACHE`.
+
+## Store apps (App Store / Google Play)
+
+Capacitor wraps the game (`capacitor.config.json`, app id `com.bistroisland.app`):
+
+    npm run app             # copy the game into www/ and sync ios/ and android/
+    npx cap open ios        # Xcode: set your team, then Archive
+    npx cap open android    # Android Studio: Build → Generate Signed Bundle
+
+iOS needs CocoaPods (`pod`); the Android build needs Android Studio. Icons and splash come from `resources/` (`npx @capacitor/assets generate --assetPath resources`).
+
+**Ads** (AppLovin MAX, in the apps only): put the SDK key and the rewarded ad unit ids in `ADS.max` in `js/systems/ads.js`. One optional ad a day doubles the day's tips.
+
+## Payments (Stripe)
+
+Live products and Payment Links exist (`STORE.checkout` in `js/systems/store.js`); the sandbox links are used on a local copy (`STORE.test`, card 4242 4242 4242 4242). To take real money:
+
+1. Stripe Dashboard → Developers → Webhooks → add endpoint `https://cgbaigeergwvbmghrakb.supabase.co/functions/v1/jen-island-stripe-webhook`, event `checkout.session.completed`.
+2. Copy its signing secret and, in the Supabase SQL editor, run `select vault.create_secret('<whsec_…>', 'jen_island_stripe_webhook_live');`.
+3. Set `STORE.payments = true` and deploy.
+
+The store is hidden inside the store apps: Apple and Google require their own in-app purchases for cosmetics.
+
+## Email (Resend)
+
+Supabase → Authentication → Emails → SMTP settings: host `smtp.resend.com`, port `465`, username `resend`, password a Resend API key, sender an address on a domain verified in Resend.
 
 ## Launch checklist (dev tools)
 

@@ -22,14 +22,14 @@ create policy "jen_island_purchases_select_own"
 on public.jen_island_purchases for select to authenticated
 using ((select auth.uid()) is not null and (select auth.uid()) = user_id);
 
--- The Stripe webhook's signing secret is kept in Supabase Vault (name:
--- jen_island_stripe_webhook); only the service role (the edge function) can read it.
+-- The Stripe webhooks' signing secrets are kept in Supabase Vault (names starting with
+-- jen_island_stripe_webhook); only the service role (the edge function) can read them.
 create or replace function public.jen_island_stripe_secret()
 returns text
 language sql
 stable
 security definer
 set search_path = ''
-as $$ select decrypted_secret from vault.decrypted_secrets where name = 'jen_island_stripe_webhook' limit 1 $$;
+as $$ select string_agg(decrypted_secret, ',') from vault.decrypted_secrets where name like 'jen_island_stripe_webhook%' $$;
 revoke all on function public.jen_island_stripe_secret() from public, anon, authenticated;
 grant execute on function public.jen_island_stripe_secret() to service_role;

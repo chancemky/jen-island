@@ -5,7 +5,7 @@ import { T } from '../systems/state.js';
 import { escapeHtml } from '../core/util.js';
 import { sfx } from '../core/audio.js';
 
-const card = s => `${escapeHtml(s?.island?.name || 'JEN Island')} · ${T(`Day ${s?.day} · Chapter ${s?.story?.chapter}`, `Ngày ${s?.day} · Chương ${s?.story?.chapter}`)}`;
+const card = s => `${escapeHtml(s?.island?.name || 'Bistro Island')} · ${T(`Day ${s?.day} · Chapter ${s?.story?.chapter}`, `Ngày ${s?.day} · Chương ${s?.story?.chapter}`)}`;
 // resolves 'here' or 'cloud'
 export function chooseIsland(here, cloud, { why = T('This island was also played on another device. The one you don\'t pick will be replaced.', 'Hòn đảo này cũng được chơi trên một thiết bị khác. Hòn đảo bạn không chọn sẽ bị thay thế.'), cloudLabel = T('The other device\'s island', 'Đảo trên thiết bị kia') } = {}) {
   return new Promise(res => {
