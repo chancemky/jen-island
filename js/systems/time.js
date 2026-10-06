@@ -60,6 +60,7 @@ export function endDay() {
   const staff = [...(costs.staff || []), ...(s.biz.restaurant.owned ? staffReport() : [])];
   const prev = s.history[s.history.length - 1];
   rollUsage(t);
+  s.stats.bestDay = Math.max(s.stats.bestDay || 0, t.served);
   const sum = {
     day: s.day, island: s.island.name, chapter: s.story.chapter,
     revenue: Math.round(t.revenue), served: t.served, perfect: t.perfect, tips: Math.round(t.tips), lost: t.lost, wages, rent: costs.rent, keeperWages: costs.keeperWages,

@@ -55,7 +55,7 @@ function cast() {
     G.runtime.pause--; el.remove(); pl.setAct(null); game = null;
     if (!ok) { toast({ text, icon: 'fish', ms: 1500 }); return; }
     const id = pick(), F = FISH[id];
-    const bag = (s.fishBag ||= {}); bag[id] = (bag[id] || 0) + 1;
+    const bag = (s.fishBag ||= {}); bag[id] = (bag[id] || 0) + 1; (s.fishSeen ||= {})[id] = true;   // (fishSeen: every kind ever caught, for the collection)
     if (F.ing) addPantry(F.ing, 1);
     if (!F.junk && !F.ing && id !== 'pufferfish') s.fishForMeo = (s.fishForMeo || 0) + 1;
     markDirty(true); sfx(F.rare ? 'fanfare' : F.junk ? 'sad' : 'success');

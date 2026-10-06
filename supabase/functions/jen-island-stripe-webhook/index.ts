@@ -2,33 +2,41 @@
 // Stripe's signature, then records the product for the player (jen_island_purchases).
 // The game reads that table on start (js/systems/store.js); players can't write it.
 //
-// Set up (once there is a Stripe account):
-//   supabase secrets set STRIPE_SECRET_KEY=sk_live_… STRIPE_WEBHOOK_SECRET=whsec_…
-//   supabase functions deploy jen-island-stripe-webhook --no-verify-jwt
-// In Stripe: create a Payment Link per product with metadata product_id = supporter
-// (or pass_s1), and a webhook for checkout.session.completed pointing at this function.
-// Then set STORE.payments = true and the links in STORE.checkout.
+// The webhook signing secret lives in Supabase Vault (name: jen_island_stripe_webhook)
+// and is read through jen_island_stripe_secret(), which only the service role may call.
+// Each Payment Link carries metadata product_id (supporter / pass_s1) and the game adds
+// the player's id as client_reference_id.
 
-import Stripe from 'https://esm.sh/stripe@17?target=deno';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { httpClient: Stripe.createFetchHttpClient() });
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 const PRODUCTS = new Set(['supporter', 'pass_s1']);
+const enc = new TextEncoder();
+let secret: string | null = null;
+
+async function signingSecret() {
+  if (!secret) { const { data, error } = await db.rpc('jen_island_stripe_secret'); if (error || !data) throw new Error('no webhook secret'); secret = data as string; }
+  return secret;
+}
+// Stripe-Signature: t=<unix time>,v1=<hex hmac of "t.payload">[,v1=…]
+async function verified(payload: string, header: string) {
+  const parts = header.split(',').map(p => p.split('=')), t = parts.find(([k]) => k === 't')?.[1];
+  const sigs = parts.filter(([k]) => k === 'v1').map(([, v]) => v);
+  if (!t || !sigs.length || Math.abs(Date.now() / 1000 - +t) > 300) return false;
+  const key = await crypto.subtle.importKey('raw', enc.encode(await signingSecret()), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(`${t}.${payload}`)));
+  const hex = [...mac].map(b => b.toString(16).padStart(2, '0')).join('');
+  return sigs.some(s => s.length === hex.length && [...s].reduce((d, c, i) => d | (c.charCodeAt(0) ^ hex.charCodeAt(i)), 0) === 0);
+}
 
 Deno.serve(async req => {
-  const sig = req.headers.get('stripe-signature');
-  if (!sig) return new Response('missing signature', { status: 400 });
-  let event: Stripe.Event;
-  try {
-    event = await stripe.webhooks.constructEventAsync(await req.text(), sig, Deno.env.get('STRIPE_WEBHOOK_SECRET')!, undefined, Stripe.createSubtleCryptoProvider());
-  } catch {
-    return new Response('bad signature', { status: 400 });
-  }
+  const payload = await req.text(), sig = req.headers.get('stripe-signature');
+  if (!sig || !(await verified(payload, sig).catch(() => false))) return new Response('bad signature', { status: 400 });
+  const event = JSON.parse(payload);
   if (event.type !== 'checkout.session.completed') return new Response('ignored');
-  const s = event.data.object as Stripe.Checkout.Session;
+  const s = event.data.object;
   const userId = s.client_reference_id, product = s.metadata?.product_id;
-  if (s.payment_status !== 'paid' || !userId || !product || !PRODUCTS.has(product)) return new Response('ignored');
+  if (s.payment_status !== 'paid' || !userId || !PRODUCTS.has(product)) return new Response('ignored');
   const { error } = await db.from('jen_island_purchases').upsert(
     { user_id: userId, product_id: product, provider: 'stripe', provider_ref: s.id },
     { onConflict: 'provider_ref', ignoreDuplicates: true },

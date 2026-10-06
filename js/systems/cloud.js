@@ -29,7 +29,7 @@ async function fresh() {
 }
 async function api(path, opt = {}) { await fresh(); return raw(path, opt, session.access_token); }
 
-export function currentUser() { return session?.user ? { id: session.user.id, email: session.user.email } : null; }
+export function currentUser() { return session?.user ? { id: session.user.id, email: session.user.email, createdAt: Date.parse(session.user.created_at || '') || null } : null; }
 
 export async function signUp(email, password) {
   let d = await raw('/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email, password }) });

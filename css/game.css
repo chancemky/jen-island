@@ -156,6 +156,10 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; flex: none; }           /* every tab visible: long lists wrap onto a second row */
 .tabs button { flex: 1 1 auto; padding: 8px 12px; border-radius: 999px; background: #f3e6cf; font-weight: 900; font-size: 13px; border: 2.5px solid transparent; white-space: nowrap; }
 .tabs button.on { background: #fff; border-color: var(--ink); box-shadow: 0 2px 0 rgba(91,63,54,.25); }
+.tabs.icons { flex-wrap: nowrap; gap: 4px; }        /* one row: icon over a short label */
+.tabs.icons button { flex: 1 1 0; min-width: 0; padding: 5px 2px 4px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 10.5px; }
+.tabs.icons button img { width: 24px; height: 24px; }
+.tabs.icons button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px; }
 .row { display: flex; align-items: center; gap: 10px; padding: 10px; background: #fff; border: 2.5px solid #e9d8bf; border-radius: 18px; transition: transform .15s; }
 .row.dim { opacity: .55; }
@@ -188,6 +192,17 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 .empty-note { text-align: center; padding: 22px 12px; font-weight: 800; opacity: .6; }
 .empty-note a, .auth-legal a { color: inherit; font-weight: 900; text-decoration: underline; text-underline-offset: 2px; }
 .section-title { font-size: 12px; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; opacity: .55; margin: 12px 4px 6px; }
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 6px 0 2px; }
+.badge { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px 8px; border-radius: 16px; border: 3px solid var(--ink); background: var(--paper); font: inherit; text-align: center; cursor: pointer; }
+.badge .glyph { font-size: 26px; line-height: 1.1; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; border: 3px solid; }
+.badge b { font-size: 11.5px; line-height: 1.15; }
+.badge small { font-size: 9.5px; font-weight: 800; opacity: .65; line-height: 1.15; }
+.badge.locked { opacity: .5; filter: grayscale(1); }
+.badge.shown { box-shadow: 0 0 0 3px #f08ca0; }
+.t-bronze .glyph { border-color: #c98a55; background: #fbe8d6; } .t-silver .glyph { border-color: #a9b3be; background: #eef2f6; }
+.t-gold .glyph { border-color: #e3a52c; background: #fff3c8; } .t-legend .glyph { border-color: #9b6bd6; background: linear-gradient(135deg, #ffe3f1, #e3f0ff 50%, #e9ffe3); }
+.badge-mini { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 4px; border-radius: 50%; border: 2px solid; font-size: 12px; vertical-align: -4px; }
+.badge-mini.t-bronze { border-color: #c98a55; background: #fbe8d6; } .badge-mini.t-silver { border-color: #a9b3be; background: #eef2f6; } .badge-mini.t-gold { border-color: #e3a52c; background: #fff3c8; } .badge-mini.t-legend { border-color: #9b6bd6; background: #f3e8ff; }
 .mini-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .mini-chip { display: inline-flex; align-items: center; gap: 1px; padding: 1px 6px 1px 2px; border-radius: 9px; background: rgba(255,255,255,.75); font-size: 11px; font-weight: 900; }
 .mini-chip img { width: 18px; height: 18px; }

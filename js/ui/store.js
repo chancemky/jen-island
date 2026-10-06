@@ -13,11 +13,13 @@ const note = (en, vi) => h('div', 'empty-note', T(en, vi));
 function buyButton(id) {
   if (ownsProduct(id)) { const b = h('div', 'pill', T('Owned ✓', 'Đã có ✓')); return b; }
   return btn(PRODUCTS[id].price, () => {
-    if (buy(id) === 'off') { sfx('ui'); toast({ text: T('Coming soon', 'Sắp ra mắt'), sub: T('The supporter store isn\'t open yet.', 'Cửa hàng ủng hộ chưa mở.'), icon: 'shirt' }); }
+    const r = buy(id);
+    if (r === 'off') { sfx('ui'); toast({ text: T('Coming soon', 'Sắp ra mắt'), sub: T('The supporter store isn\'t open yet.', 'Cửa hàng ủng hộ chưa mở.'), icon: 'shirt' }); }
+    if (r === 'account') { sfx('ui'); toast({ text: T('Make a free account first', 'Hãy tạo tài khoản miễn phí trước'), sub: T('Menu → Account. Purchases belong to your account, so they\'re never lost.', 'Menu → Tài khoản. Món đã mua gắn với tài khoản nên không bao giờ mất.'), icon: 'heart' }); }
   }, 'btn gold');
 }
 export function renderStore(pane) {
-  if (!STORE.payments) pane.appendChild(note('Preview: payments are switched off, so nothing can be bought yet.', 'Xem trước: chưa bật thanh toán nên chưa mua được gì.'));
+  if (!STORE.payments) pane.appendChild(note('Test mode (Stripe sandbox): pay with card 4242 4242 4242 4242, any future date and any CVC. No real money moves.', 'Chế độ thử (Stripe sandbox): thanh toán bằng thẻ 4242 4242 4242 4242, ngày bất kỳ trong tương lai và CVC bất kỳ. Không trừ tiền thật.'));
   pane.appendChild(note('Everything here is cosmetic. It never makes you richer, faster or stronger, and everything else in the game stays free.', 'Mọi thứ ở đây chỉ để trang trí. Không giúp bạn giàu hơn, nhanh hơn hay mạnh hơn, và mọi thứ khác trong game vẫn miễn phí.'));
 
   // the supporter pack

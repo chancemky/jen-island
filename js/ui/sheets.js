@@ -50,7 +50,13 @@ export function tabs(body, list, onPick, start = 0, api = null) {
   if (api && api.tab !== undefined) start = api.tab;
   const bar = document.createElement('div'); bar.className = 'tabs';
   const pane = document.createElement('div'); pane.className = 'scroll'; pane.style.flex = '1'; pane.style.minHeight = '0';
-  list.forEach((t, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.onclick = () => { sfx('ui'); select(i); }; bar.appendChild(b); });
+  // a tab is a label, or { label, icon } for a single row of icon tabs
+  if (list.some(t => t?.icon)) bar.classList.add('icons');
+  list.forEach((t, i) => {
+    const b = document.createElement('button'); b.type = 'button';
+    if (t?.icon) { b.innerHTML = `<img src="${iconURL(t.icon, 36)}" alt=""><span></span>`; b.lastChild.textContent = t.label; b.setAttribute('aria-label', t.label); } else b.textContent = t;
+    b.onclick = () => { sfx('ui'); select(i); }; bar.appendChild(b);
+  });
   body.append(bar, pane);
   // sheets with tabs keep one height, so switching tabs doesn't make the menu jump
   body.closest('.sheet')?.classList.add('fixedh');

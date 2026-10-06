@@ -13,14 +13,18 @@ import { G, T, markDirty } from './state.js';
 import { bus } from '../core/util.js';
 import { CLOTHES } from '../data/wardrobe.js';
 import * as cloud from './cloud.js';
+import { grantServerBadge } from './badges.js';
 
+const local = ['localhost', '127.0.0.1'].includes(location.hostname);
 export const STORE = {
-  payments: false,   // real purchases (needs the checkout links below and the webhook)
-  checkout: { supporter: '', pass_s1: '' },   // payment links (the player's id is added as client_reference_id)
+  payments: false,   // live purchases: turn on once the live Stripe account's links are below
+  checkout: { supporter: '', pass_s1: '' },   // live Payment Links (the player's id is added as client_reference_id)
+  // Stripe sandbox links: used on a local copy, so the whole flow can be tried with test cards
+  test: { supporter: 'https://buy.stripe.com/test_6oU6oH0q4dGyghvckxeEo00', pass_s1: 'https://buy.stripe.com/test_3cI6oHc8M9qi5CR3O1eEo01' },
 };
 // the store screen shows on the live site once payments are on; before that only
 // on a local copy, so it can be checked
-export const storeVisible = () => STORE.payments || ['localhost', '127.0.0.1'].includes(location.hostname);
+export const storeVisible = () => STORE.payments || local;
 
 export const PRODUCTS = {
   supporter: {
@@ -71,6 +75,7 @@ export async function syncPurchases() {
     verified.add(id); fresh.push(id);
     give(PRODUCTS[id].clothes);
   }
+  if (verified.size) grantServerBadge('supporter');
   if (fresh.length) { claimSeason(); markDirty(true); }
   return fresh;
 }
@@ -90,10 +95,21 @@ function claimSeason() {
 }
 export const seasonState = () => ({ on: seasonOn(), pts: seasonPoints(), paid: ownsProduct(SEASON.product), got: S().season[SEASON.id]?.got || [] });
 
-// Start a purchase. Returns 'off' while payments are switched off.
+// Start a purchase: 'redirect' to Stripe, 'account' (needs a signed-in account), or 'off'.
 export function buy(id) {
-  const link = STORE.checkout[id];
-  if (!STORE.payments || !link || !G.user || G.user.local) return 'off';
+  const link = STORE.payments ? STORE.checkout[id] : local ? STORE.test[id] : null;
+  if (!link) return 'off';
+  if (!G.user || G.user.local) return 'account';                 // purchases belong to an account, so they're never lost
   location.href = `${link}${link.includes('?') ? '&' : '?'}client_reference_id=${encodeURIComponent(G.user.id)}`;
   return 'redirect';
+}
+
+// Back from Stripe (?purchase=<product>): thank the player and pick the purchase up once
+// the webhook has recorded it (usually within a few seconds).
+export function purchaseReturn() {
+  const q = new URLSearchParams(location.search), id = q.get('purchase');
+  if (!id || !PRODUCTS[id]) return;
+  history.replaceState(null, '', location.pathname);
+  bus.emit('toast', { text: T('Thank you for supporting JEN Island!', 'Cảm ơn bạn đã ủng hộ JEN Island!'), sub: T('Your items are on their way to your wardrobe.', 'Món đồ đang được gửi tới tủ quần áo của bạn.'), icon: 'heart', ms: 5000 });
+  let tries = 0; const poll = async () => { if ((await syncPurchases()).length || ++tries > 10) return; setTimeout(poll, 3000); }; setTimeout(poll, 1500);
 }

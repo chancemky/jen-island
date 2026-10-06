@@ -20,12 +20,32 @@ import { renderOffice } from './office.js';
 import * as cloud from '../systems/cloud.js';
 import { storeVisible } from '../systems/store.js';
 import { renderStore } from './store.js';
+import { toast } from './hud.js';
+import { BADGES, TIER_ORDER } from '../data/badges.js';
+import { hasBadge, showcaseBadge, setShowcase } from '../systems/badges.js';
 
+// badges: earned ones in colour, the rest greyed with what they need; tap one you've
+// earned to show it beside your name on the leaderboard
+function renderBadges(pane, api) {
+  const ids = Object.keys(BADGES).sort((a, b) => TIER_ORDER.indexOf(BADGES[a].tier) - TIER_ORDER.indexOf(BADGES[b].tier));
+  const got = ids.filter(hasBadge), shown = showcaseBadge();
+  pane.appendChild(h('div', 'section-title', T(`Badges · ${got.length} / ${ids.length}`, `Huy hiệu · ${got.length} / ${ids.length}`)));
+  const grid = h('div', 'badge-grid'); pane.appendChild(grid);
+  for (const id of ids) {
+    const b = BADGES[id], own = hasBadge(id);
+    const el = h('button', `badge t-${b.tier}${own ? '' : ' locked'}${id === shown ? ' shown' : ''}`, `<span class="glyph">${own ? b.glyph : '🔒'}</span><b>${escapeHtml(T(b.en, b.vi))}</b><small>${escapeHtml(T(b.need[0], b.need[1]))}</small>`);
+    el.type = 'button';
+    el.onclick = () => { if (!own) { sfx('error'); return; } setShowcase(id); sfx('success'); toast({ text: T(`${b.en} now shows beside your name`, `${b.vi} giờ hiện cạnh tên bạn`), icon: 'star' }); api.rebuild(); };
+    grid.appendChild(el);
+  }
+  pane.appendChild(h('div', 'empty-note', T('Tap a badge you\'ve earned to show it on the leaderboard.', 'Chạm huy hiệu đã có để hiện trên bảng xếp hạng.')));
+}
 function renderMilestones(pane, api) {
   const s = G.state;
   const lv = s.level || 1;
   const head = h('div', 'ms-row', `<img src="${iconURL('trophy', 48)}" alt=""><div class="ms-info"><b>${T(`Level ${lv}`, `Cấp ${lv}`)}</b><small>${T(`${Math.floor(s.xp || 0)} / ${xpNeed(lv)} XP to level ${lv + 1}`, `${Math.floor(s.xp || 0)} / ${xpNeed(lv)} KN để lên cấp ${lv + 1}`)}</small><div class="ms-bar"><i style="width:${Math.min(100, (s.xp || 0) / xpNeed(lv) * 100)}%"></i></div></div>`);
   pane.appendChild(head);
+  renderBadges(pane, api);
   const list = TRACKS.map(tr => ({ tr, st: trackState(tr) })).sort((a, b) => b.st.ready - a.st.ready || a.st.completed - b.st.completed);
   const done = list.filter(x => x.st.completed).length;
   if (done) pane.appendChild(h('div', 'empty-note', T(`${done} milestone${done > 1 ? 's' : ''} completed ✓`, `Đã hoàn thành ${done} cột mốc ✓`)));
@@ -74,20 +94,21 @@ function renderLeaderboard(pane) {
       await cloud.pushLeaderboard(leaderboardRowNow()).catch(() => {});
       const rows = await cloud.fetchLeaderboard(cur);
       if (!rows?.length) { box.innerHTML = `<div class="empty-note">${T('No one here yet. Be the first!', 'Chưa có ai. Hãy là người đầu tiên!')}</div>`; return; }
-      box.innerHTML = rows.map(r => `<div class="lb-row${r.is_me ? ' me' : ''}"><div class="lb-rank g${r.rank}">${r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] : '#' + r.rank}</div><div class="lb-name"><b>${escapeHtml(r.player_name)}${r.is_me ? T(' (you)', ' (bạn)') : ''}</b><small>${escapeHtml(r.island_name || '')} · ${T('Day', 'Ngày')} ${r.day}</small></div><div class="lb-val">${T('Lv', 'Cấp')} ${r.level}<small>${money(r.money)} · ${r.served} ${T('served', 'khách')}</small></div></div>`).join('');
+      box.innerHTML = rows.map(r => `<div class="lb-row${r.is_me ? ' me' : ''}"><div class="lb-rank g${r.rank}">${r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] : '#' + r.rank}</div><div class="lb-name"><b>${r.badge && BADGES[r.badge] ? `<span class="badge-mini t-${BADGES[r.badge].tier}" title="${escapeHtml(T(BADGES[r.badge].en, BADGES[r.badge].vi))}">${BADGES[r.badge].glyph}</span>` : ''}${escapeHtml(r.player_name)}${r.is_me ? T(' (you)', ' (bạn)') : ''}</b><small>${escapeHtml(r.island_name || '')} · ${T('Day', 'Ngày')} ${r.day}</small></div><div class="lb-val">${T('Lv', 'Cấp')} ${r.level}<small>${money(r.money)} · ${r.served} ${T('served', 'khách')}</small></div></div>`).join('');
     } catch (e) { box.innerHTML = `<div class="empty-note">${T('Could not reach the leaderboard. Check your connection.', 'Không kết nối được bảng xếp hạng. Kiểm tra mạng nhé.')}</div>`; }
   };
   for (const [k, label] of sorts) { const b = h('button', '', label); b.type = 'button'; b.onclick = () => { sfx('ui'); cur = k; load(); }; seg.appendChild(b); }
   pane.append(seg, box);
   load();
 }
-const leaderboardRowNow = () => leaderboardRow(G.state);
+const leaderboardRowNow = () => ({ ...leaderboardRow(G.state), badge: showcaseBadge() });
 
 export function openMenu({ onLogout, tab = 0 } = {}) {
   const s = G.state;
   openSheet({ title: s.island.name || 'JEN Island', sub: T(`Day ${s.day} · ${clock(s.time)} · Chapter ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.title || ''}`, `Ngày ${s.day} · ${clock(s.time)} · Chương ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.vi || ''}`), full: true, build: (body, api) => {
     const shop = storeVisible();
-    tabs(body, [T('Map', 'Bản đồ'), T('Business', 'Kinh doanh'), T('Milestones', 'Cột mốc'), T('Leaderboard', 'Xếp hạng'), T('Settings', 'Cài đặt'), T('Account', 'Tài khoản'), ...(shop ? [T('Support ✦', 'Ủng hộ ✦')] : []), ...(DEV_TOOLS ? ['🛠 Dev'] : [])], (i, pane) => {
+    const tab = (label, icon) => ({ label, icon });
+    tabs(body, [tab(T('Map', 'Bản đồ'), 'map'), tab(T('Business', 'Kinh doanh'), 'coin'), tab(T('Goals', 'Mục tiêu'), 'trophy'), tab(T('Ranks', 'Xếp hạng'), 'star'), tab(T('Settings', 'Cài đặt'), 'menu'), tab(T('Account', 'Tài khoản'), 'person'), ...(shop ? [tab(T('Support', 'Ủng hộ'), 'heart')] : []), ...(DEV_TOOLS ? [tab('Dev', 'hammer')] : [])], (i, pane) => {
       if (shop && i === 6) return renderStore(pane);
       if (DEV_TOOLS && i === (shop ? 7 : 6)) { import('../dev/devtools.js').then(m => m.renderDevPane(pane, api)); return; }   // testing only — see js/dev/flag.js
       if (i === 1) return renderOffice(pane, api);

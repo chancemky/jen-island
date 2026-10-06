@@ -19,6 +19,7 @@ import * as cloud from './cloud.js';
 import { bus } from '../core/util.js';
 import { leaderboardRow, shouldPushLeaderboard } from './progress.js';
 import { chooseIsland } from '../ui/conflict.js';
+import { showcaseBadge } from './badges.js';
 import { toast } from '../ui/hud.js';
 
 // saves from before OLDEST_SAVE are not loaded (everyone started fresh at that reset);
@@ -116,7 +117,7 @@ export async function saveCloudNow({ keepalive = false } = {}) {
     const snap = snapshot();
     await cloud.saveCloud(snap, { keepalive }); writeSync(G.user.id, snap.savedAt);
     saveStatus.cloudAt = Date.now(); saveStatus.offline = false; saveStatus.error = ''; cloudDirty = false;
-    if (G.state.player.name && (keepalive || shouldPushLeaderboard())) cloud.pushLeaderboard(leaderboardRow(G.state)).catch(e => console.warn('leaderboard', e.message));
+    if (G.state.player.name && (keepalive || shouldPushLeaderboard())) cloud.pushLeaderboard({ ...leaderboardRow(G.state), badge: showcaseBadge() }).catch(e => console.warn('leaderboard', e.message));
   }
   catch (e) {
     if (e.conflict) { cloudBusy = false; await otherDevice(); return; }

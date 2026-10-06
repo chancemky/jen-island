@@ -21,3 +21,15 @@ drop policy if exists "jen_island_purchases_select_own" on public.jen_island_pur
 create policy "jen_island_purchases_select_own"
 on public.jen_island_purchases for select to authenticated
 using ((select auth.uid()) is not null and (select auth.uid()) = user_id);
+
+-- The Stripe webhook's signing secret is kept in Supabase Vault (name:
+-- jen_island_stripe_webhook); only the service role (the edge function) can read it.
+create or replace function public.jen_island_stripe_secret()
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$ select decrypted_secret from vault.decrypted_secrets where name = 'jen_island_stripe_webhook' limit 1 $$;
+revoke all on function public.jen_island_stripe_secret() from public, anon, authenticated;
+grant execute on function public.jen_island_stripe_secret() to service_role;

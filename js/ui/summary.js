@@ -2,7 +2,9 @@
 // performance, milestones and achievements, then "Ngày mới" (new day).
 
 import { h, present } from './sheets.js';
-import { T, tr } from '../systems/state.js';
+import { G, T, tr, addMoney, markDirty } from '../systems/state.js';
+import { adsReady, showRewarded } from '../systems/ads.js';
+import { track } from '../systems/telemetry.js';
 import { bizName, CHAPTERS, ROLES } from '../data/game.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml } from '../core/util.js';
@@ -30,6 +32,7 @@ export function showSummary(sum) { return present(() => summaryCard(sum)); }
 function summaryCard(sum) {
   return new Promise(res => {
     const el = h('div', 'summary');
+    const f = G.state.story.flags, adOffer = adsReady() && sum.tips > 0 && f.adDay !== sum.day;   // (once a day, only when there were tips)
     const biz = Object.entries(sum.biz || {}).filter(([, v]) => v.served);
     const pl = sum.books?.biz || {};
     const vs = (a, b) => b != null && b !== 0 ? ` <span style="opacity:.7;font-size:.85em">${a >= b ? '▲' : '▼'}${Math.abs(Math.round((a - b) / Math.abs(b) * 100))}%</span>` : '';
@@ -55,7 +58,8 @@ function summaryCard(sum) {
       ${(sum.milestones.length || sum.achievements.length) ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Milestones', 'Cột mốc')}</div><ul class="sum-list">${sum.milestones.map(m => `<li class="ach"><span>★ ${escapeHtml(tr(m))}</span></li>`).join('')}</ul></div>` : ''}
       <div class="sum-card" style="text-align:center;font-weight:800;opacity:.85">${escapeHtml(sum.meoLine)}</div>
       ${walletTrail(sum)}
-      <button class="btn big pink" type="button" style="max-width:420px">${T('Next day ☀', 'Ngày mới ☀')}</button>`;
+      ${adOffer ? `<button class="btn big gold sum-ad" type="button" style="max-width:420px;margin-bottom:8px">${T(`▶ Watch a short ad: double today's tips (+${money(sum.tips)})`, `▶ Xem quảng cáo ngắn: nhân đôi tiền boa hôm nay (+${money(sum.tips)})`)}</button>` : ''}
+      <button class="btn big pink sum-next" type="button" style="max-width:420px">${T('Next day ☀', 'Ngày mới ☀')}</button>`;
     document.getElementById('app').appendChild(el);
     const stats = [...el.querySelectorAll('.sum-stat')];
     stats.forEach((s, i) => setTimeout(() => {
@@ -70,6 +74,13 @@ function summaryCard(sum) {
       requestAnimationFrame(step);
     }, 350 + i * 220));
     let done = false;
-    el.querySelector('button').onclick = () => { if (done) return; done = true; el.style.pointerEvents = 'none'; sfx('bell'); el.style.transition = 'opacity .5s'; el.style.opacity = 0; setTimeout(() => { el.remove(); res(); }, 450); };
+    const ad = el.querySelector('.sum-ad');
+    if (ad) ad.onclick = async () => {
+      ad.disabled = true; f.adDay = sum.day;
+      track('ad_offer_taken', { day: sum.day });
+      if (await showRewarded('double_tips')) { addMoney(sum.tips, 'ad'); markDirty(true); sfx('coin'); track('ad_rewarded', { day: sum.day, tips: sum.tips }); ad.textContent = T(`Tips doubled! +${money(sum.tips)}`, `Đã nhân đôi tiền boa! +${money(sum.tips)}`); }
+      else ad.textContent = T('No ad right now. Try again tomorrow!', 'Chưa có quảng cáo. Mai thử lại nhé!');
+    };
+    el.querySelector('.sum-next').onclick = () => { if (done) return; done = true; el.style.pointerEvents = 'none'; sfx('bell'); el.style.transition = 'opacity .5s'; el.style.opacity = 0; setTimeout(() => { el.remove(); res(); }, 450); };
   });
 }
