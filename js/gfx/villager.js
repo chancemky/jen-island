@@ -118,12 +118,15 @@ function pose(a, t, yaw) {
     case 'photo': aim(0, -2.2, SHO_Y + 7.6, 6); aim(1, 2.2, SHO_Y + 7.6, 6); P.held = 'camera'; break;
     case 'dance': { const k = Math.sin(at * 7); aim(0, -SHO_X - 2 + k, SHO_Y + 3 + Math.abs(k) * 3, 2); aim(1, SHO_X + 2 + k, SHO_Y + 3 + Math.abs(k) * 3, 2); P.roll += k * 0.1; P.bob += Math.abs(Math.sin(at * 7)) * 1.4; P.pelvisYaw += k * 0.2; break; }
     case 'stretch': { const k = Math.sin(Math.min(1, at / 1.6) * Math.PI); aim(0, -2 - k, SHO_Y + 3 + k * 8, 0.5); aim(1, 2 + k, SHO_Y + 3 + k * 8, 0.5); P.squashY *= 1 + k * 0.05; break; }
+    case 'clap': { const k = Math.abs(Math.sin(at * 11)); aim(0, -0.8 - k * 2.4, SHO_Y + 1.6, 6.2); aim(1, 0.8 + k * 2.4, SHO_Y + 1.6, 6.2); P.bob += k * 0.4; break; }
+    case 'laugh': { const k = Math.abs(Math.sin(at * 13)); aim(0, -2.8, SHO_Y - 6.4, 5); aim(1, 2.8, SHO_Y - 6.4, 5); P.bob += k * 0.9; P.headTilt -= 0.06; P.roll += Math.sin(at * 6.5) * 0.04; break; }
+    case 'bow': { const k = Math.sin(Math.min(1, at / 0.9) * Math.PI); P.lean += k * 0.32; P.headNod += k * 0.3; P.squashY *= 1 - k * 0.06; P.bob -= k * 1.2; aim(0, -2.4, SHO_Y - 6, 4); aim(1, 2.4, SHO_Y - 6, 4); break; }
     case 'wait': P.feet[1].y += Math.max(0, Math.sin(at * 6)) * (Math.sin(at * 0.7) > 0.3 ? 0.9 : 0); break;
     case 'sleep': P.headNod += 0.12; break;
     case 'ride': P.ride = true; break;
   }
   // carrying a shopping basket in the left hand (unless that hand is busy)
-  if (a.basket && !['cheer', 'carry', 'photo', 'dance', 'stretch', 'write', 'sweep', 'chop', 'work', 'stir', 'hammer'].includes(act)) { aim(0, -(SHO_X + 3.4), SHO_Y - 6.4 + P.bob * 0.3, 0.6 + Math.sin(ph) * 0.6 * m); P.basket = true; }
+  if (a.basket && !['cheer', 'carry', 'photo', 'dance', 'stretch', 'write', 'sweep', 'chop', 'work', 'stir', 'hammer', 'clap', 'laugh', 'bow'].includes(act)) { aim(0, -(SHO_X + 3.4), SHO_Y - 6.4 + P.bob * 0.3, 0.6 + Math.sin(ph) * 0.6 * m); P.basket = true; }
   // ---- lying back (in a hammock): legs together, ankles close, hands folded on the tummy
   if (a.lying) {
     P.lean = 0; P.roll = 0; P.sway = 0; P.pelvisYaw = 0; P.chestYaw = 0; P.bob = breathe * 0.25; P.headNod = -0.05;

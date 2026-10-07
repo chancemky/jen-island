@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#fbf3e4}canvas{display:block}</style></head><body><canvas id="c"></canvas>
+<script type="module">
+// Animation check: ?acts=a,b (default: every act) × 5 moments × 3 facings
+import { drawHuman } from '../js/gfx/character.js';
+import { playerLook } from '../js/data/looks.js';
+const acts = (new URLSearchParams(location.search).get('acts') || 'wave,cheer,clap,laugh,bow,dance,stretch,think,drink,work').split(',');
+const cv = document.getElementById("c"), S = 1.7, W = 16 * 62 + 80, H = acts.length * 120 + 20; cv.width = W * 2; cv.height = H * 2; cv.style.width = W + 'px';
+const c = cv.getContext('2d'); c.scale(2, 2); c.lineJoin = c.lineCap = 'round'; c.font = '800 11px sans-serif';
+const look = playerLook({ hairStyle: 'bob' });
+acts.forEach((act, r) => {
+  c.fillStyle = '#5b3f36'; c.fillText(act, 6, r * 120 + 64);
+  let x = 90;
+  for (const dir of ['down', 'right', 'left']) for (const at of [0.05, 0.25, 0.5, 0.75, 1.0]) {
+    c.save(); c.translate(x, r * 120 + 110); c.scale(S, S);
+    drawHuman(c, { look, dir, moving: 0, walkPh: 0, seed: 1, blinkAmt: 0, emo: 'happy', act, actT: at }, at); c.restore(); x += 62;
+  }
+});
+window.__ready = true;
+</script></body></html>

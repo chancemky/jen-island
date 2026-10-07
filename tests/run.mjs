@@ -376,6 +376,24 @@ if (run('features')) {
   if (r.mail) pass('features', 'morning mail comes once a day'); else fail('features', 'morning mail wrong');
   if (r.festivals.join() === 'tet,halloween,christmas,') pass('features', 'real festivals fall on their dates'); else fail('features', `festival dates wrong: ${r.festivals.join()}`);
   if (r.festivalHats && r.songs >= 12) pass('features', `festival hats exist; ${r.songs} songs all valid`); else fail('features', 'festival hats or songs missing');
+  // the Island Board: three notes a day, the same all day, counted as you play, paid once
+  const board = await p.evaluate(async () => {
+    const J = window.__jen, s = J.G.state, B = await import('/js/systems/board.js'), { bus } = await import('/js/core/util.js');
+    s.biz.shed1.owned = true; s.day = 30;
+    const a = B.todaysNotes().map(n => n.kind + n.giver).join(), again = B.todaysNotes().map(n => n.kind + n.giver).join();
+    for (const n of B.todaysNotes()) B.takeNote(n);
+    const m0 = s.money, done0 = s.stats.boardDone || 0;
+    for (let i = 0; i < 40; i++) bus.emit('served', { order: { recipe: s.recipes[0] } }, 'perfect', 10, 1);
+    for (let i = 0; i < 4; i++) bus.emit('fish', 'sardine');
+    for (const n of B.todaysNotes()) if (n.kind === 'bring') { s.pantry[n.item] = 99; B.handIn(n); B.handIn(n); } else if (n.kind === 'mats') { s.materials[n.item] = 99; B.handIn(n); B.handIn(n); }
+    const pays = B.todaysNotes().reduce((t, n) => t + n.pay, 0);
+    s.day = 31; const fresh = B.todaysNotes().every(n => n.state === 'open');
+    const W = await import('/js/systems/weekboard.js');
+    return { same: a === again && a.length > 0, n: B.todaysNotes().length, allDone: (s.stats.boardDone || 0) - done0, paid: s.money - m0 >= pays, fresh,
+      prize: [W.prizeFor(1).trophy, W.prizeFor(3).trophy, W.prizeFor(10).trophy].join(), ends: new Date(W.weekEndsAt(Date.parse('2026-10-08T05:00:00Z'))).toISOString() };
+  });
+  if (board.same && board.n >= 3 && board.allDone === 3 && board.paid && board.fresh) pass('features', 'Island Board: 3 daily notes, counted and paid once, new ones the next day'); else fail('features', `Island Board wrong: ${JSON.stringify(board)}`);
+  if (board.prize === 'trophy_gold,trophy_silver,trophy_bronze' && board.ends === '2026-10-11T17:00:00.000Z') pass('features', 'weekly board: prizes by rank, closes Monday 00:00 Vietnam time'); else fail('features', `weekly board wrong: ${board.prize} ${board.ends}`);
   if (errors.length) fail('features', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('features', 'no errors');
   await ctx.close();
 }

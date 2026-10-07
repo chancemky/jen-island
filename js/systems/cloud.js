@@ -177,6 +177,10 @@ export async function listFriends() {
   return api(`/rest/v1/jen_island_showcase?select=${SHOW}&user_id=in.(${rows.map(r => r.friend_id).join(',')})&order=updated_at.desc`);
 }
 export async function friendHome(id) { return (await api(`/rest/v1/jen_island_showcase?select=player_name,island_name,look,home,badge&user_id=eq.${encodeURIComponent(id)}`))?.[0] || null; }
+// visits: the emote you leave at a friend's home (one per friend per day; the latest wins)
+export async function leaveVisit(to, emote) { await api('/rest/v1/jen_island_visits?on_conflict=from_id,to_id,day', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ from_id: session.user.id, to_id: to, emote }) }); }
+export async function myVisitors() { return api('/rest/v1/rpc/jen_island_my_visitors', { method: 'POST', body: '{}' }); }
+export async function visitsSeen() { await api(`/rest/v1/jen_island_visits?to_id=eq.${session.user.id}&seen=eq.false`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ seen: true }) }); }
 export async function giftsSentToday() { return api(`/rest/v1/jen_island_gifts?select=to_id&from_id=eq.${session.user.id}&sent_on=eq.${new Date().toISOString().slice(0, 10)}`); }
 export async function sendGift(to, kind) { await api('/rest/v1/jen_island_gifts', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ from_id: session.user.id, to_id: to, kind }) }); }
 export async function giftsWaiting() {

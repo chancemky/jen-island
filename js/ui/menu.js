@@ -25,7 +25,7 @@ import { toast } from './hud.js';
 import { BADGES, TIER_ORDER } from '../data/badges.js';
 import { hasBadge, showcaseBadge, setShowcase } from '../systems/badges.js';
 import { weeklyGoals, claimGoal, goalReward } from '../systems/weekly.js';
-import { myCode, visitFriend, sendGift, GIFTS } from '../systems/social.js';
+import { myCode, visitFriend, sendGift, GIFTS, noteFriendCount } from '../systems/social.js';
 import { timeLeftText } from '../systems/weekboard.js';
 import { slimLook } from '../data/looks.js';
 import { drawVillagerHead } from '../gfx/villager.js';
@@ -51,6 +51,7 @@ function renderFriends(pane, api) {
   pane.appendChild(add);
   const list = h('div', 'list'); list.innerHTML = `<div class="empty-note">${T('Loading your friends…', 'Đang tải bạn bè…')}</div>`; pane.appendChild(list);
   Promise.all([cloud.listFriends(), cloud.giftsSentToday()]).then(([friends, sent]) => {
+    noteFriendCount(friends?.length || 0);
     list.innerHTML = '';
     if (!friends?.length) { list.appendChild(h('div', 'empty-note', T('No friends yet. Share your code!', 'Chưa có bạn bè. Chia sẻ mã của bạn nhé!'))); return; }
     const gave = new Set((sent || []).map(r => r.to_id));

@@ -14,7 +14,7 @@ await p.waitForFunction(() => window.done, null, { timeout: 30000 });
 await p.evaluate(async () => { const d = await import('/js/dev/devtools.js'); d.jumpTo('free'); const st = window.__jen.G.state; st.player.name = 'Tester'; st.island.name = 'Test Isle'; const s = await import('/js/systems/save.js'); s.saveLocal(); });
 await p.goto(base); await p.waitForFunction(() => window.done, null, { timeout: 30000 });
 for (let i = 0; i < 24; i++) {         // clear the start-of-day popups and any cutscene
-  await p.evaluate(() => { document.querySelector('#skipBtn:not(.hidden)')?.click(); const m = document.querySelector('.modal .btn'); m?.click(); }).catch(() => {});
+  await p.evaluate(() => { document.querySelector('#skipBtn:not(.hidden)')?.click(); document.querySelector('.modal .btn, .reward button')?.click(); }).catch(() => {});
   await p.waitForTimeout(400);
 }
 console.log('state', await p.evaluate(() => { const s = window.__jen.G.state; return `ch ${s.story.chapter} step ${s.story.step} scene ${window.__jen.G.scene?.id} cs ${!!window.__jen.G.runtime.inCutscene}`; }));

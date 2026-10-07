@@ -19,6 +19,7 @@ export const BADGES = {
   angler:      { tier: 'bronze', glyph: '🎣', en: 'Angler', vi: 'Cần thủ', need: ['Catch 3 kinds of fish', 'Câu được 3 loại cá'], got: s => Object.keys(s.fishSeen || {}).length >= 3 },
   goal_getter: { tier: 'bronze', glyph: '🎯', en: 'Goal Getter', vi: 'Hoàn thành mục tiêu', need: ['Finish a week of island goals', 'Hoàn thành mục tiêu một tuần'], got: s => (s.weekly?.champ || 0) >= 1 },
   neighbour:   { tier: 'bronze', glyph: '📌', en: 'Good Neighbour', vi: 'Hàng xóm tốt', need: ['Finish 10 notes from the Island Board', 'Hoàn thành 10 lời nhờ trên Bảng tin đảo'], got: s => (s.stats.boardDone || 0) >= 10 },
+  first_friend:{ tier: 'bronze', glyph: '🫶', en: 'First Friend', vi: 'Người bạn đầu tiên', need: ['Add a friend', 'Kết bạn với một người'], got: s => (s.social?.friends || 0) >= 1 },
   homebody:    { tier: 'bronze', glyph: '🏡', en: 'Homebody', vi: 'Người yêu nhà', need: ['Place 10 pieces of furniture', 'Đặt 10 món nội thất'], got: s => (s.home?.furniture || []).length >= 10 },
   // ---- silver
   crowd:       { tier: 'silver', glyph: '🎪', en: 'Crowd Pleaser', vi: 'Đắt khách', need: ['Serve 1,000 customers', 'Phục vụ 1.000 khách'], got: s => s.stats.served >= 1000 },
@@ -34,6 +35,9 @@ export const BADGES = {
   fashion:     { tier: 'gold', glyph: '👗', en: 'Fashion Icon', vi: 'Biểu tượng thời trang', need: ['Own every boutique piece', 'Có mọi món ở tiệm thời trang'], got: s => boutique().every(id => s.wardrobe?.owned?.includes(id)) },
   fisher:      { tier: 'gold', glyph: '🐟', en: 'Master Angler', vi: 'Bậc thầy câu cá', need: ['Catch every kind of fish', 'Câu được mọi loại cá'], got: s => Object.keys(FISH).every(id => s.fishSeen?.[id]) },
   pillar:      { tier: 'gold', glyph: '🏘️', en: 'Pillar of the Island', vi: 'Trụ cột của đảo', need: ['Finish 150 notes from the Island Board', 'Hoàn thành 150 lời nhờ trên Bảng tin đảo'], got: s => (s.stats.boardDone || 0) >= 150 },
+  gift_giver:  { tier: 'silver', glyph: '🎁', en: 'Gift Giver', vi: 'Người hay tặng quà', need: ['Send 20 gifts to friends', 'Tặng bạn bè 20 món quà'], got: s => (s.social?.giftsSent || 0) >= 20 },
+  globetrotter:{ tier: 'silver', glyph: '🧳', en: 'Houseguest', vi: 'Khách quen nhà bạn', need: ['Visit friends\' homes 15 times', 'Thăm nhà bạn bè 15 lần'], got: s => (s.social?.visitsMade || 0) >= 15 },
+  open_house:  { tier: 'gold', glyph: '🏠', en: 'Open House', vi: 'Nhà luôn rộng cửa', need: ['Have friends visit your home 30 times', 'Được bạn bè ghé thăm 30 lần'], got: s => (s.social?.visitorsGot || 0) >= 30 },
   ten_weeks:   { tier: 'gold', glyph: '🏆', en: 'Ten Good Weeks', vi: 'Mười tuần tuyệt vời', need: ['Finish 10 weeks of island goals', 'Hoàn thành mục tiêu 10 tuần'], got: s => (s.weekly?.champ || 0) >= 10 },
   month_streak:{ tier: 'gold', glyph: '🌙', en: 'Thirty Mornings', vi: 'Ba mươi buổi sáng', need: ['Play 30 days in a row', 'Chơi 30 ngày liên tiếp'], got: s => (s.streak?.best || 0) >= 30 },
   // ---- legend: the hardest

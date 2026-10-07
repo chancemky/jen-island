@@ -805,3 +805,16 @@ body.hide-controls #joyBase, body.hide-controls #joyHint, body.cutscene #joyHint
 @keyframes notePin { from { opacity: 0; transform: translateY(-14px) rotate(calc(var(--tilt) * -2)); } }
 @keyframes stamp { from { opacity: 0; transform: scale(2.2) rotate(-12deg); } }
 .note-pay img { width: 15px; height: 15px; vertical-align: -3px; }
+
+/* friend visits: emote bar and the "who came by" card */
+.emote-bar { position: absolute; left: 12px; bottom: calc(22px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(4, 40px); gap: 5px; padding: 7px; background: rgba(255,250,240,.95); border: 3px solid #5b3f36; border-radius: 22px; box-shadow: 0 4px 0 rgba(91,63,54,.25); z-index: 40; animation: barIn .35s cubic-bezier(.3,1.6,.5,1); }
+.emote-bar button { font-size: 22px; width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 2px solid #efdcbc; flex: none; transition: transform .12s; }
+.emote-bar button:active { transform: scale(1.25) rotate(-8deg); }
+@keyframes barIn { from { transform: translateY(30px) scale(.9); opacity: 0; } }
+.visitors { text-align: center; }
+.visitors .kicker { font-weight: 900; color: var(--pink2, #e56b8b); letter-spacing: .1em; text-transform: uppercase; font-size: 12px; }
+.vis-list { display: grid; gap: 6px; margin: 10px 0 14px; }
+.vis { display: grid; grid-template-columns: 40px 1fr; align-items: center; text-align: left; background: #fff8ea; border-radius: 14px; padding: 6px 10px; animation: notePin .35s ease-out backwards; }
+.vis:nth-child(2) { animation-delay: .08s; } .vis:nth-child(3) { animation-delay: .16s; }
+.vis-e { grid-row: span 2; font-size: 26px; }
+.vis small { font-weight: 800; opacity: .65; }

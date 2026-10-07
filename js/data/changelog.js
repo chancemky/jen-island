@@ -3,9 +3,22 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.5.4';
+export const APP_VERSION = '5.6.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.6.0', date: '2026-10-07T14:24:32Z',
+    title: ['Neighbours & Champions', 'Hàng Xóm & Nhà Vô Địch'],
+    items: [
+      ['New weekly leaderboard: Most served, Most earned and Most XP. It resets every Monday, and the all-time board stays', 'Bảng xếp hạng tuần mới: Phục vụ nhiều nhất, Kiếm nhiều nhất và Nhiều XP nhất. Làm mới mỗi thứ Hai, bảng mọi thời vẫn giữ nguyên'],
+      ['The top 10 each week win a trophy for their home (gold, silver or bronze), coins and a badge', 'Top 10 mỗi tuần nhận cúp trang trí nhà (vàng, bạc hoặc đồng), tiền và huy hiệu'],
+      ['Every player on the leaderboard now shows their character', 'Mỗi người chơi trên bảng xếp hạng giờ hiện nhân vật của họ'],
+      ['The Island Board on Wind Plaza: neighbours pin new requests every day. Help them for money, friendship and little presents', 'Bảng tin đảo ở Quảng trường gió: hàng xóm ghim lời nhờ mới mỗi ngày. Giúp họ để nhận tiền, tình bạn và quà nhỏ'],
+      ['Visiting a friend\'s home? Wave, clap, dance or laugh, and your friend answers back. They\'ll see who came by next time they play', 'Ghé nhà bạn bè? Vẫy tay, vỗ tay, nhảy hay cười, và bạn ấy sẽ đáp lại. Lần sau vào game, bạn ấy sẽ thấy ai đã ghé'],
+      ['New animations: clap, laugh and bow', 'Hoạt ảnh mới: vỗ tay, cười và cúi chào'],
+      ['New badges: Good Neighbour, Pillar of the Island, First Friend, Gift Giver, Houseguest, Open House, Top Ten, On the Podium and Champion of the Week', 'Huy hiệu mới: Hàng xóm tốt, Trụ cột của đảo, Người bạn đầu tiên, Người hay tặng quà, Khách quen nhà bạn, Nhà luôn rộng cửa, Top Mười, Lên bục vinh quang và Quán quân của tuần'],
+    ],
+  },
   {
     v: '5.5.4', date: '2026-10-07T13:47:30Z',
     title: ['Shopkeepers Are Back', 'Chủ Quán Trở Lại'],
