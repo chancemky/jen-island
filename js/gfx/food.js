@@ -297,6 +297,9 @@ export function iconURL(id, px = 64) {
   return url;
 }
 export const DRINK_PREVIEW = {
+  tra_tac_muoi: { size: 'M', layers: [{ color: '#f0b04a', h: 1 }], ice: 1, bits: [{ kind: 'kumquat', float: 1 }], straw: true, strawColor: '#ffffff' },
+  tra_sua_dao: { size: 'M', layers: [{ color: '#f2c19a', h: 1 }], ice: 1, bits: [{ kind: 'peach' }, { kind: 'tapioca' }], straw: true, strawColor: '#f7a868' },
+  ca_phe_cam: { size: 'M', layers: [{ color: '#ffae3a', h: 0.6 }, { color: '#5e3a28', h: 0.4 }], ice: 2, straw: true, strawColor: '#6fbf73' },
   sinh_to_xoai: { size: 'M', layers: [{ color: '#ffc23d', h: 1 }], straw: true, strawColor: '#f36d86' },
   nuoc_dua: { size: 'M', layers: [{ color: '#eef6ea', h: 1 }], ice: 2, straw: true, strawColor: '#6fbf73' },
   chanh_day: { size: 'M', layers: [{ color: '#f2b51e', h: 0.35 }, { color: '#f7d36a', h: 0.65 }], ice: 2, bits: [{ kind: 'lime', float: 1 }], straw: true, strawColor: '#8f7fd0' },

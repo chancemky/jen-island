@@ -120,7 +120,30 @@ export async function talkToMerchant(a) {
   }
   await say(a, pickT(choice(MERCH[a.data.mid] || [['Hello!', 'Xin chào!']])));
 }
+const KEEPER_TALK = {
+  quick: [['Order, make, hand over, smile. I could do this in my sleep. I might be doing it in my sleep.', 'Nhận order, làm, đưa, cười. {Me} làm trong mơ cũng được. Có khi đang mơ thật.'], ['Fastest hands on the island. Ask anyone. Actually, don\'t, they\'ll say Bà Tư.', 'Tay nhanh nhất đảo đó. Hỏi ai cũng biết. Mà thôi đừng hỏi, họ sẽ nói Bà Tư.']],
+  careful: [['I measure everything twice. The ice cubes are a little scared of me.', '{Me} đo mọi thứ hai lần. Mấy viên đá hơi sợ {me}.'], ['Not one complaint this week. I keep a little notebook.', 'Tuần này không có lời phàn nàn nào. {Me} ghi vào sổ nhỏ đó.']],
+  friendly: [['I know every regular\'s name, their kids\' names and two of their dogs.', '{Me} biết tên mọi khách quen, tên con họ và hai con chó của họ.'], ['A tourist cried because the tea was so good. I gave her a napkin and a free one.', 'Có du khách khóc vì trà ngon quá. {Me} đưa khăn giấy và tặng thêm một ly.']],
+  steady: [['Another good day. Nothing broken, nobody angry. That\'s the job.', 'Thêm một ngày tốt. Không vỡ gì, không ai giận. Việc là vậy đó.']],
+};
+// your own shopkeepers: they chat in character, and you can pay for training or promote an expert
+async function talkToKeeper(a, id) {
+  const E = await import('./economy.js'), k = E.keeperOf(id); if (!k) return;
+  a.face(G.player); a.setEmo('happy', 2);
+  const sk = E.keeperSkill(k), lines = KEEPER_TALK[k.trait] || KEEPER_TALK.steady;
+  await say(a, pickT(choice(lines)) + (k.head ? T(' (Head keeper, by the way.)', ' (Trưởng quán đó nha.)') : ''));
+  const opts = [];
+  if (E.canTrain(id)) opts.push({ id: 'train', label: T(`Send for training · ${E.trainCost(id)}k`, `Cho đi học nghề · ${E.trainCost(id)}k`) });
+  if (sk >= 3 && !k.head) opts.push({ id: 'promote', label: T(`Promote to head keeper · ${E.promoteCost(id)}k`, `Thăng trưởng quán · ${E.promoteCost(id)}k`) });
+  if (!opts.length) return;
+  opts.push({ id: 'no', label: T('Keep up the good work!', 'Cứ làm tốt như vậy nha!') });
+  const pick = await ask(a, T('Anything you need from me?', 'Sếp cần gì không ạ?'), opts.map(o => o.label));
+  const o = opts[pick]; if (!o || o.id === 'no') return;
+  if (o.id === 'train') { if (E.trainKeeper(id)) { a.showEmote('sparkle', 1.6); await say(a, T('I\'ll come back sharper. Thank you, boss!', '{Me} sẽ giỏi hơn. Cảm ơn sếp!')); } else await say(a, T('Maybe when the till is a bit fuller, boss.', 'Chắc đợi két đầy thêm chút nha sếp.')); }
+  if (o.id === 'promote') { if (E.promoteKeeper(id)) { a.showEmote('heart', 2); await say(a, T('Head keeper?! I\'m telling my mum right now.', 'Trưởng quán?! {Me} phải báo mẹ ngay.')); } else await say(a, T('Maybe when the till is a bit fuller, boss.', 'Chắc đợi két đầy thêm chút nha sếp.')); }
+}
 export async function talkToStaff(a) {
+  if (a.data.keeper) return talkToKeeper(a, a.data.keeper);
   const e = a.data.emp;
   a.face(G.player);
   const role = T(ROLES[e.role].en, ROLES[e.role].vi);

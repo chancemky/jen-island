@@ -62,7 +62,7 @@ export const SKILL_NAMES = [null, ['Learning', 'Đang học'], ['Capable', 'Th�
 export const KEEPER_SKILL_AT = [0, 0, 150, 400];                 // guests served to reach each skill level
 export const keeperSkill = k => Math.max(1, Math.min(3, k?.skill || 1));
 export const wageFor = (id, skill) => Math.round((KEEPER_WAGE[BUSINESSES[id].kind] || 50) * (0.8 + 0.2 * skill));
-export const keeperWage = (id, k = keeperOf(id)) => wageFor(id, keeperSkill(k));
+export const keeperWage = (id, k = keeperOf(id)) => Math.round(wageFor(id, keeperSkill(k)) * (k?.head ? 1.2 : 1));
 export const HIRE_DAYS = 2;
 export const keeperOf = id => G.state.keepers?.[id] || null;
 export const canHaveKeeper = id => BUSINESSES[id].kind !== 'restaurant';
@@ -71,7 +71,23 @@ const TRAIT = [{ id: 'quick', en: 'Quick hands', vi: 'Nhanh tay', speed: 0.75, p
 export const keeperTrait = k => TRAIT.find(t => t.id === k.trait) || TRAIT[0];
 // how fast and how well: trait × skill
 export const keeperSpeed = k => keeperTrait(k).speed * [1, 1.15, 1, 0.85][keeperSkill(k)];
-export const keeperPerfect = k => Math.min(0.95, keeperTrait(k).perfect + [0, -0.08, 0, 0.1][keeperSkill(k)]);
+export const keeperPerfect = k => Math.min(0.97, keeperTrait(k).perfect + [0, -0.08, 0, 0.1][keeperSkill(k)] + (k.head ? 0.05 : 0));
+// training: a paid course that lifts a keeper one skill level (once every three days)
+export const trainCost = id => keeperWage(id) * 4;
+export const canTrain = id => { const k = keeperOf(id); return !!k && keeperSkill(k) < 3 && (G.state.day - (k.trainedDay || -9)) >= 3; };
+export function trainKeeper(id) {
+  const k = keeperOf(id), cost = trainCost(id); if (!canTrain(id) || !canAfford(cost)) return false;
+  addMoney(-cost, 'hire'); recordCost(id, 'wages', cost); k.skill = keeperSkill(k) + 1; k.trainedDay = G.state.day; markDirty(true); addXP(30, 'train');
+  return true;
+}
+// an expert can be promoted to head keeper: a little more careful, and proud of it (a higher wage)
+export const promoteCost = id => keeperWage(id) * 6;
+export function promoteKeeper(id) {
+  const k = keeperOf(id), cost = promoteCost(id); if (!k || k.head || keeperSkill(k) < 3 || !canAfford(cost)) return false;
+  addMoney(-cost, 'hire'); recordCost(id, 'wages', cost); k.head = true; markDirty(true); addXP(60, 'promote');
+  const a = actors[id]; if (a) { a.look = { ...a.look, hat: 'chef', hatColor: '#fffdf8' }; a.setAct('cheer'); setTimeout(() => a.setAct(null), 1500); }
+  return true;
+}
 export function candidate(id) {
   // the same person applies until you hire them (new one each day)
   let h = 7; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) % 100003;
@@ -135,7 +151,7 @@ function keeperLook(id, k) {
   const look = { ...visitorLook(k.seed * 13 + 7, 'regular'), apron: '#fff6e6', scale: 0.86 };
   delete look.backpack; delete look.camera; delete look.tote; delete look.guitar; delete look.surf; delete look.suitcase;
   const w = workOf(id), st = bizOf(id);
-  look.hat = w.hat; look.hatColor = st.signCol || st.awning?.[1] || '#f28f7c'; look.hatRibbon = '#fff6e6';
+  look.hat = k.head ? 'chef' : w.hat; look.hatColor = k.head ? '#fffdf8' : st.signCol || st.awning?.[1] || '#f28f7c'; look.hatRibbon = '#fff6e6';
   return look;
 }
 function placeKeeper(id, a) {

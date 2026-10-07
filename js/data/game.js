@@ -219,6 +219,12 @@ Object.assign(RECIPES, {
   // and for the Harbour Café: coconut coffee, blended like a cloud
   ca_phe_dua:    { vi: 'Cà phê cốt dừa', en: 'Coconut Coffee', blurbVi: 'Cốt dừa xay với đá như mây, rót cà phê đậm lên trên.', blurb: 'Coconut cream blended to a cloud with ice, strong coffee poured over.', biz: 'cafe', price: 37, vessel: 'cup', steps: ['coconut_milk', 'condensed_milk', 'blend', 'coffee'], options: ['size'], icon: 'drink:ca_phe_dua', chapter: 15, needRep: 1000 },
 });
+// Secret recipes: never taught by anyone — found by experimenting at your own stove (ui/lab.js)
+Object.assign(RECIPES, {
+  tra_tac_muoi: { vi: 'Trà tắc muối', en: 'Salted Kumquat Tea', blurbVi: 'Trà tắc thêm chút muối biển. Chua, mặn, ngọt — đúng kiểu dân đảo.', blurb: 'Kumquat tea with a pinch of sea salt. Sour, salty, sweet — an islander\'s drink.', biz: 'drinks', price: 22, vessel: 'cup', steps: ['tea', 'kumquat_cut', 'sea_salt'], options: ['size', 'sugar', 'ice'], icon: 'drink:tra_tac_muoi', chapter: 4, secret: true },
+  tra_sua_dao:  { vi: 'Trà sữa đào', en: 'Peach Milk Tea', blurbVi: 'Trà sữa béo hòa với siro đào. Ai thử cũng hỏi "sao trước giờ không có?"', blurb: 'Creamy milk tea with peach syrup. Everyone asks why nobody made it before.', biz: 'drinks', price: 30, vessel: 'cup', steps: ['tea', 'milk', 'peach_syrup'], options: ['size', 'sugar', 'ice', 'topping'], icon: 'drink:tra_sua_dao', chapter: 7, secret: true },
+  ca_phe_cam:   { vi: 'Cà phê cam', en: 'Orange Coffee', blurbVi: 'Nước cam vắt và một shot cà phê đậm. Lạ mà ghiền.', blurb: 'Fresh orange juice with a shot of strong coffee. Strange, then addictive.', biz: 'cafe', price: 40, vessel: 'cup', steps: ['orange_cut', 'coffee'], options: ['size', 'ice'], icon: 'drink:ca_phe_cam', chapter: 13, secret: true },
+});
 // The Night Market stalls each have their own speciality (handed over by the owner when you buy the stall)
 Object.assign(RECIPES, {
   oc_luoc:    { vi: 'Ốc luộc sả', en: 'Lemongrass Snails', blurbVi: 'Ốc luộc sả, chấm muối tiêu chanh. Ăn chậm, nói chuyện nhiều.', blurb: 'Snails boiled with lemongrass, dipped in salt, pepper and lime. You eat slowly and talk a lot.', biz: 'night', price: 38, vessel: 'plate', steps: ['snails_cooked', 'herbs', 'lime_wedge'], options: ['chili'], icon: 'oc_luoc', chapter: 9, stallOnly: true },
@@ -296,6 +302,16 @@ const HIGH_UPGRADES = {
           { cost: 9500, mats: { wood: 20, cable: 4, lantern: 8 }, label: 'Rooftop lanterns & live music corner', labelVi: 'Đèn lồng sân thượng & góc nhạc sống', tables: 8, attract: 2.3, price: 1.25 }],
 };
 for (const [id, ups] of Object.entries(HIGH_UPGRADES)) BUSINESSES[id].upgrades.push(...ups);
+// the harbour café, the cove grill and the smoothie bar: kiosk upgrades (string lights,
+// seating, planters, then a famous-spot finish), drawn in gfx/buildings.js drawKiosk
+const kioskUps = (base, flavour) => [null, null,
+  { cost: base, mats: { cable: 1, wood: 6 }, label: 'String lights & a chalkboard menu', labelVi: 'Dây đèn & bảng menu phấn', queue: 6, attract: 1.3 },
+  { cost: base * 2.2, mats: { wood: 10, paint: 4 }, label: 'Extra seating out front', labelVi: 'Thêm chỗ ngồi phía trước', queue: 6, attract: 1.6, price: 1.1 },
+  { cost: base * 4.5, mats: { tile: 8, paint: 4, lantern: 3 }, label: flavour[0], labelVi: flavour[1], queue: 7, attract: 1.9, price: 1.15 },
+  { cost: base * 9, mats: { cable: 3, lantern: 6, paint: 6 }, label: 'Neon trim & a famous-spot banner', labelVi: 'Viền neon & băng rôn quán nổi tiếng', queue: 7, attract: 2.2, price: 1.22 }];
+BUSINESSES.cafe.upgrades = kioskUps(1200, ['Flower boxes & a coffee-bean sign', 'Chậu hoa & biển hạt cà phê']);
+BUSINESSES.grill.upgrades = kioskUps(1600, ['Tiki torches & a bigger charcoal grill', 'Đuốc tiki & bếp than lớn hơn']);
+BUSINESSES.smoothie.upgrades = kioskUps(1400, ['Fruit crates & a surfboard sign', 'Thùng trái cây & biển ván lướt']);
 BUSINESSES.night.upgrades = [null, null,
   { cost: 900, mats: { lantern: 4, wood: 6 }, label: 'Red lantern canopy', labelVi: 'Mái lồng đèn đỏ', queue: 5, attract: 1.3 },
   { cost: 2000, mats: { cable: 2, paint: 4 }, label: 'Charcoal grill upgrade', labelVi: 'Nâng cấp bếp than', queue: 5, attract: 1.6, price: 1.1 },
@@ -419,6 +435,9 @@ export const PERSONALITIES = {
   excited:  { vi: 'Hào hứng', en: 'Excited',  patience: 1.0,  tip: 1.2, weight: 2 },
   picky:    { vi: 'Khó tính', en: 'Picky',  patience: 0.9,  tip: 1.45, weight: 1 },
   tourist:  { vi: 'Du khách', en: 'Tourist',  patience: 1.1,  tip: 1.3, weight: 3 },
+  // by look, not drawn at random: little ones and grandparents
+  kid:      { vi: 'Em bé', en: 'Kid',  patience: 0.85, tip: 0.6, weight: 0 },
+  elder:    { vi: 'Ông bà', en: 'Grandparent',  patience: 1.7, tip: 1.2, weight: 0 },
 };
 
 // ---------------------------------------------------------------- chapters

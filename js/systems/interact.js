@@ -55,7 +55,7 @@ const ACTIONS = {
   wall_mirror: p => ({ label: T('Mirror', 'Soi gương'), icon: 'heart', run: () => mirror() }), mirror: p => ACTIONS.wall_mirror(p),
   bookshelf: p => ({ label: T('Read', 'Đọc sách'), icon: 'notebook', run: () => books() }),
   familyPhoto: p => ({ label: T('Photos', 'Xem ảnh'), icon: 'photo', run: () => photos(p) }), photoWall: p => ACTIONS.familyPhoto(p),
-  stove: p => ({ label: T('Stove', 'Bếp'), icon: 'grill', run: () => kitchen(p, 'stove') }), sink: p => ({ label: T('Sink', 'Bồn rửa'), icon: 'ice', run: () => kitchen(p, 'sink') }),
+  stove: p => G.scene?.id === 'house' ? { label: T('Recipe lab', 'Bếp thử món'), icon: 'grill', run: () => import('../ui/lab.js').then(m => m.openLab()) } : { label: T('Stove', 'Bếp'), icon: 'grill', run: () => kitchen(p, 'stove') }, sink: p => ({ label: T('Sink', 'Bồn rửa'), icon: 'ice', run: () => kitchen(p, 'sink') }),
   prepTable: p => ({ label: T('Prep table', 'Bàn sơ chế'), icon: 'bread_split', run: () => kitchen(p, 'prep') }),
   fittingRoom: p => ({ label: T('Fitting room', 'Phòng thử đồ'), icon: 'shirt', run: () => fitting(p) }),
   neon_sign: p => ACTIONS.lamp(p), moon_lamp: p => ACTIONS.lamp(p), fairy_lights: p => ACTIONS.lamp(p),

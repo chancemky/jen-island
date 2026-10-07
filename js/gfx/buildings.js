@@ -481,6 +481,17 @@ export function drawRestaurant(c, t, b) {
     c.beginPath(); c.moveTo(x - 13, -8); c.lineTo(x - 13, -30); c.arc(x, -30, 13, Math.PI, TAU); c.lineTo(x + 13, -8); c.closePath();
     c.fillStyle = broken ? '#6e5a4e' : lit ? winLit() : '#a9dcee'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
     if (lit) glow(b, x, -24, 34, 'rgba(255,210,130,.5)');
+    if (!broken && s.open) {                           // through the glass: diners at a table, a server passing, the chef at the pass
+      c.save(); c.beginPath(); c.moveTo(x - 12, -9); c.lineTo(x - 12, -30); c.arc(x, -30, 12, Math.PI, TAU); c.lineTo(x + 12, -9); c.closePath(); c.clip();
+      c.translate(0, 3); const seed = x * 0.37, bob = k2 => Math.sin(t * 2.4 + seed + k2) * 0.4;
+      if (x === 38) { circ(c, x, -22 + bob(0), 4, '#f6d2b5', INK, 0.5); ell(c, x, -27 + bob(0), 4.6, 3, '#fffdf8', INK, 0.5); box(c, x - 4, -27 + bob(0), 8, 3, 1, '#fffdf8', INK, 0.4); box(c, x - 6, -18, 12, 9, 2, '#fffdf8', INK, 0.5); }
+      else { box(c, x - 10, -14, 20, 2.5, 1, '#c98f5a', INK, 0.5);
+        for (const [dx, col, hair] of [[-6, '#f28f7c', '#4a322b'], [6, '#8fb7e0', '#2f2a30']]) { const hx = x + dx; box(c, hx - 3.5, -19 + bob(dx), 7, 6, 2, col, INK, 0.4); circ(c, hx, -22.5 + bob(dx), 3, '#f6d2b5', INK, 0.4); c.beginPath(); c.arc(hx, -23 + bob(dx), 3.1, Math.PI, TAU); c.fillStyle = hair; c.fill(); }
+        if (Math.sin(t * 1.5 + seed) > 0.6) circ(c, x, -16.5, 1.4, '#ffd35a', INK, 0.3); }
+      const sx = x - 30 + ((t * 18 + seed * 40) % 80);   // the server walking past with a tray
+      if (Math.abs(sx - x) < 14 && x !== 38) { box(c, sx - 3.5, -20, 7, 8, 2, '#3f4a5e', INK, 0.4); circ(c, sx, -23.5, 3, '#f1c6a4', INK, 0.4); line(c, sx + 2, -21, sx + 7, -21, '#c9c3cb', 0.8); }
+      c.restore();
+    }
     if (broken) { line(c, x - 14, -34, x + 14, -10, '#a07a50', 3.6); line(c, x - 14, -14, x + 14, -38, '#a07a50', 3.6); }
     else { line(c, x, -43, x, -8, INK, 0.8); }
   }
@@ -607,6 +618,17 @@ export function drawKiosk(c, t, b) {
   } else { // tiki torches
     for (const x of [-w / 2 - 12, w / 2 + 12]) { limb(c, [x, 0, x, -30], 2, '#8a5f3e'); const k = Math.sin(t * 8 + x) * 1.2; c.beginPath(); c.moveTo(x - 3, -30); c.quadraticCurveTo(x + k, -42, x + 3, -30); c.fillStyle = '#ff9a3a'; c.fill(); if (nightA() > 0.05) glow(b, x, -34, 26, 'rgba(255,170,90,.5)'); }
   }
+  // upgrades you can see: lights, seats, planters, then the famous-spot finish
+  const lv = own ? (s.level || 1) : 1;
+  if (lv >= 2) stringLights(c, w + 10, -h - 4, t, b);
+  if (lv >= 2) { box(c, -w / 2 - 34, -30, 16, 22, 2, '#3a3a3a', '#8a5f3e', 1.4); for (let i = 0; i < 3; i++) line(c, -w / 2 - 31, -25 + i * 5, -w / 2 - 21 + (i % 2) * 3, -25 + i * 5, '#fff', 0.8); limb(c, [-w / 2 - 30, -8, -w / 2 - 33, 0], 1, '#8a5f3e'); limb(c, [-w / 2 - 22, -8, -w / 2 - 19, 0], 1, '#8a5f3e'); }
+  if (lv >= 3) for (const x of [w / 2 + 42, w / 2 + 64]) { ell(c, x, -12, 9, 3, '#fff8ea', INK, 0.8); limb(c, [x, -11, x, 0], 1.4, '#6b4431'); for (const sx of [-12, 12]) { ell(c, x + sx, -5, 4, 1.6, b.style === 'smoothie' ? '#ff8fb0' : '#c98f5a', INK, 0.5); limb(c, [x + sx, -4, x + sx, 0], 0.9, '#8a8f99'); } }
+  if (lv >= 4) { for (const x of [-w / 2 + 10, w / 2 - 10]) { box(c, x - 9, -10, 18, 8, 2, '#a8763e', INK, 0.8); for (let i = 0; i < 4; i++) flower(c, x - 6 + i * 4, -11, 1.4, ['#ff8fb0', '#ffd35a', '#fff', '#f28f7c'][i]); }
+    if (b.style === 'grill') for (const x of [-w / 2 - 44, w / 2 + 84]) { limb(c, [x, 0, x, -34], 2, '#8a5f3e'); const k = Math.sin(t * 8 + x) * 1.2; c.beginPath(); c.moveTo(x - 3, -34); c.quadraticCurveTo(x + k, -46, x + 3, -34); c.fillStyle = '#ffb347'; c.fill(); glow(b, x, -40, 26, 'rgba(255,170,90,.5)'); }
+    if (b.style === 'smoothie') for (let i = 0; i < 3; i++) { box(c, w / 2 + 6 + i * 11, -9, 10, 9, 1, '#c98f5a', INK, 0.6); for (let k = 0; k < 3; k++) circ(c, w / 2 + 9 + i * 11 + k * 2.4, -10, 1.6, ['#ffc23d', '#e8457a', '#a7c96a'][(i + k) % 3], INK, 0.3); }
+    if (b.style === 'cafe') { circ(c, w / 2 + 14, -h - 8, 7, '#6b4431', INK, 0.9); line(c, w / 2 + 14, -h - 14, w / 2 + 14, -h - 2, '#3a2418', 1); } }
+  if (lv >= 5) { const k = (Math.sin(t * 3) + 1) / 2; c.save(); c.strokeStyle = `rgba(255,111,174,${0.6 + k * 0.4})`; c.lineWidth = 1.4; c.shadowColor = '#ff6fae'; c.shadowBlur = 5; c.strokeRect(-w / 2 + 2, -h + 2, w - 4, h - 4); c.restore();
+    signBoard(c, 0, -h - 46, 70, 10, T('★ ISLAND FAVOURITE ★', '★ QUÁN ĐƯỢC YÊU THÍCH ★'), '#ffd35a', '#7a4e12'); }
   if (!own) { // for sale board
     c.save(); c.translate(w / 2 - 12, -h + 26); c.rotate(0.12); box(c, -16, -7, 32, 14, 2, '#fffaf0', INK, 0.9); stext(c, T('FOR SALE', 'CẦN BÁN'), 0, 0.5, 5.6, '#e8584e', 900); c.restore();
   }

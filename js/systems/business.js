@@ -92,7 +92,7 @@ export function perceivedValue(bizId, id) {
   return 1 + 0.06 * (rl - 1) + 0.04 * (sl - 1);
 }
 // how a kind of customer feels about price (tourists shrug, picky ones notice)
-export const PRICE_TOLERANCE = { tourist: 1.35, regular: 1.15, picky: 0.9, rushed: 1.05, excited: 1.05, patient: 1 };
+export const PRICE_TOLERANCE = { tourist: 1.35, regular: 1.15, picky: 0.9, rushed: 1.05, excited: 1.05, patient: 1, kid: 0.85, elder: 1.05 };
 export function tolerance(bizId, personality, perfectShop = false) {
   let t = PRICE_TOLERANCE[personality] ?? 1;
   if (personality === 'picky' && perfectShop) t = 1.1;           // picky people pay for quality
@@ -193,6 +193,9 @@ export function spawnCustomer(bizId, opts = {}) {
     personality = G.state.regulars[key]?.visits >= 3 ? 'regular' : pickPersonality(false);
     look = visitorLook(n * 31 + 7, personality);
   }
+  if (!resident && !opts.special && look?.age === 'kid') personality = 'kid';
+  else if (!resident && !opts.special && look?.age === 'elder') personality = 'elder';
+  if (opts.team) { look = { ...look, top: opts.team.col, topStyle: 'varsity', top2: '#fff', sleeve: 0.5, hat: 'cap', hatColor: opts.team.col, backpack: null, suitcase: null, surf: null, guitar: null }; name = opts.team.names[opts.team.i] || name; }
   let actor = resident;
   if (!actor) {
     // appear somewhere a little way off along the paths, then walk over
@@ -200,7 +203,7 @@ export function spawnCustomer(bizId, opts = {}) {
     const [lo, hi] = r.first ? [70, 140] : [100, 210];
     const nodes = island.nav.nodes.filter(n => n.tags.has('path') && dist(n.x, n.y, qx, qy) > lo && dist(n.x, n.y, qx, qy) < hi);
     const start = opts.from || (nodes.length ? choice(nodes) : island.nav.nearest(qx, qy));
-    actor = new Actor({ kind: 'human', look, x: start.x, y: start.y, speed: personality === 'rushed' ? 90 : rand(72, 82), data: { customer: true } });
+    actor = new Actor({ kind: 'human', look, x: start.x, y: start.y, speed: personality === 'rushed' ? 90 : personality === 'elder' ? rand(44, 52) : personality === 'kid' ? rand(84, 96) : rand(72, 82), data: { customer: true } });
     island.add(actor);
     actor.alpha = 0; actor.fadeIn = true;
   }
@@ -209,6 +212,7 @@ export function spawnCustomer(bizId, opts = {}) {
   const base = 52 * P.patience * (G.state.story.chapter <= 2 ? 1.4 : 1) * recipeLv * eq(bizId, 'patience');
   const c = new Customer({ bizId, actor, key, name, personality, resident: !!resident, patience: base * (opts.special ? 1.6 : 1), patienceMax: base * (opts.special ? 1.6 : 1), friendOf: opts.friendOf || null });
   if (opts.special) { c.special = opts.special.id; actor.data.special = opts.special.id; }
+  if (opts.team) c.team = opts.team;
   c.order = makeOrder(bizId, c);
   if (c.order?.walk) { G.state.today.priceWalk = (G.state.today.priceWalk || 0) + 1; bus.emit('customer:pricey', bizId); if (!resident) { actor.showEmote?.('sweat', 1.2); setTimeout(() => { actor.fadeOut = true; }, 900); } else G.npcs.returnResident(resident); return null; }
   if (!c.order) { if (!resident) island.remove(actor); else G.npcs.returnResident(resident); return null; }
@@ -219,6 +223,17 @@ export function spawnCustomer(bizId, opts = {}) {
   // now and then a regular brings someone along
   if (!opts.friendOf && G.state.regulars[key]?.visits >= 4 && chance(0.15)) setTimeout(() => { const f = spawnCustomer(bizId, { friendOf: name, from: { x: actor.x + 14, y: actor.y + 6 } }); if (f) f.actor.showEmote?.('happy', 1.2); }, 700);
   return c;
+}
+// now and then a sports team turns up together in matching jerseys: serve all of them for a bonus
+const TEAMS = [['#e8584e', ['Sơn', 'Đạt', 'Khoa', 'Phát']], ['#3f6fb5', ['Linh', 'Hằng', 'Vy', 'Thảo']], ['#2f9e8f', ['Tuấn', 'Bảo', 'Nam', 'Quân']]];
+export function spawnTeam(bizId) {
+  const r = rt(bizId), room = Math.min(QUEUES[bizId].length, bizMaxQueue(bizId)) - r.queue.length; if (room < 3) return false;
+  const [col, names] = choice(TEAMS), size = Math.min(room, 3 + (chance(0.4) ? 1 : 0));
+  const team = { col, names, size, done: 0, total: 0, members: [] };
+  for (let i = 0; i < size; i++) { const c = spawnCustomer(bizId, { tourist: true, team: { ...team, i } }); if (!c) break; c.team = team; team.members.push(c); }
+  team.size = team.members.length;
+  if (team.size >= 2) { team.members[0].actor.showEmote?.('happy', 1.6); bus.emit('toast', { text: T(`A team of ${team.size} is in line!`, `Một đội ${team.size} người đang xếp hàng!`), sub: T('Serve them all for a team bonus.', 'Phục vụ cả đội để nhận thưởng.'), icon: 'star', ms: 2600 }); }
+  return team.size >= 2;
 }
 export function bizMaxQueue(bizId) {
   const b = bizOf(bizId), def = BUSINESSES[bizId];
@@ -278,6 +293,8 @@ export function makeOrder(bizId, cust) {
   if (R.options.includes('ice')) opts.ice = wpick([['không đá', 1], ['ít đá', 2], ['đá bình thường', 4]]);
   if (R.options.includes('topping')) opts.topping = wpick([['none', 2], ['tapioca', 3], ['jelly', 2], ['cheese_foam', 2]]);
   if (R.options.includes('chili')) opts.chili = chance(0.55) ? 'có ớt' : 'không ớt';
+  if (cust.personality === 'kid') { if (opts.size) opts.size = 'S'; if (opts.sugar) opts.sugar = 100; if (opts.chili) opts.chili = 'không ớt'; }        // small, sweet, never spicy
+  if (cust.personality === 'elder') { if (opts.size) opts.size = 'S'; if (opts.ice) opts.ice = 'ít đá'; if (opts.sugar) opts.sugar = 50; }
   // make sure the options can be made with current stock; relax if not
   if (!canMake(bizId, id, opts)) { if (opts.topping) opts.topping = 'none'; if (opts.chili) opts.chili = 'không ớt'; if (!canMake(bizId, id, opts) && opts.ice) opts.ice = 'không đá'; }
   const price = recipePrice(bizId, id, opts);
@@ -308,6 +325,9 @@ export function orderText(order, cust) {
     const k = pickLine(cust, 3);
     if (reg) return P([`Chào ${pn}! Như mọi khi nha: 1 ${v} ${name}${tail}!`, `Lại là {me} nè ${pn}! Cho {me} 1 ${v} ${name}${tail} nhé!`, `${pn} ơi, món quen: 1 ${v} ${name}${tail}!`][k]);
     if (cust.personality === 'tourist') return P([`Xin chào {you}! Cho {me} 1 ${v} ${name}${tail}, cảm ơn nha!`, `Chào {you}! {Me} muốn 1 ${v} ${name}${tail} nhé!`, `Cho {me} thử 1 ${v} ${name}${tail} nha {you}!`][k]);
+    if (cust.team) return P(`Cả đội {me} đây! Cho {me} 1 ${v} ${name}${tail} nha, mình vừa đá xong mệt quá!`);
+    if (cust.personality === 'kid') return P([`{You} ơi! Cho con 1 ${v} ${name}${tail} ạ! Nhiều đường nha!`, `Con được mẹ cho tiền nè! 1 ${v} ${name}${tail} ạ!`, `Con muốn 1 ${v} ${name}${tail}! Con ngoan lắm á!`][k]);
+    if (cust.personality === 'elder') return P([`Chào con. Từ từ thôi con nhé, cho bà 1 ${v} ${name}${tail}.`, `Con ơi, cho ông 1 ${v} ${name}${tail}. Không vội đâu.`, `Ngày xưa ở đây bán trà ngon lắm. Cho 1 ${v} ${name}${tail} nhé con.`][k]);
     if (cust.personality === 'rushed') return P(`{You} ơi, nhanh giúp {me} nha! 1 ${v} ${name}${tail}!`);
     if (cust.personality === 'picky') return P(`Làm kỹ giúp {me} nhé {you}: 1 ${v} ${name}${tail}. Đúng y vậy nha.`);
     if (cust.personality === 'excited') return P([`Oa, thơm quá! {You} cho {me} 1 ${v} ${name}${tail} đi!`, `{Me} nghe đồn quán ngon lắm! 1 ${v} ${name}${tail} nha {you}!`, `Hôm nay {me} thèm 1 ${v} ${name}${tail} ghê!`][k]);
@@ -329,6 +349,9 @@ export function orderText(order, cust) {
   const k = pickLine(cust, 3);
   if (reg) return [`Hi ${pn}! The usual, please: ${art} ${item}${tail}!`, `It's me again, ${pn}! ${cap(art)} ${item}${tail}, like always.`, `${pn}! My favourite: ${art} ${item}${tail}!`][k];
   if (cust.personality === 'tourist') return [`Hello! Could I try ${art} ${item}${tail}, please?`, `Hi there! One ${item}${tail}, please!`, `Everyone says I have to try this: ${art} ${item}${tail}!`][k];
+  if (cust.team) return [`Whole team's here! ${cap(art)} ${item}${tail} for me — we just won!`, `Big match today. ${cap(art)} ${item}${tail}, please!`, `Team order! I'll have ${art} ${item}${tail}.`][k];
+  if (cust.personality === 'kid') return [`Hi! Can I have ${art} ${item}${tail}? Extra sweet!`, `Mum gave me money! ${cap(art)} ${item}${tail}, please!`, `I've been SO good today. ${cap(art)} ${item}${tail}?`][k];
+  if (cust.personality === 'elder') return [`No rush, dear. ${cap(art)} ${item}${tail}, please.`, `Take your time. I'll have ${art} ${item}${tail}.`, `This used to be a tea stand, you know. ${cap(art)} ${item}${tail}, please.`][k];
   if (cust.personality === 'rushed') return `Quick, please! ${cap(art)} ${item}${tail}!`;
   if (cust.personality === 'picky') return `Carefully, please: ${art} ${item}${tail}. Exactly like that.`;
   if (cust.personality === 'excited') return [`Ooh, it smells amazing! ${cap(art)} ${item}${tail}, please!`, `I heard this place is the best! ${cap(art)} ${item}${tail}!`, `I've been craving this all day: ${art} ${item}${tail}!`][k];
@@ -383,6 +406,9 @@ export function completeOrder(c, quality) {
   tipRate *= P.tip * (lv?.tip || 1) * (order.special ? 1.25 : 1);
   if (G.state.regulars[c.key]?.visits >= 3) tipRate *= 1.15 * eq(c.bizId, 'regTip');
   tipRate *= eq(c.bizId, 'tip') * Math.min(1.4, Math.pow(priceMul(order.recipe), -1.2)); // pricey food, smaller tips
+  // perfect orders in a row while you serve yourself: tips grow up to +30%
+  const r0 = rt(c.bizId), byYou = G.runtime.serviceOpen === c.bizId;
+  if (byYou) { r0.streak = quality === 'perfect' ? (r0.streak || 0) + 1 : 0; if (r0.streak > 1) tipRate *= 1 + Math.min(0.3, (r0.streak - 1) * 0.05); if (r0.streak > (G.state.stats.bestStreak || 0)) G.state.stats.bestStreak = r0.streak; bus.emit('streak', c.bizId, r0.streak); }
   const L = G.runtime.luck, luck = L && L.day === G.state.day && G.state.time < L.until ? L.tip : 1;   // a busker's song, the golden cat (systems/rare.js)
   const tip = Math.round(price * tipRate * luck);
   addXP(quality === 'perfect' ? 12 + (order.special ? 3 : 0) : 7, 'serve');
@@ -421,6 +447,7 @@ export function completeOrder(c, quality) {
   if (s.lifetime >= 1000) unlockAchievement('money_1000');
   if (s.lifetime >= 10000) unlockAchievement('money_10000');
   bus.emit('served', c, quality, price, tip);
+  if (c.team) { c.team.done++; if (c.team.done >= c.team.size) { const bonus = Math.round(c.team.total * 0.5 + price * 0.5); addMoney(bonus, 'tip'); fx.float(a.x, a.y - 66, `${T('TEAM BONUS', 'THƯỞNG ĐỘI')} +${bonus}k`, '#ffe07a', { size: 11, life: 2 }); sfx('fanfare'); for (const m of c.team.members) { m.actor?.setAct?.('cheer'); m.actor?.doHop?.(); setTimeout(() => m.actor?.setAct?.(null), 1400); } } else c.team.total += price; }
   c.state = 'done';
   customerLeave(c, 'happy');
   markDirty(true);
@@ -435,6 +462,7 @@ export function failOrder(c) {
 function timeoutCustomer(c) {
   G.state.today.lost++;
   addRep(-1);
+  rt(c.bizId).streak = 0; bus.emit('streak', c.bizId, 0);
   customerLeave(c, 'angry');
   bus.emit('customer:timeout', c);
 }
@@ -461,7 +489,7 @@ export function updateBusinesses(dt, gameMin) {
       const made = makeableRecipes(id).length;
       if (!made) { if (!r.noStockWarned) { r.noStockWarned = true; bus.emit('toast', { text: T('Out of ingredients!', 'Hết nguyên liệu!'), sub: T(`${bizName(id)}: restock or prep more.`, `${bizName(id)}: mua thêm hoặc sơ chế nhé.`), bad: true }); } r.spawnT = 6; }
       else {
-        spawnCustomer(id);
+        if (!(G.state.story.chapter >= 4 && chance(0.025) && spawnTeam(id))) spawnCustomer(id);
         r.spawnT = nextSpawnDelay(id);
         if (r.first) { r.first = false; }
       }

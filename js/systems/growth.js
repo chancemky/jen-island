@@ -6,7 +6,9 @@
 
 import { G, T } from './state.js';
 import { INK, ell, circ, box, line, poly } from '../gfx/draw.js';
-import { PLAZA } from '../world/island.js';
+import { PLAZA, QUEUES } from '../world/island.js';
+import { drawIcon } from '../gfx/food.js';
+import { RECIPES } from '../data/game.js';
 import { glows } from '../gfx/props.js';
 import { eventOn } from './interact.js';
 import { npcs } from './npc.js';
@@ -109,6 +111,20 @@ function fireworks(c, t, x, y) {
     c.restore();
   }
 }
+// where each shop's special easel stands: beside the start of its queue
+export function specialEasels() {
+  const out = [];
+  for (const [id, z] of Object.entries(G.state.biz || {})) if (z.owned && (z.repair ?? 1) >= 1 && QUEUES[id] && id !== 'restaurant') { const [qx, qy] = QUEUES[id][0]; out.push({ id, x: qx + 30, y: qy + 6, recipe: RECIPES[z.special] ? z.special : null }); }
+  return out;
+}
+function easel(c, t, x, y, recipe) {
+  for (const [a, b2] of [[-7, 0], [7, 0], [0, -2]]) line(c, x, y - 26, x + a, y + b2, '#8a5f3e', 1.4);
+  box(c, x - 10, y - 30, 20, 18, 1.5, '#2f3a34', '#8a5f3e', 1.4);
+  c.save(); c.fillStyle = '#fffaf0'; c.font = '900 3.6px Nunito, sans-serif'; c.textAlign = 'center'; c.fillText(T('TODAY', 'HÔM NAY'), x, y - 25.5); c.restore();
+  c.save(); c.translate(x, y - 18.5); c.scale(0.45, 0.45); if (recipe) drawIcon(c, RECIPES[recipe].icon, t); c.restore();
+  if (!recipe) { c.save(); c.fillStyle = '#fffaf0'; c.font = '900 9px Nunito, sans-serif'; c.textAlign = 'center'; c.fillText('?', x, y - 15); c.restore(); }
+  const k = (Math.sin(t * 2) + 1) / 2; c.fillStyle = `rgba(255,211,90,${0.4 + k * 0.6})`; c.fillRect(x - 8, y - 14.5, 16, 0.8);
+}
 // a little decorated tree with twinkling lights, for Christmas
 function xmasTree(c, t, x, y) {
   box(c, x - 3, y - 6, 6, 6, 1, '#8a5f3e', INK, 0.7);
@@ -203,6 +219,8 @@ export function growthDrawables() {
   if (ev?.id === 'nmnight' || ev?.id === 'midautumn') {
     add(430, 640, OVERHEAD, (c, t) => { lanternString(c, t, 300, 660, 560, 660, 70); lanternString(c, t, 300, 760, 560, 760, 70); });
   }
+  // today's special on a chalkboard easel by each of your shops (tap it to change)
+  for (const sp of specialEasels()) add(sp.x, sp.y, sp.y, (c, t) => easel(c, t, sp.x, sp.y, sp.recipe));
   // Minh's exhibition: photos pinned on a board at the plaza
   if (flag('minh_exhibit')) add(PLAZA.x + 150, PLAZA.y + 40, PLAZA.y + 40, c => { const x = PLAZA.x + 150, y = PLAZA.y + 40; line(c, x - 18, y, x - 18, y - 30, '#8a5f3e', 2); line(c, x + 18, y, x + 18, y - 30, '#8a5f3e', 2); box(c, x - 22, y - 44, 44, 22, 2, '#c9955e', INK, 0.9); for (let i = 0; i < 3; i++) box(c, x - 18 + i * 13, y - 41, 10, 8 + (i % 2) * 2, 0.8, ['#aee4ed', '#f7de8c', '#f4a9b8'][i], INK, 0.5); });
   return out;

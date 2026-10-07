@@ -3,9 +3,25 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.13.0';
+export const APP_VERSION = '5.14.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.14.0', date: '2026-10-07T23:00:14Z',
+    title: ['Busy Season', 'Mùa Đông Khách'],
+    items: [
+      ['Recipe lab: experiment at your stove at home and discover three secret recipes', 'Bếp thử món: thử nghiệm ở bếp nhà và khám phá ba món bí mật'],
+      ['Today\'s special on a chalkboard by each shop: tap it to pick the dish', 'Món đặc biệt trên bảng phấn cạnh mỗi quán: chạm để chọn món'],
+      ['Perfect-order streaks while you serve: tips grow up to +30%', 'Chuỗi món hoàn hảo khi bạn phục vụ: tiền boa tăng tới +30%'],
+      ['Sports teams arrive together in matching jerseys: serve the whole team for a bonus', 'Đội thể thao đến cùng lúc với áo đồng phục: phục vụ cả đội để nhận thưởng'],
+      ['Kids and grandparents order in their own way (small and sweet, or no rush and less ice)', 'Trẻ em và ông bà gọi món theo kiểu riêng (nhỏ và ngọt, hoặc thong thả và ít đá)'],
+      ['Train your shopkeepers and promote an expert to head keeper (they get the white chef hat)', 'Đào tạo người trông quán và thăng chức trưởng quán (được đội mũ đầu bếp trắng)'],
+      ['Harbour Café, Cove Grill and the Smoothie Bar can now be upgraded: lights, seating, planters and a neon finish', 'Cà Phê Bến Cảng, Quán Nướng Vịnh Dừa và Quán Sinh Tố giờ nâng cấp được: đèn, chỗ ngồi, chậu hoa và viền neon'],
+      ['The Smoothie Bar has its story: Cô Dừa tells you about her nephew Tín', 'Quán Sinh Tố có câu chuyện riêng: Cô Dừa kể về cháu Tín'],
+      ['Diners and staff in the restaurant windows, and the supply runner\'s scooter on its morning round', 'Thực khách và nhân viên sau cửa sổ nhà hàng, và xe giao hàng chạy vòng buổi sáng'],
+      ['Island sounds: waves, birds, crickets, chatter by busy shops, and each shop\'s own kitchen sounds', 'Âm thanh đảo: sóng, chim, dế, tiếng nói cười ở quán đông, và tiếng bếp riêng của mỗi quán'],
+    ],
+  },
   {
     v: '5.13.0', date: '2026-10-07T22:41:29Z',
     title: ['Picture Perfect', 'Đẹp Như Tranh'],

@@ -162,6 +162,16 @@ export function sfx(name, opt = {}) {
     case 'beep': horn(0, 0.13); horn(0.2, 0.26); break;          // a scooter's two-tone electric horn: bíp-bíiip
     case 'blend': noise(0.7, { vol: 0.16, freq: 400, q: 3, to: 900 }); tone(120, 0.7, { type: 'sawtooth', vol: 0.06, slide: 80, lp: 700 }); for (let i = 0; i < 4; i++) noise(0.03, { vol: 0.06, freq: 2500, q: 8, when: 0.1 + i * 0.13 }); break;   // the motor, and ice knocking the jar
     case 'firework': noise(0.3, { vol: 0.03, freq: 2000, q: 8, to: 5000 }); tone(140, 0.5, { type: 'sine', vol: 0.2, slide: -90, when: 0.25, wet: 0.5 }); noise(0.5, { vol: 0.12, freq: 300, q: 0.7, when: 0.25, wet: 0.5 }); for (let i = 0; i < 10; i++) noise(0.015, { vol: 0.05, freq: 3000 + Math.random() * 4000, q: 3, when: 0.45 + Math.random() * 0.6 }); break;   // whistle, boom, crackle
+    // ambience (systems/ambience.js): quiet, short, layered
+    case 'amb_wave': noise(1.6, { vol: 0.05, freq: 380, q: 0.5, to: 900, wet: 0.4 }); noise(1.2, { vol: 0.025, freq: 2200, q: 0.4, when: 0.5 }); break;
+    case 'amb_bird': { const b = 2600 + Math.random() * 900; for (let i = 0; i < 2 + Math.floor(Math.random() * 3); i++) tone(b + Math.random() * 400, 0.06, { type: 'sine', vol: 0.025, slide: 500, when: i * 0.11, pan: (Math.random() - 0.5) * 1.2 }); break; }
+    case 'amb_cricket': { const p0 = (Math.random() - 0.5) * 1.4; for (let i = 0; i < 6; i++) tone(4200, 0.025, { type: 'square', vol: 0.006, when: i * 0.05, lp: 5000, pan: p0 }); break; }
+    case 'amb_chatter': for (let i = 0; i < 4; i++) voice([[0, 180 + Math.random() * 120, 500, 1400], [0.12, 200 + Math.random() * 100, 700, 1700], [0.22, 170, 450, 1200]], { vol: 0.012, q: 3, when: i * 0.22 + Math.random() * 0.1 }); break;
+    case 'amb_steam': noise(0.9, { vol: 0.03, freq: 5200, q: 0.7, type: 'highpass' }); break;
+    case 'amb_crackle': for (let i = 0; i < 7; i++) noise(0.012, { vol: 0.05, freq: 2500 + Math.random() * 3000, q: 3, when: Math.random() * 0.8 }); noise(0.9, { vol: 0.012, freq: 300, q: 0.5 }); break;
+    case 'amb_ice': for (let i = 0; i < 2; i++) tone(2700 + Math.random() * 900, 0.04, { type: 'sine', vol: 0.02, when: i * 0.07 }); break;
+    case 'amb_blender': noise(0.8, { vol: 0.03, freq: 420, q: 3, to: 700 }); tone(110, 0.8, { type: 'sawtooth', vol: 0.012, lp: 600 }); break;
+    case 'amb_knife': for (let i = 0; i < 3; i++) { noise(0.02, { vol: 0.04, freq: 3000, q: 1.5, when: i * 0.16 }); tone(170, 0.05, { type: 'sine', vol: 0.03, when: i * 0.16 }); } break;
     case 'page': noise(0.14, { vol: 0.07, freq: 2600, q: 0.8, to: 4200 }); noise(0.05, { vol: 0.05, freq: 1500, q: 1, when: 0.1 }); break;
   }
 }

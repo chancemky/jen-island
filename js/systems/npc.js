@@ -385,6 +385,21 @@ export function ferryDrawable() {
 export function resetFerryForNewDay() { const f = npcs.ferry; if (!f) return; f.state = 'away'; f.y = 2980; f.gap = 10; f.pax = 0; f.next = nextFerryTime(); }
 
 // ---------------------------------------------------------------- scooters
+// the supply runner's morning round: from the dock past every shop it restocked, then back
+export function sendDelivery(shops) {
+  const isl = G.scenes.island; if (!isl || !shops?.length) return;
+  const stops = shops.map(id => QUEUES[id]?.[0]).filter(Boolean).map(([x, y]) => [x + 26, y + 14]);
+  const wps = [[900, 2420], ...stops, [900, 2420]];
+  let path = [];
+  for (let i = 0; i < wps.length - 1; i++) { const seg = isl.nav.path(wps[i][0], wps[i][1], wps[i + 1][0], wps[i + 1][1]) || []; path = path.concat(path.length ? seg.slice(1) : seg); }
+  if (path.length < 2) return;
+  const sc = makeScooter(path, '#ff9f43', 0);
+  sc.once = true; sc.pause = 0; sc.rider.look = { ...sc.rider.look, hat: 'helmet', hatColor: '#ff9f43', top: '#ff9f43', topStyle: 'polo', top2: '#fff' };
+  // where along the road each shop is (the nearest point of the route)
+  let acc = 0; const cum = sc.pts.map((p, i) => (acc += i ? sc.segs[i - 1] : 0));
+  sc.stops = stops.map(([x, y]) => { let best = 0, bd = 1e9; sc.pts.forEach((p, i) => { const d = dist(p[0], p[1], x, y); if (d < bd) { bd = d; best = i; } }); return { at: cum[best], done: false }; }).sort((a, b) => a.at - b.at);
+  (npcs.deliveries ||= []).push(sc);
+}
 function makeScooter(path, col, phase) {
   const flat = smoothLine(path, 6), pts = [];
   for (let i = 0; i < flat.length; i += 2) pts.push([flat[i], flat[i + 1]]);
@@ -425,7 +440,12 @@ function updateScooter(sc, dt) {
   sc.beep -= dt;
   sc.speed += (target - sc.speed) * Math.min(1, dt * 3);
   sc.pos += sc.dir * sc.speed * dt;
-  if (sc.pos > sc.len) { sc.pos = sc.len; sc.dir = -1; } else if (sc.pos < 0) { sc.pos = 0; sc.dir = 1; }
+  if (sc.once) {                                      // a delivery run: stop at each shop, then home and gone
+    if (sc.pause > 0) { sc.pause -= dt; sc.pos -= sc.dir * sc.speed * dt; sc.speed = 0; }
+    const stop = sc.stops.find(st => !st.done && sc.pos >= st.at);
+    if (stop) { stop.done = true; sc.pause = 1.6; fx.burst('star', sc.x, sc.y - 30, 4, { up: 30, col: '#ffd35a', life: 0.8 }); fx.float(sc.x, sc.y - 44, '📦', '#fff', { size: 10 }); sfx('pop'); }
+    if (sc.pos >= sc.len) { sc.gone = true; return; }
+  } else if (sc.pos > sc.len) { sc.pos = sc.len; sc.dir = -1; } else if (sc.pos < 0) { sc.pos = 0; sc.dir = 1; }
   let p = sc.pos, i = 0;
   while (i < sc.segs.length - 1 && p > sc.segs[i]) { p -= sc.segs[i]; i++; }
   const a = sc.pts[i], b = sc.pts[i + 1], k = sc.segs[i] ? p / sc.segs[i] : 0;
@@ -520,6 +540,8 @@ export function updateNPCs(dt) {
   updateFerry(island, dt);
   const ridersOut = G.state.time >= 6 * 60 && G.state.time < 24 * 60;   // nobody rides around after midnight
   if (ridersOut) for (const sc of npcs.scooters) updateScooter(sc, dt);
+  if (G.runtime.deliveryShops?.length && G.state.time > 6.5 * 60 && G.state.time < 10 * 60 && !G.runtime.inCutscene) { sendDelivery(G.runtime.deliveryShops); G.runtime.deliveryShops = null; }
+  if (npcs.deliveries?.length) { for (const sc of npcs.deliveries) updateScooter(sc, dt); npcs.deliveries = npcs.deliveries.filter(sc => !sc.gone); }
   for (const g of npcs.gulls) g.a += g.sp * dt;
   updateDucks(dt);
   // leaves and petals drift down from trees in view when the wind picks up
@@ -548,6 +570,7 @@ export function npcDrawables() {
   const f = ferryDrawable(); if (f) out.push(f);
   out.push(...animalDrawables());
   if (G.state.time >= 6 * 60 && G.state.time < 24 * 60) for (const sc of npcs.scooters) out.push(scooterDrawable(sc));
+  for (const sc of npcs.deliveries || []) out.push(scooterDrawable(sc));
   for (const d of sideQuestDrawables()) out.push(d);
   for (const d of growthDrawables()) out.push(d);
   for (const b of npcs.butterflies) out.push({ x: b.x, y: b.y, sortY: b.y + 30, draw: (c, t) => { c.save(); c.translate(0, -22 - Math.sin(b.t * 3) * 4); const f = Math.abs(Math.sin(b.t * 16)); c.fillStyle = b.col; c.strokeStyle = 'rgba(91,63,54,.7)'; c.lineWidth = 0.6; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * 2.6 * f, -1, 2.6 * f + 0.4, 3, s * 0.4, 0, TAU); c.fill(); c.stroke(); } c.restore(); } });

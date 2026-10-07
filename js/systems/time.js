@@ -79,7 +79,7 @@ export function endDay() {
   // fresh daily specials
   // a daily special only makes sense when there's more than one thing on the menu
   for (const id of Object.keys(BUSINESSES)) { const recs = bizRecipes(id); s.biz[id].special = recs.length > 1 ? choice(recs) : null; }
-  const del = morningDeliveries(); sum.deliveries = del.total;
+  const del = morningDeliveries(); sum.deliveries = del.total; G.runtime.deliveryShops = del.shops;   // (the rider drives the round after breakfast: npc.js)
   sum.wallet = { start: Math.round(walletStart), end: Math.round(s.money), bills: Math.round(wages + costs.rent + costs.keeperWages + del.total) };
   sum.gift = starterHelp() || debtHelp();
   // how long each chapter takes (for pacing)

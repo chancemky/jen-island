@@ -23,6 +23,14 @@ const ICE_LEVEL = { 'không đá': 0, 'ít đá': 1, 'đá bình thường': 2 }
 let S = null; // active session
 
 export function isServiceOpen() { return !!S; }
+// the perfect-order streak badge in the counter's top bar
+bus.on('streak', (bizId, n) => {
+  const el = document.querySelector('.svc .svc-streak'); if (!el || G.runtime.serviceOpen !== bizId) return;
+  el.hidden = n < 2; if (n < 2) return;
+  el.innerHTML = `🔥 ×${n}<small>+${Math.min(30, (n - 1) * 5)}% ${T('tips', 'boa')}</small>`;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  if (n % 5 === 0) { sfx('sparkle'); toast({ text: T(`${n} perfect in a row!`, `${n} món hoàn hảo liên tiếp!`), icon: 'star', ms: 1600 }); }
+});
 export function openService(bizId, { onClose, tutorial = false, single = null } = {}) {
   if (S) return;
   releaseJoystick();
@@ -31,7 +39,7 @@ export function openService(bizId, { onClose, tutorial = false, single = null } 
   el.innerHTML = `
     <div class="svc-awning"></div>
     <div class="svc-outside"><div class="svc-sky"><i class="cl c1"></i><i class="cl c2"></i><i class="sunb"></i></div>
-    <div class="svc-top"><div class="svc-queue"></div><div class="svc-clock"><span class="sun"></span><b class="clk"></b></div><div class="svc-money"><span class="coin"></span><b class="m"></b></div><button class="svc-close" type="button" aria-label="Close">✕</button></div>
+    <div class="svc-top"><div class="svc-queue"></div><div class="svc-clock"><span class="sun"></span><b class="clk"></b></div><div class="svc-money"><span class="coin"></span><b class="m"></b></div><div class="svc-streak" hidden></div><button class="svc-close" type="button" aria-label="Close">✕</button></div>
     <div class="svc-customer"><div class="svc-portrait"><canvas width="216" height="248"></canvas></div><div class="svc-bubble"><div class="svc-order"></div><div class="svc-chips"></div><div class="patience"><span>${T('PATIENCE', 'KIÊN NHẪN')}</span><div class="bar"><i></i></div></div></div><div class="svc-waiting hidden"></div></div>
     <div class="svc-glass"></div></div>
     <div class="svc-counter">

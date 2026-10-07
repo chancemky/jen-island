@@ -26,7 +26,7 @@ import { startDecorate, isDecorating, rebuildHouseFurniture } from './ui/decorat
 import { openStaffBoard } from './ui/staff.js';
 import { openMenu, guestReminder } from './ui/menu.js';
 import { showAuth } from './ui/auth.js';
-import { updateBusinesses, openBiz, closeBiz, rt as bizRT } from './systems/business.js';
+import { updateBusinesses, openBiz, closeBiz, rt as bizRT, bizRecipes } from './systems/business.js';
 import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs, feedDucks, nearPond } from './systems/npc.js';
 import { updateClock, endDay, specialsInit, DAWN } from './systems/time.js';
 import { repairBridge, STEPS, stallHandover, buildSeaBridge, runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
@@ -63,8 +63,11 @@ import { initReview } from './systems/review.js';
 import { initBoard, BOARD, boardOpen } from './systems/board.js';
 import { initRare, rareAction } from './systems/rare.js';
 import { initTips } from './systems/tips.js';
+import { initSmoothieIntro } from './systems/smoothieintro.js';
+import { specialEasels } from './systems/growth.js';
 import { openPhotoMode } from './ui/photo.js';
 import { updatePlayerIdle } from './systems/idle.js';
+import { updateAmbience } from './systems/ambience.js';
 import { openBoard } from './ui/board.js';
 import { CLOTHES } from './data/wardrobe.js';
 import { initAds } from './systems/ads.js';
@@ -150,7 +153,7 @@ async function boot() {
   initBadges();
   initSocial();
   initBoard();
-  initNotify(); initReview(); initRare(); initTips();
+  initNotify(); initReview(); initRare(); initTips(); initSmoothieIntro();
   setTimeout(initWeekBoard, 4000);          // after the morning mail settles
   showMorningMail();
   festivalGift();
@@ -395,6 +398,7 @@ function loop(now) {
   updateNPCs(dt);
   updateWorldEvents(dt);
   updateSeasonal(dt);
+  updateAmbience();
   if (G.scene === scenes.island) updateVendors(dt);
   // shops stand still while a menu or the prep table has the clock paused (no new
   // customers, no lost patience), so checking your bag never costs you a sale
@@ -534,6 +538,8 @@ function updateInteraction(dt) {
   }
   // fishing off the end of the pier (once Chú Hải has shown you how)
   const fish = fishingAction(pl); if (fish) { setAction(fish.label, fish.run, fish.icon); return; }
+  // a shop's special easel: tap to pick today's special (cycles through what it sells)
+  if (sc === scenes.island) { const e = specialEasels().find(e => Math.hypot(pl.x - e.x, pl.y - e.y - 6) < 24); if (e) { setAction(T('Today\'s special', 'Món đặc biệt'), () => cycleSpecial(e.id), 'star'); return; } }
   // a rare visitor (the golden cat)
   const rv = rareAction(pl); if (rv) { setAction(rv.label, rv.run, rv.icon); return; }
   // the fountain, the pier, the shore
@@ -545,6 +551,11 @@ function updateInteraction(dt) {
   // the pet walking with you (it isn't talkable): feed it or send it home
   const walker = followingPet(sc, pl); if (walker) { setAction(walker.data.pet.name, () => walkerMenu(walker), 'paw'); return; }
   noAction(dt);
+}
+function cycleSpecial(id) {
+  const z = bizOf(id), list = bizRecipes(id); if (!list.length) return;
+  const i = list.indexOf(z.special); z.special = list[(i + 1) % list.length]; markDirty(true); sfx('page');
+  toast({ text: T(`Today's special: ${recipeName(z.special)}`, `Món đặc biệt hôm nay: ${recipeName(z.special)}`), sub: T('Customers order it more and tip a little extra. Tap again for another.', 'Khách gọi món này nhiều hơn và boa thêm. Chạm lần nữa để đổi.'), icon: RECIPES[z.special].icon, ms: 2600 });
 }
 function followingPet(sc, pl) {
   const uid = followerUid(); if (!uid) return null;
