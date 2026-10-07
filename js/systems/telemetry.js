@@ -34,6 +34,7 @@ export function track(name, props = {}) {
   queue.push({ device, session, version: APP_VERSION, name, props });
   if (queue.length >= 20) flush(); else if (!timer) timer = setTimeout(flush, 20000);
 }
+export function reportError(e, context = {}) { report(e?.message || String(e), e?.stack, context); }
 function report(message, stack, context = {}) {
   message = String(message || 'unknown error').slice(0, 500);
   if (!on() || errors >= 10 || seenErrors.has(message)) return;

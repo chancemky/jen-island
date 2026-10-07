@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.5.2';
+export const APP_VERSION = '5.5.3';
 
 export const CHANGELOG = [
+  {
+    v: '5.5.3', date: '2026-10-07T13:15:28Z',
+    title: ['Steady Start', 'Khởi Động Vững Vàng'],
+    items: [
+      ['Fixed: some islands opened to an empty blue screen', 'Đã sửa: một số hòn đảo mở ra màn hình xanh trống'],
+      ['If one part of your island can\'t load, the rest of the game still opens (and we get a report to fix it)', 'Nếu một phần của hòn đảo không tải được, phần còn lại vẫn mở (và chúng tôi nhận báo cáo để sửa)'],
+    ],
+  },
   {
     v: '5.5.2', date: '2026-10-07T13:04:56Z',
     title: ['Always Opens', 'Luôn Mở Được'],

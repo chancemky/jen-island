@@ -36,7 +36,7 @@ import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, peekLocalLa
 import * as cloud from './systems/cloud.js';
 import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, bizName, recipeName, HARBOUR_BRIDGE, COVE_BRIDGE, BRIDGE_REPAIR, FESTIVAL_REQ, KEEPER_REQ } from './data/game.js';
 import { applyStaticText, bootText } from './ui/statictext.js';
-import { MERCHANTS, RESIDENTS } from './data/looks.js';
+import { MERCHANTS, RESIDENTS, playerLook } from './data/looks.js';
 import { tapAnimals, react as reactAnimal } from './systems/animals.js';
 import { nearestSeat, sitDown, standUp, updateSeat, clearSeat, inSeat } from './systems/seats.js';
 import { meoAntic } from './systems/fun.js';
@@ -49,7 +49,7 @@ import { plaqueAction } from './systems/garden.js';
 import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, TRACKS, trackState, claimMilestone } from './systems/progress.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { syncPurchases, purchaseReturn } from './systems/store.js';
-import { initTelemetry, track } from './systems/telemetry.js';
+import { initTelemetry, track, reportError } from './systems/telemetry.js';
 import { initBadges, grantServerBadge, FOUNDER_BEFORE } from './systems/badges.js';
 import { morningMail } from './systems/daily.js';
 import { initSocial } from './systems/social.js';
@@ -198,25 +198,26 @@ function startGame() {
   if (G.runtime.paused) { G.runtime.paused = false; document.getElementById('pauseCard')?.remove(); }   // a new start is never paused
   setAudio({ music: s.settings.music, sfx: s.settings.sfx });
   soundHint(s.settings.music || s.settings.sfx);
-  debtRelief(s);
-  const look = currentLook(); // base look + clothes from the wardrobe
+  // one piece that fails (an odd save, a missing item) is reported and skipped, never a blank screen
+  const safe = (name, fn) => { try { fn(); } catch (e) { console.error('[start]', name, e); reportError(e, { where: 'start:' + name }); } };
+  safe('debt', () => debtRelief(s));
+  let look; try { look = currentLook(); } catch (e) { reportError(e, { where: 'start:look' }); look = playerLook(s.player.lookOpt || {}); }   // base look + clothes from the wardrobe
   G.player = new Player(look);
   G.player.name = s.player.name;
   G.meo = new Actor({ id: 'meo', kind: 'cat', look: { cat: true }, name: 'Mèo Mây', speed: 66, data: { meo: true } });
   G.meo.talkable = true;
   scenes.island.add(G.meo); G.meo.x = 970; G.meo.y = 1650;
-  initNPCs(scenes.island);
-  spawnVendors(scenes.island);
-  spawnMerchants();
-  rebuildHouseFurniture();
-  if (G.state.truckSpot && TRUCK_SPOTS[G.state.truckSpot]) { const sp = TRUCK_SPOTS[G.state.truckSpot]; scenes.island.moveBuilding('truck', sp.x, sp.y); }
-  spawnKeepers();
-  rebuildPets();
-  scenes.restaurant.applyLevel();
-  if (bizOf('restaurant').owned) initRestaurantRuntime();
-  specialsInit();
+  safe('npcs', () => initNPCs(scenes.island));
+  safe('vendors', () => spawnVendors(scenes.island));
+  safe('merchants', () => spawnMerchants());
+  safe('furniture', () => rebuildHouseFurniture());
+  safe('truck', () => { if (G.state.truckSpot && TRUCK_SPOTS[G.state.truckSpot]) { const sp = TRUCK_SPOTS[G.state.truckSpot]; scenes.island.moveBuilding('truck', sp.x, sp.y); } });
+  safe('keepers', () => spawnKeepers());
+  safe('pets', () => rebuildPets());
+  safe('restaurant', () => { scenes.restaurant.applyLevel(); if (bizOf('restaurant').owned) initRestaurantRuntime(); });
+  safe('specials', () => specialsInit());
   if (s.today.repStart === null) s.today.repStart = s.reputation;
-  renderStars();
+  safe('stars', () => renderStars());
   requestAnimationFrame(loop);
   watchForUpdates(toast);
   window.done = true; window.__started = true;   // (the boot guard stands down)
@@ -229,7 +230,8 @@ function startGame() {
   const sc0 = scenes[pos.scene], near = sc0.nearestStand(x, y, 5);
   if (near) [x, y] = near;
   else { x = sc0.spawn?.x ?? sc0.entry?.x ?? 900; y = sc0.entry?.y - 16 || 1700; }
-  setScene(pos.scene, x, y, 'down');
+  try { setScene(pos.scene, x, y, 'down'); }
+  catch (e) { reportError(e, { where: 'start:resume', scene: pos.scene }); setScene('house', 135, 170, 'down'); }   // (somewhere safe)
   if (!flag('freeRoam')) setFlag('freeRoam');
   if (s.story.step === 'free' && !flag('keeper')) setStep('rest7'); // new chapters 8–10 for finished saves
   showHud(true);
@@ -973,7 +975,7 @@ if (devHost()) import('./dev/validate.js').then(async m => { while (!scenes.isla
 
 // testing builds wear a ribbon, so a dev build can never be mistaken for the real thing (js/dev/flag.js)
 import('./dev/flag.js').then(m => { if (m.DEV_TOOLS) { const r = document.createElement('div'); r.id = 'devRibbon'; r.textContent = 'DEV BUILD'; document.body.appendChild(r); } }).catch(() => {});
-boot().catch(e => { console.error(e); $('bootMsg').textContent = bootText('err'); });
+boot().catch(e => { console.error(e); $('bootMsg').textContent = bootText('err'); reportError(e, { where: 'boot' }); window.__guardFail?.(e); });
 
 // Offline support + "Add to Home Screen" on the website (not on a local copy, so tests always
 // get fresh files, and not in the store app, which carries its files inside)

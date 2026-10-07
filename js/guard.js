@@ -33,19 +33,23 @@
     setTimeout(done, 6000);
   }
   window.__repairGame = repair;
-  function card() {
-    if (shown || window.__started) return; shown = true;
+  // the game's own start failed: show the card now, with what went wrong
+  window.__guardFail = function (e) { lastError = (e && (e.message || String(e))) || ''; report('[start] ' + lastError, e && e.stack); card(true); };
+  var lastError = '';
+  function card(force) {
+    if (shown || (window.__started && !force)) return; shown = true;
     var vi = false; try { vi = (localStorage.getItem('jenisland.lang') || '') === 'vi'; } catch (e) {}
     var el = document.createElement('div');
     el.setAttribute('style', 'position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:rgba(40,28,24,.55);font-family:Nunito,system-ui,sans-serif;padding:20px');
     el.innerHTML = '<div style="background:#fffaf0;border:3px solid #5b3f36;border-radius:24px;padding:22px;max-width:340px;text-align:center;color:#5b3f36">'
       + '<h2 style="margin:0 0 8px;font-size:21px">' + (vi ? 'Ối, game chưa mở được' : 'Oops, the island didn\'t open') + '</h2>'
       + '<p style="font-weight:700;line-height:1.4;margin:0 0 16px">' + (vi ? 'Hòn đảo của bạn vẫn an toàn. Thử lại, hoặc bấm Sửa để tải lại các tệp của game.' : 'Your island is safe. Try again, or tap Repair to download the game\'s files fresh.') + '</p>'
+      + (lastError ? '<p style="font-size:11px;opacity:.7;margin:-8px 0 12px;word-break:break-word">' + lastError.replace(/[<>&]/g, '') + '</p>' : '')
       + '<button data-a="retry" style="font:inherit;font-weight:900;font-size:16px;width:100%;padding:12px;border-radius:999px;border:3px solid #5b3f36;background:#fff;margin-bottom:8px">' + (vi ? 'Thử lại' : 'Try again') + '</button>'
       + '<button data-a="repair" style="font:inherit;font-weight:900;font-size:16px;width:100%;padding:12px;border-radius:999px;border:3px solid #5b3f36;background:#f08ca0;color:#fff">' + (vi ? 'Sửa và tải lại' : 'Repair') + '</button></div>';
     (document.body || document.documentElement).appendChild(el);
     el.querySelector('[data-a="retry"]').onclick = function () { location.reload(); };
-    el.querySelector('[data-a="repair"]').onclick = function () { this.textContent = vi ? 'Đang sửa…' : 'Repairing…'; repair(); };
+    el.querySelector('[data-a="repair"]').onclick = function () { this.textContent = vi ? 'Đang sửa…' : 'Repairing…'; this.disabled = true; repair(); };
   }
   var timer = null;
   function soon() { clearTimeout(timer); timer = setTimeout(card, 2500); }
