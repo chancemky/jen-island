@@ -49,7 +49,7 @@ export const social = () => (G.state.social ||= { friends: 0, giftsSent: 0, visi
 export function noteFriendCount(n) { if (social().friends !== n) { social().friends = n; markDirty(); } }
 // an invite link (…?friend=CODE): add them once you're signed in (a guest keeps it for later)
 const INVITE_KEY = 'jenisland.invite';
-async function acceptInvite() {
+export async function acceptInvite() {
   const q = new URLSearchParams(location.search).get('friend');
   if (q) { try { localStorage.setItem(INVITE_KEY, q.toUpperCase()); } catch {} history.replaceState(null, '', location.pathname); }
   let code = null; try { code = localStorage.getItem(INVITE_KEY); } catch {}

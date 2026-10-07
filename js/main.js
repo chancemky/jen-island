@@ -49,6 +49,8 @@ import { plaqueAction } from './systems/garden.js';
 import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, TRACKS, trackState, claimMilestone } from './systems/progress.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { syncPurchases, purchaseReturn } from './systems/store.js';
+import { initIAP } from './systems/iap.js';
+import { initDeepLinks } from './systems/deeplink.js';
 import { initTelemetry, track, reportError } from './systems/telemetry.js';
 import { initBadges, grantServerBadge, FOUNDER_BEFORE } from './systems/badges.js';
 import { morningMail } from './systems/daily.js';
@@ -140,7 +142,7 @@ async function boot() {
   if (dev && new URLSearchParams(location.search).has('fresh')) G.state = defaultState();
   $('boot').classList.add('gone');
   startGame();
-  syncPurchases(); purchaseReturn();
+  syncPurchases(); purchaseReturn(); initIAP(); initDeepLinks();
   if (!G.user.local && G.user.createdAt && G.user.createdAt < FOUNDER_BEFORE) grantServerBadge('founder');
   initBadges();
   initSocial();

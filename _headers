@@ -19,3 +19,6 @@
   Cache-Control: public, max-age=86400
 /version.json
   Cache-Control: no-store
+
+/.well-known/apple-app-site-association
+  Content-Type: application/json

@@ -14,6 +14,7 @@ import { bus, devHost, nativeApp, islandNow } from '../core/util.js';
 import { CLOTHES } from '../data/wardrobe.js';
 import * as cloud from './cloud.js';
 import { grantServerBadge } from './badges.js';
+import { iapReady, iapBuy } from './iap.js';
 
 const local = devHost();
 export const STORE = {
@@ -25,7 +26,7 @@ export const STORE = {
 // the store screen shows on the live site once payments are on; before that only
 // on a local copy, so it can be checked
 // (not in the store apps: Apple and Google need their own in-app purchases for these)
-export const storeVisible = () => !nativeApp() && (STORE.payments || local);
+export const storeVisible = () => nativeApp() ? iapReady() : (STORE.payments || local);
 
 export const PRODUCTS = {
   supporter: {
@@ -98,6 +99,15 @@ export const seasonState = () => ({ on: seasonOn(), pts: seasonPoints(), paid: o
 
 // Start a purchase: 'redirect' to Stripe, 'account' (needs a signed-in account), or 'off'.
 export function buy(id) {
+  if (nativeApp()) {                                              // the store apps: Apple / Google pay, via RevenueCat
+    if (!iapReady()) return 'off';
+    if (!G.user || G.user.local) return 'account';
+    iapBuy(id).then(r => {
+      if (r === 'bought') purchaseThanks();
+      else if (r === 'failed') bus.emit('toast', { text: T('The purchase didn\'t go through', 'Giao dịch chưa thành công'), sub: T('Nothing was charged. Please try again.', 'Bạn chưa bị trừ tiền. Hãy thử lại.'), icon: 'heart', bad: true });
+    });
+    return 'iap';
+  }
   const link = STORE.payments ? STORE.checkout[id] : local ? STORE.test[id] : null;
   if (!link) return 'off';
   if (!G.user || G.user.local) return 'account';                 // purchases belong to an account, so they're never lost
@@ -111,6 +121,9 @@ export function purchaseReturn() {
   const q = new URLSearchParams(location.search), id = q.get('purchase');
   if (!id || !PRODUCTS[id]) return;
   history.replaceState(null, '', location.pathname);
+  purchaseThanks();
+}
+function purchaseThanks() {
   bus.emit('toast', { text: T('Thank you for supporting Bistro Island!', 'Cảm ơn bạn đã ủng hộ Bistro Island!'), sub: T('Your items are on their way to your wardrobe.', 'Món đồ đang được gửi tới tủ quần áo của bạn.'), icon: 'heart', ms: 5000 });
   let tries = 0; const poll = async () => { if ((await syncPurchases()).length || ++tries > 10) return; setTimeout(poll, 3000); }; setTimeout(poll, 1500);
 }

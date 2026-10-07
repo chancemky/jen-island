@@ -14,6 +14,12 @@ PODS:
   - CordovaPluginsStatic (7.6.9):
     - AppLovinSDK (= 13.2.0)
     - CapacitorCordova
+  - PurchasesHybridCommon (17.25.0):
+    - RevenueCat (= 5.51.1)
+  - RevenueCat (5.51.1)
+  - RevenuecatPurchasesCapacitor (11.3.2):
+    - Capacitor
+    - PurchasesHybridCommon (= 17.25.0)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
@@ -23,10 +29,13 @@ DEPENDENCIES:
   - "CapacitorLocalNotifications (from `../../node_modules/@capacitor/local-notifications`)"
   - "CapawesomeCapacitorAppReview (from `../../node_modules/@capawesome/capacitor-app-review`)"
   - CordovaPluginsStatic (from `../capacitor-cordova-ios-plugins`)
+  - "RevenuecatPurchasesCapacitor (from `../../node_modules/@revenuecat/purchases-capacitor`)"
 
 SPEC REPOS:
   trunk:
     - AppLovinSDK
+    - PurchasesHybridCommon
+    - RevenueCat
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -43,6 +52,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capawesome/capacitor-app-review"
   CordovaPluginsStatic:
     :path: "../capacitor-cordova-ios-plugins"
+  RevenuecatPurchasesCapacitor:
+    :path: "../../node_modules/@revenuecat/purchases-capacitor"
 
 SPEC CHECKSUMS:
   AppLovinSDK: 1eb88a82b4feea9f3696ce9cc1e3343c4997ee12
@@ -53,7 +64,10 @@ SPEC CHECKSUMS:
   CapacitorLocalNotifications: f8ccb7e9c9056a23f415398e51825594e953af3a
   CapawesomeCapacitorAppReview: d21a583169b99c7b6071fa9b8b3e668f05dfa4fd
   CordovaPluginsStatic: f298de1a7d977d9c56a2a4d909a044d6346c45b5
+  PurchasesHybridCommon: 6a79a873ab52f777bfa36e9516f3fcd84d3b3428
+  RevenueCat: eab035bbab271faccfef5c36eaff2a1ffef14dc0
+  RevenuecatPurchasesCapacitor: 17db9f0b99ec5c4055d84af83d38bc5038f50ff2
 
-PODFILE CHECKSUM: 5c3d5e21cccb98bacf79cbb4a5ca3ff4376c9a9c
+PODFILE CHECKSUM: 7ab157ca295e051f5e6b9eabd8a636b8e9f5d9fc
 
 COCOAPODS: 1.15.2

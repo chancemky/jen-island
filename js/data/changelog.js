@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.9.0';
+export const APP_VERSION = '5.10.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.10.0', date: '2026-10-07T16:20:24Z',
+    title: ['Ready for the App Stores', 'Sẵn Sàng Lên Kho Ứng Dụng'],
+    items: [
+      ['Getting ready for the App Store and Google Play: in-app purchases, Restore Purchases and links that open the app', 'Chuẩn bị lên App Store và Google Play: mua trong ứng dụng, Khôi phục giao dịch và liên kết mở thẳng ứng dụng'],
+      ['Privacy policy updated for friends, visits, purchases and optional ads', 'Cập nhật chính sách quyền riêng tư cho bạn bè, ghé thăm, giao dịch và quảng cáo tùy chọn'],
+    ],
+  },
   {
     v: '5.9.0', date: '2026-10-07T15:56:49Z',
     title: ['Smooth Sailing', 'Thuận Buồm Xuôi Gió'],

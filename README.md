@@ -21,7 +21,9 @@ On `localhost` only:
 
     npm i            # once (Playwright)
     npm test         # everything
-    npm run test:quick     # content, save, economy, ui, clock (a few minutes)
+    npm run test:quick     # content, save, economy, ui, clock, features — in parallel (~2 min)
+    npm run test:all       # every suite except chaos, in parallel
+    npm run check:audio    # every sound effect and stinger: none silent, clipping or throwing
     npm run test:story | test:economy | test:quests | test:world | test:stability | test:clock | test:ui | test:render
     node tests/run.mjs story,ui   # any comma list of suites
 
@@ -40,6 +42,8 @@ On `localhost` only:
 | chaos (`npm run test:chaos`, not in `npm test`) | Chapters 1→20 with an impatient player: random taps, mashing the action key, opening/closing the menu around transitions |
 | clock | staying up past dawn in a closed stand, the bed and Talk prompts from every side, the clock and position surviving a reload |
 | render | every look × pose × direction draws pixels, and every figure keeps its big head |
+
+Art checks: `tests/furniture.html?ids=…` (each piece at four moments, at night and as the shop preview), `tests/clothes.html?ids=…` (each piece from the front, both sides, behind and walking, with different hair), `tests/acts.html?acts=…` (animations from three sides). Screenshot any page with `node tools/shot.mjs <page> <out.png> [width]`; script a play-test with `node tools/play.mjs <steps.mjs> <out-prefix>`.
 
 `tests/cast.html` is a contact sheet of the whole cast for art checks against `docs/reference/`. `tests/backview.html` shows every haircut, hat and accessory from behind, three-quarters behind and the side (`?set=hair|hats|gear&hair=pony`), and `tests/hammock.html` shows lying in each kind of hammock.
 
@@ -70,7 +74,18 @@ Live products and Payment Links exist (`STORE.checkout` in `js/systems/store.js`
 2. Copy its signing secret and, in the Supabase SQL editor, run `select vault.create_secret('<whsec_…>', 'jen_island_stripe_webhook_live');`.
 3. Set `STORE.payments = true` and deploy.
 
-The store is hidden inside the store apps: Apple and Google require their own in-app purchases for cosmetics.
+**In the store apps** purchases go through Apple / Google via RevenueCat (`js/systems/iap.js`); the Stripe store is never shown there. To switch it on:
+
+1. App Store Connect and Google Play Console: create two non-consumable products, `bistro_supporter` ($4.99) and `bistro_pass_s1` ($2.99).
+2. RevenueCat: add both apps and products; copy the public SDK keys into `IAP.keys` in `js/systems/iap.js`.
+3. RevenueCat → Integrations → Webhooks: URL `https://cgbaigeergwvbmghrakb.supabase.co/functions/v1/jen-island-revenuecat-webhook`, Authorization header = a long random string of your choice. In the Supabase SQL editor: `select vault.create_secret('<that string>', 'jen_island_revenuecat_webhook');`
+4. `npm run app`, then build.
+
+**Links into the app**: `bistroisland://?friend=CODE` works now. For the website's own links (invites, password reset) to open the app, run `APPLE_TEAM_ID=… PLAY_SHA256=… node tools/well-known.mjs`, deploy, and add `applinks:<domain>` under Signing & Capabilities → Associated Domains in Xcode.
+
+## Admin
+
+`/admin` (admin.html) shows players per day, sign-ups, versions, events, errors, chapters and D1/D7 return. Sign in with a game account listed in `jen_island_admins` (add one: `insert into jen_island_admins values ('<user id>');`).
 
 ## Email (Resend)
 
