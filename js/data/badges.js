@@ -7,6 +7,7 @@ import { RECIPES, BUSINESSES } from './game.js';
 import { CLOTHES, FREE_CLOTHES } from './wardrobe.js';
 import { FISH } from '../systems/fishing.js';
 import { PLACES } from '../systems/economy.js';
+import { setProgress } from './sets.js';
 
 const regulars = s => Object.values(s.regulars || {}).filter(r => r.visits >= 3).length;
 const owned = s => Object.keys(BUSINESSES).filter(id => s.biz[id]?.owned).length;
@@ -20,6 +21,7 @@ export const BADGES = {
   goal_getter: { tier: 'bronze', glyph: '🎯', en: 'Goal Getter', vi: 'Hoàn thành mục tiêu', need: ['Finish a week of island goals', 'Hoàn thành mục tiêu một tuần'], got: s => (s.weekly?.champ || 0) >= 1 },
   neighbour:   { tier: 'bronze', glyph: '📌', en: 'Good Neighbour', vi: 'Hàng xóm tốt', need: ['Finish 10 notes from the Island Board', 'Hoàn thành 10 lời nhờ trên Bảng tin đảo'], got: s => (s.stats.boardDone || 0) >= 10 },
   first_friend:{ tier: 'bronze', glyph: '🫶', en: 'First Friend', vi: 'Người bạn đầu tiên', need: ['Add a friend', 'Kết bạn với một người'], got: s => (s.social?.friends || 0) >= 1 },
+  designer:    { tier: 'silver', glyph: '🛋️', en: 'Interior Designer', vi: 'Nhà thiết kế nội thất', need: ['Complete 3 furniture sets at home', 'Hoàn thành 3 bộ nội thất trong nhà'], got: s => setProgress(s.home).filter(x => x.done).length >= 3 },
   homebody:    { tier: 'bronze', glyph: '🏡', en: 'Homebody', vi: 'Người yêu nhà', need: ['Place 10 pieces of furniture', 'Đặt 10 món nội thất'], got: s => (s.home?.furniture || []).length >= 10 },
   // ---- silver
   crowd:       { tier: 'silver', glyph: '🎪', en: 'Crowd Pleaser', vi: 'Đắt khách', need: ['Serve 1,000 customers', 'Phục vụ 1.000 khách'], got: s => s.stats.served >= 1000 },

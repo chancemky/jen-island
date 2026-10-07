@@ -53,18 +53,23 @@ async function next() {
 }
 async function stage(title) {
   const pl = G.player, sc = G.scene, mine = { x: pl.x, y: pl.y - 26, zoom: 2.1, rate: 5 };
-  document.body.classList.add('snapping'); cam.override = mine;
-  pl.face('down'); pl.setAct('cheer'); pl.setEmo?.('happy', 4);
-  const crowd = (sc.actors || []).filter(a => a !== pl && a.kind === 'human' && a.visible && Math.hypot(a.x - pl.x, a.y - pl.y) < 110 && !a.data?.keeper && !a.clip).slice(0, 4);
-  for (const a of crowd) { a.face(a.x < pl.x ? 'right' : 'left'); a.setAct('clap'); }
-  if (G.meo?.visible && G.meo.scene === sc) G.meo.showEmote?.('heart', 2);
-  await sleep(750);
-  fx.burst('confetti', pl.x, pl.y - 34, 30, { up: 90, speed: 70, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 60, life: 1.8 });
-  bus.emit('sfx', 'sparkle');
-  await sleep(700);
-  const shot = grab(title);
-  document.body.classList.remove('snapping'); if (cam.override === mine) cam.override = null;
-  pl.setAct(null); for (const a of crowd) if (a.act === 'clap') a.setAct(null);
+  let crowd = [], shot = null;
+  try {
+    document.body.classList.add('snapping'); cam.override = mine;
+    pl.face('down'); pl.setAct('cheer'); pl.setEmo?.('happy', 4);
+    crowd = (sc.actors || []).filter(a => a !== pl && a.kind === 'human' && a.visible && Math.hypot(a.x - pl.x, a.y - pl.y) < 110 && !a.data?.keeper && !a.clip).slice(0, 4);
+    for (const a of crowd) { a.face(a.x < pl.x ? 'right' : 'left'); a.setAct('clap'); }
+    if (G.meo?.visible && G.meo.scene === sc) G.meo.showEmote?.('heart', 2);
+    await sleep(750);
+    if (!calm() && G.runtime.inCutscene) return;                 // a scene started: give way
+    fx.burst('confetti', pl.x, pl.y - 34, 30, { up: 90, speed: 70, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 60, life: 1.8 });
+    bus.emit('sfx', 'sparkle');
+    await sleep(700);
+    shot = grab(title);
+  } finally {
+    document.body.classList.remove('snapping'); if (cam.override === mine) cam.override = null;
+    if (pl.act === 'cheer') pl.setAct(null); for (const a of crowd) if (a.act === 'clap') a.setAct(null);
+  }
   if (!shot) return;
   const list = albumPhotos(); list.push({ day: G.state.day, t: Date.now(), title, img: shot, celebration: true });
   while (list.length > MAX) list.shift(); save(list);
@@ -84,6 +89,7 @@ function grab(title) {
     return cv.toDataURL('image/jpeg', 0.8);
   } catch { return null; }
 }
+export function deletePhoto(t) { save(albumPhotos().filter(p => p.t !== t)); }
 const MOMENTS = {
   first_repair: ['The first shed, fixed', 'Căn chòi đầu tiên, đã sửa xong'], first_sale: ['My very first customer', 'Vị khách đầu tiên'],
   first_keeper: ['My first helper', 'Người phụ giúp đầu tiên'], truck: ['The truck is ours', 'Chiếc xe là của mình'],
@@ -96,5 +102,6 @@ export function initAlbum() {
   bus.on('chapterCard', (n, title) => celebratePhoto(title));
   bus.on('levelup', lv => { if (lv % 10 === 0) celebratePhoto([`Level ${lv}!`, `Cấp ${lv}!`]); });
   bus.on('weekAward', () => celebratePhoto(['A trophy week!', 'Một tuần đoạt cúp!']));
+  bus.on('rareMet', id => celebratePhoto({ critic: ['Five stars from the critic', 'Năm sao từ nhà phê bình'], vlogger: ['On Kenji\'s travel vlog', 'Lên vlog của Kenji'], busker: ['A song by the fountain', 'Một bài hát bên đài phun nước'], goldcat: ['The golden cat!', 'Chú mèo vàng!'] }[id] || ['A rare visitor', 'Vị khách hiếm']));
   bus.on('quest:done', (id, title) => { if (['minh_sunset', 'minh_fireflies', 'vy_portrait', 'hai_dawn', 'post_lam', 'nm_lanterns'].includes(id) && title) snapshot(title, 200); });
 }

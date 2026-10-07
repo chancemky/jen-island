@@ -2,6 +2,7 @@
 // and in the automated test suite (tests/run.mjs), so broken data never ships.
 // Each check returns human-readable problems; an empty list means all good.
 
+import { SETS } from '../data/sets.js';
 import { INGREDIENTS, PREPPED, PREP_VERB, STATION, RECIPES, BUSINESSES, MATERIALS, OPTIONS, ACHIEVEMENTS, CHAPTERS, FURNITURE, VY_VIEWS, recipeCost } from '../data/game.js';
 import { RESIDENTS, MERCHANTS } from '../data/looks.js';
 import { hasIcon } from '../gfx/food.js';
@@ -106,6 +107,7 @@ export function validateContent(scenes = null) {
   for (const v of VY_VIEWS) if (scenes?.island && !scenes.island.terrain(v.x, v.y)) bad('story', `Vy's view ${v.id} is off the island`);
   // ---- furniture
   for (const [id, f] of Object.entries(FURNITURE)) if (!f.reward && !(f.price > 0)) bad('furniture', `${id} has no price`);
+  for (const [id, st] of Object.entries(SETS)) for (const p of st.pieces) if (!FURNITURE[p]) bad('sets', `${id} needs ${p}, which isn't furniture`);
   for (const id of Object.keys(FURNITURE)) if (!FURN_DRAW[id]) bad('asset', `furniture ${id} has no drawing`);
   // ---- milestones: a finite track may never ask for more than exists
   for (const tr of TRACKS) {

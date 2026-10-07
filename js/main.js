@@ -64,10 +64,12 @@ import { initBoard, BOARD, boardOpen } from './systems/board.js';
 import { initRare, rareAction } from './systems/rare.js';
 import { initTips } from './systems/tips.js';
 import { initSmoothieIntro } from './systems/smoothieintro.js';
-import { specialEasels } from './systems/growth.js';
+import { specialEasels, drawBeam } from './systems/growth.js';
 import { openPhotoMode } from './ui/photo.js';
 import { updatePlayerIdle } from './systems/idle.js';
 import { updateAmbience } from './systems/ambience.js';
+import { updateWeather, drawRain } from './systems/weather.js';
+import { initHome } from './systems/home.js';
 import { openBoard } from './ui/board.js';
 import { CLOTHES } from './data/wardrobe.js';
 import { initAds } from './systems/ads.js';
@@ -232,7 +234,7 @@ function startGame() {
   safe('npcs', () => initNPCs(scenes.island));
   safe('vendors', () => spawnVendors(scenes.island));
   safe('merchants', () => spawnMerchants());
-  safe('furniture', () => rebuildHouseFurniture());
+  safe('furniture', () => { initHome(); rebuildHouseFurniture(); });
   safe('truck', () => { if (G.state.truckSpot && TRUCK_SPOTS[G.state.truckSpot]) { const sp = TRUCK_SPOTS[G.state.truckSpot]; scenes.island.moveBuilding('truck', sp.x, sp.y); } });
   safe('keepers', () => spawnKeepers());
   safe('pets', () => rebuildPets());
@@ -379,7 +381,7 @@ function loop(now) {
   if (G.runtime.cinematic) return; // the opening cinematic owns the canvas
   if (!G.scene) return;
   if (G.runtime.paused) { // frozen world: just keep drawing it under the pause card
-    G.renderer.render(G.scene, t, { player: G.player, light: lightingFor(G.state.time, G.scene.kind !== 'island'), worldExtra: G.scene === scenes.island ? npcDrawables() : null, overlay: (c, tt) => drawSkyLife(c, tt) });
+    G.renderer.render(G.scene, t, { player: G.player, light: lightingFor(G.state.time, G.scene.kind !== 'island'), worldExtra: G.scene === scenes.island ? npcDrawables() : null, overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); } });
     return;
   }
   const gm = updateClock(dt);
@@ -399,6 +401,7 @@ function loop(now) {
   updateWorldEvents(dt);
   updateSeasonal(dt);
   updateAmbience();
+  updateWeather(dt);
   if (G.scene === scenes.island) updateVendors(dt);
   // shops stand still while a menu or the prep table has the clock paused (no new
   // customers, no lost patience), so checking your bag never costs you a sale
@@ -419,7 +422,7 @@ function loop(now) {
   if (!(isServiceOpen() || isPrepOpen())) G.renderer.render(sc, t, {
     player: pl, light,
     worldExtra: sc === scenes.island ? npcDrawables() : null,
-    overlay: (c, tt) => { drawSkyLife(c, tt); G.runtime.decoOverlay?.(c, tt); },
+    overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); G.runtime.decoOverlay?.(c, tt); },
   });
   updateHud(dt);
   tickCelebrations(() => !cs.active && !isUiOpen() && !isPresenting() && !isServiceOpen() && !isPrepOpen() && !dialogue.active && !isDecorating() && !G.runtime.paused);
@@ -802,6 +805,12 @@ function statueSheet() {
 }
 async function homeSnack() {
   const pl = G.player;
+  // your kitchen: a snack, or the recipe lab once you know a few recipes
+  if (G.state.recipes.length >= 3) {
+    const pick = await ask(null, T('The kitchen. What shall we do?', 'Gian bếp. Làm gì đây?'), [T('Recipe lab: experiment', 'Bếp thử món: thử nghiệm'), T('Make a little snack', 'Làm món ăn vặt')]);
+    if (pick === 0) { (await import('./ui/lab.js')).openLab(); return; }
+    if (pick !== 1) return;
+  }
   await cs.run('snack', async () => {
     pl.face('up'); pl.setAct('stir'); sfx('pour'); await wait(1.2);
     pl.face('down'); pl.setAct('drink', 'cup'); pl.setEmo('happy', 2); await wait(1.8); pl.setAct(null);

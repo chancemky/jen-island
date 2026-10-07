@@ -8,6 +8,7 @@ import { RESIDENTS, visitorLook } from '../data/looks.js';
 import { addXP } from './progress.js';
 import { Actor } from '../world/actor.js';
 import { QUEUES, TRUCK_SPOTS } from '../world/island.js';
+import { comfortBonus } from '../data/sets.js';
 import { bus, rand, randi, choice, chance, clamp, dist, clock } from '../core/util.js';
 import { sfx } from '../core/audio.js';
 import { applyPronouns, customerProfile } from './pronouns.js';
@@ -410,7 +411,7 @@ export function completeOrder(c, quality) {
   const r0 = rt(c.bizId), byYou = G.runtime.serviceOpen === c.bizId;
   if (byYou) { r0.streak = quality === 'perfect' ? (r0.streak || 0) + 1 : 0; if (r0.streak > 1) tipRate *= 1 + Math.min(0.3, (r0.streak - 1) * 0.05); if (r0.streak > (G.state.stats.bestStreak || 0)) G.state.stats.bestStreak = r0.streak; bus.emit('streak', c.bizId, r0.streak); }
   const L = G.runtime.luck, luck = L && L.day === G.state.day && G.state.time < L.until ? L.tip : 1;   // a busker's song, the golden cat (systems/rare.js)
-  const tip = Math.round(price * tipRate * luck);
+  const tip = Math.round(price * tipRate * luck * (1 + comfortBonus(G.state.home)));   // a cosy home (complete furniture sets) puts you in a good mood
   addXP(quality === 'perfect' ? 12 + (order.special ? 3 : 0) : 7, 'serve');
   addMoney(price, 'sale');
   if (tip > 0) { addMoney(tip, 'tip'); s.today.tips += tip; s.stats.tipsTotal += tip; }

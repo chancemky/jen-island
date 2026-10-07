@@ -13,6 +13,7 @@ import { openSheet, h } from '../ui/sheets.js';
 import { sfx, setRoomMusic, roomMusic, playNote } from '../core/audio.js';
 import { fx } from '../world/render.js';
 import { choice, dist, rand, clock, bus, islandDay } from '../core/util.js';
+import { weatherBoost, weatherOn, seasonOf, SEASON_NAME } from './weather.js';
 import { PLAZA, PIER, PIER_END, isOcean } from '../world/island.js';
 import { COUNTS } from '../core/counts.js';
 import { npcs, visitorBoatTimes } from './npc.js';
@@ -126,7 +127,7 @@ async function clockLook() { discover('clock'); await say(null, T(`It's ${clock(
 async function calendarLook() {
   discover('calendar');
   const ev = nextEvent(G.state.day);
-  await say(null, T(`Day ${G.state.day} on the island. ${ev ? `Circled on the calendar: ${ev.en} (day ${ev.day}).` : ''}`, `Ngày ${G.state.day} trên đảo. ${ev ? `Khoanh tròn trên lịch: ${ev.vi} (ngày ${ev.day}).` : ''}`));
+  const ss = seasonOf(); await say(null, T(`Day ${G.state.day} on the island · ${SEASON_NAME[ss][0]}. ${ev ? `Circled on the calendar: ${ev.en} (day ${ev.day}).` : ''}`, `Ngày ${G.state.day} trên đảo · ${SEASON_NAME[ss][1]}. ${ev ? `Khoanh tròn trên lịch: ${ev.vi} (ngày ${ev.day}).` : ''}`));
 }
 async function mirror() {
   discover('mirror'); const pl = G.player;
@@ -296,8 +297,9 @@ export function nextEvent(day) {
   return null;
 }
 // how much busier a business is today
-export function eventBoost(biz) { const ev = eventOn(); return ev ? (ev.boost[biz] || ev.boost.all || 1) : 1; }
+export function eventBoost(biz) { const ev = eventOn(); return (ev ? (ev.boost[biz] || ev.boost.all || 1) : 1) * weatherBoost(biz); }
 export function morningEvent() {
+  const w = weatherOn(); if (w.rain) setTimeout(() => toast({ text: T(`Rain expected around ${Math.floor(w.start)}:00`, `Dự báo mưa khoảng ${Math.floor(w.start)} giờ`), sub: T('Hot drinks and the restaurant will be busy.', 'Đồ uống nóng và nhà hàng sẽ đông khách.'), icon: 'ice', ms: 4200 }), 2500);
   const ev = eventOn(); if (!ev) return;
   toast({ text: T(`Today: ${ev.en}`, `Hôm nay: ${ev.vi}`), sub: T(ev.line[0], ev.line[1]), icon: 'lantern', ms: 5200 });
 }

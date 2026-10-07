@@ -30,7 +30,7 @@ export const RARE = {
 };
 const openShops = () => Object.keys(BUSINESSES).filter(id => G.state.biz[id]?.open && BUSINESSES[id].kind !== 'restaurant' && rt(id));
 function met(id) {
-  const r = R(); if (!r.seen[id]) { r.seen[id] = true; bus.emit('stinger', 'rare'); }
+  const r = R(); if (!r.seen[id]) { r.seen[id] = true; bus.emit('stinger', 'rare'); bus.emit('rareMet', id); }
   r.seen[id] = true; markDirty(true); track('rare_met', { id });
 }
 

@@ -26,7 +26,7 @@ export const BUILTINS = {
   wardrobe: { kind: 'wardrobeBig', en: 'Wardrobe', vi: 'Tủ quần áo', x: 104, y: 72, w: 48, h: 10, opts: () => ({ col: '#e3b77f' }),
          trig: { id: 'wardrobe', dx: -26, dy: 0, w: 52, h: 22, label: 'Thay đồ', en: 'Wardrobe', icon: 'shirt', action: 'wardrobe' } },
   kitchen: { kind: 'kitchen', en: 'Kitchen', vi: 'Bếp', x: 226, y: 98, w: 70, h: 32, opts: () => ({}),
-         trig: { id: 'kitchen', dx: -36, dy: 0, w: 70, h: 18, label: 'Nấu', en: 'Snack', icon: 'tea', action: 'homeSnack' } },
+         trig: { id: 'kitchen', dx: -36, dy: 0, w: 70, h: 18, label: 'Bếp', en: 'Kitchen', icon: 'tea', action: 'homeSnack' } },
   lamp: { kind: 'floorLamp', en: 'Floor lamp', vi: 'Đèn đứng', x: 22, y: 150, w: 10, h: 4, round: true, opts: () => ({}) },
   plant: { kind: 'plant', en: 'Potted plant', vi: 'Chậu cây', x: 24, y: 284, w: 14, h: 8, round: true, opts: () => ({ s: 1 }) },
   mat: { kind: 'rug', en: 'Mat', vi: 'Thảm', x: 150, y: 214, w: 96, h: 40, floor: true, opts: () => ({ w: 96, h: 40, col: '#f7d6a0' }) },   // last: it lies under everything
@@ -267,6 +267,7 @@ function renderTools() {
     const before = snap(); st.rot = rot; rebuildHouseFurniture(); changed(before); sfx('whoosh'); renderBar();
   };
   if (!def.wall && SIDE[keyOf(sel)]) t.append(act('↺', 'ghost small icon', () => turn(-1)), act('↻', 'ghost small icon', () => turn(1)));
+  else t.append(act('⇋', 'ghost small icon', () => turn(2)));                       // everything else can be mirrored
   if (D.sel.f) t.append(act(T('Put away', 'Cất đi'), 'ghost small', () => {
     const before = snap(), list = G.state.home.furniture, i = list.indexOf(D.sel.f);
     if (i >= 0) { list.splice(i, 1); G.state.home.owned.push(D.sel.f.id); }

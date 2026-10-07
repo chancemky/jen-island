@@ -11,7 +11,7 @@ import { INK, ell, circ, poly, shadow, heart } from '../gfx/draw.js';
 import { F } from '../gfx/furniture.js';
 import { say, ask } from '../ui/dialogue.js';
 import { sfx } from '../core/audio.js';
-import { rand, dist, sleep } from '../core/util.js';
+import { rand, dist, sleep, bus } from '../core/util.js';
 import { fx } from '../world/render.js';
 import {addXP } from './progress.js';
 import { COUNTS } from '../core/counts.js';
@@ -146,6 +146,18 @@ export async function buyPet(id, name) {
   rebuildPets();
   return p;
 }
+// your pet at the shop: customers who've just been served bend down to say hello, and
+// the pet wags, hops and gets a heart (and a little love). Now and then they add a coin.
+bus.on('served', c => {
+  const uid = followerUid(); if (!uid || !c?.actor) return;
+  const a = G.scene?.actors?.find(x => x.data?.pet?.uid === uid); if (!a || dist(a.x, a.y, c.actor.x, c.actor.y) > 120 || Math.random() > 0.35) return;
+  setTimeout(() => {
+    c.actor.face?.(a.x < c.actor.x ? 'left' : 'right'); c.actor.showEmote?.('heart', 1.4);
+    a.data.happy = 2; a.doHop?.(90); a.showEmote?.('heart', 1.4); sfx(a.data.pet.kind === 'cat' || /cat/.test(a.data.pet.id || '') ? 'mew' : 'woof');
+    const p = S().pets.find(x => x.uid === uid); if (p) { p.love = Math.min(100, (p.love || 0) + 1); markDirty(); }
+    if (Math.random() < 0.3) { addMoney(2, 'tip'); fx.float(a.x, a.y - 30, '+2k 🐾', '#ffe07a', { size: 9 }); }
+  }, 900);
+});
 export function setFollower(uid) { S().petFollow = uid; markDirty(true); rebuildPets(); }
 export function buyFood(n = 1) { const cost = PET_FOOD.price * n; if (!canAfford(cost)) return false; addMoney(-cost, 'petfood'); S().petFood += PET_FOOD.n * n; markDirty(true); return true; }
 

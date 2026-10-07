@@ -16,6 +16,9 @@ import { activeQuests, SIDE_QUESTS, deliverTarget } from '../systems/sidequests.
 import { MEO_MEMORIES } from '../data/lore.js';
 import { DISCOVERIES } from '../systems/interact.js';
 import { albumPhotos } from '../systems/album.js';
+import { openPhotoViewer } from './album.js';
+import { nextHome, homeLoan, upgradeHome } from '../systems/home.js';
+import { setProgress, comfortBonus } from '../data/sets.js';
 import { upgradeCost, shopNeed } from '../systems/economy.js';
 import { toast, moneyShortfall } from './hud.js';
 import { STEPS, STEP_TEACHES } from '../systems/story.js';
@@ -161,6 +164,18 @@ export function openFurnitureShop() {
   openSheet({ title: T('Anh Khoa\'s Furniture', 'Nhà đẹp Anh Khoa'), sub: T('Make your house a home', 'Đồ đạc cho ngôi nhà'), who: MERCHANTS.anh_khoa, build: (body, api) => {
     const list = h('div', 'list scroll'); list.style.flex = '1'; body.appendChild(list);
     const s = G.state;
+    // home upgrades (pay now, or move in now and pay back a little each good night)
+    const up = nextHome();
+    if (up || homeLoan()) {
+      const r = h('div', 'row', `<div class="ico">🏡</div><div class="info"><b>${escapeHtml(up ? T(up.en, up.vi) : T('Home loan', 'Tiền nhà'))}</b><small>${homeLoan() ? T(`Still owed: ${money(homeLoan())} (paid back from good days)`, `Còn nợ: ${money(homeLoan())} (trả dần vào ngày có lãi)`) : escapeHtml(T(...up.note))}</small></div>`);
+      if (up && !homeLoan()) { const col = h('div', 'btn-col'); col.append(btn(money(up.cost), () => { if (!upgradeHome('cash')) return moneyShortfall(up.cost); sfx('fanfare'); api.rebuild(); }, 'buy'), btn(T('Pay later', 'Trả dần'), () => { upgradeHome('loan'); sfx('fanfare'); api.rebuild(); }, 'buy alt')); r.appendChild(col); }
+      list.appendChild(r);
+    }
+    // furniture sets: place every piece for the home-comfort bonus
+    { const sets = setProgress(s.home), done = sets.filter(x => x.done).length;
+      list.appendChild(h('div', 'section-title', T(`Furniture sets · ${done} complete · tips +${Math.round(comfortBonus(s.home) * 100)}%`, `Bộ nội thất · hoàn thành ${done} · boa +${Math.round(comfortBonus(s.home) * 100)}%`)));
+      const wrap = h('div', 'set-list'); list.appendChild(wrap);
+      for (const st of sets) wrap.appendChild(h('div', 'set-chip' + (st.done ? ' done' : ''), `<b>${st.done ? '✓ ' : ''}${escapeHtml(T(st.en, st.vi))}</b><small>${st.have}/${st.pieces.length} · ${st.pieces.map(p => escapeHtml(furnName(p))).join(', ')}</small>`)); }
     const ids = Object.keys(FURNITURE).sort((a, b) => !!FURNITURE[a].collector - !!FURNITURE[b].collector);
     let collectorHead = false;
     for (const id of ids) {
@@ -509,7 +524,7 @@ const LORE = [
 ];
 export function openJournal() {
   const s = G.state;
-  openSheet({ title: T('Chapters & Story', 'Các chương & câu chuyện'), sub: T('Every chapter of your island, the ones still to come, side quests and Mèo Mây\'s stories', 'Các chương của hòn đảo, những chương sắp tới, nhiệm vụ phụ và chuyện Mèo Mây kể'), who: 'meo', full: true, build: (body) => {
+  openSheet({ title: T('Chapters & Story', 'Các chương & câu chuyện'), sub: T('Every chapter of your island, the ones still to come, side quests and Mèo Mây\'s stories', 'Các chương của hòn đảo, những chương sắp tới, nhiệm vụ phụ và chuyện Mèo Mây kể'), who: 'meo', full: true, build: (body, api) => {
     const list = h('div', 'list scroll'); list.style.flex = '1'; body.appendChild(list);
     // the photo album: snapshots of the big moments
     const photos = albumPhotos();
@@ -519,7 +534,7 @@ export function openJournal() {
       const grid = h('div', 'album'); list.appendChild(grid);
       for (const ph of [...photos].reverse()) {
         const f = h('button', 'album-ph', `<img src="${ph.img}" alt=""><small>${escapeHtml(T(ph.title[0], ph.title[1]))} · <br>${T(`Day ${ph.day}`, `Ngày ${ph.day}`)}</small>`); f.type = 'button';
-        f.onclick = () => { const o = h('div', 'album-view', `<img src="${ph.img}" alt=""><b>${escapeHtml(T(ph.title[0], ph.title[1]))}</b><small>${T(`Day ${ph.day}`, `Ngày ${ph.day}`)}</small>`); o.onclick = () => o.remove(); document.getElementById('app').appendChild(o); sfx('page'); };
+        f.onclick = () => openPhotoViewer(ph.t, () => api.rebuild());
         grid.appendChild(f);
       }
     }

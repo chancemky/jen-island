@@ -867,7 +867,6 @@ body.hc :is(.empty-note, small, .muted) { opacity: 1 !important; color: #3a2a24;
 body.hc .quest { color: #1f1512; text-shadow: none; }
 body.hc :is(.chip, .tag, .pill, .opt-tag) { border-width: 3px; }
 /* the album's celebration photo: HUD out of the way, a white flash after */
-body.snapping #hud, body.snapping #toasts, body.snapping #actions, body.snapping #touch, body.snapping #pointer, body.snapping .emote-bar { visibility: hidden !important; }
 .snap-flash { position: absolute; inset: 0; background: #fff; pointer-events: none; z-index: 70; animation: phFlash .5s ease-out forwards; }
 .svc-streak { align-self: center; font-weight: 900; font-size: 14px; color: #fff; background: linear-gradient(135deg, #ff8a3a, #e8584e); border: 2.5px solid var(--ink); border-radius: 999px; padding: 2px 9px; line-height: 1.1; text-align: center; }
 .svc-streak small { display: block; font-size: 9px; opacity: .9; }
@@ -883,3 +882,17 @@ body.snapping #hud, body.snapping #toasts, body.snapping #actions, body.snapping
 .lab-ing i { position: absolute; top: 2px; right: 4px; font-style: normal; font-size: 9px; font-weight: 900; opacity: .6; }
 .lab-ing.dim { opacity: .4; }
 .lab-cook { margin-top: 8px; }
+/* album viewer */
+.album-view.viewer { display: grid; grid-template-columns: 44px 1fr 44px; grid-template-rows: auto auto auto auto; align-items: center; justify-items: center; gap: 8px; padding: 50px 10px 20px; }
+.album-view.viewer img { grid-column: 2; max-width: 100%; max-height: 62vh; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.album-view.viewer b, .album-view.viewer small, .album-view.viewer .av-row { grid-column: 1 / -1; }
+.av-nav { font-size: 34px; font-weight: 900; color: #fff; background: rgba(255,255,255,.15); border-radius: 50%; width: 40px; height: 40px; border: 0; }
+.av-nav.l { grid-column: 1; grid-row: 1; } .av-nav.r { grid-column: 3; grid-row: 1; }
+.av-nav:disabled { opacity: .2; }
+.av-x { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 12px; width: 40px; height: 40px; border-radius: 50%; background: #fffaf0; border: 3px solid #5b3f36; font-weight: 900; }
+.av-row { display: flex; gap: 8px; }
+.btn-col { display: flex; flex-direction: column; gap: 4px; }
+.set-list { display: grid; gap: 6px; margin-bottom: 10px; }
+.set-chip { background: #fff; border: 2px solid #efdcbc; border-radius: 12px; padding: 6px 10px; }
+.set-chip b { font-size: 13px; } .set-chip small { display: block; font-weight: 700; opacity: .65; font-size: 11px; }
+.set-chip.done { border-color: #8fd8a0; background: #f1fbf3; }

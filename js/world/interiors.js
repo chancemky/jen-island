@@ -131,21 +131,28 @@ export class Interior extends Scene {
 }
 
 // ---------------------------------------------------------------- definitions
+// Your house: 270 wide to start; each home upgrade adds 90 (a second window, more wall
+// decor, more floor to decorate). The door stays in the middle.
+export const HOUSE_SIZES = [270, 360, 450];
+export function buildHouse(level = 0) {
+  const w = HOUSE_SIZES[Math.min(level, HOUSE_SIZES.length - 1)], mid = w / 2;
+  const r = new Interior({ id: 'house', name: 'Nhà của bạn', w, h: 300, WH: 64, wall: level >= 2 ? '#f6e6d6' : '#f7e2c4', wall2: level >= 2 ? '#efd9c3' : '#f2d7b3', floor: level >= 1 ? '#d29d64' : '#d9a870', door: { x: mid, w: 30 }, building: 'house' });
+  r.wallItem('window', mid + 25, { w: 46, h: 28, hgt: 54, curtain: '#f4a9b8' });
+  r.wallItem('calendar', mid + 65, { day: () => G.state.day });
+  r.wallItem('clock', 28, {});
+  // the bed, wardrobe, kitchen, mat, floor lamp and plant are placed from your saved layout (see decorate.js)
+  r.wallItem('wallShelf', w - 30); r.wallItem('familyPhoto', 58);
+  if (level >= 1) r.wallItem('window', mid - 70, { w: 46, h: 28, hgt: 54, curtain: '#9fd8c8' });
+  if (level >= 2) { r.wallItem('window', w - 90, { w: 46, h: 28, hgt: 54, curtain: '#f7de8c' }); r.wallItem('familyPhoto', mid - 120); }
+  r.bedPos = { x: 46, y: 88 };
+  r.decorArea = { x: 16, y: 104, w: w - 32, h: 178 };
+  return r;
+}
 export function buildInteriors() {
   const S = {};
 
-  // Player home
-  {
-    const r = new Interior({ id: 'house', name: 'Nhà của bạn', w: 270, h: 300, WH: 64, wall: '#f7e2c4', wall2: '#f2d7b3', floor: '#d9a870', door: { x: 135, w: 30 }, building: 'house' });
-    r.wallItem('window', 160, { w: 46, h: 28, hgt: 54, curtain: '#f4a9b8' });
-    r.wallItem('calendar', 200, { day: () => G.state.day });
-    r.wallItem('clock', 28, {});
-    // the bed, wardrobe, kitchen, mat, floor lamp and plant are placed from your saved layout (see decorate.js)
-    r.wallItem('wallShelf', 240); r.wallItem('familyPhoto', 58);
-    r.bedPos = { x: 46, y: 88 };
-    r.decorArea = { x: 16, y: 104, w: 238, h: 178 };
-    S.house = r;
-  }
+  // Player home (its size grows with home upgrades: buildHouse)
+  S.house = buildHouse(G.state?.home?.size || 0);
   // Supermarket
   {
     const r = new Interior({ id: 'supermarket', name: 'Siêu thị Bình Minh', w: 300, h: 300, WH: 66, wall: '#e3f3ea', wall2: '#d3ecdf', wallStyle: 'tile', floor: '#f4efe4', floorStyle: 'tile', door: { x: 150, w: 34 }, building: 'supermarket' });

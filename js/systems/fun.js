@@ -167,7 +167,10 @@ export async function residentMenu(a, rid, chat) {
   if (canGift) opts.splice(3, 0, isBirthday(rid) ? T('🎂 Give a birthday gift', '🎂 Tặng quà sinh nhật') : T('Give a gift', 'Tặng quà'));
   const qo = questOption(rid);
   if (qo) opts.unshift(qo);
+  const gear = rid === 'chu_hai' && G.state.story.flags.fishing;
+  if (gear) opts.unshift(T('🎣 Fishing gear', '🎣 Đồ câu cá'));
   let pick = await ask(a, choice([T('Oh, hi!', 'Ơ, chào {you}!'), T(`Hey ${G.state.player.name}!`, `Ê ${G.state.player.name}!`), T('What\'s up?', 'Có chuyện gì vậy?')]), opts, { emo: 'happy' });
+  if (gear) { if (pick === 0) { (await import('./fishing.js')).openTackle(); return; } pick--; }
   if (qo) { if (pick === 0) { await questTalk(a, rid); return; } pick--; }
   if (canGift && pick === 3) { await giveResidentGift(a, rid); return; }
   if (canGift && pick > 3) pick--;

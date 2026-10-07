@@ -167,6 +167,8 @@ export function sfx(name, opt = {}) {
     case 'amb_bird': { const b = 2600 + Math.random() * 900; for (let i = 0; i < 2 + Math.floor(Math.random() * 3); i++) tone(b + Math.random() * 400, 0.06, { type: 'sine', vol: 0.025, slide: 500, when: i * 0.11, pan: (Math.random() - 0.5) * 1.2 }); break; }
     case 'amb_cricket': { const p0 = (Math.random() - 0.5) * 1.4; for (let i = 0; i < 6; i++) tone(4200, 0.025, { type: 'square', vol: 0.006, when: i * 0.05, lp: 5000, pan: p0 }); break; }
     case 'amb_chatter': for (let i = 0; i < 4; i++) voice([[0, 180 + Math.random() * 120, 500, 1400], [0.12, 200 + Math.random() * 100, 700, 1700], [0.22, 170, 450, 1200]], { vol: 0.012, q: 3, when: i * 0.22 + Math.random() * 0.1 }); break;
+    case 'amb_rain': noise(1.6, { vol: 0.05, freq: 3200, q: 0.4, type: 'highpass' }); noise(1.6, { vol: 0.03, freq: 900, q: 0.6, when: 0.2 }); break;
+    case 'amb_rain_heavy': noise(1.6, { vol: 0.09, freq: 2600, q: 0.4, type: 'highpass' }); noise(1.6, { vol: 0.05, freq: 600, q: 0.6 }); if (Math.random() < 0.08) tone(70, 1.6, { type: 'sine', vol: 0.06, slide: -20 }); break;
     case 'amb_steam': noise(0.9, { vol: 0.03, freq: 5200, q: 0.7, type: 'highpass' }); break;
     case 'amb_crackle': for (let i = 0; i < 7; i++) noise(0.012, { vol: 0.05, freq: 2500 + Math.random() * 3000, q: 3, when: Math.random() * 0.8 }); noise(0.9, { vol: 0.012, freq: 300, q: 0.5 }); break;
     case 'amb_ice': for (let i = 0; i < 2; i++) tone(2700 + Math.random() * 900, 0.04, { type: 'sine', vol: 0.02, when: i * 0.07 }); break;

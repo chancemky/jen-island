@@ -111,6 +111,17 @@ function fireworks(c, t, x, y) {
     c.restore();
   }
 }
+// at night the lighthouse sweeps its beam across the sea (drawn over the night tint)
+export function drawBeam(c, t) {
+  if (!night() || G.scene !== G.scenes.island) return;
+  const x = 900, y = 300 - 132, a = t * 0.55, L = 1100;
+  c.save(); c.globalCompositeOperation = 'lighter';
+  for (const off of [0, Math.PI]) { const ang = a + off, w = 0.11;
+    const g2 = c.createLinearGradient(x, y, x + Math.cos(ang) * L, y + Math.sin(ang) * L * 0.45); g2.addColorStop(0, 'rgba(255,240,180,.34)'); g2.addColorStop(1, 'rgba(255,240,180,0)');
+    c.fillStyle = g2; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(ang - w) * L, y + Math.sin(ang - w) * L * 0.45); c.lineTo(x + Math.cos(ang + w) * L, y + Math.sin(ang + w) * L * 0.45); c.closePath(); c.fill(); }
+  const k = (Math.sin(t * 3) + 1) / 2; c.fillStyle = `rgba(255,245,200,${0.5 + k * 0.3})`; c.beginPath(); c.arc(x, y, 7, 0, Math.PI * 2); c.fill();
+  c.restore();
+}
 // where each shop's special easel stands: beside the start of its queue
 export function specialEasels() {
   const out = [];

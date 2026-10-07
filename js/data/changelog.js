@@ -3,9 +3,25 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.14.0';
+export const APP_VERSION = '5.15.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.15.0', date: '2026-10-07T23:23:18Z',
+    title: ['Rain or Shine', 'Mưa Hay Nắng'],
+    items: [
+      ['Weather and seasons: a dry season and a rainy season, afternoon showers with umbrellas, and a forecast each morning. Cafés fill up in the rain, the beach empties', 'Thời tiết và mùa: mùa khô và mùa mưa, mưa chiều với ô dù, và dự báo mỗi sáng. Trời mưa quán cà phê đông, bãi biển vắng'],
+      ['The lighthouse sweeps its beam over the sea at night', 'Hải đăng quét đèn trên biển mỗi đêm'],
+      ['Home upgrades from Anh Khoa: two bigger houses, paid now or a little each good night', 'Nâng cấp nhà từ Anh Khoa: hai ngôi nhà rộng hơn, trả ngay hoặc trả dần vào những đêm có lãi'],
+      ['Furniture sets: complete a set at home for a comfort bonus to tips (and the Interior Designer badge)', 'Bộ nội thất: hoàn thành một bộ trong nhà để được thưởng tiền boa (và huy hiệu Nhà thiết kế nội thất)'],
+      ['Flip any piece of furniture while decorating', 'Lật mọi món nội thất khi trang trí'],
+      ['Your kitchen at home now opens the recipe lab', 'Gian bếp trong nhà giờ mở được Bếp thử món'],
+      ['Chú Hải\'s tackle box: better rods, bait for rare fish, and a fish journal with size records', 'Hộp đồ câu của Chú Hải: cần tốt hơn, mồi cho cá hiếm, và sổ tay cá có kỷ lục kích thước'],
+      ['Your pet greets customers at your shop (and sometimes earns a coin)', 'Thú cưng chào khách ở quán (và đôi khi kiếm được tiền)'],
+      ['Album viewer: swipe through your photos, share or delete them; rare visitors get a photo too', 'Xem album: lướt ảnh, chia sẻ hoặc xóa; khách hiếm cũng được chụp ảnh'],
+      ['Fixed: milestone photos briefly hid the controls', 'Đã sửa: ảnh cột mốc làm ẩn nút điều khiển trong chốc lát'],
+    ],
+  },
   {
     v: '5.14.0', date: '2026-10-07T23:00:14Z',
     title: ['Busy Season', 'Mùa Đông Khách'],
