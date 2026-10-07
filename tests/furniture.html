@@ -4,13 +4,13 @@
 // Art check: ?ids=a,b (default: all). Each row: 4 moments in the room at 3x, the shop preview, and night.
 import { FURN_DRAW, drawFurniturePreview } from '../js/gfx/furniture.js';
 import { FURNITURE } from '../js/data/game.js';
-const q = new URLSearchParams(location.search), ids = (q.get('ids') || Object.keys(FURNITURE).join(',')).split(',');
+const q = new URLSearchParams(location.search), Z = +(q.get('zoom') || 1), ids = (q.get('ids') || Object.keys(FURNITURE).join(',')).split(',');
 for (const id of ids) {
   const row = document.createElement('div'); row.className = 'row'; row.innerHTML = `<b>${id}</b>`; document.body.appendChild(row);
   for (const [t, night] of [[0.2, 0], [0.9, 0], [1.6, 0], [2.7, 0], [1.2, 1]]) {
-    const cv = document.createElement('canvas'), S = 3; cv.width = 110 * S; cv.height = 110 * S; cv.style.width = '110px';
+    const cv = document.createElement('canvas'), S = 3; cv.width = 110 * S * Z; cv.height = 110 * S * Z; cv.style.width = 110 * Z + 'px';
     if (night) cv.style.background = '#2e3550';
-    const c = cv.getContext('2d'); c.lineJoin = c.lineCap = 'round'; c.scale(S, S); c.translate(55, 96);
+    const c = cv.getContext('2d'); c.lineJoin = c.lineCap = 'round'; c.scale(S * Z, S * Z); c.translate(55, 96);
     FURN_DRAW[id]?.(c, t, { x: 0, y: 0, ...FURNITURE[id] });
     row.appendChild(cv);
   }

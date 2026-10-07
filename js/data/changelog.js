@@ -3,9 +3,19 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.11.0';
+export const APP_VERSION = '5.12.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.12.0', date: '2026-10-07T16:47:27Z',
+    title: ['The Cosy Collection', 'Bộ Sưu Tập Ấm Áp'],
+    items: [
+      ['Ten new pieces at Anh Khoa\'s: a "Bistro" neon sign, moon lamp, Tết apricot blossom tree, arcade cabinet (beat your high score!), Bát Tràng tea set, a singing canary, a brass telescope, a cat tower, fairy lights and a surfboard rack', 'Mười món mới ở Nhà đẹp Anh Khoa: biển neon "Bistro", đèn mặt trăng, cây mai ngày Tết, máy chơi game thùng (phá kỷ lục nào!), bộ ấm chén Bát Tràng, chim hoàng yến biết hót, kính thiên văn, nhà cây cho mèo, dây đèn lấp lánh và giá ván lướt sóng'],
+      ['Redrawn with more love: the piano, the golden Mèo Mây statue, the Mèo Mây plush, the pet bed, bean bag, radio, wall clock (with a swinging pendulum) and the red lantern', 'Vẽ lại kỹ hơn: đàn piano, tượng Mèo Mây mạ vàng, thú bông Mèo Mây, nệm thú cưng, ghế lười, radio, đồng hồ treo tường (có quả lắc) và lồng đèn đỏ'],
+      ['Supporter and season outfits now look the part: real áo dài with blossom and wave prints and gold trim, a lantern-print tee, a hoodie with glowing fireflies, painted and gold-leaf nón lá, a lantern bow and a long gold scarf', 'Trang phục ủng hộ và theo mùa đẹp xứng tầm: áo dài thật với họa tiết hoa và sóng viền vàng, áo thun in lồng đèn, hoodie đom đóm phát sáng, nón lá vẽ hoa và dát vàng, nơ lồng đèn và khăn vàng dài'],
+      ['The Gala Night Dress and the Tycoon Suit got gold trims and starlight', 'Váy dạ tiệc và vest ông chủ đảo được thêm viền vàng và ánh sao'],
+    ],
+  },
   {
     v: '5.11.0', date: '2026-10-07T16:39:09Z',
     title: ['Busy Hands', 'Đôi Tay Bận Rộn'],

@@ -40,7 +40,7 @@ export function discover(key) {
 // ---------------------------------------------------------------- indoors: furniture that does something
 const kindOf = p => p.homeFurn ? p.homeFurn.id : p.kind;
 const stateOf = p => p.homeFurn ? (p.homeFurn.fs ||= {}) : p;          // your own furniture remembers (saved); elsewhere it's just for now
-const WALL = new Set(['clock', 'calendar', 'wall_mirror', 'mirror', 'painting', 'familyPhoto', 'photoWall', 'lantern_red', 'hanging_plant']);
+const WALL = new Set(['clock', 'calendar', 'wall_mirror', 'mirror', 'painting', 'familyPhoto', 'photoWall', 'lantern_red', 'hanging_plant', 'neon_sign', 'fairy_lights']);
 const ACTIONS = {
   tv: p => ({ label: stateOf(p).off ? T('Turn on TV', 'Bật tivi') : T('Change channel', 'Đổi kênh'), icon: 'star', run: () => tv(p) }),
   radio: p => ({ label: roomMusic() === 'radio' ? T('Radio off', 'Tắt radio') : T('Radio on', 'Bật radio'), icon: 'note', run: () => music(p, 'radio') }),
@@ -58,6 +58,11 @@ const ACTIONS = {
   stove: p => ({ label: T('Stove', 'Bếp'), icon: 'grill', run: () => kitchen(p, 'stove') }), sink: p => ({ label: T('Sink', 'Bồn rửa'), icon: 'ice', run: () => kitchen(p, 'sink') }),
   prepTable: p => ({ label: T('Prep table', 'Bàn sơ chế'), icon: 'bread_split', run: () => kitchen(p, 'prep') }),
   fittingRoom: p => ({ label: T('Fitting room', 'Phòng thử đồ'), icon: 'shirt', run: () => fitting(p) }),
+  neon_sign: p => ACTIONS.lamp(p), moon_lamp: p => ACTIONS.lamp(p), fairy_lights: p => ACTIONS.lamp(p),
+  arcade_cabinet: p => ({ label: T('Play a game', 'Chơi một ván'), icon: 'star', run: () => arcade(p) }),
+  telescope: p => ({ label: T('Look through', 'Nhìn qua kính'), icon: 'star', run: () => stargaze() }),
+  bird_cage: p => ({ label: T('Whistle to the bird', 'Huýt sáo với chim'), icon: 'note', run: () => { discover('bird'); sfx('sparkle'); G.player.setAct('wave'); setTimeout(() => G.player.act === 'wave' && G.player.setAct(null), 900); toast({ text: T('The canary sings back, very pleased with itself', 'Chim hoàng yến hót đáp lại, rất tự hào'), icon: 'note', ms: 1800 }); } }),
+  tea_set: p => ({ label: T('Pour some tea', 'Rót trà'), icon: 'tea', run: () => { discover('tea'); sfx('pour'); G.player.setAct('drink', 'cup'); setTimeout(() => G.player.act === 'drink' && G.player.setAct(null), 2200); toast({ text: T('A small cup of hot tea. Everything slows down.', 'Một chén trà nóng nhỏ. Mọi thứ chậm lại.'), icon: 'tea', ms: 1800 }); } }),
   shelfJars: p => ({ label: T('Look', 'Xem'), icon: 'photo', run: () => display(p) }), flowerCooler: p => ACTIONS.shelfJars(p), flowerBuckets: p => ACTIONS.shelfJars(p),
 };
 export function nearbyThing(sc, pl) {
@@ -107,6 +112,16 @@ function feedFish(p) {
   else toast({ text: T('They\'ve eaten today — they look at you hopefully anyway', 'Hôm nay tụi nó ăn rồi — mà vẫn nhìn bạn đầy hy vọng'), icon: 'fish', ms: 1600 });
 }
 function lamp(p) { const st = stateOf(p); st.off = !st.off; p.off = st.off; markDirty(); sfx('click'); discover('lamp'); }
+async function arcade(p) {
+  discover('arcade'); sfx('click'); G.player.face('up'); G.player.setAct('work');
+  const score = 1000 + Math.floor(Math.random() * 9000), st = stateOf(p), best = Math.max(st.best || 0, score); st.best = best; markDirty();
+  setTimeout(() => { G.player.setAct(null); sfx(score === best ? 'fanfare' : 'pop'); toast({ text: score === best ? T(`New high score: ${score}!`, `Kỷ lục mới: ${score}!`) : T(`Score: ${score}`, `Điểm: ${score}`), sub: T(`Best: ${best}`, `Cao nhất: ${best}`), icon: 'star', ms: 2200 }); }, 1600);
+}
+async function stargaze() {
+  discover('telescope'); G.player.face('up');
+  const night = G.state.time >= 19 * 60 || G.state.time < 5 * 60;
+  await say(null, night ? choice([T('The Moonfish constellation, right above the lighthouse. Lucky!', 'Chòm sao Cá Mặt Trăng, ngay trên hải đăng. May mắn ghê!'), T('A shooting star! You make a wish about tomorrow\'s customers.', 'Sao băng! Bạn ước cho khách ngày mai thật đông.'), T('The moon is so close you can see its craters smiling.', 'Trăng gần đến mức thấy cả miệng hố đang cười.')]) : T('In daylight you can see all the way to the mainland. A ferry, a cloud, a seagull.', 'Ban ngày nhìn thấy tận đất liền. Một chiếc phà, một đám mây, một con hải âu.'));
+}
 async function clockLook() { discover('clock'); await say(null, T(`It's ${clock(G.state.time)}. ${G.state.time >= 22 * 60 ? 'Nearly bedtime.' : G.state.time < 8 * 60 ? 'Early — the island is just waking up.' : 'Plenty of day left.'}`, `Bây giờ là ${clock(G.state.time)}. ${G.state.time >= 22 * 60 ? 'Sắp tới giờ ngủ rồi.' : G.state.time < 8 * 60 ? 'Còn sớm — hòn đảo mới thức dậy.' : 'Ngày còn dài.'}`)); }
 async function calendarLook() {
   discover('calendar');

@@ -940,3 +940,186 @@ FURN_DRAW.opening_balloons = (c, t, p) => {
   });
   box(c, -5, -6, 10, 6, 2, '#f2c14e', INK, 0.8); stext(c, '31·10', 0, -2.3, 2.6, INK, 900);
 };
+
+// ---------------------------------------------------------------- premium pass (5.12)
+// The plain pieces redrawn with real craft, and a new line of cosy, collectable pieces.
+// Each has a little life to it (a swaying tassel, a pendulum, steam, a bird, falling petals).
+const gold = (c, x, y, w, h) => { const gr = c.createLinearGradient(x, y, x + w, y + h); gr.addColorStop(0, '#fff1a8'); gr.addColorStop(0.45, '#f2c14e'); gr.addColorStop(1, '#c98a1e'); return gr; };
+const sparkle = (c, x, y, r, a) => { c.save(); c.globalAlpha = a; c.fillStyle = '#fffbe0'; c.beginPath(); c.moveTo(x, y - r * 2); c.lineTo(x + r * 0.5, y); c.lineTo(x, y + r * 2); c.lineTo(x - r * 0.5, y); c.closePath(); c.fill(); c.fillRect(x - r * 2, y - 0.3, r * 4, 0.6); c.restore(); };
+const onWall = (c, p, fn) => { c.save(); c.translate(0, p.preview ? 52 : 0); fn(); c.restore(); };
+Object.assign(FURN_DRAW, {
+  // an upright piano in warm walnut: sheet music, a candle, real black-key groups
+  piano: (c, t, p) => {
+    shadow(c, 0, 1, 25, 4, 0.2);
+    wood(c, -23, -44, 46, 33, 3, '#6b4431'); box(c, -25, -47, 50, 5, 2, '#7d523c', INK, 1); c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(-21, -42, 2, 26);
+    box(c, -8, -55, 16, 9, 1, '#fffaf0', INK, 0.7); for (let i = 0; i < 4; i++) line(c, -6, -53 + i * 2, 6, -53 + i * 2, 'rgba(91,63,54,.4)', 0.4); circ(c, -2, -51, 0.7, INK, null); line(c, -1.3, -51, -1.3, -54, INK, 0.4);
+    box(c, 15, -51, 3, 5, 0.6, '#fffaf0', INK, 0.5); const fl = Math.sin(t * 9) * 0.4; poly(c, [16.5 - 1, -51.2, 16.5 + fl, -55, 16.5 + 1, -51.2], '#ffd35a', null); if (!p.preview) g(p, 16, -53, 16, 'rgba(255,210,130,.5)');
+    box(c, -23, -15, 46, 6, 1, '#fffdf6', INK, 0.8); for (let x = -21; x < 23; x += 3.6) line(c, x, -15, x, -9, 'rgba(91,63,54,.35)', 0.4);
+    for (let i = 0, x = -20; x < 21; i++, x += 3.6) if ([0, 1, 3, 4, 5].includes(i % 7)) box(c, x + 1.8, -15, 2, 3.6, 0.4, '#2f2a30', null);
+    for (const x of [-20, 20]) { limb(c, [x, -9, x, 0], 2.4, '#5b3a2e'); circ(c, x, 0, 1.3, '#f2c14e', INK, 0.4); }
+  },
+  // Mèo Mây cast in gold on a marble plinth, with a name plate and a slow shine
+  meo_statue: (c, t, p) => {
+    shadow(c, 0, 1, 17, 4, 0.22);
+    box(c, -15, -15, 30, 15, 2, '#efe8de', INK, 1); c.strokeStyle = 'rgba(150,140,130,.35)'; c.lineWidth = 0.5; c.beginPath(); c.moveTo(-12, -12); c.quadraticCurveTo(-4, -6, 2, -11); c.quadraticCurveTo(7, -14, 12, -5); c.stroke();
+    box(c, -17, -18, 34, 4, 1.5, '#f7f2ea', INK, 0.8); box(c, -7, -10, 14, 5, 1, gold(c, -7, -10, 14, 5), INK, 0.5); stext(c, 'MÈO MÂY', 0, -7.3, 2.4, '#7a4e12', 900);
+    const G2 = gold(c, -12, -54, 24, 36);
+    ell(c, 0, -27, 11, 9.5, G2, INK, 1); circ(c, 0, -41, 9.5, G2, INK, 1);
+    poly(c, [-8, -45, -6.5, -55, -1.5, -48], G2, INK, 0.9); poly(c, [8, -45, 6.5, -55, 1.5, -48], G2, INK, 0.9);
+    c.strokeStyle = G2; c.lineWidth = 3; c.beginPath(); c.moveTo(9, -22); c.quadraticCurveTo(21, -30, 14, -42); c.stroke(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+    ell(c, 0, -33, 7, 2, '#e8a92e', INK, 0.6);                                                     // the scarf
+    c.strokeStyle = INK; c.lineWidth = 0.8; for (const s of [-1, 1]) { c.beginPath(); c.arc(s * 3.2, -41, 1.3, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }
+    ell(c, 0, -38.5, 1.2, 0.7, '#b8761a', null);
+    c.save(); c.beginPath(); c.arc(0, -41, 9.5, 0, TAU); c.ellipse(0, -27, 11, 9.5, 0, 0, TAU); c.clip(); const gx = -16 + ((t * 0.3) % 1.6) * 22; c.fillStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.moveTo(gx, -56); c.lineTo(gx + 4, -56); c.lineTo(gx - 6, -16); c.lineTo(gx - 10, -16); c.fill(); c.restore();
+    const k = (Math.sin(t * 2) + 1) / 2; sparkle(c, -13, -48, 1.3, 0.4 + k * 0.6); sparkle(c, 14, -34, 1, 1 - k);
+    g(p, 0, -32, 30, 'rgba(255,214,90,.35)');
+  },
+  // a plush round pet bed: scalloped rim, a cushion with a paw print and a toy mouse
+  cat_bed: (c, t, p) => {
+    shadow(c, 0, 1, 14, 3.5, 0.18);
+    ell(c, 0, -5, 14, 6.5, '#f08a9a', INK, 1); for (let i = 0; i < 9; i++) { const a = Math.PI + i / 8 * Math.PI; circ(c, Math.cos(a) * 12, -5 + Math.sin(a) * 5, 2.6, '#f6a3b1', INK, 0.5); }
+    ell(c, 0, -5, 9.5, 4, '#fff4f6', INK, 0.7); circ(c, 0, -5.2, 1.3, '#f6a3b1', null); for (const [dx, dy] of [[-1.6, -1.8], [0, -2.3], [1.6, -1.8]]) circ(c, dx, -5.2 + dy, 0.6, '#f6a3b1', null);
+    ell(c, 10, -2, 3, 1.8, '#b9b3ba', INK, 0.5); circ(c, 12.3, -3, 0.8, '#f6a3b1', null); c.strokeStyle = INK; c.lineWidth = 0.4; c.beginPath(); c.moveTo(7.2, -2); c.quadraticCurveTo(5, -1 + Math.sin(t * 3), 3.5, -2); c.stroke();
+  },
+  // a squashy bean bag with folds, a stitched panel and a little cushion
+  bean_bag: (c, t, p) => {
+    shadow(c, 0, 1, 16, 4, 0.18);
+    c.beginPath(); c.moveTo(-15, -2); c.quadraticCurveTo(-18, -16, -6, -22); c.quadraticCurveTo(4, -26, 12, -18); c.quadraticCurveTo(18, -10, 15, -2); c.quadraticCurveTo(0, 2, -15, -2); c.closePath();
+    c.fillStyle = '#f2a65a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    c.strokeStyle = 'rgba(160,90,40,.5)'; c.lineWidth = 0.6; for (const [a, b, d] of [[-8, -6, -14], [3, -5, -16], [9, -8, -13]]) { c.beginPath(); c.moveTo(a, b); c.quadraticCurveTo(a + 2, b - 4, a + d * 0.1, d); c.stroke(); }
+    c.save(); c.setLineDash([1.2, 1]); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 0.5; c.beginPath(); c.moveTo(-12, -6); c.quadraticCurveTo(0, -3, 12, -6); c.stroke(); c.restore();
+    ell(c, -5, -17, 5, 2.5, 'rgba(255,255,255,.3)', null);
+    box(c, 4, -14, 9, 7, 2.5, '#fff4e0', INK, 0.7); heart(c, 8.5, -10.6, 1.4, '#f28fa3', null);
+  },
+  // a retro wooden radio: cloth grille, glowing dial, antenna — notes when it's playing
+  radio: (c, t, p) => {
+    shadow(c, 0, 1, 11, 3, 0.16);
+    c.beginPath(); c.moveTo(-11, 0); c.lineTo(-11, -12); c.quadraticCurveTo(-11, -17, 0, -17); c.quadraticCurveTo(11, -17, 11, -12); c.lineTo(11, 0); c.closePath(); c.fillStyle = '#9b6a45'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    box(c, -8.5, -12.5, 9, 10, 2, '#e9d8bf', INK, 0.6); c.strokeStyle = 'rgba(120,90,60,.45)'; c.lineWidth = 0.4; for (let x = -7.5; x < 0; x += 1.4) line(c, x, -12, x, -3, 'rgba(120,90,60,.4)', 0.4);
+    box(c, 2, -12, 7, 4, 1, '#ffe7a0', INK, 0.5); line(c, 4 + Math.sin(t * 0.5) * 2, -12, 4 + Math.sin(t * 0.5) * 2, -8, '#e8584e', 0.5);
+    for (const x of [3.5, 7.5]) circ(c, x, -4.5, 1.6, '#5b3f36', INK, 0.4);
+    limb(c, [8, -16, 13, -26], 0.7, '#8a8f99'); circ(c, 13, -26, 0.9, '#e8584e', null);
+    if (p.on !== false && Math.sin(t * 3) > -0.3) { c.fillStyle = '#7a5cc8'; c.font = '900 7px Nunito'; c.fillText('♪', 10 + Math.sin(t) * 3, -20 - (t * 8) % 8); }
+    if (!p.preview) g(p, 5.5, -10, 10, 'rgba(255,220,140,.45)');
+  },
+  // a wall clock with a swinging pendulum in a little wooden case
+  clock: (c, t, p) => onWall(c, p, () => {
+    wood(c, -7, -70, 14, 30, 4, '#8a5a3a'); poly(c, [-9, -70, 0, -76, 9, -70], '#7a4e33', INK, 0.9);
+    circ(c, 0, -63, 5.6, '#fff8ea', INK, 0.9); const m = LIGHT.minutes || 0;
+    line(c, 0, -63, Math.sin(m / 720 * TAU) * 3, -63 - Math.cos(m / 720 * TAU) * 3, INK, 1); line(c, 0, -63, Math.sin(m / 60 * TAU) * 4.4, -63 - Math.cos(m / 60 * TAU) * 4.4, INK, 0.6);
+    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; circ(c, Math.sin(a) * 4.6, -63 - Math.cos(a) * 4.6, 0.3, INK, null); }
+    box(c, -4.5, -56, 9, 14, 1.5, '#5b3a2e', null); const sw = Math.sin(t * 3.1) * 0.35;
+    c.save(); c.translate(0, -56); c.rotate(sw); line(c, 0, 0, 0, 10, '#f2c14e', 0.8); circ(c, 0, 11, 2, gold(c, -2, 9, 4, 4), INK, 0.5); c.restore();
+  }),
+  // a big silk lantern with a gold cap and a swaying tassel
+  lantern_red: (c, t, p) => onWall(c, p, () => {
+    const sw = Math.sin(t * 1.8 + (p.x || 0)) * 0.08;
+    c.save(); c.translate(0, -76); c.rotate(sw);
+    line(c, 0, 0, 0, 6, INK, 0.7); box(c, -4, 5, 8, 2.5, 1, gold(c, -4, 5, 8, 3), INK, 0.6);
+    ell(c, 0, 16, 9, 9, '#e8453a', INK, 1); for (const dx of [-5, 0, 5]) { c.strokeStyle = 'rgba(120,20,20,.35)'; c.lineWidth = 0.6; c.beginPath(); c.ellipse(0, 16, Math.abs(dx) + 1, 9, 0, 0, TAU); c.stroke(); }
+    stext(c, 'Phúc', 0, 17.5, 4, '#ffd35a', 900);
+    box(c, -4, 24.5, 8, 2.5, 1, gold(c, -4, 24, 8, 3), INK, 0.6);
+    const ts = Math.sin(t * 2.4) * 1.2; for (let i = -1; i <= 1; i++) line(c, i * 0.8, 27, i * 1.2 + ts, 35, '#f2c14e', 0.7);
+    c.restore();
+    if (!p.preview) g(p, 0, -60, 30, 'rgba(255,170,100,.55)');
+  }),
+  // Mèo Mây plush: stitched seams, button eyes, a scarf and a sewn-on tag
+  meo_plush: (c, t, p) => {
+    const sq = 1 + Math.sin(t * 1.2) * 0.015;
+    shadow(c, 0, 1, 11, 3, 0.16); c.save(); c.scale(1, sq);
+    ell(c, 0, -8, 9.5, 8, '#fffaf0', INK, 1); circ(c, 0, -20, 8.6, '#fffaf0', INK, 1);
+    poly(c, [-7, -24, -5.5, -33, -1, -26], '#fffaf0', INK, 0.9); poly(c, [7, -24, 5.5, -33, 1, -26], '#fffaf0', INK, 0.9);
+    poly(c, [-6.2, -25.5, -5.3, -31, -2.4, -26.5], '#ffc0d0', null); poly(c, [6.2, -25.5, 5.3, -31, 2.4, -26.5], '#ffc0d0', null);
+    ell(c, 3.5, -23.5, 4, 2.6, '#a9bcdc', null); ell(c, -4, -7, 3, 2.2, '#a9bcdc', null);
+    c.save(); c.setLineDash([0.9, 0.8]); c.strokeStyle = 'rgba(91,63,54,.45)'; c.lineWidth = 0.4; c.beginPath(); c.moveTo(0, -28.5); c.lineTo(0, -12); c.stroke(); c.restore();
+    for (const x of [-3, 3]) { circ(c, x, -20, 1.4, '#2f2a30', null); circ(c, x - 0.4, -20.5, 0.4, '#fff', null); }
+    ell(c, 0, -17, 1.3, 0.8, '#f08ca0', null); circ(c, -5.5, -18, 1.2, 'rgba(255,150,170,.45)', null); circ(c, 5.5, -18, 1.2, 'rgba(255,150,170,.45)', null);
+    ell(c, 0, -13.2, 6.5, 1.8, '#f08a78', INK, 0.6); poly(c, [3, -13, 6, -8, 3.5, -8.5], '#f08a78', INK, 0.5);
+    box(c, 7, -6, 3.5, 4, 0.6, '#ffd35a', INK, 0.4);
+    c.restore();
+  },
+  // ---- the new line
+  neon_sign: (c, t, p) => onWall(c, p, () => {
+    const on = !p.off, fl = on && Math.sin(t * 23) > 0.96 ? 0.5 : 1;
+    box(c, -24, -78, 48, 22, 3, '#2f2a30', INK, 1); for (const x of [-21, 21]) circ(c, x, -75, 0.8, '#8a8f99', null);
+    c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+    const col = on ? '#ff6fae' : '#7a5a6a';
+    if (on) { c.shadowColor = '#ff6fae'; c.shadowBlur = 6 * fl; }
+    c.strokeStyle = col; c.lineWidth = 1.4; c.globalAlpha = fl;
+    c.font = 'italic 900 9px "Segoe Script", "Brush Script MT", cursive'; c.textAlign = 'center'; c.strokeText('Bistro', 2, -64);
+    heart(c, -16, -67, 2.2, null, col, 1.1); c.restore();
+    if (on && !p.preview) g(p, 0, -67, 34, 'rgba(255,110,174,.55)');
+  }),
+  moon_lamp: (c, t, p) => {
+    const on = !p.off;
+    shadow(c, 0, 1, 8, 2.5, 0.16); box(c, -6, -5, 12, 5, 2, '#c9955e', INK, 0.8); line(c, 0, -5, 0, -9, '#8a5a3a', 1.4);
+    circ(c, 0, -19, 10, on ? '#fff6d8' : '#e9e1d4', INK, 1);
+    for (const [x, y, r] of [[-3, -22, 2.2], [4, -16, 1.6], [2, -24, 1], [-4, -14, 1.3]]) circ(c, x, y, r, on ? 'rgba(220,190,120,.45)' : 'rgba(150,140,130,.4)', null);
+    c.fillStyle = 'rgba(255,255,255,.45)'; c.beginPath(); c.arc(-3, -23, 4, Math.PI, Math.PI * 1.6); c.lineTo(-3, -23); c.fill();
+    if (on) { const k = (Math.sin(t * 1.5) + 1) / 2; c.globalAlpha = 0.25 + k * 0.15; circ(c, 0, -19, 14, '#fff3c0', null); c.globalAlpha = 1; if (!p.preview) g(p, 0, -19, 46, 'rgba(255,240,190,.6)'); }
+  },
+  mai_tree: (c, t, p) => {
+    shadow(c, 0, 1, 15, 4, 0.18);
+    c.beginPath(); c.moveTo(-12, -14); c.lineTo(12, -14); c.lineTo(9, 0); c.lineTo(-9, 0); c.closePath(); c.fillStyle = '#f5f8fb'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    c.strokeStyle = '#3f6fb5'; c.lineWidth = 0.6; c.beginPath(); for (let x = -9; x <= 9; x += 3) { c.moveTo(x, -11); c.quadraticCurveTo(x + 1.5, -9, x, -6); } c.stroke(); box(c, -13, -16, 26, 3, 1, '#3f6fb5', INK, 0.6);
+    c.strokeStyle = '#6b4a36'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(0, -16); c.quadraticCurveTo(-2, -30, -8, -42); c.moveTo(-1, -26); c.quadraticCurveTo(6, -34, 10, -46); c.moveTo(-5, -36); c.lineTo(-14, -44); c.moveTo(4, -38); c.lineTo(0, -52); c.stroke();
+    const R = rng(77); for (let i = 0; i < 26; i++) { const x = (R() - 0.5) * 30, y = -38 - R() * 18, sw = Math.sin(t * 1.4 + i) * 0.4; for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; circ(c, x + sw + Math.cos(a) * 1.2, y + Math.sin(a) * 1.2, 0.9, '#ffd35a', null); } circ(c, x + sw, y, 0.5, '#e8892e', null); }
+    for (let i = 0; i < 4; i++) { const k = ((t * 0.25 + i / 4) % 1), x = -12 + i * 8 + Math.sin(t + i) * 3, y = -40 + k * 40; c.globalAlpha = 1 - k; circ(c, x, y, 0.9, '#ffd35a', null); c.globalAlpha = 1; }
+    box(c, -3, -30, 6, 4, 0.6, '#e8453a', INK, 0.4);                                                   // a red lì xì envelope hanging in the branches
+  },
+  arcade_cabinet: (c, t, p) => {
+    shadow(c, 0, 1, 14, 4, 0.2);
+    c.beginPath(); c.moveTo(-12, 0); c.lineTo(-12, -46); c.lineTo(-8, -54); c.lineTo(10, -54); c.lineTo(12, -46); c.lineTo(12, 0); c.closePath(); c.fillStyle = '#6f4cc8'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    box(c, -10, -53, 20, 6, 1, '#ffd35a', INK, 0.6); stext(c, 'ISLAND', 0, -49.6, 3.2, '#e8584e', 900);
+    box(c, -9, -45, 18, 15, 1.5, '#1d2340', INK, 0.8);
+    const k = Math.floor(t * 4) % 8; for (let i = 0; i < 5; i++) box(c, -7 + i * 3.2, -42 + ((i + k) % 4) * 2, 2, 1.2, 0.3, ['#ff6fae', '#6fe0ff', '#ffd35a', '#8fe07a', '#ff9f43'][i], null);
+    circ(c, -3 + Math.sin(t * 3) * 4, -34, 1, '#ffd35a', null);
+    box(c, -11, -29, 22, 6, 1, '#5a3cb0', INK, 0.8); circ(c, -5, -27, 1.6, '#e8584e', INK, 0.4); line(c, -5, -27, -5, -30, INK, 0.6); circ(c, 2, -26.5, 1.3, '#ffd35a', INK, 0.4); circ(c, 6, -26.5, 1.3, '#6fe0ff', INK, 0.4);
+    for (const s of [-1, 1]) { c.fillStyle = s < 0 ? '#ff6fae' : '#6fe0ff'; c.fillRect(s * 11 - (s < 0 ? 0 : 1.2), -44, 1.2, 38); }
+    if (!p.preview) g(p, 0, -38, 26, 'rgba(120,140,255,.45)');
+  },
+  tea_set: (c, t, p) => {
+    shadow(c, 0, 1, 18, 4, 0.18); wood(c, -17, -10, 34, 5, 2, '#8a5a3a'); for (const x of [-14, 14]) limb(c, [x, -6, x, 0], 1.8, '#6b4431');
+    ell(c, -3, -14, 7, 5, '#f5f8fb', INK, 0.9); c.strokeStyle = '#3f6fb5'; c.lineWidth = 0.6; c.beginPath(); c.arc(-3, -14, 3.5, 0.3, 2.8); c.stroke();
+    poly(c, [3, -15, 9, -19, 8, -17.5, 4, -13], '#f5f8fb', INK, 0.7); c.strokeStyle = INK; c.lineWidth = 0.8; c.beginPath(); c.arc(-10.5, -14, 2.5, Math.PI * 0.5, Math.PI * 1.5); c.stroke();
+    ell(c, -3, -18.6, 3, 1, '#f5f8fb', INK, 0.6); circ(c, -3, -20, 0.9, '#3f6fb5', INK, 0.4);
+    for (const x of [10, 15]) { ell(c, x, -11.5, 2.2, 1.6, '#f5f8fb', INK, 0.6); ell(c, x, -12.6, 1.6, 0.5, '#c9883a', null); }
+    for (let i = 0; i < 3; i++) { const k = (t * 0.6 + i / 3) % 1; c.globalAlpha = 0.6 * (1 - k); c.strokeStyle = '#fff'; c.lineWidth = 0.9; c.beginPath(); c.moveTo(9 + i * 0.5, -20 - k * 10); c.quadraticCurveTo(11 + Math.sin(k * 6) * 2, -24 - k * 10, 9, -28 - k * 10); c.stroke(); c.globalAlpha = 1; }
+  },
+  bird_cage: (c, t, p) => {
+    shadow(c, 0, 1, 10, 3, 0.16); box(c, -10, -4, 20, 4, 1.5, '#c9955e', INK, 0.8);
+    c.strokeStyle = '#a8763e'; c.lineWidth = 0.7; for (let i = -4; i <= 4; i++) { c.beginPath(); c.moveTo(i * 2.2, -4); c.quadraticCurveTo(i * 2.2, -26, i * 0.8, -34); c.stroke(); }
+    c.strokeStyle = INK; c.lineWidth = 1; c.beginPath(); c.moveTo(-9, -4); c.quadraticCurveTo(-10, -28, 0, -36); c.quadraticCurveTo(10, -28, 9, -4); c.stroke(); circ(c, 0, -37, 1.6, '#f2c14e', INK, 0.5);
+    line(c, -6, -14, 6, -14, '#8a5a3a', 1);
+    const hop = Math.abs(Math.sin(t * 2.2)) > 0.92 ? -2 : 0, f = Math.sin(t * 0.7) > 0 ? 1 : -1;
+    c.save(); c.translate(0, -16 + hop); c.scale(f, 1); ell(c, 0, 0, 3.2, 2.6, '#ffd84a', INK, 0.6); circ(c, 2.2, -2.4, 1.9, '#ffd84a', INK, 0.6); circ(c, 2.8, -2.8, 0.45, INK, null); poly(c, [3.9, -2.4, 5.4, -2, 3.9, -1.6], '#f08a3a', null); poly(c, [-2.4, 0, -5, -1.2, -4.4, 1.2], '#f2b43a', INK, 0.4); c.restore();
+    if (Math.sin(t * 1.3) > 0.6) { c.fillStyle = '#7a5cc8'; c.font = '900 6px Nunito'; c.fillText('♪', 8, -28 - ((t * 6) % 6)); }
+  },
+  telescope: (c, t, p) => {
+    shadow(c, 0, 1, 12, 3, 0.16);
+    for (const [x2, y2] of [[-10, 0], [10, 0], [0, 2]]) limb(c, [0, -18, x2, y2], 1.2, '#6b4431');
+    c.save(); c.translate(0, -20); c.rotate(-0.55);
+    box(c, -10, -3.2, 26, 6.4, 3, gold(c, -10, -3, 26, 6), INK, 0.9); box(c, 14, -4, 5, 8, 2, '#c98a1e', INK, 0.8); box(c, -14, -2, 5, 4, 1.5, '#8a5a3a', INK, 0.7);
+    c.fillStyle = 'rgba(255,255,255,.5)'; c.fillRect(-8, -2.4, 20, 1); c.restore();
+    circ(c, 0, -20, 1.8, '#5b3f36', INK, 0.5);
+    if (LIGHT.night > 0.2) sparkle(c, 14, -44, 1.3, (Math.sin(t * 3) + 1) / 2);
+  },
+  cat_tower: (c, t, p) => {
+    shadow(c, 0, 1, 16, 4, 0.18); box(c, -15, -5, 30, 5, 2, '#d9b38a', INK, 0.8);
+    for (const x of [-8, 7]) { box(c, x - 2.5, -40, 5, 36, 1, '#e9d2a8', INK, 0.7); c.strokeStyle = 'rgba(150,110,70,.45)'; c.lineWidth = 0.5; for (let y = -38; y < -6; y += 2) { c.beginPath(); c.moveTo(x - 2.5, y); c.lineTo(x + 2.5, y + 1.2); c.stroke(); } }
+    box(c, -14, -24, 18, 4, 2, '#f6a3b1', INK, 0.7); box(c, -2, -44, 16, 4, 2, '#a9bcdc', INK, 0.7);
+    c.beginPath(); c.arc(-6, -30, 6, Math.PI, 0); c.lineTo(0, -24); c.lineTo(-12, -24); c.closePath(); c.fillStyle = '#f6a3b1'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke(); circ(c, -6, -28, 2.6, '#5b3f36', null);
+    const sw = Math.sin(t * 2.2) * 2; line(c, 12, -42, 12 + sw, -32, INK, 0.4); circ(c, 12 + sw, -31, 1.6, '#ffd35a', INK, 0.4);
+  },
+  fairy_lights: (c, t, p) => onWall(c, p, () => {
+    const n = 9, on = !p.off;
+    c.strokeStyle = '#5b6b4a'; c.lineWidth = 0.6; c.beginPath(); for (let i = 0; i <= 20; i++) { const u = i / 20, x = -26 + u * 52, y = -74 + Math.sin(u * Math.PI) * 6; i ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke();
+    for (let i = 0; i < n; i++) { const u = (i + 0.5) / n, x = -26 + u * 52, y = -73 + Math.sin(u * Math.PI) * 6, k = (Math.sin(t * 2.5 + i * 1.3) + 1) / 2;
+      circ(c, x, y + 1.6, 1.4, on ? `rgba(255,${200 + k * 40},${110 + k * 60},1)` : '#d9cfc0', INK, 0.4); if (on) { c.globalAlpha = 0.3 + k * 0.4; circ(c, x, y + 1.6, 3.2, '#ffe7a0', null); c.globalAlpha = 1; if (!p.preview && i % 2 === 0) g(p, x, y, 16, 'rgba(255,220,150,.5)'); } }
+  }),
+  surfboard_rack: (c, t, p) => {
+    shadow(c, 0, 1, 16, 3, 0.16); box(c, -16, -4, 32, 4, 1, '#8a5a3a', INK, 0.8);
+    [['#6fbfb0', -9, -0.15], ['#ff8fb0', 0, 0], ['#ffd35a', 9, 0.15]].forEach(([col, x, r]) => { c.save(); c.translate(x, -4); c.rotate(r); ell(c, 0, -20, 4.5, 20, col, INK, 0.9); line(c, 0, -39, 0, -1, '#fff', 0.8); poly(c, [-1.5, -6, 1.5, -6, 0, -2], INK, null); c.restore(); });
+    for (const x of [-15, 15]) limb(c, [x, -4, x, -30], 1.6, '#8a5a3a');
+  },
+});

@@ -387,6 +387,17 @@ export const FURNITURE = {
   wall_mirror: { vi: 'Gương mặt trời', en: 'Sunburst mirror', price: 80,  w: 24, h: 8, wall: true },
   lamp_table:  { vi: 'Bàn đèn ngủ',    en: 'Bedside lamp table', price: 75, w: 20, h: 12, light: true },
   bamboo_screen:{ vi: 'Bình phong tre', en: 'Bamboo screen',  price: 120, w: 48, h: 10 },
+  // the cosy collection (5.12)
+  neon_sign:   { vi: 'Biển neon "Bistro"', en: '"Bistro" neon sign', price: 190, w: 48, h: 8, wall: true, light: true },
+  moon_lamp:   { vi: 'Đèn mặt trăng',  en: 'Moon lamp',       price: 135, w: 22, h: 10, light: true },
+  mai_tree:    { vi: 'Cây mai ngày Tết', en: 'Tết apricot blossom tree', price: 240, w: 30, h: 14 },
+  arcade_cabinet:{ vi: 'Máy chơi game thùng', en: 'Island arcade cabinet', price: 320, w: 26, h: 14 },
+  tea_set:     { vi: 'Bộ ấm chén trà', en: 'Bát Tràng tea set', price: 105, w: 36, h: 14 },
+  bird_cage:   { vi: 'Lồng chim hoàng yến', en: 'Canary in a bamboo cage', price: 155, w: 22, h: 10 },
+  telescope:   { vi: 'Kính thiên văn', en: 'Brass telescope', price: 180, w: 24, h: 12 },
+  cat_tower:   { vi: 'Nhà cây cho mèo', en: 'Cat tower',       price: 130, w: 32, h: 14 },
+  fairy_lights:{ vi: 'Dây đèn lấp lánh', en: 'Fairy lights',   price: 60,  w: 52, h: 8, wall: true, light: true },
+  surfboard_rack:{ vi: 'Giá ván lướt sóng', en: 'Surfboard rack', price: 90, w: 32, h: 10 },
   // collector's corner: expensive treats to save up for (prices here are final)
   meo_plush:   { vi: 'Thú bông Mèo Mây', en: 'Mèo Mây plush',  price: 900,  w: 18, h: 12, collector: true, unlock: 4, fixed: true },
   lantern_wall:{ vi: 'Bộ sưu tập lồng đèn', en: 'Night Market lantern collection', price: 1800, w: 50, h: 8, wall: true, collector: true, unlock: 9, fixed: true },

@@ -374,6 +374,13 @@ function drawHat(c, L, S, yawFace, t) {
     const apex = [by[0], by[1] - HR * 1.05];
     c.beginPath(); c.moveTo(by[0] - HR * 1.5, by[1] - 1); c.quadraticCurveTo(by[0] - HR * 0.5, apex[1] + HR * 0.5, apex[0], apex[1]); c.quadraticCurveTo(by[0] + HR * 0.5, apex[1] + HR * 0.5, by[0] + HR * 1.5, by[1] - 1); c.quadraticCurveTo(by[0], by[1] + 4, by[0] - HR * 1.5, by[1] - 1);
     c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    if (L.hatMotif) {                                   // painted blossoms, or gold leaf with a moving shine
+      c.save(); c.clip();
+      const sx = Math.sin(yawFace) * HR * 0.6;
+      if (L.hatMotif === 'flowers') for (let i = 0; i < 6; i++) { const px = by[0] - HR * 0.9 + i * HR * 0.36 + sx, py = by[1] - 3 - (i % 2) * HR * 0.25; for (let k2 = 0; k2 < 5; k2++) { const an = k2 / 5 * TAU + i; circ(c, px + Math.cos(an) * 1.3, py + Math.sin(an) * 1.1, 1, ['#ff6f91', '#ffffff', '#ffb3c6'][i % 3], null); } circ(c, px, py, 0.6, '#ffd35a', null); ell(c, px + 2, py + 0.6, 1.1, 0.5, '#6fae4d', null); }
+      if (L.hatMotif === 'gold') { const k2 = ((t * 0.35) % 1.4) - 0.2, gx = by[0] - HR * 1.6 + k2 * HR * 3.2; c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.moveTo(gx, apex[1]); c.lineTo(gx + 3, apex[1]); c.lineTo(gx - 3, by[1] + 3); c.lineTo(gx - 6, by[1] + 3); c.fill(); for (let i = 0; i < 5; i++) circ(c, by[0] - HR + i * HR * 0.5 + sx, by[1] - 2.2 - (i % 2) * 2, 0.6, '#fff6b0', null); }
+      c.restore();
+    }
     c.strokeStyle = shade(col, -26); c.lineWidth = 0.5; for (let i = 1; i < 4; i++) { const k = i / 4; c.beginPath(); c.moveTo(by[0] - HR * 1.5 * (1 - k), by[1] - (by[1] - apex[1]) * k); c.quadraticCurveTo(by[0], by[1] - (by[1] - apex[1]) * k + 2 * (1 - k), by[0] + HR * 1.5 * (1 - k), by[1] - (by[1] - apex[1]) * k); c.stroke(); }
     return;
   }
@@ -435,6 +442,14 @@ function drawHat(c, L, S, yawFace, t) {
   if (h === 'crown') { const y = top[1] + 2; c.beginPath(); c.moveTo(top[0] - 6, y); c.lineTo(top[0] - 6.4, y - 5.4); c.lineTo(top[0] - 3, y - 2.6); c.lineTo(top[0], y - 6.6); c.lineTo(top[0] + 3, y - 2.6); c.lineTo(top[0] + 6.4, y - 5.4); c.lineTo(top[0] + 6, y); c.closePath(); c.fillStyle = '#ffd35a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke(); for (const [x, cl] of [[-3.2, '#f36d86'], [0, '#6fbfb0'], [3.2, '#8fb7e0']]) circ(c, top[0] + x, y - 1.4, 0.9, cl, null); return; }
   // decorations that sit on a point of the head
   const onPt = (lon, lat, fn) => { const q = onHead(S, yawFace, lon, lat, HR * 1.08); if (q.dz < -0.35) return; const pp = proj(q.p); c.save(); if (q.dz < 0) c.globalAlpha = 0.9; fn(pp[0], pp[1], Math.max(0.5, Math.abs(q.dz) * 0.5 + 0.5)); c.restore(); };
+  if (h === 'lanternbow') onPt(0.9, 0.55, (x, y, k) => {      // a gold bow with a tiny red lantern swinging under it
+    for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + sd * 5 * k, y - 4.2, x + sd * 5 * k, y + 0.6); c.quadraticCurveTo(x + sd * 3.6 * k, y + 3.2, x, y); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); }
+    circ(c, x, y, 1.4, shade(col, -14), INK, 0.7);
+    const sw = Math.sin(t * 2.6) * 0.35, lx = x + Math.sin(sw) * 5, ly = y + Math.cos(sw) * 5;
+    line(c, x, y + 1, lx, ly - 1.6, INK, 0.4);
+    ell(c, lx, ly, 1.9, 2.2, '#e8584e', INK, 0.5); c.fillStyle = '#ffd35a'; c.fillRect(lx - 1.3, ly - 2.4, 2.6, 0.6); c.fillRect(lx - 1.3, ly + 1.8, 2.6, 0.6);
+    c.globalAlpha = 0.35 + Math.sin(t * 4) * 0.15; circ(c, lx, ly, 3.2, '#ffcf6a', null); c.globalAlpha = 1;
+  });
   if (h === 'bow') onPt(0.9, 0.55, (x, y, k) => { for (const s of [-1, 1]) { c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + s * 5 * k, y - 4.2, x + s * 5 * k, y + 0.6); c.quadraticCurveTo(x + s * 3.6 * k, y + 3.2, x, y); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); } circ(c, x, y, 1.4, shade(col, -14), INK, 0.7); });
   if (L.flower && h !== 'flower') onPt(0.85, 0.5, (x, y) => { for (let i = 0; i < 5; i++) { const an = i / 5 * TAU; circ(c, x + Math.cos(an) * 1.7, y + Math.sin(an) * 1.7, 1.45, L.flower, INK, 0.5); } circ(c, x, y, 1.1, '#ffd35a', INK, 0.5); });
   if (h === 'flower') onPt(0.8, 0.45, (x, y) => { for (let i = 0; i < 5; i++) { const an = i / 5 * TAU; circ(c, x + Math.cos(an) * 1.7, y + Math.sin(an) * 1.7, 1.45, col, INK, 0.5); } circ(c, x, y, 1.1, '#ffd35a', INK, 0.5); });
@@ -491,7 +506,7 @@ function drawTorso(c, L, S, a, t) {
   const top = proj(S.chest), bot = proj(S.waist), neck = proj(S.neck);
   const dress = st === 'dress' || st === 'aodai';
   const wT = w(5.1, 3.6), wB = w(dress ? 7.6 : 5.8, dress ? 5.2 : 4.1);
-  const hemY = dress ? bot[1] + (st === 'aodai' ? 6.5 : 4.2) : bot[1] + 1.2;
+  const hemY = dress ? bot[1] + (st === 'aodai' ? 8.6 : 4.2) : bot[1] + 1.2;
   // bottoms under the top (shorts/skirt waistband)
   if (!dress) {
     const bw = w(5.6, 3.9);
@@ -518,7 +533,28 @@ function drawTorso(c, L, S, a, t) {
   if (L.overall) { const ob = w(4.2, 3), fk = Math.cos(yaw); c.fillStyle = L.overall; if (fk > -0.1) { c.beginPath(); c.moveTo(bot[0] + Math.sin(yaw) * 2 - ob, top[1] + 3.2); c.lineTo(bot[0] + Math.sin(yaw) * 2 + ob, top[1] + 3.2); c.lineTo(bot[0] + wB, hemY + 2); c.lineTo(bot[0] - wB, hemY + 2); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke(); }
     c.strokeStyle = L.overall; c.lineWidth = 1.5; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(top[0] + sd * wT * 0.55, top[1] - 1.6); c.lineTo(bot[0] + sd * ob * 0.8 + Math.sin(yaw) * 2, top[1] + 3.4); c.stroke(); } }
   if (st === 'floral') for (let i = 0; i < 8; i++) { circ(c, top[0] + ((i * 37) % 11) - 5.5 + Math.sin(yaw) * 2, top[1] + 1 + ((i * 23) % 9), 0.85, L.top2 || '#fff4b8', null); }
+  // printed motifs for the special pieces (they slide round as you turn)
+  if (L.motif) {
+    const sx = Math.sin(yaw) * 3, cols = L.motifCols || ['#fff4f6', '#ffd35a', '#ff9fb4'];
+    if (L.motif === 'blossom') for (let i = 0; i < 7; i++) {
+      const px = top[0] + ((i * 41) % 13) - 6.5 + sx, py = top[1] + 1.2 + ((i * 29) % 13) * (hemY - top[1] - 2) / 13, col = cols[i % cols.length];
+      for (let k2 = 0; k2 < 5; k2++) { const an = k2 / 5 * TAU + i; circ(c, px + Math.cos(an) * 0.95, py + Math.sin(an) * 0.95, 0.72, col, null); }
+      circ(c, px, py, 0.45, '#ffd35a', null); if (i % 2) ell(c, px + 1.4, py + 0.6, 0.8, 0.35, '#7fc062', null);
+    }
+    if (L.motif === 'lanterns') for (let i = 0; i < 4; i++) {
+      const px = top[0] - 5.4 + i * 3.6 + sx, py = top[1] + 3.4 + (i % 2) * 1.2;
+      line(c, px, py - 1.6, px, py - 0.9, '#5b3f36', 0.35); ell(c, px, py, 1.1, 1.3, '#e8584e', null); c.fillStyle = '#ffd35a'; c.fillRect(px - 0.8, py - 1.35, 1.6, 0.4); c.fillRect(px - 0.8, py + 1.0, 1.6, 0.4);
+    }
+    if (L.motif === 'fireflies') for (let i = 0; i < 9; i++) {
+      const k2 = (Math.sin(t * 2.2 + i * 1.7) + 1) / 2, px = top[0] + ((i * 31) % 12) - 6 + sx + Math.sin(t + i) * 0.4, py = top[1] + 0.8 + ((i * 17) % 11) * (hemY - top[1] - 1) / 11;
+      c.globalAlpha = 0.25 + k2 * 0.75; circ(c, px, py, 0.55 + k2 * 0.35, '#e9ff8a', null); c.globalAlpha = 0.25 * k2; circ(c, px, py, 1.7, '#e9ff8a', null); c.globalAlpha = 1;
+    }
+    if (L.motif === 'waves') for (let j = 0; j < 2; j++) { c.strokeStyle = cols[j % cols.length]; c.lineWidth = 0.55; c.beginPath(); for (let x = -10; x <= 10; x += 2.5) { const px = bot[0] + x + sx, py = hemY - 1.6 - j * 1.8; c.moveTo(px - 1.25, py); c.quadraticCurveTo(px, py - 1.4, px + 1.25, py); } c.stroke(); }
+  }
+  if (L.trim) { c.fillStyle = L.trim; c.fillRect(bot[0] - 14, hemY - 1.3, 28, 1.1); c.globalAlpha = 0.55; c.fillStyle = '#fff6c8'; c.fillRect(bot[0] - 14, hemY - 1.25, 28, 0.35); c.globalAlpha = 1; }
   c.restore();
+  // a gold collar band on the áo dài
+  if (L.trim && (st === 'aodai' || st === 'dress')) { c.strokeStyle = L.trim; c.lineWidth = 1.1; c.beginPath(); c.moveTo(neck[0] - w(2.4, 1.8), top[1] - 1.7); c.quadraticCurveTo(neck[0], top[1] - 0.2, neck[0] + w(2.4, 1.8), top[1] - 1.7); c.stroke(); }
   // front details (only when facing us): collars, buttons, pockets, hood strings
   const facing = Math.cos(yaw);
   const fx = top[0] + Math.sin(yaw) * 3.2 * 0.9, k = Math.max(0.2, facing);
@@ -538,6 +574,16 @@ function drawTorso(c, L, S, a, t) {
   if (L.backpack && facing > 0.1) { c.strokeStyle = shade(L.backpack, -18); c.lineWidth = 1.5; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(fx + sd * 3 * k, top[1] - 1.6); c.quadraticCurveTo(fx + sd * 3.6 * k, top[1] + 3, fx + sd * 3.2 * k, bot[1] - 2); c.stroke(); } }
   if (L.cape) { c.beginPath(); c.moveTo(neck[0] - 3, top[1] - 2); c.lineTo(neck[0] + 3, top[1] - 2); c.lineTo(bot[0] + wB + 3.5, hemY + 2.5); c.quadraticCurveTo(bot[0], hemY + 4.5, bot[0] - wB - 3.5, hemY + 2.5); c.closePath(); c.fillStyle = L.cape; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke(); c.strokeStyle = 'rgba(111,191,176,.6)'; c.lineWidth = 0.6; for (let i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(neck[0] + i * 0.8, top[1]); c.lineTo(bot[0] + i * 2.4, hemY + 3); c.stroke(); } }
   if (L.scarf) { ell(c, neck[0], neck[1] + 1.4, w(4.8, 3.6), 1.9, L.scarf, INK, 0.8); }
+  if (L.scarf && L.scarfLong) {                        // the long tails, fluttering, with a fringe
+    const side = Math.sin(yaw) > 0.3 ? -1 : 1, fl = Math.sin(t * 3.2) * 0.8 + (a.moving || 0) * Math.sin(t * 9) * 1.2, x0 = neck[0] + side * 2.4, y0 = neck[1] + 2.4;
+    for (const [dx, len] of [[0, 9], [1.6, 7]]) {
+      const ex = x0 + side * dx + fl * (1 + dx * 0.3), ey = y0 + len;
+      c.beginPath(); c.moveTo(x0 + side * dx - 1.1, y0); c.quadraticCurveTo(x0 + side * dx + fl * 0.5 - 1.3, y0 + len * 0.5, ex - 1.1, ey); c.lineTo(ex + 1.1, ey); c.quadraticCurveTo(x0 + side * dx + fl * 0.5 + 1.3, y0 + len * 0.5, x0 + side * dx + 1.1, y0); c.closePath();
+      c.fillStyle = L.scarf; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.6; c.stroke();
+      c.strokeStyle = shade(L.scarf, -25); c.lineWidth = 0.4; for (let f = -1; f <= 1; f++) { c.beginPath(); c.moveTo(ex + f * 0.7, ey); c.lineTo(ex + f * 0.7 + fl * 0.2, ey + 1.2); c.stroke(); }
+      c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(ex - 0.9, y0 + 2, 0.5, len - 3);
+    }
+  }
   // work gear that says who someone is
   if (L.coat) {                                         // a doctor's long white coat, open at the front
     const cw = wT + 0.6, cb = wB + 1.2, ch = Math.max(hemY, bot[1]) + 5.2;
