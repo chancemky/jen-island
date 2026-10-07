@@ -24,7 +24,7 @@ import { openPrep, updatePrep, isPrepOpen } from './ui/prep.js';
 import { showSummary } from './ui/summary.js';
 import { startDecorate, isDecorating, rebuildHouseFurniture } from './ui/decorate.js';
 import { openStaffBoard } from './ui/staff.js';
-import { openMenu } from './ui/menu.js';
+import { openMenu, guestReminder } from './ui/menu.js';
 import { showAuth } from './ui/auth.js';
 import { updateBusinesses, openBiz, closeBiz, rt as bizRT } from './systems/business.js';
 import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs, feedDucks, nearPond } from './systems/npc.js';
@@ -118,11 +118,11 @@ async function boot() {
   else {
     const link = await cloud.takeLinkSession();            // (opened from a reset / confirmation email)
     user = await cloud.resume() || cloud.guestUser();       // an account, or a guest coming back
-    if (link === 'recovery' && user && !user.guest) { $('boot').classList.add('gone'); user = await showAuth({ start: 'reset' }); }
+    if (link === 'recovery' && user && !user.guest) { $('boot').classList.add('gone'); window.__guardWait?.(true); user = await showAuth({ start: 'reset' }); window.__guardWait?.(false); }
   }
   progress(1, bootText('ready'));
   $('boot').classList.add('gone');
-  if (!user) user = await showAuth();
+  if (!user) { window.__guardWait?.(true); user = await showAuth(); window.__guardWait?.(false); }
   G.user = user;
   // The saved language belongs to this island; the device fallback may belong to a different account.
   const savedLang = peekLocalLanguage(user); if (savedLang) G.state.settings.lang = savedLang;
@@ -138,6 +138,7 @@ async function boot() {
   initSocial();
   showMorningMail();
   festivalGift();
+  setTimeout(guestReminder, 20000);
   const s = G.state;
   track('session_start', { account: !G.user.local, guest: !!G.user.guest, chapter: s.story.chapter, step: s.story.step, day: s.day, level: s.level, lang: G.lang, touch: matchMedia('(pointer: coarse)').matches, installed: matchMedia('(display-mode: standalone)').matches });
   bus.on('step', step => track('step', { step, chapter: G.state.story.chapter, day: G.state.day }));
@@ -218,7 +219,7 @@ function startGame() {
   renderStars();
   requestAnimationFrame(loop);
   watchForUpdates(toast);
-  window.done = true;
+  window.done = true; window.__started = true;   // (the boot guard stands down)
   if (s.story.step === 'intro' || !s.player.name) { runArrival(); return; }
   if (s.story.step === 'tour') { setScene('island', 900, 2440, 'up'); showHud(true); runTour(); return; }
   // resume where we left off

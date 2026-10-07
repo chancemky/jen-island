@@ -20,8 +20,8 @@ async function latest() {
 }
 async function hardRefresh(v) {
   try { sessionStorage.setItem(KEY, v); } catch {}
+  if (window.__repairGame) { window.__repairGame(); return; }    // (js/guard.js: clears caches and refetches every file)
   try { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } catch {}
-  try { const reg = await navigator.serviceWorker?.getRegistration(); await reg?.update(); } catch {}
   location.reload();
 }
 

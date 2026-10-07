@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jen-island.jen-simulator.workers.dev/sitemap.xml

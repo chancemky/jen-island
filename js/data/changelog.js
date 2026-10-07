@@ -3,9 +3,18 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.5.1';
+export const APP_VERSION = '5.5.2';
 
 export const CHANGELOG = [
+  {
+    v: '5.5.2', date: '2026-10-07T13:04:56Z',
+    title: ['Always Opens', 'Luôn Mở Được'],
+    items: [
+      ['Fixed: on some phones the game could open to an empty blue screen after an update', 'Đã sửa: trên một số điện thoại, game có thể mở ra màn hình xanh trống sau khi cập nhật'],
+      ['If the island ever can\'t open, a Repair button now fetches the game\'s files fresh (your island is never touched)', 'Nếu hòn đảo không mở được, nút Sửa sẽ tải lại các tệp của game (hòn đảo của bạn không bị ảnh hưởng)'],
+      ['Safer website: stricter security settings', 'Trang web an toàn hơn: thiết lập bảo mật chặt chẽ hơn'],
+    ],
+  },
   {
     v: '5.5.1', date: '2026-10-07T12:51:16Z',
     title: ['Smooth Mornings', 'Buổi Sáng Suôn Sẻ'],

@@ -282,11 +282,25 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
   } });
 }
 
+// Guests are reminded now and then that their island lives only on this device
+// (Safari can clear a website's storage after a week away unless it's on the Home Screen).
+export function guestReminder() {
+  const s = G.state, f = s.story.flags;
+  if (!G.user?.guest || !f.freeRoam || s.day < 3 || Date.now() - (f.guestNudge || 0) < 2 * 864e5) return;
+  f.guestNudge = Date.now(); markDirty();
+  const el = h('div', 'modal');
+  el.innerHTML = `<div class="card"><h2>${T('Keep your island safe', 'Giữ hòn đảo an toàn')}</h2>
+    <p style="font-weight:800;line-height:1.4">${T('Your island is saved only on this device. A free account keeps it safe in the cloud, lets you play on other devices and join the leaderboard.', 'Hòn đảo của bạn chỉ được lưu trên máy này. Tài khoản miễn phí giúp lưu an toàn trên mây, chơi trên thiết bị khác và lên bảng xếp hạng.')}</p>
+    <div style="display:flex;gap:8px;margin-top:12px"><button type="button" class="btn ghost" data-a="no" style="flex:1">${T('Later', 'Để sau')}</button><button type="button" class="btn pink" data-a="yes" style="flex:1">${T('Make an account', 'Tạo tài khoản')}</button></div></div>`;
+  document.getElementById('app').appendChild(el);
+  el.querySelector('[data-a="no"]').onclick = () => { sfx('back'); el.remove(); };
+  el.querySelector('[data-a="yes"]').onclick = () => { el.remove(); linkAccount(null, 'signup'); };
+}
 // A guest makes (or logs in to) an account. A new account takes this island along; an
 // existing account that already has an island asks which one to keep.
-async function linkAccount(api, start) {
+export async function linkAccount(api, start) {
   const guestId = G.user.id;
-  api.close(true);
+  api?.close(true);
   const user = await showAuth({ start, cancellable: true });
   if (!user) return;
   let keepThis = true;
