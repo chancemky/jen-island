@@ -117,7 +117,7 @@ if (run('content')) {
   // every module under js/ that the game imports is cached for offline play
   const mods = []; const walk2 = d => { for (const f of fs.readdirSync(d)) { const fp = path.join(d, f); if (fs.statSync(fp).isDirectory()) { if (f !== 'dev') walk2(fp); } else if (f.endsWith('.js')) mods.push('./' + path.relative(ROOT, fp)); } };
   walk2(path.join(ROOT, 'js'));
-  const uncached = mods.filter(m => !shell.includes(m));
+  const uncached = mods.filter(m => !shell.includes(m) && m !== './js/admin.js');   // (the admin page isn't part of the game)
   if (uncached.length) fail('content', 'modules missing from the service worker cache (run npm run sw): ' + uncached.join(', ')); else pass('content', 'every game module is cached for offline play');
   if (errors.length) errors.forEach(e => fail('content', e));
   await ctx.close();

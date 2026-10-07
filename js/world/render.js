@@ -8,6 +8,30 @@ import { drawSpark } from '../gfx/character.js';
 import { drawIcon } from '../gfx/food.js';
 
 // ---------------------------------------------------------------- camera
+// ---------------------------------------------------------------- prop sprites
+// Nature props (trees, palms, bushes, grass, flowers, rocks) are drawn into a small
+// offscreen canvas and blitted, re-drawn only when the zoom or the darkness changes or the
+// breeze moves on (ten times a second). Their glows (fireflies) are recorded and replayed.
+const SPRITE_KINDS = new Set(['tree', 'flameTree', 'palm', 'bush', 'frangipani', 'banana', 'bamboo', 'flowerPatch', 'flowerBed', 'grassTuft', 'tallGrass', 'rock', 'pebbles', 'stump', 'mushrooms', 'reeds']);
+let SPRITE_ON = true;
+export const setSprites = on => { SPRITE_ON = !!on; };
+const liveSprites = new Set();
+function drawSprite(c, t, scene, p, k) {
+  const b = p.cull, sc = k.s;
+  let S = p._spr;
+  const key = sc + '|' + k.tq + '|' + k.n;
+  if (!S || S.key !== key) {
+    if (!S) { S = p._spr = { cv: document.createElement('canvas'), key: '', glows: [], used: 0 }; liveSprites.add(p); }
+    const w = Math.max(1, Math.ceil(b.w * sc)), h = Math.max(1, Math.ceil(b.h * sc));
+    if (S.cv.width !== w || S.cv.height !== h) { S.cv.width = w; S.cv.height = h; } else S.cv.getContext('2d').clearRect(0, 0, w, h);
+    const cc = S.cv.getContext('2d'); cc.setTransform(sc, 0, 0, sc, -b.x * sc, -b.y * sc); cc.lineJoin = 'round'; cc.lineCap = 'round';
+    const g0 = glows.length; cc.translate(p.x, p.y); p.draw(cc, k.tq, scene); S.glows = glows.splice(g0);
+    S.key = key;
+  }
+  S.used = k.now;
+  c.drawImage(S.cv, b.x, b.y, S.cv.width / sc, S.cv.height / sc);
+  for (const g of S.glows) glows.push(g);
+}
 export const cam = {
   x: 0, y: 0, zoom: 1.3, baseZoom: 1.3, zoomMul: 1, targetZoomMul: 1,
   follow: null, fx: 0, fy: 0, override: null, shake: 0, lead: [0, 0],
@@ -123,6 +147,8 @@ export class Renderer {
     // characters about 48px tall on a typical phone
     cam.baseZoom = clamp(Math.min(this.w / 285, this.h / 500), 1.05, 2.2);
   }
+  // free the sprites nobody has drawn for a while (walked away from)
+  sweepSprites() { const now = performance.now(); for (const p of liveSprites) if (now - p._spr.used > 6000) { p._spr.cv.width = p._spr.cv.height = 0; p._spr = null; liveSprites.delete(p); } }
   render(scene, t, extra = {}) {
     const c = this.c, v = cam.view, z = cam.zoom, d = this.dpr;
     c.setTransform(1, 0, 0, 1, 0, 0);
@@ -140,9 +166,11 @@ export class Renderer {
     // depth-sorted world
     const list = [], pad = 40;
     const inView = r => r.x < v.x + v.w + pad && r.x + r.w > v.x - pad && r.y < v.y + v.h + pad && r.y + r.h > v.y - pad;
+    const spr = SPRITE_ON && !extra.noSprites ? { s: Math.round(d * z * 20) / 20, tq: Math.floor(t * 10) / 10, n: Math.round(LIGHT.night * 10), now: performance.now() } : null;
     for (const p of scene.props) {
       if (p.hidden?.()) continue;
       if (p.cull && !inView(p.cull)) continue;
+      if (spr && p.cull && SPRITE_KINDS.has(p.kind)) { p.spriteDraw ||= (cc, tt, sc) => drawSprite(cc, tt, sc, p, spr); if (p.flat) { drawSprite(c, t, scene, p, spr); continue; } list.push({ x: p.x, y: p.y, sortY: p.sortY, draw: p.spriteDraw, viaSprite: true }); continue; }
       if (p.flat) { c.save(); c.translate(p.x, p.y); p.draw(c, t); c.restore(); continue; }
       list.push(p);
     }
@@ -150,6 +178,7 @@ export class Renderer {
     if (extra.worldExtra) for (const e of extra.worldExtra) list.push(e);
     list.sort((a, b) => (a.sortY ?? a.y) - (b.sortY ?? b.y));
     for (const o of list) {
+      if (o.viaSprite) { o.draw(c, t, scene); continue; }
       if (o instanceof Object && o.draw && o.look !== undefined) { o.draw(c, t); continue; }
       c.save(); c.translate(o.x, o.y); o.draw(c, t, scene); c.restore();
     }

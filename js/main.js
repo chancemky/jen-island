@@ -936,6 +936,7 @@ function checkMilestonesReady() {
   }
 }
 setInterval(checkMilestonesReady, 4000);
+setInterval(() => G.renderer?.sweepSprites?.(), 2000);
 
 // ---------------------------------------------------------------- pause
 // Pausing is only for free roam: never before the story has handed you the island

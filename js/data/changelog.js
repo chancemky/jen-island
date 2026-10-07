@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.8.0';
+export const APP_VERSION = '5.9.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.9.0', date: '2026-10-07T15:56:49Z',
+    title: ['Smooth Sailing', 'Thuận Buồm Xuôi Gió'],
+    items: [
+      ['Smoother on older phones: trees, palms, bushes, grass and flowers now draw much faster', 'Mượt hơn trên điện thoại cũ: cây, dừa, bụi cây, cỏ và hoa giờ vẽ nhanh hơn nhiều'],
+      ['The golden cat now glows softly so it\'s easier to spot', 'Mèo vàng giờ phát sáng nhẹ nên dễ tìm hơn'],
+    ],
+  },
   {
     v: '5.8.0', date: '2026-10-07T15:42:12Z',
     title: ['Sunny Days & Surprise Guests', 'Ngày Nắng & Vị Khách Bất Ngờ'],
