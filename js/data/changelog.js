@@ -3,9 +3,21 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.5.0';
+export const APP_VERSION = '5.5.1';
 
 export const CHANGELOG = [
+  {
+    v: '5.5.1', date: '2026-10-07T12:51:16Z',
+    title: ['Smooth Mornings', 'Buổi Sáng Suôn Sẻ'],
+    items: [
+      ['Fixed: the game could stay on the loading screen when opening it again', 'Đã sửa: game có thể bị kẹt ở màn hình tải khi mở lại'],
+      ['Menu tabs show clean icons, and the open tab shows its name', 'Các tab menu hiện biểu tượng gọn gàng, tab đang mở hiện tên'],
+      ['Goals now has its own tabs: Milestones, This week, Badges, Achievements and the Lantern Season pass', 'Mục tiêu giờ có các tab riêng: Cột mốc, Tuần này, Huy hiệu, Thành tựu và vé Mùa Lồng Đèn'],
+      ['Friends: invite links, choose which gift to send, remove a friend, and see a friend\'s island at a glance', 'Bạn bè: link mời, chọn quà để tặng, xóa bạn, và xem nhanh hòn đảo của bạn ấy'],
+      ['Your chosen badge now shines beside the nameplate on your house', 'Huy hiệu bạn chọn giờ hiện cạnh bảng tên trên nhà bạn'],
+      ['Daily gifts and weekly goals turn over at the same time for everyone', 'Quà mỗi ngày và mục tiêu tuần đổi mới cùng lúc cho mọi người'],
+    ],
+  },
   {
     v: '5.5.0', date: '2026-10-06T15:05:16Z',
     title: ['Island Life', 'Cuộc Sống Trên Đảo'],

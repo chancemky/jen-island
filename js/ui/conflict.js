@@ -9,7 +9,7 @@ const card = s => `${escapeHtml(s?.island?.name || 'Bistro Island')} · ${T(`Day
 // resolves 'here' or 'cloud'
 export function chooseIsland(here, cloud, { why = T('This island was also played on another device. The one you don\'t pick will be replaced.', 'Hòn đảo này cũng được chơi trên một thiết bị khác. Hòn đảo bạn không chọn sẽ bị thay thế.'), cloudLabel = T('The other device\'s island', 'Đảo trên thiết bị kia') } = {}) {
   return new Promise(res => {
-    const el = document.createElement('div'); el.className = 'modal';
+    const el = document.createElement('div'); el.className = 'modal'; el.style.zIndex = 300;   // (above the loading screen)
     el.innerHTML = `<div class="card"><h2>${T('Which island do you want to keep?', 'Bạn muốn giữ hòn đảo nào?')}</h2>
       <p style="font-weight:800;line-height:1.4">${why}</p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">

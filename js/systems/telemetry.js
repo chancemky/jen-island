@@ -13,6 +13,7 @@ const rand = () => crypto.randomUUID?.() || Math.random().toString(36).slice(2) 
 let device = 'unknown';
 try { device = localStorage.getItem(DEVICE_KEY) || (localStorage.setItem(DEVICE_KEY, rand()), localStorage.getItem(DEVICE_KEY)) || rand(); } catch { device = rand(); }
 const session = rand();
+export { device as deviceId };
 const local = devHost();     // (tests and local copies never send anything)
 const on = () => !local && G.state?.settings?.stats !== false;
 let queue = [], timer = 0, errors = 0;

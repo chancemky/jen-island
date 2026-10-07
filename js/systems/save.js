@@ -20,6 +20,7 @@ import { bus } from '../core/util.js';
 import { leaderboardRow, shouldPushLeaderboard } from './progress.js';
 import { chooseIsland } from '../ui/conflict.js';
 import { showcaseBadge } from './badges.js';
+import { deviceId } from './telemetry.js';
 import { toast } from '../ui/hud.js';
 
 // saves from before OLDEST_SAVE are not loaded (everyone started fresh at that reset);
@@ -38,7 +39,7 @@ export const saveStatus = { cloudAt: 0, localAt: 0, offline: false, error: '', r
 
 function snapshot() {
   const s = G.state;
-  s.savedAt = Date.now();
+  s.savedAt = Date.now(); s.savedBy = deviceId;         // (which device wrote it: your own saves are never a conflict)
   if (G.scene && G.player && !G.runtime.inCutscene) {
     // never keep a spot nobody can stand on (a roof, inside a bush or a cart): save the nearest free floor instead, or keep the last good place
     const sc = G.scene, r = G.player.radius || 5, x = Math.round(G.player.x), y = Math.round(G.player.y);
@@ -185,8 +186,9 @@ export async function loadGame(user) {
   const sync = readSync(user.id), at = remote && cloud.cloudSyncedAt();
   if (local && remote && sync?.at && at) {
     const cloudMoved = at !== sync.at, localMoved = (local.savedAt || 0) > (sync.savedAt || 0) && local.savedAt !== remote.savedAt;
+    const otherDevice = remote.savedBy && remote.savedBy !== deviceId;
     if (!cloudMoved) { pick = local; other = remote; }                 // nobody else saved: this device is up to date (or ahead)
-    else if (!localMoved) { pick = remote; other = local; }            // another device played; nothing new here
+    else if (!localMoved || !otherDevice || (remote.savedAt || 0) >= (local.savedAt || 0)) { pick = remote; other = local; }   // the cloud has the newest (often this device's own last save)
     else {                                                             // both played since the last sync: the player decides
       const c = await chooseIsland(local, remote);
       [pick, other] = c === 'here' ? [local, remote] : [remote, local];
