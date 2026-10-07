@@ -223,11 +223,13 @@ if (run('story') || run('chaos')) {
     lastCh = Math.max(lastCh, ch);
     // after every scene the island must be fully free again
     let h = null;
-    for (let k = 0; k < 10; k++) { h = await p.evaluate(() => window.__jen.health()); if (!h.cs && !h.dialog && !h.overlays.length && !h.presenting) break; await pump(800); }
+    for (let k = 0; k < 10; k++) { h = await p.evaluate(() => window.__jen.health()); if (!h.cs && !h.dialog && !h.overlays.length && !h.presenting && !h.transitioning && !h.fade) break; await pump(800); }
+    // (the impatient bot walks through doors on its own: a door it just used is mid-transition, not stuck — wait it out once more)
+    if (chaos && (h.transitioning || h.fade || h.locks.includes('door'))) { await p.waitForTimeout(2500); h = await p.evaluate(() => window.__jen.health()); }
     if (!h.cs && !h.dialog) {
       // (in the impatient run, a menu the bot just opened is fine — but only if the pause count matches what's open)
       const menus = h.overlays.filter(o => /sheet-wrap/.test(o) && !/out/.test(o)).length, others = h.overlays.filter(o => !/sheet-wrap/.test(o));
-      const bad = [h.inCutscene && 'inCutscene', h.pause > (chaos ? menus : 0) && `pause ${h.pause}`, h.locks.length && `locks ${h.locks}`, (chaos ? others.length : h.overlays.length) && `overlays ${chaos ? others : h.overlays}`, h.fade && 'fade'].filter(Boolean);
+      const bad = [h.inCutscene && 'inCutscene', h.pause > (chaos ? menus + (h.holders?.prep ? 1 : 0) + (h.holders?.decorate ? 1 : 0) : 0) && `pause ${h.pause} (${Object.entries(h.holders || {}).filter(([, v]) => v).map(([k]) => k).join(',') || 'nothing open'})`, h.locks.length && `locks ${h.locks}`, (chaos ? others.length : h.overlays.length) && `overlays ${chaos ? others : h.overlays}`, h.fade && 'fade'].filter(Boolean);
       if (bad.length) stuckAfter.push(`${after}: ${bad.join(', ')}`);
     }
   }

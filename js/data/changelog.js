@@ -3,9 +3,18 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.12.0';
+export const APP_VERSION = '5.12.1';
 
 export const CHANGELOG = [
+  {
+    v: '5.12.1', date: '2026-10-07T17:40:44Z',
+    title: ['Steady Hands', 'Tay Vững'],
+    items: [
+      ['Fixed: opening photo mode just as a story scene began could freeze the story', 'Đã sửa: mở chế độ chụp ảnh đúng lúc cảnh truyện bắt đầu có thể làm kẹt cốt truyện'],
+      ['Fixed: no more vibration before you\'ve touched the screen', 'Đã sửa: không còn rung trước khi bạn chạm vào màn hình'],
+      ['The Smoothie Bar has its own icon on its buttons', 'Quán Sinh Tố có biểu tượng riêng trên các nút'],
+    ],
+  },
   {
     v: '5.12.0', date: '2026-10-07T16:47:27Z',
     title: ['The Cosy Collection', 'Bộ Sưu Tập Ấm Áp'],

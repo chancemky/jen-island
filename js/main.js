@@ -667,7 +667,7 @@ async function driveTruck() {
   toast({ text: T(`The truck is at ${sp.en} now`, `Xe đã tới ${sp.vi}`), sub: T(sp.fx, sp.fxVi), icon: 'goi_cuon' });
 }
 // Stalls and kiosks are run from the counter outside.
-const KIOSK_ICON = { night: 'banh_trang_nuong', cafe: 'coffee', grill: 'squid' };
+const KIOSK_ICON = { night: 'banh_trang_nuong', cafe: 'coffee', grill: 'squid', smoothie: 'drink:sinh_to_xoai' };
 function stallSheet(id = 'night') {
   const z = bizOf(id), def = BUSINESSES[id];
   const hrs = def.hours ? `${clock(def.hours[0])}–${clock(def.hours[1])}` : '';
@@ -988,7 +988,7 @@ if (window.__jen) {
   window.__jen.endDay = endDay;
   // stability tests: everything that can hold the screen or the player
   Object.assign(window.__jen, { say, ask, addXP, showReward, triggerAction, dialogue, isUiOpen, isPresenting, inputLocked, lockNames, lockInput, unlockAchievement, claimMilestone, isTransitioning,
-    health: () => ({ cs: cs.active, csName: cs.name, queued: cs.queued, inCutscene: G.runtime.inCutscene, pause: G.runtime.pause, locks: lockNames(), dialog: dialogue.active, ui: isUiOpen(), presenting: isPresenting(),
+    health: () => ({ cs: cs.active, csName: cs.name, queued: cs.queued, inCutscene: G.runtime.inCutscene, pause: G.runtime.pause, holders: { prep: isPrepOpen(), decorate: isDecorating(), photo: !!G.runtime.photoMode, service: isServiceOpen() }, locks: lockNames(), dialog: dialogue.active, ui: isUiOpen(), presenting: isPresenting(),
       dlgState: { typing: dialogue.typing, choices: !!dialogue.choices, resolve: !!dialogue.resolve, shown: dialogue.shown, len: dialogue.len, sinceShown: Math.round(performance.now() - (dialogue.shownAt || 0)) },
       overlays: [...document.querySelectorAll('.reward, .levelup, .summary, .modal, .sheet-wrap, .wn-wrap, .fishing, .album-view, .cs-continue')].map(e => e.className),
       fade: document.getElementById('fade').classList.contains('on'), transitioning: isTransitioning(),

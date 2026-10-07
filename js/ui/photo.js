@@ -8,6 +8,7 @@ import { addPhoto } from '../systems/album.js';
 import { sfx } from '../core/audio.js';
 import { toast } from './hud.js';
 import { track } from '../systems/telemetry.js';
+import { bus } from '../core/util.js';
 
 const FILTERS = {
   natural: { en: 'Natural', vi: 'Tự nhiên', css: '', px: null },
@@ -21,12 +22,18 @@ const POSES = [['smile', '😊', null], ['wave', '👋', 'wave'], ['cheer', '�
 const FRAMES = [['none', ['No frame', 'Không khung']], ['polaroid', ['Polaroid', 'Polaroid']], ['postcard', ['Postcard', 'Bưu thiếp']]];
 
 let ui = null;
+// the camera hold photo mode uses (put back if anything else cleared it)
+let mine = null;
+const camOv = st => { if (!cam.override) cam.override = mine = { x: st.x, y: st.y, zoom: st.zoom, rate: 12 }; return cam.override; };
+// a story scene or a change of place ends photo mode first
+bus.on('cutscene', on => { if (on) closePhotoMode(); });
+bus.on('scene', () => closePhotoMode());
 export function openPhotoMode() {
-  if (ui || !G.renderer?.cv) return;
+  if (ui || !G.renderer?.cv || G.runtime.inCutscene) return;
   const pl = G.player, start = { x: cam.x, y: cam.y };
   const st = { filter: 'natural', frame: 'none', zoom: 1, x: cam.x, y: cam.y, pose: null };
   G.runtime.photoMode = true; document.body.classList.add('photo-mode');
-  cam.override = { x: st.x, y: st.y, zoom: 1, rate: 12 };
+  cam.override = mine = { x: st.x, y: st.y, zoom: 1, rate: 12 };
   pl?.face('down');
   ui = document.createElement('div'); ui.className = 'photo-ui';
   ui.innerHTML = `<div class="ph-drag" aria-hidden="true"></div>
@@ -48,10 +55,10 @@ export function openPhotoMode() {
     if (!last) return; const z = cam.zoom || 1;
     st.x -= (e.clientX - last[0]) / z; st.y -= (e.clientY - last[1]) / z; last = [e.clientX, e.clientY];
     const dx = st.x - start.x, dy = st.y - start.y, d = Math.hypot(dx, dy), R = 420; if (d > R) { st.x = start.x + dx / d * R; st.y = start.y + dy / d * R; }
-    cam.override.x = st.x; cam.override.y = st.y;
+    camOv(st).x = st.x; camOv(st).y = st.y;
   });
   drag.addEventListener('pointerup', () => { last = null; });
-  ui.querySelector('.ph-zoom').oninput = e => { st.zoom = +e.target.value / 100; cam.override.zoom = st.zoom; };
+  ui.querySelector('.ph-zoom').oninput = e => { st.zoom = +e.target.value / 100; camOv(st).zoom = st.zoom; };
   ui.querySelector('.ph-filters').onclick = e => { const k = e.target.closest('[data-f]')?.dataset.f; if (k) { sfx('ui'); setFilter(k); } };
   ui.querySelector('.ph-frames').onclick = e => { const k = e.target.closest('[data-fr]')?.dataset.fr; if (k) { sfx('ui'); st.frame = k; ui.querySelectorAll('[data-fr]').forEach(b => b.classList.toggle('on', b.dataset.fr === k)); } };
   ui.querySelector('.ph-poses').onclick = e => {
@@ -69,7 +76,7 @@ export function closePhotoMode() {
   ui.remove(); ui = null;
   if (G.renderer?.cv) G.renderer.cv.style.filter = '';
   document.body.classList.remove('photo-mode'); G.runtime.photoMode = false;
-  cam.override = null; G.player?.setAct(null); G.player?.setEmo?.('neutral', 0);
+  if (cam.override === mine) cam.override = null; mine = null; G.player?.setAct(null); G.player?.setEmo?.('neutral', 0);
 }
 async function shoot(st) {
   const src = G.renderer.cv, W = Math.min(1080, src.width), H = Math.round(W * src.height / src.width);

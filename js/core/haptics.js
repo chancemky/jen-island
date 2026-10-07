@@ -22,6 +22,7 @@ export function haptic(kind = 'light') {
       if (kind === 'success' || kind === 'warn') return void h.notification?.({ type: kind === 'success' ? 'SUCCESS' : 'WARNING' }).catch(() => {});
       return void h.impact?.({ style: kind === 'heavy' ? 'HEAVY' : kind === 'medium' ? 'MEDIUM' : 'LIGHT' }).catch(() => {});
     }
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;   // browsers refuse (and complain) before the first tap
     navigator.vibrate?.(PATTERN[kind] ?? 10);
   } catch { /* no haptics here */ }
 }
