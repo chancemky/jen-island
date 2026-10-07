@@ -1,7 +1,7 @@
 // Main menu: island map, journal, settings, save status, account.
 
 import { G, T, setLang, markDirty } from '../systems/state.js';
-import { openSheet, tabs, h, btn, showReward } from './sheets.js';
+import { openSheet, tabs, h, btn, showReward, rowEl } from './sheets.js';
 import { DEV_TOOLS } from '../dev/flag.js';
 import { saveStatus, saveLocal, saveCloudNow, resetGame, forgetLocal, adoptLocalSave } from '../systems/save.js';
 import { askText } from './naming.js';
@@ -9,8 +9,8 @@ import { showAuth } from './auth.js';
 import { chooseIsland } from './conflict.js';
 import { setAudio, sfx } from '../core/audio.js';
 import { escapeHtml, clock, money, moneyPair, moneyShort } from '../core/util.js';
-import { openJournal } from './shops.js';
-import { CHAPTERS, FURNITURE } from '../data/game.js';
+import { openJournal, renderAchievements } from './shops.js';
+import { CHAPTERS, FURNITURE, BUSINESSES, RECIPES, bizName } from '../data/game.js';
 import { TRACKS, trackState, claimMilestone, xpNeed, trackGift, leaderboardRow } from '../systems/progress.js';
 import { CLOTHES } from '../data/wardrobe.js';
 import { renderChangelog } from './whatsnew.js';
@@ -18,8 +18,9 @@ import { iconURL } from '../gfx/food.js';
 import { mountMap } from './worldmap.js';
 import { renderOffice } from './office.js';
 import * as cloud from '../systems/cloud.js';
-import { storeVisible } from '../systems/store.js';
-import { renderStore } from './store.js';
+import { CLOUD } from '../systems/cloud.js';
+import { storeVisible, STORE } from '../systems/store.js';
+import { renderStore, renderSeason } from './store.js';
 import { toast } from './hud.js';
 import { BADGES, TIER_ORDER } from '../data/badges.js';
 import { hasBadge, showcaseBadge, setShowcase } from '../systems/badges.js';
@@ -31,7 +32,11 @@ function renderFriends(pane, api) {
   if (!cloud.hasSession() || G.user?.local) { pane.appendChild(h('div', 'empty-note', T('Make a free account in Menu → Account to add friends, visit their homes and send gifts.', 'Tạo tài khoản miễn phí ở Menu → Tài khoản để kết bạn, thăm nhà nhau và tặng quà.'))); return; }
   const code = myCode();
   const me = h('div', 'row', `<div class="info"><b>${T('Your friend code', 'Mã kết bạn của bạn')}: <span class="friend-code">${escapeHtml(code || '…')}</span></b><small>${T('Share it with a friend so they can add you.', 'Gửi mã cho bạn bè để họ kết bạn với bạn.')}</small></div>`);
-  if (code) me.appendChild(btn(T('Copy', 'Sao chép'), b => { navigator.clipboard?.writeText(code).then(() => { b.textContent = T('Copied ✓', 'Đã chép ✓'); }).catch(() => {}); sfx('ui'); }, 'buy alt'));
+  if (code) me.appendChild(btn(T('Invite', 'Mời'), async b => {
+    sfx('ui');
+    const link = `${CLOUD.site}?friend=${code}`, text = T(`Come visit my island in Bistro Island! My friend code: ${code}`, `Ghé đảo của mình trong Bistro Island nhé! Mã kết bạn: ${code}`);
+    try { if (navigator.share) await navigator.share({ title: 'Bistro Island', text, url: link }); else { await navigator.clipboard.writeText(`${text} ${link}`); b.textContent = T('Link copied ✓', 'Đã chép link ✓'); } } catch {}
+  }, 'buy alt'));
   pane.appendChild(me);
   const add = h('div', 'row', `<div class="info"><b>${T('Add a friend', 'Thêm bạn')}</b><label class="field" style="margin:6px 0 0"><input class="fcode" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="${T('Their code', 'Mã của bạn ấy')}"></label></div>`);
   add.appendChild(btn(T('Add', 'Thêm'), async b => {
@@ -51,16 +56,42 @@ function renderFriends(pane, api) {
       const ago = Math.round((Date.now() - Date.parse(f.updated_at)) / 36e5), seen = ago < 1 ? T('online recently', 'vừa chơi gần đây') : ago < 48 ? T(`${ago}h ago`, `${ago} giờ trước`) : T(`${Math.round(ago / 24)} days ago`, `${Math.round(ago / 24)} ngày trước`);
       const r = h('div', 'row', `<div class="info"><b>${b ? `<span class="badge-mini t-${b.tier}">${b.glyph}</span>` : ''}${escapeHtml(f.player_name || '?')}</b><small>${escapeHtml(f.island_name || '')} · ${T('Lv', 'Cấp')} ${f.level} · ${T('Day', 'Ngày')} ${f.day} · ${seen}</small></div>`);
       const col = h('div'); col.style.cssText = 'display:flex;flex-direction:column;gap:6px';
-      col.appendChild(btn(T('Visit', 'Thăm'), async () => { api.close(true); if (!(await visitFriend(f.user_id))) toast({ text: T('Could not reach their island', 'Không tới được đảo của bạn ấy'), bad: true }); }, 'buy'));
-      col.appendChild(btn(gave.has(f.user_id) ? T('Gift sent ✓', 'Đã tặng ✓') : T('Send gift', 'Tặng quà'), async gb => {
-        const kinds = Object.keys(GIFTS), kind = kinds[Math.floor(Math.random() * kinds.length)];
-        gb.disabled = true;
-        try { await sendGift(f.user_id, kind); sfx('success'); gb.textContent = T('Gift sent ✓', 'Đã tặng ✓'); toast({ text: T(`You sent ${f.player_name} ${GIFTS[kind].en}`, `Bạn đã tặng ${f.player_name} ${GIFTS[kind].vi}`), icon: GIFTS[kind].icon }); }
-        catch { sfx('error'); toast({ text: T('One gift per friend each day', 'Mỗi ngày một món quà cho mỗi người bạn'), bad: true }); }
-      }, 'buy alt', gave.has(f.user_id)));
+      col.appendChild(btn(T('Visit home', 'Thăm nhà'), async () => { api.close(true); if (!(await visitFriend(f.user_id))) toast({ text: T('Could not reach their island', 'Không tới được đảo của bạn ấy'), bad: true }); }, 'buy'));
+      col.appendChild(btn(T('Island', 'Hòn đảo'), () => islandPostcard(f), 'buy alt'));
       r.appendChild(col); list.appendChild(r);
+      // today's gift: pick one of three (one per friend per day)
+      const gifts = h('div', 'gift-row');
+      if (gave.has(f.user_id)) gifts.appendChild(h('small', '', T('Gift sent today ✓', 'Đã tặng quà hôm nay ✓')));
+      else for (const [kind, G2] of Object.entries(GIFTS)) {
+        const gb = h('button', 'gift-pick', `<img src="${iconURL(G2.icon, 32)}" alt=""><span>${escapeHtml(T(G2.label[0], G2.label[1]))}</span>`); gb.type = 'button';
+        gb.onclick = async () => {
+          gifts.querySelectorAll('button').forEach(x => { x.disabled = true; });
+          try { await sendGift(f.user_id, kind); sfx('success'); gifts.innerHTML = `<small>${T('Gift sent today ✓', 'Đã tặng quà hôm nay ✓')}</small>`; toast({ text: T(`You sent ${f.player_name} ${G2.en}`, `Bạn đã tặng ${f.player_name} ${G2.vi}`), icon: G2.icon }); }
+          catch { sfx('error'); toast({ text: T('One gift per friend each day', 'Mỗi ngày một món quà cho mỗi người bạn'), bad: true }); }
+        };
+        gifts.appendChild(gb);
+      }
+      const rm = h('button', 'link-btn', T('Remove friend', 'Xóa bạn')); rm.type = 'button';
+      rm.onclick = async () => { if (rm.dataset.sure) { await cloud.removeFriend(f.user_id).catch(() => {}); sfx('back'); api.rebuild(); } else { rm.dataset.sure = 1; rm.textContent = T('Tap again to remove', 'Chạm lần nữa để xóa'); } };
+      gifts.appendChild(rm);
+      list.appendChild(gifts);
     }
   }).catch(() => { list.innerHTML = `<div class="empty-note">${T('Could not reach the server. Check your connection.', 'Không kết nối được máy chủ. Kiểm tra mạng nhé.')}</div>`; });
+}
+// a friend's island at a glance: their shops, badges and numbers
+async function islandPostcard(f) {
+  const home = await cloud.friendHome(f.user_id).catch(() => null), I = home?.home?.island || {};
+  openSheet({ title: f.island_name || 'Bistro Island', sub: T(`${f.player_name}'s island · Lv ${f.level} · Day ${f.day}`, `Đảo của ${f.player_name} · Cấp ${f.level} · Ngày ${f.day}`), build: body => {
+    body.appendChild(h('div', 'office-head', [[T('Customers served', 'Khách đã phục vụ'), I.served ?? '—'], [T('Regulars', 'Khách quen'), I.regulars ?? '—'], [T('Best streak', 'Chuỗi ngày dài nhất'), I.streak ?? '—']].map(([label, v]) => `<div><small>${escapeHtml(label)}</small><b>${escapeHtml(String(v))}</b></div>`).join('')));
+    body.appendChild(h('div', 'section-title', T('Their shops', 'Các quán')));
+    const shops = h('div', 'list'); body.appendChild(shops);
+    for (const [id, lv] of I.shops || []) if (BUSINESSES[id]) shops.appendChild(rowEl({ icon: RECIPES[(BUSINESSES[id].menu || [])[0]]?.icon || 'coin', title: escapeHtml(bizName(id)), sub: T(`Level ${lv}`, `Cấp ${lv}`) }));
+    if (!(I.shops || []).length) shops.appendChild(h('div', 'empty-note', T('Their island is just getting started.', 'Hòn đảo của bạn ấy mới bắt đầu.')));
+    body.appendChild(h('div', 'section-title', T('Badges', 'Huy hiệu')));
+    const grid = h('div', 'badge-grid'); body.appendChild(grid);
+    for (const id of I.badges || []) { const b = BADGES[id]; if (b) grid.appendChild(h('div', `badge t-${b.tier}`, `<span class="glyph">${b.glyph}</span><b>${escapeHtml(T(b.en, b.vi))}</b>`)); }
+    if (!(I.badges || []).length) grid.appendChild(h('div', 'empty-note', T('No badges yet.', 'Chưa có huy hiệu.')));
+  } });
 }
 // this week's three island goals (systems/weekly.js)
 function renderWeekly(pane, api) {
@@ -82,7 +113,7 @@ function renderWeekly(pane, api) {
 // badges: earned ones in colour, the rest greyed with what they need; tap one you've
 // earned to show it beside your name on the leaderboard
 function renderBadges(pane, api) {
-  const ids = Object.keys(BADGES).sort((a, b) => TIER_ORDER.indexOf(BADGES[a].tier) - TIER_ORDER.indexOf(BADGES[b].tier));
+  const ids = Object.keys(BADGES).filter(id => id !== 'supporter' || STORE.payments || hasBadge(id)).sort((a, b) => TIER_ORDER.indexOf(BADGES[a].tier) - TIER_ORDER.indexOf(BADGES[b].tier));
   const got = ids.filter(hasBadge), shown = showcaseBadge();
   pane.appendChild(h('div', 'section-title', T(`Badges · ${got.length} / ${ids.length}`, `Huy hiệu · ${got.length} / ${ids.length}`)));
   const grid = h('div', 'badge-grid'); pane.appendChild(grid);
@@ -95,13 +126,24 @@ function renderBadges(pane, api) {
   }
   pane.appendChild(h('div', 'empty-note', T('Tap a badge you\'ve earned to show it on the leaderboard.', 'Chạm huy hiệu đã có để hiện trên bảng xếp hạng.')));
 }
+// Goals: milestones, this week's goals, badges, achievements and the season, one at a time
 function renderMilestones(pane, api) {
+  const ti = (label, icon) => ({ label, icon });
+  const box = h('div', ''); box.style.cssText = 'display:flex;flex-direction:column;min-height:100%'; pane.appendChild(box);
+  tabs(box, [ti(T('Milestones', 'Cột mốc'), 'trophy'), ti(T('This week', 'Tuần này'), 'coin'), ti(T('Badges', 'Huy hiệu'), 'star'), ti(T('Achievements', 'Thành tựu'), 'lantern'), ti(T('Season', 'Mùa'), 'heart')], (i, sub) => {
+    G.runtime.goalsTab = i;
+    if (i === 0) renderMilestoneList(sub, api);
+    if (i === 1) renderWeekly(sub, api);
+    if (i === 2) renderBadges(sub, api);
+    if (i === 3) { const list = h('div', 'list'); sub.appendChild(list); renderAchievements(list); }
+    if (i === 4) renderSeason(sub);
+  }, G.runtime.goalsTab || 0);
+}
+function renderMilestoneList(pane, api) {
   const s = G.state;
   const lv = s.level || 1;
   const head = h('div', 'ms-row', `<img src="${iconURL('trophy', 48)}" alt=""><div class="ms-info"><b>${T(`Level ${lv}`, `Cấp ${lv}`)}</b><small>${T(`${Math.floor(s.xp || 0)} / ${xpNeed(lv)} XP to level ${lv + 1}`, `${Math.floor(s.xp || 0)} / ${xpNeed(lv)} KN để lên cấp ${lv + 1}`)}</small><div class="ms-bar"><i style="width:${Math.min(100, (s.xp || 0) / xpNeed(lv) * 100)}%"></i></div></div>`);
   pane.appendChild(head);
-  renderWeekly(pane, api);
-  renderBadges(pane, api);
   const list = TRACKS.map(tr => ({ tr, st: trackState(tr) })).sort((a, b) => b.st.ready - a.st.ready || a.st.completed - b.st.completed);
   const done = list.filter(x => x.st.completed).length;
   if (done) pane.appendChild(h('div', 'empty-note', T(`${done} milestone${done > 1 ? 's' : ''} completed ✓`, `Đã hoàn thành ${done} cột mốc ✓`)));

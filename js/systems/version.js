@@ -6,11 +6,14 @@
 import { APP_VERSION } from '../data/changelog.js';
 import { T } from './state.js';
 
+import { learnServerTime } from '../core/util.js';
+
 const KEY = 'jenisland.reloadedFor';
 
 async function latest() {
   try {
     const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    learnServerTime(r.headers.get('date'));
     if (!r.ok) return null;
     return (await r.json()).v || null;
   } catch { return null; }

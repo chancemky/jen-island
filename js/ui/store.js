@@ -7,7 +7,7 @@ import { sfx } from '../core/audio.js';
 import { escapeHtml } from '../core/util.js';
 import { toast } from './hud.js';
 import { itemRow } from './clothes.js';
-import { STORE, PRODUCTS, SEASON, buy, ownsProduct, seasonState } from '../systems/store.js';
+import { STORE, PRODUCTS, SEASON, buy, ownsProduct, seasonState, storeVisible } from '../systems/store.js';
 
 const note = (en, vi) => h('div', 'empty-note', T(en, vi));
 function buyButton(id) {
@@ -29,8 +29,11 @@ export function renderStore(pane) {
   const list = h('div', 'list'); pane.appendChild(list);
   for (const id of P.clothes) list.appendChild(itemRow(id, null));
   const b = buyButton('supporter'); b.style.marginTop = '8px'; pane.appendChild(b);
+  renderSeason(pane);
+}
 
-  // the season pass
+// the season pass: free rewards for everyone, a supporter track for those who buy it
+export function renderSeason(pane) {
   const st = seasonState(), Q = PRODUCTS[SEASON.product];
   pane.appendChild(h('div', 'section-title', escapeHtml(T(`${SEASON.en} · ${st.pts} points`, `${SEASON.vi} · ${st.pts} điểm`))));
   pane.appendChild(note(st.on ? 'Every customer you serve this season is a point. Free rewards are for everyone.' : `The season runs ${SEASON.start} → ${SEASON.end}. Every customer you serve then is a point.`,
@@ -41,6 +44,6 @@ export function renderStore(pane) {
     const got = st.got.includes(id), tag = paid ? T('Supporter track', 'Nhánh ủng hộ') : T('Free', 'Miễn phí');
     tiers.appendChild(itemRow(id, h('div', 'pill', got ? '✓' : `${t.at}`), { dim: !got, note: `${tag} · ${T(`at ${t.at} points`, `ở ${t.at} điểm`)}` }));
   }
-  pane.appendChild(note(...Q.blurb));
-  const pb = buyButton(SEASON.product); pb.style.marginTop = '8px'; pane.appendChild(pb);
+  // the supporter track can be bought only while the store is open (never inside the store apps)
+  if (storeVisible()) { pane.appendChild(note(...Q.blurb)); const pb = buyButton(SEASON.product); pb.style.marginTop = '8px'; pane.appendChild(pb); }
 }

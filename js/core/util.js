@@ -54,6 +54,13 @@ export function mix(h1, h2, t) {
 }
 
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
+// The island's clock for daily and weekly things (morning mail, streaks, weekly goals):
+// the servers' time, not the device's (changing the phone's clock doesn't repeat gifts),
+// and days turn over at midnight in Việt Nam for everyone.
+let serverOffset = 0;
+export function learnServerTime(dateHeader) { const t = Date.parse(dateHeader || ''); if (t) serverOffset = t - Date.now(); }
+export const islandNow = () => Date.now() + serverOffset;
+export const islandDay = (t = islandNow()) => new Date(t + 7 * 3600e3).toISOString().slice(0, 10);   // "2026-10-31", Việt Nam time
 // the App Store / Google Play build (Capacitor) — it is served from "localhost" too
 export const nativeApp = () => !!globalThis.Capacitor?.isNativePlatform?.();
 // a developer's local copy (tests, dev tools), never the store app

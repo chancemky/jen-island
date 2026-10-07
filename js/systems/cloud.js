@@ -2,7 +2,7 @@
 // row-level security on the jen_island_* tables restricts every row to its
 // owner (see supabase/migrations). This game never touches other tables.
 
-import { nativeApp } from '../core/util.js';
+import { nativeApp, learnServerTime } from '../core/util.js';
 
 export const CLOUD = { url: 'https://cgbaigeergwvbmghrakb.supabase.co', key: 'sb_publishable_w1-MKpH0ysDz_nXEt25cXA_n_1H5DBo', site: 'https://jen-island.jen-simulator.workers.dev/' };
 const SESSION_KEY = 'jenisland.session';
@@ -18,6 +18,7 @@ async function raw(path, opt = {}, token) {
   const headers = { apikey: CLOUD.key, 'Content-Type': 'application/json', ...(opt.headers || {}) };
   if (token) headers.Authorization = 'Bearer ' + token;
   const res = await fetch(CLOUD.url + path, { ...opt, headers });
+  learnServerTime(res.headers.get('date'));
   const txt = await res.text();
   let data = null; try { data = txt ? JSON.parse(txt) : null; } catch { data = txt; }
   if (!res.ok) { const e = new Error(data?.msg || data?.message || data?.error_description || data?.error || 'Request failed (' + res.status + ')'); e.status = res.status; e.code = data?.code || data?.error_code; throw e; }

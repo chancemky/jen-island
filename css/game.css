@@ -171,9 +171,11 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 .tabs button { flex: 1 1 auto; padding: 8px 12px; border-radius: 999px; background: #f3e6cf; font-weight: 900; font-size: 13px; border: 2.5px solid transparent; white-space: nowrap; }
 .tabs button.on { background: #fff; border-color: var(--ink); box-shadow: 0 2px 0 rgba(91,63,54,.25); }
 .tabs.icons { flex-wrap: nowrap; gap: 4px; }        /* one row: icon over a short label */
-.tabs.icons button { flex: 1 1 0; min-width: 0; padding: 5px 2px 4px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 10.5px; }
-.tabs.icons button img { width: 24px; height: 24px; }
-.tabs.icons button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.tabs.icons button { flex: 1 1 0; min-width: 0; padding: 6px 2px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; transition: flex-grow .2s; }
+.tabs.icons button img { width: 24px; height: 24px; flex: none; }
+.tabs.icons button span { display: none; white-space: nowrap; }       /* icons only… */
+.tabs.icons button.on { flex-grow: 2.6; }                                /* …and the open tab says its name in full */
+.tabs.icons button.on span { display: inline; }
 .list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px; }
 .row { display: flex; align-items: center; gap: 10px; padding: 10px; background: #fff; border: 2.5px solid #e9d8bf; border-radius: 18px; transition: transform .15s; }
 .row.dim { opacity: .55; }
@@ -206,6 +208,10 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 .empty-note { text-align: center; padding: 22px 12px; font-weight: 800; opacity: .6; }
 .empty-note a, .auth-legal a { color: inherit; font-weight: 900; text-decoration: underline; text-underline-offset: 2px; }
 .section-title { font-size: 12px; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; opacity: .55; margin: 12px 4px 6px; }
+.gift-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -4px 4px 10px; }
+.gift-pick { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px 4px 4px; border-radius: 999px; border: 2px solid #e1ccad; background: #fff; font: inherit; font-weight: 900; font-size: 12px; cursor: pointer; }
+.gift-pick img { width: 22px; height: 22px; }
+.gift-row .link-btn { margin: 0 0 0 auto; font-size: 12px; }
 .friend-code { font-family: ui-monospace, monospace; letter-spacing: 2px; background: #fff3c8; padding: 1px 6px; border-radius: 6px; }
 .coll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; margin: 8px 0 12px; }
 .coll { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 3px; border-radius: 12px; background: var(--paper); border: 2px solid #ead9bd; text-align: center; }

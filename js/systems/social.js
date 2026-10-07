@@ -4,7 +4,7 @@
 import { G, T, addPantry, addMat, markDirty } from './state.js';
 import * as cloud from './cloud.js';
 import { bus } from '../core/util.js';
-import { showcaseBadge } from './badges.js';
+import { showcaseBadge, earnedBadges } from './badges.js';
 import { currentLook } from '../ui/clothes.js';
 import { rebuildHouseFurniture } from '../ui/decorate.js';
 import { scenes, setScene } from './scenes.js';
@@ -13,9 +13,9 @@ import { FURNITURE } from '../data/game.js';
 import { track } from './telemetry.js';
 
 export const GIFTS = {
-  basket: { icon: 'bag', en: 'a gift basket', vi: 'một giỏ quà', give: () => { addPantry('tea', 6); addPantry('kumquat', 6); addPantry('sugar', 6); addPantry('ice', 6); return T('tea, kumquats, sugar and ice', 'trà, tắc, đường và đá'); } },
-  flowers: { icon: 'heart', en: 'a pot of flowers', vi: 'một chậu hoa', give: () => { (G.state.home.owned ||= []).push(FURNITURE.plant_big ? 'plant_big' : 'plant'); return T('a potted plant for your home', 'một chậu cây cho nhà bạn'); } },
-  lanterns: { icon: 'lantern', en: 'silk lanterns', vi: 'lồng đèn lụa', give: () => { addMat('lantern', 2); return T('2 silk lanterns', '2 lồng đèn lụa'); } },
+  basket: { icon: 'bag', label: ['Basket', 'Giỏ quà'], en: 'a gift basket', vi: 'một giỏ quà', give: () => { addPantry('tea', 6); addPantry('kumquat', 6); addPantry('sugar', 6); addPantry('ice', 6); return T('tea, kumquats, sugar and ice', 'trà, tắc, đường và đá'); } },
+  flowers: { icon: 'heart', label: ['Flowers', 'Hoa'], en: 'a pot of flowers', vi: 'một chậu hoa', give: () => { (G.state.home.owned ||= []).push(FURNITURE.plant_big ? 'plant_big' : 'plant'); return T('a potted plant for your home', 'một chậu cây cho nhà bạn'); } },
+  lanterns: { icon: 'lantern', label: ['Lanterns', 'Lồng đèn'], en: 'silk lanterns', vi: 'lồng đèn lụa', give: () => { addMat('lantern', 2); return T('2 silk lanterns', '2 lồng đèn lụa'); } },
 };
 export const myCode = () => G.runtime.friendCode || null;
 const online = () => cloud.hasSession() && G.user && !G.user.local;
@@ -25,7 +25,7 @@ export async function publishShowcase() {
   if (!online() || !G.state.player.name) return;
   const s = G.state;
   try {
-    G.runtime.friendCode = await cloud.publishShowcase({ player_name: s.player.name, island_name: s.island.name, level: s.level || 1, day: s.day, chapter: s.story.chapter, badge: showcaseBadge(), look: currentLook(), home: { furniture: s.home.furniture, builtins: s.home.builtins } });
+    G.runtime.friendCode = await cloud.publishShowcase({ player_name: s.player.name, island_name: s.island.name, level: s.level || 1, day: s.day, chapter: s.story.chapter, badge: showcaseBadge(), look: currentLook(), home: { furniture: s.home.furniture, builtins: s.home.builtins, island: { shops: Object.entries(s.biz).filter(([, b]) => b.owned).map(([id, b]) => [id, b.level || 1]), badges: earnedBadges(), served: s.stats.served, regulars: Object.values(s.regulars || {}).filter(r => r.visits >= 3).length, streak: s.streak?.best || 0 } } });
   } catch (e) { console.warn('showcase', e.message); }
 }
 // gifts friends sent: open them all at once
@@ -43,8 +43,18 @@ export async function openGifts() {
 export async function sendGift(friend, kind) {
   await cloud.sendGift(friend, kind); track('gift_sent', { kind });
 }
+// an invite link (…?friend=CODE): add them once you're signed in (a guest keeps it for later)
+const INVITE_KEY = 'jenisland.invite';
+async function acceptInvite() {
+  const q = new URLSearchParams(location.search).get('friend');
+  if (q) { try { localStorage.setItem(INVITE_KEY, q.toUpperCase()); } catch {} history.replaceState(null, '', location.pathname); }
+  let code = null; try { code = localStorage.getItem(INVITE_KEY); } catch {}
+  if (!code || !online()) return;
+  try { localStorage.removeItem(INVITE_KEY); } catch {}
+  if (await cloud.addFriend(code).catch(() => null)) { bus.emit('toast', { text: T('New friend added!', 'Đã thêm bạn mới!'), sub: T('Menu → Friends to visit them.', 'Menu → Bạn bè để ghé thăm.'), icon: 'heart' }); track('invite_accepted', {}); }
+}
 export function initSocial() {
-  publishShowcase(); openGifts();
+  publishShowcase(); openGifts(); acceptInvite();
   setInterval(() => { publishShowcase(); openGifts(); }, 5 * 60 * 1000);
   bus.on('scene', id => { if (G.runtime.visit && id !== 'house') endVisit(); });
 }

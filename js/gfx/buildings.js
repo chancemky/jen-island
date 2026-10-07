@@ -217,7 +217,13 @@ function houseExtras(c, t, b, w, h) {
       for (const x of [-Math.min(32, w * 0.5 - 20), Math.min(32, w * 0.5 - 20)]) { box(c, x - 13, -h + 31, 26, 5, 2, '#b77a4f', INK, 0.8); for (let i = 0; i < 4; i++) flower(c, x - 9 + i * 6, -h + 29.6, 2.4, ['#ff8fb0', '#ffd35a', '#fff', '#f36d86'][i], i === 2 ? 1 : 0); }
       box(c, -12, -h - 34, 24, 18, 3, b.wall || '#f7dd8a', INK, 1); box(c, -7, -h - 30, 14, 11, 2, '#bfe6ef', INK, 0.8); poly(c, [-15, -h - 34, 0, -h - 44, 15, -h - 34], b.roof || '#d9784f', INK, 1);
       const nm = (G.state?.player?.name || '').slice(0, 10);
-      if (nm) signBoard(c, 0, -h + 4, Math.max(30, nm.length * 3.6 + 10), 7, nm, '#fff5df', INK);   // centred over the door, like every home
+      if (nm) {
+        const bw = Math.max(30, nm.length * 3.6 + 10);
+        signBoard(c, 0, -h + 4, bw, 7, nm, '#fff5df', INK);   // centred over the door, like every home
+        // your showcase badge, a little medallion beside the name
+        const bd = G.runtime.nameBadge;                      // { glyph, tier }, kept by systems/badges.js
+        if (bd) { const x = bw / 2 + 6, y = -h + 4, ring = { bronze: '#c98a55', silver: '#a9b3be', gold: '#e3a52c', legend: '#9b6bd6' }[bd.tier]; circ(c, x, y, 5, '#fff8ea', ring, 1.4); c.font = '6px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(bd.glyph, x, y + 0.3); c.textBaseline = 'alphabetic'; }
+      }
       break;
     }
     case 'wood': { // Bà Tư: kumquat pots and a rocking chair on the porch

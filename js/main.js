@@ -156,7 +156,7 @@ function festivalGift() {
 function showMorningMail() {
   const m = morningMail(); if (!m) return;
   track('daily_gift', { day: m.day, streak: m.streak });
-  showReward({ kicker: T('Morning mail', 'Thư buổi sáng'), title: T(`Day ${m.day} of 7`, `Ngày ${m.day} / 7`), sub: '●'.repeat(m.day) + '○'.repeat(7 - m.day), icon: m.day === 7 ? 'heart' : 'note', text: `${m.line}. ${m.next}`, button: T('Thank you!', 'Cảm ơn!') });
+  showReward({ kicker: T('Morning mail', 'Thư buổi sáng'), title: T(`Day ${m.day} of 7`, `Ngày ${m.day} / 7`), sub: '●'.repeat(m.day) + '○'.repeat(7 - m.day), icon: m.day === 7 ? 'heart' : 'letter', text: `${m.line}. ${m.next}`, button: T('Thank you!', 'Cảm ơn!') });
 }
 // The soundtrack follows the place and the hour (songs: data/songs.js).
 const COZY = new Set(['restaurant', 'boutique', 'salon', 'petshop', 'furniture']);

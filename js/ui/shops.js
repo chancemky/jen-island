@@ -213,6 +213,17 @@ function bagRecipeDetail(id, bizId, lv) {
   return detail;
 }
 
+// Achievements: one-off special moments (shown in Menu → Goals)
+export function renderAchievements(list) {
+  const s = G.state;
+  const all = Object.entries(ACHIEVEMENTS), have = all.filter(([id]) => s.achievements.includes(id)).length;
+  list.appendChild(h('div', 'empty-note', T(`${have} / ${all.length} — achievements are one-off special moments. Milestones are counters that keep growing.`, `${have} / ${all.length} — thành tựu là những khoảnh khắc đặc biệt, chỉ một lần. Cột mốc là bộ đếm cứ tăng dần.`)));
+  for (const [id, a] of all) {
+    const got = s.achievements.includes(id);
+    if (a.hidden && !got) { list.appendChild(rowEl({ icon: 'lock', title: T('??? · a secret', '??? · bí mật'), sub: escapeHtml(T(...a.hint)), dim: true })); continue; }
+    list.appendChild(rowEl({ icon: got ? (a.hidden ? 'star' : 'lantern') : 'lock', title: got ? escapeHtml(T(a.en, a.vi)) + (a.hidden ? ` <span class="pill new">${T('Secret', 'Bí mật')}</span>` : '') : '— — —', sub: escapeHtml(T(a.desc, a.descVi)), dim: !got }));
+  }
+}
 // The collection book: every fish caught, dish discovered and boutique piece owned — the
 // rest are question marks waiting to be found.
 function renderCollection(pane) {
@@ -232,8 +243,9 @@ function renderCollection(pane) {
 export function openBag() {
   const s = G.state;
   openSheet({ title: T('Bag', 'Túi đồ'), full: true, build: (body, api) => {
-    tabs(body, [T('Ingredients', 'Nguyên liệu'), T('Materials', 'Vật liệu'), T('Recipes', 'Công thức'), T('Regulars', 'Khách quen'), T('Achievements', 'Thành tựu'), T('Collection', 'Bộ sưu tập')], (i, pane) => {
-      if (i === 5) return renderCollection(pane);
+    const ti = (label, icon) => ({ label, icon });
+    tabs(body, [ti(T('Ingredients', 'Nguyên liệu'), 'bag'), ti(T('Materials', 'Vật liệu'), 'wood'), ti(T('Recipes', 'Công thức'), 'notebook'), ti(T('Regulars', 'Khách quen'), 'person'), ti(T('Collection', 'Bộ sưu tập'), 'fish')], (i, pane) => {
+      if (i === 4) return renderCollection(pane);
       const list = h('div', 'list'); pane.appendChild(list);
       if (i === 0) {
         const ids = Object.keys(INGREDIENTS).filter(k => pantry(k) > 0);
@@ -265,14 +277,6 @@ export function openBag() {
         const regs = Object.entries(s.regulars).sort((a, b) => b[1].visits - a[1].visits);
         if (!regs.length) list.appendChild(h('div', 'empty-note', T('Serve the same people a few times and they\'ll become regulars.', 'Phục vụ một người vài lần là họ thành khách quen.')));
         for (const [, r] of regs) list.appendChild(rowEl({ icon: RECIPES[r.fav]?.icon || 'heart', title: escapeHtml(r.name) + (r.visits >= 3 ? ` <span class="pill new">${T('Regular', 'Khách quen')}</span>` : ''), sub: T(`Visited ${r.visits} ${r.visits === 1 ? 'time' : 'times'} · Favourite: ${r.fav ? recipeName(r.fav) : '—'}`, `Đã ghé ${r.visits} lần · Món ruột: ${r.fav ? recipeName(r.fav) : '—'}`) }));
-      } else {
-        const all = Object.entries(ACHIEVEMENTS), have = all.filter(([id]) => s.achievements.includes(id)).length;
-        list.appendChild(h('div', 'empty-note', T(`${have} / ${all.length} — achievements are one-off special moments. Milestones (in the Menu) are counters that keep growing.`, `${have} / ${all.length} — thành tựu là những khoảnh khắc đặc biệt, chỉ một lần. Cột mốc (trong Menu) là bộ đếm cứ tăng dần.`)));
-        for (const [id, a] of all) {
-          const got = s.achievements.includes(id);
-          if (a.hidden && !got) { list.appendChild(rowEl({ icon: 'lock', title: T('??? · a secret', '??? · bí mật'), sub: escapeHtml(T(...a.hint)), dim: true })); continue; }
-          list.appendChild(rowEl({ icon: got ? (a.hidden ? 'star' : 'lantern') : 'lock', title: got ? escapeHtml(T(a.en, a.vi)) + (a.hidden ? ` <span class="pill new">${T('Secret', 'Bí mật')}</span>` : '') : '— — —', sub: escapeHtml(T(a.desc, a.descVi)), dim: !got }));
-        }
       }
     }, 0, api);
   } });

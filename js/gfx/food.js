@@ -173,6 +173,11 @@ const snailShell = (c, x, y, s = 1, col = '#b98a5a') => { c.save(); c.translate(
 const skewer = (c, x, y, rot, meat = '#b5603a') => { c.save(); c.translate(x, y); c.rotate(rot); line(c, 0, -14, 0, 13, '#d9b27a', 1.6); for (let k = 0; k < 3; k++) { box(c, -4, -11 + k * 7, 8, 6, 2.5, meat, INK, 0.8); line(c, -3, -9 + k * 7, 3, -9 + k * 7, shade(meat, -45), 0.8); } c.restore(); };
 Object.assign(ICONS, {
   fish: c => { c.beginPath(); c.moveTo(-11, 0); c.quadraticCurveTo(-2, -9, 7, 0); c.quadraticCurveTo(-2, 9, -11, 0); c.fillStyle = '#8fb7e0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); poly(c, [7, 0, 13, -6, 13, 6], '#6f9fc8', INK, 1); circ(c, -6, -1.5, 1.4, INK, null); line(c, -2, -4, -2, 4, '#6f9fc8', 0.8); },
+  letter: c => {   // an envelope with a little heart seal (morning mail)
+    box(c, -13, -8, 26, 17, 2.5, '#fff8ea', INK, 1.2);
+    poly(c, [-13, -7, 0, 3, 13, -7], null, INK, 1.1, false); line(c, -13, 9, -4, 1, INK, 0.9); line(c, 13, 9, 4, 1, INK, 0.9);
+    c.save(); c.translate(0, 3); c.scale(0.38, 0.38); c.beginPath(); c.moveTo(0, 9); c.bezierCurveTo(-16, -2, -8, -14, 0, -5); c.bezierCurveTo(8, -14, 16, -2, 0, 9); c.fillStyle = '#f36d86'; c.fill(); c.restore();
+  },
   note: c => { line(c, 3, 7, 3, -10, INK, 1.6); c.beginPath(); c.moveTo(3, -10); c.quadraticCurveTo(10, -8, 9, -2); c.strokeStyle = INK; c.lineWidth = 1.6; c.stroke(); ell(c, -1, 7, 4.4, 3.4, '#f08ca0', INK, 1); },
   rock: c => { poly(c, [-10, 6, -8, -3, -2, -8, 7, -6, 11, 2, 7, 7], '#b9b2a6', INK, 1); line(c, -4, -2, 2, 1, '#8f887c', 0.8); ell(c, -3, -5, 2.4, 1.2, 'rgba(255,255,255,.4)', null); },
   snails: c => { snailShell(c, -5, 3, 1.1); snailShell(c, 6, -2, 0.95, '#9a7a5c'); snailShell(c, 3, 8, 0.8, '#c29a6a'); },

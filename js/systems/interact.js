@@ -12,7 +12,7 @@ import { toast } from '../ui/hud.js';
 import { openSheet, h } from '../ui/sheets.js';
 import { sfx, setRoomMusic, roomMusic, playNote } from '../core/audio.js';
 import { fx } from '../world/render.js';
-import { choice, dist, rand, clock, bus } from '../core/util.js';
+import { choice, dist, rand, clock, bus, islandDay } from '../core/util.js';
 import { PLAZA, PIER, PIER_END, isOcean } from '../world/island.js';
 import { COUNTS } from '../core/counts.js';
 import { npcs, visitorBoatTimes } from './npc.js';
@@ -253,8 +253,8 @@ const REAL = [
   { id: 'halloween', span: [-7, 0], days: y => [`${y}-10-31`], en: 'Pumpkin Nights', vi: 'Đêm Bí Ngô', boost: { night: 1.3, all: 1.1 }, line: ['Pumpkin lanterns all over the island, and the Night Market is spooky tonight!', 'Đèn bí ngô khắp đảo, và Chợ Đêm tối nay rùng rợn lắm!'], hat: 'black_cat_ears' },
   { id: 'christmas', span: [-6, 1], days: y => [`${y}-12-25`], en: 'Christmas Lights', vi: 'Đèn Giáng Sinh', boost: { cafe: 1.3, all: 1.15 }, tip: 1.15, line: ['Fairy lights over the plaza and hot drinks everywhere.', 'Đèn lấp lánh trên quảng trường và đồ uống nóng khắp nơi.'], hat: 'snow_beanie' },
 ];
-export function realEvent(now = new Date()) {
-  const y = now.getFullYear(), day = Date.UTC(y, now.getMonth(), now.getDate()) / 864e5;
+export function realEvent(now = new Date(islandDay() + 'T00:00:00Z')) {   // (the date in Việt Nam)
+  const y = now.getUTCFullYear(), day = Date.UTC(y, now.getUTCMonth(), now.getUTCDate()) / 864e5;
   for (const e of REAL) for (const ds of [...e.days(y), ...e.days(y + 1)]) {
     const d = Date.parse(ds + 'T00:00:00Z') / 864e5;
     if (day >= d + e.span[0] && day <= d + e.span[1]) return { ...e, real: true };

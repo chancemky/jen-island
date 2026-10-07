@@ -363,7 +363,7 @@ if (run('features')) {
     // morning mail once a day
     s.dailyGift = null; const m1 = daily.morningMail(), m2 = daily.morningMail(); out.mail = !!m1 && !m2;
     // real festivals on their dates, nothing on an ordinary day
-    out.festivals = [interact.realEvent(new Date(2027, 1, 6))?.id, interact.realEvent(new Date(2026, 9, 31))?.id, interact.realEvent(new Date(2026, 11, 25))?.id, interact.realEvent(new Date(2027, 4, 10))?.id];
+    out.festivals = [interact.realEvent(new Date(Date.UTC(2027, 1, 6)))?.id, interact.realEvent(new Date(Date.UTC(2026, 9, 31)))?.id, interact.realEvent(new Date(Date.UTC(2026, 11, 25)))?.id, interact.realEvent(new Date(Date.UTC(2027, 4, 10)))?.id];
     out.festivalHats = ['lucky_nonla', 'moon_bow', 'black_cat_ears', 'snow_beanie'].every(id => wardrobe.CLOTHES[id]?.store);
     out.songs = music.checkSongs();
     return out;

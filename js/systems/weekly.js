@@ -6,7 +6,7 @@
 import { G, T, addMoney, markDirty } from './state.js';
 import { addXP } from './progress.js';
 import { FURNITURE } from '../data/game.js';
-import { rng } from '../core/util.js';
+import { rng, islandDay } from '../core/util.js';
 
 const regulars = s => Object.values(s.regulars || {}).filter(r => r.visits >= 3).length;
 // counters each goal measures from the start of the week
@@ -20,8 +20,8 @@ const POOL = {
   days:    { icon: 'sleep_moon', count: s => s.stats.daysPlayed || 0, target: () => 5, en: n => `Finish ${n} island days`, vi: n => `Trải qua ${n} ngày trên đảo` },
 };
 // ISO week, e.g. "2026-W41"
-export function weekKey(d = new Date()) {
-  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())), day = t.getUTCDay() || 7;
+export function weekKey(d = new Date(islandDay() + 'T00:00:00Z')) {   // (Việt Nam's Monday, for everyone)
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())), day = t.getUTCDay() || 7;
   t.setUTCDate(t.getUTCDate() + 4 - day);
   const y = t.getUTCFullYear(), w = Math.ceil(((t - Date.UTC(y, 0, 1)) / 864e5 + 1) / 7);
   return `${y}-W${String(w).padStart(2, '0')}`;

@@ -10,7 +10,7 @@
 // set STORE.payments and fill in STORE.checkout with each product's checkout link.
 
 import { G, T, markDirty } from './state.js';
-import { bus, devHost, nativeApp } from '../core/util.js';
+import { bus, devHost, nativeApp, islandNow } from '../core/util.js';
 import { CLOTHES } from '../data/wardrobe.js';
 import * as cloud from './cloud.js';
 import { grantServerBadge } from './badges.js';
@@ -57,7 +57,7 @@ export const SEASON = {
 const S = () => { const s = G.state; s.store ||= { season: {} }; s.store.season ||= {}; return s.store; };
 const verified = new Set();               // products the server says this player bought
 export const ownsProduct = id => verified.has(id);
-const seasonOn = (now = Date.now()) => now >= Date.parse(SEASON.start) && now < Date.parse(SEASON.end) + 864e5;
+const seasonOn = (now = islandNow()) => now >= Date.parse(SEASON.start) && now < Date.parse(SEASON.end) + 864e5;
 export const seasonPoints = () => S().season[SEASON.id]?.pts || 0;
 
 function give(ids) {
