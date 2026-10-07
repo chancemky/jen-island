@@ -3,9 +3,20 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.10.0';
+export const APP_VERSION = '5.11.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.11.0', date: '2026-10-07T16:39:09Z',
+    title: ['Busy Hands', 'Đôi Tay Bận Rộn'],
+    items: [
+      ['Shopkeepers now work behind the counter where you can see them: through the service window, behind the market stalls and inside the shop, slicing, stirring, pouring and handing over each order', 'Người trông quán giờ làm việc sau quầy, bạn nhìn thấy được: qua cửa sổ bán hàng, sau sạp chợ và trong quán, cắt, khuấy, rót và trao từng món'],
+      ['Every shop has its own uniform cap in the shop\'s colours, and each keeper has their own look', 'Mỗi quán có mũ đồng phục theo màu của quán, và mỗi người trông quán có ngoại hình riêng'],
+      ['Happy customers walk off with their drink or food and take sips and bites on the way', 'Khách vui vẻ cầm đồ uống, món ăn đi và vừa đi vừa nhâm nhi'],
+      ['Your character stretches, yawns, hums and looks around when you stand still; islanders laugh and clap more', 'Nhân vật của bạn vươn vai, ngáp, ngân nga và nhìn quanh khi đứng yên; dân đảo cười và vỗ tay nhiều hơn'],
+      ['Night Market stall signs moved up so you can see who\'s cooking', 'Biển hiệu sạp Chợ Đêm được dời lên để bạn thấy ai đang nấu'],
+    ],
+  },
   {
     v: '5.10.0', date: '2026-10-07T16:20:24Z',
     title: ['Ready for the App Stores', 'Sẵn Sàng Lên Kho Ứng Dụng'],

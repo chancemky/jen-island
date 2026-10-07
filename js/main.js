@@ -62,6 +62,7 @@ import { initReview } from './systems/review.js';
 import { initBoard, BOARD, boardOpen } from './systems/board.js';
 import { initRare, rareAction } from './systems/rare.js';
 import { openPhotoMode } from './ui/photo.js';
+import { updatePlayerIdle } from './systems/idle.js';
 import { openBoard } from './ui/board.js';
 import { CLOTHES } from './data/wardrobe.js';
 import { initAds } from './systems/ads.js';
@@ -383,6 +384,7 @@ function loop(now) {
   if (!busyUi && !cs.active) updateSeat(moveVector()[2]);
   if (G.state.time >= DAWN && !busyUi && !cs.active && !isTransitioning() && !G.runtime.sleeping) dawnDoze();   // stayed up all night
   updateFollow(dt);
+  updatePlayerIdle(dt, cs.active || blockingOpen() || G.runtime.photoMode || G.runtime.sleeping || G.runtime.inCutscene || !!G.runtime.serviceOpen);
   if (G.runtime.sleepy && !pl.act) { if (pl.emo !== 'sleepy') pl.setEmo('sleepy', 0); G.runtime.yawnT = (G.runtime.yawnT ?? 4) - dt; if (G.runtime.yawnT <= 0) { G.runtime.yawnT = 7 + Math.random() * 5; pl.showEmote('zzz', 2); } }
   else if (!G.runtime.sleepy && pl.emo === 'sleepy' && !G.runtime.sleeping) pl.setEmo('neutral', 0);
   sc.update(dt, t);

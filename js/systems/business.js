@@ -242,7 +242,12 @@ export function customerLeave(c, why) {
   c.state = 'leaving';
   const a = c.actor;
   if (why === 'angry') { a.setEmo('angry', 3); a.showEmote('angry', 1.8); sfx('sad'); }
-  else if (why === 'happy') { a.setEmo('happy', 3); }
+  else if (why === 'happy') {
+    a.setEmo('happy', 3);
+    // they walk off with what they ordered, and take a sip or a bite on the way
+    const v = RECIPES[c.order?.recipe]?.vessel, held = v === 'cup' || v === 'glass' ? 'cup' : v === 'bread' ? 'banh_mi' : 'bowl', act = held === 'cup' ? 'drink' : 'eat';
+    if (!c.resident) { a.held = held; let n = 0; const sip = () => { if (a.fadeOut || a.alpha === 0 || n++ > 4) return; a.setAct(act); setTimeout(() => { if (a.act === act) a.setAct(null); setTimeout(sip, rand(1600, 2800)); }, 1300); }; setTimeout(sip, 1200); }
+  }
   else if (why === 'closed') { a.showEmote('sad', 1.4); a.setEmo('sad', 2); }
   const island = G.scenes.island;
   setTimeout(() => {

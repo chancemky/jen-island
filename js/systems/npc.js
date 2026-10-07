@@ -230,6 +230,8 @@ const IDLE = [
   { w: 1.2, go: a => act(a, 'drink', 3, 'cup') },
   { w: 1, go: a => act(a, 'eat', 3, 'banh_mi') },
   { w: 1, go: a => { act(a, 'stretch', 1.8); } },
+  { w: 0.8, go: a => { act(a, 'laugh', 1.6); a.showEmote('happy', 1.2); } },
+  { w: 0.6, go: a => { act(a, 'clap', 1.4); } },
   { w: 0.8, go: a => { a.face('left'); setTimeout(() => a.face('right'), 700); setTimeout(() => a.face('down'), 1400); } }, // look around
 ];
 function act(a, name, secs, held = null) { a.setAct(name, held); setTimeout(() => a.act === name && a.setAct(null), secs * 1000); }
