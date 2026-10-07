@@ -7,7 +7,7 @@ import { G, T, markDirty, addPantry } from './state.js';
 import { sfx } from '../core/audio.js';
 import { toast } from '../ui/hud.js';
 import { fx } from '../world/render.js';
-import { rand } from '../core/util.js';
+import { rand, bus } from '../core/util.js';
 import { PIER_END } from '../world/island.js';
 import { discover } from './interact.js';
 
@@ -57,6 +57,7 @@ function cast() {
     const id = pick(), F = FISH[id];
     const bag = (s.fishBag ||= {}); bag[id] = (bag[id] || 0) + 1; (s.fishSeen ||= {})[id] = true; s.stats.fishCaught = (s.stats.fishCaught || 0) + 1;   // (fishSeen: every kind ever caught, for the collection)
     if (F.ing) addPantry(F.ing, 1);
+    bus.emit('fish', id);
     if (!F.junk && !F.ing && id !== 'pufferfish') s.fishForMeo = (s.fishForMeo || 0) + 1;
     markDirty(true); sfx(F.rare ? 'fanfare' : F.junk ? 'sad' : 'success');
     fx.burst('splash', pl.x, pl.y + 26, 8, { up: 30, col: '#e6f7ff' });

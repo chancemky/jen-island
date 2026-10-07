@@ -105,7 +105,7 @@ export function validateContent(scenes = null) {
   }
   for (const v of VY_VIEWS) if (scenes?.island && !scenes.island.terrain(v.x, v.y)) bad('story', `Vy's view ${v.id} is off the island`);
   // ---- furniture
-  for (const [id, f] of Object.entries(FURNITURE)) if (!(f.price > 0)) bad('furniture', `${id} has no price`);
+  for (const [id, f] of Object.entries(FURNITURE)) if (!f.reward && !(f.price > 0)) bad('furniture', `${id} has no price`);
   for (const id of Object.keys(FURNITURE)) if (!FURN_DRAW[id]) bad('asset', `furniture ${id} has no drawing`);
   // ---- milestones: a finite track may never ask for more than exists
   for (const tr of TRACKS) {

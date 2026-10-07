@@ -165,7 +165,7 @@ export function openFurnitureShop() {
     let collectorHead = false;
     for (const id of ids) {
       const f = FURNITURE[id];
-      if (f.unlock && s.story.chapter < f.unlock) continue;
+      if (f.reward || (f.unlock && s.story.chapter < f.unlock)) continue;
       if (f.need && !s.story.flags[f.need] && !(s.sideQuests?.[f.need] === 'done')) continue;
       if (f.collector && !collectorHead) { collectorHead = true; list.appendChild(h('div', 'section-title', T('✦ Collector\'s corner', '✦ Góc sưu tầm'))); }
       const owned = s.home.owned.filter(x => x === id).length + s.home.furniture.filter(x => x.id === id).length;

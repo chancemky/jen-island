@@ -85,6 +85,7 @@ export const PIER = { x: 872, y: 2400, w: 56, h: 205 };
 export const PIER_END = { x: 820, y: 2560, w: 150, h: 46 };
 export const BRIDGES = [{ x: 424, y: 900, w: 64, h: 86, deck: 'v' }, { x: 116, y: 1050, w: 56, h: 80, deck: 'v' }];
 export const PLAZA = { x: 900, y: 1540, r: 104 };
+export const BOARD = { x: 1030, y: 1560 };      // the Island Board (systems/board.js), on the plaza's east side
 export const NM_PLAZA = { x: 250, y: 470, w: 360, h: 330 };
 // fields sit back from the farm road with walkable earth bunds between them
 export const PADDIES = [
@@ -575,6 +576,8 @@ export class Island extends Scene {
     const fountain = this.add2('fountain', PLAZA.x, PLAZA.y + 6, { cullR: 60, cullH: 130, solidR: 40 });   // basin centred on the plaza's rosette
     const baseDraw = fountain.draw;
     fountain.draw = (c, t) => { baseDraw(c, t); if (G.state.statue) drawFounderStatue(c, t); };
+    // the Island Board (systems/board.js): neighbours pin daily requests here
+    this.add2('noticeBoard', BOARD.x, BOARD.y, { solidRect: [-24, -6, 48, 6], cullR: 40, cullH: 80, notes: () => G.state.board?.day === G.state.day ? G.state.board.notes.filter(n => n.state !== 'done').length : 3, fresh: () => !!G.runtime.boardFresh?.() });
     // plaza banyan & benches
     this.add2('banyan', 700, 1690, { s: 0.9, cullR: 110, cullH: 150, solidR: 14 });
     for (const [x, y] of [[830, 1640], [970, 1640], [830, 1450], [970, 1450]]) this.add2('bench', x, y, { solidRect: [-18, -8, 36, 8] });

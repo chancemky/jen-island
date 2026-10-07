@@ -26,6 +26,9 @@ import { BADGES, TIER_ORDER } from '../data/badges.js';
 import { hasBadge, showcaseBadge, setShowcase } from '../systems/badges.js';
 import { weeklyGoals, claimGoal, goalReward } from '../systems/weekly.js';
 import { myCode, visitFriend, sendGift, GIFTS } from '../systems/social.js';
+import { timeLeftText } from '../systems/weekboard.js';
+import { slimLook } from '../data/looks.js';
+import { drawVillagerHead } from '../gfx/villager.js';
 
 // Friends: your code, add a friend, visit their home, send a daily gift
 function renderFriends(pane, api) {
@@ -179,27 +182,60 @@ function meoCheer(completed) {
   return T(p[0], p[1]);
 }
 
+// Ranks: this week's boards (reset every Monday, top 10 win prizes) and the all-time board
 function renderLeaderboard(pane) {
-  const seg = h('div', 'seg lb-seg');
-  const box = h('div', '');
-  const sorts = [['level', T('Level', 'Cấp độ')], ['money', T('Money', 'Tiền')], ['served', T('Served', 'Khách')]];
-  let cur = 'level';
+  const mode = h('div', 'seg lb-mode'), seg = h('div', 'seg lb-seg'), head = h('div', 'lb-head'), box = h('div', '');
+  const MODES = [['week', T('This week', 'Tuần này')], ['all', T('All time', 'Mọi thời')]];
+  const SORTS = {
+    week: [['served', T('Served', 'Khách')], ['earned', T('Earned', 'Kiếm')], ['xp', 'XP']],
+    all: [['level', T('Level', 'Cấp độ')], ['money', T('Money', 'Tiền')], ['served', T('Served', 'Khách')]],
+  };
+  let m = 'week', cur = 'served', token = 0;
+  const badgeHTML = r => r.badge && BADGES[r.badge] ? `<span class="badge-mini t-${BADGES[r.badge].tier}" title="${escapeHtml(T(BADGES[r.badge].en, BADGES[r.badge].vi))}">${BADGES[r.badge].glyph}</span>` : '';
+  const rankHTML = r => `<div class="lb-rank g${r.rank}">${r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] : '#' + r.rank}</div>`;
+  const weekVal = r => cur === 'earned' ? money(r.score) : cur === 'xp' ? `${r.score.toLocaleString()} XP` : `${r.score.toLocaleString()} ${T('served', 'khách')}`;
+  const drawSegs = () => {
+    mode.replaceChildren(...MODES.map(([k, label]) => { const b = h('button', k === m ? 'on' : '', label); b.type = 'button'; b.onclick = () => { if (m === k) return; sfx('ui'); m = k; cur = SORTS[k][0][0]; drawSegs(); load(); }; return b; }));
+    seg.replaceChildren(...SORTS[m].map(([k, label]) => { const b = h('button', k === cur ? 'on' : '', label); b.type = 'button'; b.onclick = () => { if (cur === k) return; sfx('ui'); cur = k; drawSegs(); load(); }; return b; }));
+    head.innerHTML = m === 'week'
+      ? `<b>🏆 ${T('Weekly board', 'Bảng tuần')}</b> <span class="pill">${timeLeftText()}</span><small>${T('Top 10 on each board win a trophy for their home, coins and a badge. Resets Monday 00:00 (Vietnam time).', 'Top 10 mỗi bảng nhận cúp trang trí, tiền và huy hiệu. Làm mới lúc 00:00 thứ Hai (giờ Việt Nam).')}</small>`
+      : `<b>⭐ ${T('All-time board', 'Bảng mọi thời')}</b><small>${T('Never resets.', 'Không bao giờ làm mới.')}</small>`;
+  };
   const load = async () => {
-    [...seg.children].forEach((b, i) => b.classList.toggle('on', sorts[i][0] === cur));
+    const my = ++token;
     box.innerHTML = `<div class="empty-note">${T('Loading the island rankings…', 'Đang tải bảng xếp hạng…')}</div>`;
     if (!cloud.hasSession()) { box.innerHTML = `<div class="empty-note">${(G.user?.guest ? T('Create a free account in Menu → Account to join the global leaderboard.', 'Tạo tài khoản miễn phí ở Menu → Tài khoản để lên bảng xếp hạng toàn cầu.') : T('Sign in to see the global leaderboard.', 'Đăng nhập để xem bảng xếp hạng toàn cầu.'))}</div>`; return; }
     try {
       await cloud.pushLeaderboard(leaderboardRowNow()).catch(() => {});
-      const rows = await cloud.fetchLeaderboard(cur);
-      if (!rows?.length) { box.innerHTML = `<div class="empty-note">${T('No one here yet. Be the first!', 'Chưa có ai. Hãy là người đầu tiên!')}</div>`; return; }
-      box.innerHTML = rows.map(r => `<div class="lb-row${r.is_me ? ' me' : ''}"><div class="lb-rank g${r.rank}">${r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] : '#' + r.rank}</div><div class="lb-name"><b>${r.badge && BADGES[r.badge] ? `<span class="badge-mini t-${BADGES[r.badge].tier}" title="${escapeHtml(T(BADGES[r.badge].en, BADGES[r.badge].vi))}">${BADGES[r.badge].glyph}</span>` : ''}${escapeHtml(r.player_name)}${r.is_me ? T(' (you)', ' (bạn)') : ''}</b><small>${escapeHtml(r.island_name || '')} · ${T('Day', 'Ngày')} ${r.day}</small></div><div class="lb-val">${T('Lv', 'Cấp')} ${r.level}<small>${money(r.money)} · ${r.served} ${T('served', 'khách')}</small></div></div>`).join('');
-    } catch (e) { box.innerHTML = `<div class="empty-note">${T('Could not reach the leaderboard. Check your connection.', 'Không kết nối được bảng xếp hạng. Kiểm tra mạng nhé.')}</div>`; }
+      const rows = m === 'week' ? await cloud.fetchWeekly(cur) : await cloud.fetchLeaderboard(cur);
+      if (my !== token) return;
+      if (!rows?.length) { box.innerHTML = `<div class="empty-note">${m === 'week' ? T('A fresh week! Serve a few customers to get on the board.', 'Tuần mới! Phục vụ vài vị khách để lên bảng nhé.') : T('No one here yet. Be the first!', 'Chưa có ai. Hãy là người đầu tiên!')}</div>`; return; }
+      box.replaceChildren(...rows.map(r => {
+        const row = h('div', 'lb-row' + (r.is_me ? ' me' : '') + (m === 'week' && r.rank <= 10 ? ' prize' : ''));
+        const face = document.createElement('canvas'); face.width = face.height = 72; face.className = 'lb-face';
+        const sub = m === 'week' ? `${escapeHtml(r.island_name || '')} · ${T('Lv', 'Cấp')} ${r.level}` : `${escapeHtml(r.island_name || '')} · ${T('Day', 'Ngày')} ${r.day}`;
+        const val = m === 'week' ? `<div class="lb-val">${weekVal(r)}${r.rank <= 10 ? `<small>${r.rank === 1 ? T('Gold cup', 'Cúp vàng') : r.rank <= 3 ? T('Silver cup', 'Cúp bạc') : T('Bronze cup', 'Cúp đồng')}</small>` : ''}</div>`
+          : `<div class="lb-val">${T('Lv', 'Cấp')} ${r.level}<small>${money(r.money)} · ${r.served} ${T('served', 'khách')}</small></div>`;
+        row.innerHTML = rankHTML(r) + `<div class="lb-name"><b>${badgeHTML(r)}${escapeHtml(r.player_name)}${r.is_me ? T(' (you)', ' (bạn)') : ''}</b><small>${sub}</small></div>` + val;
+        row.insertBefore(face, row.children[1]);
+        drawFace(face, r.look);
+        return row;
+      }));
+    } catch (e) { console.warn('ranks', e); if (my === token) box.innerHTML = `<div class="empty-note">${T('Could not reach the leaderboard. Check your connection.', 'Không kết nối được bảng xếp hạng. Kiểm tra mạng nhé.')}</div>`; }
   };
-  for (const [k, label] of sorts) { const b = h('button', '', label); b.type = 'button'; b.onclick = () => { sfx('ui'); cur = k; load(); }; seg.appendChild(b); }
-  pane.append(seg, box);
-  load();
+  pane.append(mode, head, seg, box);
+  drawSegs(); load();
 }
-const leaderboardRowNow = () => ({ ...leaderboardRow(G.state), badge: showcaseBadge() });
+// a little portrait of a player's character (a soft circle when they haven't shared one)
+function drawFace(cv, look) {
+  const c = cv.getContext('2d'); c.lineJoin = 'round'; c.lineCap = 'round';
+  c.fillStyle = '#fdeed7'; c.beginPath(); c.arc(36, 36, 35, 0, Math.PI * 2); c.fill();
+  if (!look) { c.fillStyle = '#e9d0ae'; c.beginPath(); c.arc(36, 30, 13, 0, Math.PI * 2); c.fill(); c.beginPath(); c.ellipse(36, 66, 22, 18, 0, 0, Math.PI * 2); c.fill(); return; }
+  c.save(); c.beginPath(); c.arc(36, 36, 35, 0, Math.PI * 2); c.clip();
+  try { drawVillagerHead(c, 36, 41, 46, { look: { ...look, scale: 1 }, dir: 'down' }, 1); } catch { /* an odd look from an old build */ }
+  c.restore();
+}
+const leaderboardRowNow = () => ({ ...leaderboardRow(G.state), badge: showcaseBadge(), look: slimLook(G.player?.look) });
 
 export function openMenu({ onLogout, tab = 0 } = {}) {
   const s = G.state;

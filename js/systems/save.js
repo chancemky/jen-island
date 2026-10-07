@@ -18,6 +18,7 @@ import { G, T, migrate, defaultState, OLDEST_SAVE } from './state.js';
 import * as cloud from './cloud.js';
 import { bus } from '../core/util.js';
 import { leaderboardRow, shouldPushLeaderboard } from './progress.js';
+import { slimLook } from '../data/looks.js';
 import { chooseIsland } from '../ui/conflict.js';
 import { showcaseBadge } from './badges.js';
 import { deviceId } from './telemetry.js';
@@ -118,7 +119,7 @@ export async function saveCloudNow({ keepalive = false } = {}) {
     const snap = snapshot();
     await cloud.saveCloud(snap, { keepalive }); writeSync(G.user.id, snap.savedAt);
     saveStatus.cloudAt = Date.now(); saveStatus.offline = false; saveStatus.error = ''; cloudDirty = false;
-    if (G.state.player.name && (keepalive || shouldPushLeaderboard())) cloud.pushLeaderboard({ ...leaderboardRow(G.state), badge: showcaseBadge() }).catch(e => console.warn('leaderboard', e.message));
+    if (G.state.player.name && (keepalive || shouldPushLeaderboard())) cloud.pushLeaderboard({ ...leaderboardRow(G.state), badge: showcaseBadge(), look: slimLook(G.player?.look) }).catch(e => console.warn('leaderboard', e.message));
   }
   catch (e) {
     if (e.conflict) { cloudBusy = false; await otherDevice(); return; }

@@ -108,3 +108,12 @@ export function employeeLook(seed, role) {
   if (role === 'prep') { L.top = '#f7de8c'; L.hat = 'bandana'; L.hatColor = '#e8584e'; }
   return L;
 }
+
+// a look small enough to share (leaderboard rows): no cached drawings, at most ~1.8 KB
+export function slimLook(look) {
+  if (!look) return null;
+  const out = {};
+  for (const [k, v] of Object.entries(look)) if (k[0] !== '_' && v != null && typeof v !== 'function' && typeof v !== 'object') out[k] = v;
+  for (const [k, v] of Object.entries(look)) if (k[0] !== '_' && v && typeof v === 'object' && !(v instanceof HTMLElement) && JSON.stringify(v).length < 300) out[k] = v;
+  return JSON.stringify(out).length <= 1800 ? out : null;
+}

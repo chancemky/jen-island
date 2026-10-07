@@ -890,3 +890,41 @@ Object.assign(FURN_DRAW, {
   lantern_wall: (c, t, p) => { c.save(); c.translate(0, p.preview ? 50 : 0); line(c, -24, -66, 24, -66, '#5b3f36', 0.8);
     ['#ea5a4f', '#f2c14e', '#f08ca0', '#6fbfb0', '#b39ddb', '#ffae3a'].forEach((col, i) => { const x = -20 + i * 8, y = -62 + (i % 2) * 3; line(c, x, -66, x, y - 5, INK, 0.5); ell(c, x, y, 3.2, 4, col, INK, 0.6); }); c.restore(); },
 });
+
+// ---------------------------------------------------------------- weekly board trophies
+// A polished cup on a wooden plinth: twin handles, a star medallion, an engraved plate
+// and a glint that sweeps across the bowl. Gold also glows softly at night.
+const CUPS = { trophy_gold: ['#f2c14e', '#ffe48a', '#b8860b', '1'], trophy_silver: ['#c9d3dc', '#f4f8fb', '#7d8a96', '2'], trophy_bronze: ['#d38b52', '#f2b98a', '#8a4f26', '3'] };
+function trophy(c, t, p, [col, hi, dk, num]) {
+  shadow(c, 0, 1, 17, 4.5, 0.2);
+  c.save(); c.scale(1.35, 1.35);
+  // plinth with an engraved plate
+  box(c, -11, -9, 22, 9, 2, '#7a4e33', INK, 1); grain(c, -10, -8, 20, 7, '#7a4e33', 2);
+  box(c, -6, -7, 12, 4.5, 1, hi, dk, 0.5); stext(c, num === '1' ? '★ 1 ★' : '★ ' + num + ' ★', 0, -3.6, 2.6, dk, 900);
+  box(c, -8, -12, 16, 3.5, 1.2, dk, INK, 0.8);
+  // stem and knot
+  poly(c, [-2.2, -12, 2.2, -12, 1.3, -19, -1.3, -19], col, INK, 0.8); ell(c, 0, -19.5, 3.2, 1.6, hi, INK, 0.7);
+  // handles
+  c.lineWidth = 2.6; c.strokeStyle = INK;
+  for (const sx of [-1, 1]) { c.beginPath(); c.moveTo(sx * 8, -33); c.bezierCurveTo(sx * 16, -34, sx * 15, -24, sx * 5, -23); c.stroke(); }
+  c.lineWidth = 1.5; c.strokeStyle = col;
+  for (const sx of [-1, 1]) { c.beginPath(); c.moveTo(sx * 8, -33); c.bezierCurveTo(sx * 16, -34, sx * 15, -24, sx * 5, -23); c.stroke(); }
+  // bowl
+  c.beginPath(); c.moveTo(-10, -36); c.lineTo(10, -36); c.bezierCurveTo(10, -26, 6, -21, 0, -21); c.bezierCurveTo(-6, -21, -10, -26, -10, -36); c.closePath();
+  c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+  ell(c, 0, -36, 10, 2.2, dk, INK, 0.8); ell(c, 0, -36.3, 8, 1.3, shade(dk, -15), null);
+  // star medallion
+  const sp = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 1.6 : 3.6; sp.push(Math.cos(a) * r, -29 + Math.sin(a) * r); }
+  poly(c, sp, hi, dk, 0.6);
+  // moving glint, clipped to the bowl
+  c.save(); c.beginPath(); c.moveTo(-10, -36); c.lineTo(10, -36); c.bezierCurveTo(10, -26, 6, -21, 0, -21); c.bezierCurveTo(-6, -21, -10, -26, -10, -36); c.clip();
+  const gx = -16 + ((t * 0.45) % 1.6) * 24; c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.moveTo(gx, -38); c.lineTo(gx + 3, -38); c.lineTo(gx - 3, -20); c.lineTo(gx - 6, -20); c.fill();
+  c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(-8, -34, 2, 8); c.restore();
+  // sparkles
+  const k = (Math.sin(t * 3) + 1) / 2;
+  c.fillStyle = `rgba(255,255,255,${0.4 + k * 0.6})`;
+  for (const [x, y, r] of [[-12, -38, 1.4 + k], [11, -27, 1 + (1 - k)]]) { c.beginPath(); c.moveTo(x, y - r * 2); c.lineTo(x + r * 0.5, y); c.lineTo(x, y + r * 2); c.lineTo(x - r * 0.5, y); c.closePath(); c.fill(); c.fillRect(x - r * 2, y - 0.3, r * 4, 0.6); }
+  c.restore();
+  if (num === '1') g(p, 0, -38, 26, 'rgba(255,214,90,.35)');
+}
+for (const [id, cols] of Object.entries(CUPS)) FURN_DRAW[id] = (c, t, p) => trophy(c, t, p, cols);

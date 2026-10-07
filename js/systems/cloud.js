@@ -153,6 +153,12 @@ export async function pushLeaderboard(row) {
 export async function fetchLeaderboard(sort = 'level') {
   return api('/rest/v1/rpc/jen_island_leaderboard_top', { method: 'POST', body: JSON.stringify({ sort, lim: 50 }) });
 }
+// Weekly board (Monday to Sunday, island time): board = 'served' | 'earned' | 'xp'
+export async function fetchWeekly(board = 'served') {
+  return api('/rest/v1/rpc/jen_island_week_top', { method: 'POST', body: JSON.stringify({ board, lim: 50 }) });
+}
+// the weeks you finished in a top 10 (written by the server every Monday)
+export async function myAwards() { return api(`/rest/v1/jen_island_week_awards?select=week,board,rank&user_id=eq.${session.user.id}&order=week.desc&limit=100`); }
 // Delete account: erases every row this game keeps for the player, and the login.
 export async function deleteAccount() {
   return api('/rest/v1/rpc/jen_island_delete_account', { method: 'POST', body: '{}' });

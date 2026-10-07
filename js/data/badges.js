@@ -18,6 +18,7 @@ export const BADGES = {
   regular:     { tier: 'bronze', glyph: '🤝', en: 'Familiar Face', vi: 'Gương mặt quen', need: ['Make 5 regulars', 'Có 5 khách quen'], got: s => regulars(s) >= 5 },
   angler:      { tier: 'bronze', glyph: '🎣', en: 'Angler', vi: 'Cần thủ', need: ['Catch 3 kinds of fish', 'Câu được 3 loại cá'], got: s => Object.keys(s.fishSeen || {}).length >= 3 },
   goal_getter: { tier: 'bronze', glyph: '🎯', en: 'Goal Getter', vi: 'Hoàn thành mục tiêu', need: ['Finish a week of island goals', 'Hoàn thành mục tiêu một tuần'], got: s => (s.weekly?.champ || 0) >= 1 },
+  neighbour:   { tier: 'bronze', glyph: '📌', en: 'Good Neighbour', vi: 'Hàng xóm tốt', need: ['Finish 10 notes from the Island Board', 'Hoàn thành 10 lời nhờ trên Bảng tin đảo'], got: s => (s.stats.boardDone || 0) >= 10 },
   homebody:    { tier: 'bronze', glyph: '🏡', en: 'Homebody', vi: 'Người yêu nhà', need: ['Place 10 pieces of furniture', 'Đặt 10 món nội thất'], got: s => (s.home?.furniture || []).length >= 10 },
   // ---- silver
   crowd:       { tier: 'silver', glyph: '🎪', en: 'Crowd Pleaser', vi: 'Đắt khách', need: ['Serve 1,000 customers', 'Phục vụ 1.000 khách'], got: s => s.stats.served >= 1000 },
@@ -32,6 +33,7 @@ export const BADGES = {
   favourite:   { tier: 'gold', glyph: '💞', en: 'Everyone\'s Favourite', vi: 'Quán ruột của cả đảo', need: ['Make 50 regulars', 'Có 50 khách quen'], got: s => regulars(s) >= 50 },
   fashion:     { tier: 'gold', glyph: '👗', en: 'Fashion Icon', vi: 'Biểu tượng thời trang', need: ['Own every boutique piece', 'Có mọi món ở tiệm thời trang'], got: s => boutique().every(id => s.wardrobe?.owned?.includes(id)) },
   fisher:      { tier: 'gold', glyph: '🐟', en: 'Master Angler', vi: 'Bậc thầy câu cá', need: ['Catch every kind of fish', 'Câu được mọi loại cá'], got: s => Object.keys(FISH).every(id => s.fishSeen?.[id]) },
+  pillar:      { tier: 'gold', glyph: '🏘️', en: 'Pillar of the Island', vi: 'Trụ cột của đảo', need: ['Finish 150 notes from the Island Board', 'Hoàn thành 150 lời nhờ trên Bảng tin đảo'], got: s => (s.stats.boardDone || 0) >= 150 },
   ten_weeks:   { tier: 'gold', glyph: '🏆', en: 'Ten Good Weeks', vi: 'Mười tuần tuyệt vời', need: ['Finish 10 weeks of island goals', 'Hoàn thành mục tiêu 10 tuần'], got: s => (s.weekly?.champ || 0) >= 10 },
   month_streak:{ tier: 'gold', glyph: '🌙', en: 'Thirty Mornings', vi: 'Ba mươi buổi sáng', need: ['Play 30 days in a row', 'Chơi 30 ngày liên tiếp'], got: s => (s.streak?.best || 0) >= 30 },
   // ---- legend: the hardest
@@ -42,6 +44,9 @@ export const BADGES = {
   year:          { tier: 'legend', glyph: '🎋', en: 'A Year on the Island', vi: 'Một năm trên đảo', need: ['Reach day 365', 'Đến ngày thứ 365'], got: s => s.day >= 365 },
   // ---- from the server
   supporter:   { tier: 'gold', glyph: '💖', en: 'Supporter', vi: 'Người ủng hộ', need: ['Support the game in the store', 'Ủng hộ game ở cửa hàng'], server: true },
+  week_top10:  { tier: 'silver', glyph: '🎖️', en: 'Top Ten', vi: 'Top Mười', need: ['Finish a week in a top 10 of the weekly board', 'Kết thúc một tuần trong top 10 bảng tuần'], server: true },
+  week_podium: { tier: 'gold', glyph: '🥈', en: 'On the Podium', vi: 'Lên bục vinh quang', need: ['Finish a week in a top 3 of the weekly board', 'Kết thúc một tuần trong top 3 bảng tuần'], server: true },
+  week_champ:  { tier: 'legend', glyph: '🏅', en: 'Champion of the Week', vi: 'Quán quân của tuần', need: ['Finish a week first on the weekly board', 'Đứng đầu bảng tuần khi tuần kết thúc'], server: true },
   founder:     { tier: 'gold', glyph: '🌅', en: 'Founding Islander', vi: 'Cư dân khai đảo', need: ['Joined by launch day, 31 October 2026', 'Tham gia trước hoặc đúng ngày ra mắt, 31/10/2026'], server: true },
 };
 export const TIER_ORDER = ['legend', 'gold', 'silver', 'bronze'];

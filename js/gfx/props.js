@@ -859,3 +859,31 @@ export function bonfire(c, t, p) {
   if (night) glows.push([p.x, p.y - 10, 60, 'rgba(255,170,90,.55)']);
   for (let i = 0; i < 3; i++) { const k = (t * 0.6 + i / 3) % 1; c.globalAlpha = 0.5 * (1 - k); circ(c, Math.sin(k * 7 + i) * 4, -18 - k * 26, 2 + k * 4, '#d8d2cc', null); } c.globalAlpha = 1;
 }
+
+// The Island Board on Wind Plaza: a little tiled roof over a cork board with pinned notes.
+// p.notes() says how many notes are up; p.fresh() makes a "!" bob above it.
+export function noticeBoard(c, t, p) {
+  shadow(c, 0, 1, 24, 5, 0.18);
+  for (const x of [-20, 20]) { box(c, x - 2.5, -40, 5, 40, 1.5, '#8a5a3a', INK, 1); }
+  box(c, -24, -40, 48, 30, 3, '#8a5a3a', INK, 1.1);
+  box(c, -21, -37, 42, 20, 2, '#d9a86c', null);
+  c.fillStyle = 'rgba(0,0,0,.06)'; for (let i = 0; i < 14; i++) c.fillRect(-19 + (i * 7.3) % 38, -35 + (i * 5.1) % 20, 1, 1);
+  const n = p.notes ? p.notes() : 3, cols = ['#fff8e1', '#fdeef2', '#eaf6f1', '#eef1fd'], pins = ['#e8584e', '#6fbfb0', '#f2c14e', '#b39ddb'];
+  for (let i = 0; i < Math.min(n, 4); i++) {
+    const x = -17 + i * 9.5, y = -34 + (i % 2) * 2, sway = Math.sin(t * 1.3 + i) * 0.04;
+    c.save(); c.translate(x + 3.5, y); c.rotate((i % 2 ? 0.08 : -0.06) + sway);
+    box(c, -3.5, 0, 7, 9, 0.6, cols[i], 'rgba(91,63,54,.5)', 0.4);
+    for (let k = 0; k < 3; k++) line(c, -2.2, 3 + k * 1.8, 2.2, 3 + k * 1.8, 'rgba(91,63,54,.35)', 0.4);
+    circ(c, 0, 0.6, 1, pins[i], INK, 0.3); c.restore();
+  }
+  // roof
+  poly(c, [-29, -40, 0, -52, 29, -40, 26, -37, 0, -48, -26, -37], '#c9674a', INK, 1);
+  line(c, -14, -44.5, 14, -44.5, 'rgba(255,255,255,.25)', 0.6);
+  box(c, -18, -16, 36, 6, 1.5, '#fff8ea', INK, 0.6);
+  { const lab = T('ISLAND BOARD', 'BẢNG TIN ĐẢO'); stext(c, lab, 0, -12.2, fitSize(lab, 3.6, 32), '#8a5a3a', 900); }
+  if (p.fresh?.()) {
+    const b = Math.abs(Math.sin(t * 3)) * 4;
+    circ(c, 0, -62 - b, 6.5, '#ffd35a', INK, 1);
+    stext(c, '!', 0, -59.3 - b, 8, INK, 900);
+  }
+}

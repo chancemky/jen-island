@@ -53,6 +53,9 @@ import { initTelemetry, track, reportError } from './systems/telemetry.js';
 import { initBadges, grantServerBadge, FOUNDER_BEFORE } from './systems/badges.js';
 import { morningMail } from './systems/daily.js';
 import { initSocial } from './systems/social.js';
+import { initWeekBoard } from './systems/weekboard.js';
+import { initBoard, BOARD, boardOpen } from './systems/board.js';
+import { openBoard } from './ui/board.js';
 import { CLOTHES } from './data/wardrobe.js';
 import { initAds } from './systems/ads.js';
 import { showWhatsNew } from './ui/whatsnew.js';
@@ -136,6 +139,8 @@ async function boot() {
   if (!G.user.local && G.user.createdAt && G.user.createdAt < FOUNDER_BEFORE) grantServerBadge('founder');
   initBadges();
   initSocial();
+  initBoard();
+  setTimeout(initWeekBoard, 4000);          // after the morning mail settles
   showMorningMail();
   festivalGift();
   setTimeout(guestReminder, 20000);
@@ -506,6 +511,8 @@ function updateInteraction(dt) {
       return;
     }
   }
+  // the Island Board on Wind Plaza: neighbours' daily requests
+  if (sc === scenes.island && boardOpen() && Math.abs(pl.x - BOARD.x) < 30 && pl.y > BOARD.y - 4 && pl.y < BOARD.y + 34) { setAction(T('Island Board', 'Bảng tin đảo'), () => openBoard(), 'notebook'); return; }
   // statue pedestal
   if (sc === scenes.island && dist(pl.x, pl.y, 900, 1600) < 50 && G.state.story.step === 'destination') {
     setAction(T('Statue', 'Tượng đài'), () => statueSheet(), 'star'); return;
