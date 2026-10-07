@@ -2,7 +2,7 @@
 // and small props characters hold. Icons are drawn in a 32×32 box centred on 0,0.
 
 import { TAU, shade } from '../core/util.js';
-import { INK, ell, circ, poly, box, line, limb } from './draw.js';
+import { INK, ell, circ, poly, box, line, limb, stext } from './draw.js';
 
 // ---------------------------------------------------------------- held props
 export function drawHeld(c, what, x, y, t, view, P) {
@@ -70,6 +70,15 @@ export const ICONS = {
   salt_cream: c => { ell(c, 0, 4, 12, 7, '#fff', INK, 1); c.beginPath(); c.moveTo(-9, 2); c.quadraticCurveTo(0, -16, 9, 2); c.fillStyle = '#f7efe0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); for (let i = 0; i < 5; i++) circ(c, -5 + i * 2.6, -3 + (i % 2) * 3, 0.8, '#b9c3cb', null); },
   egg_yolk: c => { ell(c, -4, 2, 7, 9, '#f6e7cf', INK, 1); ell(c, 5, 3, 6, 8, '#f3dcbc', INK, 1); },
   egg_cream: c => { ell(c, 0, 4, 12, 7, '#fff', INK, 1); c.beginPath(); c.moveTo(-9, 2); c.quadraticCurveTo(0, -16, 9, 2); c.fillStyle = '#f6d98a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); },
+  mango: c => { c.save(); c.rotate(-0.4); ell(c, 0, 1, 9, 12, '#ffc23d', INK, 1); ell(c, 3, 4, 5, 7, '#f59a2f', null); ell(c, -3, -3, 2.5, 4, 'rgba(255,255,255,.4)', null); c.restore(); leafy(c, 4, -11, 4, '#5fae3f', 0.4); },
+  mango_cut: c => { for (const [x, y] of [[-6, 3], [0, 3], [6, 3], [-3, -3], [3, -3], [0, -9]]) { box(c, x - 3, y - 3, 6, 6, 1.2, '#ffc23d', INK, 0.8); box(c, x - 2, y - 2, 2, 2, 0.6, 'rgba(255,255,255,.45)', null); } },
+  dragonfruit: c => { ell(c, 0, 1, 9, 11, '#e8457a', INK, 1); for (const [x, y, r] of [[-7, -4, -0.6], [7, -4, 0.6], [-6, 6, -0.9], [6, 6, 0.9], [0, -10, 0]]) { c.save(); c.translate(x, y); c.rotate(r); poly(c, [-2, 2, 0, -5, 2, 2], '#8fd06a', INK, 0.6); c.restore(); } ell(c, -3, -3, 2, 3, 'rgba(255,255,255,.35)', null); },
+  dragonfruit_cut: c => { ell(c, 0, 2, 12, 9, '#e8457a', INK, 1); ell(c, 0, 2, 9.5, 7, '#f06a9a', null); for (let i = 0; i < 16; i++) circ(c, -7 + (i * 37 % 14), -2 + (i * 53 % 9), 0.6, INK, null); },
+  passionfruit: c => { circ(c, 0, 2, 10, '#7a3a6a', INK, 1); for (let i = 0; i < 6; i++) circ(c, -5 + (i * 7) % 11, -3 + (i * 5) % 9, 0.7, 'rgba(255,255,255,.35)', null); line(c, 0, -8, 2, -12, '#6b8a3a', 1.6); },
+  passion_pulp: c => { circ(c, 0, 2, 11, '#7a3a6a', INK, 1); circ(c, 0, 2, 8.5, '#f2b51e', null); for (let i = 0; i < 10; i++) { const a = i * 2.4, r = 2 + (i % 4) * 1.4; circ(c, Math.cos(a) * r, 2 + Math.sin(a) * r, 0.9, '#3a2a26', null); } },
+  coconut: c => { circ(c, 0, 3, 10, '#a7c96a', INK, 1); poly(c, [-6, -4, 0, -12, 6, -4], '#c9dd96', INK, 0.9); circ(c, -3, 0, 2, 'rgba(255,255,255,.35)', null); },
+  coconut_water: c => { circ(c, 0, 3, 10, '#a7c96a', INK, 1); ell(c, 0, -4, 6.5, 3, '#fffaf0', INK, 0.8); ell(c, 0, -4, 4.5, 1.8, '#eef6ea', null); line(c, 2, -4, 6, -15, '#f28fa3', 1.6); },
+  yogurt: c => { poly(c, [-8, -6, 8, -6, 6, 10, -6, 10], '#fbf6ee', INK, 1); box(c, -9, -9, 18, 4, 1.5, '#8fb7e0', INK, 0.8); stext(c, 'YO', 0, 3, 5, '#8fb7e0', 900); },
   orange: c => { circ(c, 0, 2, 11, '#8fbf4a', INK, 1); circ(c, -3, -1, 3, 'rgba(255,255,255,.35)', null); leafy(c, 3, -10, 4, '#5fae3f', 0.6); },
   orange_cut: c => { circ(c, 0, 0, 11, '#ffae3a', INK, 1); circ(c, 0, 0, 8, '#ffd36a', null); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; line(c, 0, 0, Math.cos(a) * 8, Math.sin(a) * 8, '#ffae3a', 1); } },
   sea_salt: c => { box(c, -7, -8, 14, 18, 3, '#e6f2f8', INK, 1); box(c, -7, -12, 14, 5, 2, '#6f9fc8', INK, 1); for (let i = 0; i < 6; i++) circ(c, -4 + (i % 3) * 4, 0 + Math.floor(i / 3) * 5, 1, '#fff', null); },
@@ -288,6 +297,12 @@ export function iconURL(id, px = 64) {
   return url;
 }
 export const DRINK_PREVIEW = {
+  sinh_to_xoai: { size: 'M', layers: [{ color: '#ffc23d', h: 1 }], straw: true, strawColor: '#f36d86' },
+  nuoc_dua: { size: 'M', layers: [{ color: '#eef6ea', h: 1 }], ice: 2, straw: true, strawColor: '#6fbf73' },
+  chanh_day: { size: 'M', layers: [{ color: '#f2b51e', h: 0.35 }, { color: '#f7d36a', h: 0.65 }], ice: 2, bits: [{ kind: 'lime', float: 1 }], straw: true, strawColor: '#8f7fd0' },
+  sinh_to_thanh_long: { size: 'M', layers: [{ color: '#e8457a', h: 0.7 }, { color: '#fbf6ee', h: 0.3 }], straw: true, strawColor: '#ffd35a' },
+  sua_chua_xoai: { size: 'S', layers: [{ color: '#fbf6ee', h: 0.55 }, { color: '#ffc23d', h: 0.3 }, { color: '#f2b51e', h: 0.15 }] },
+  ca_phe_dua: { size: 'M', layers: [{ color: '#fffaf0', h: 0.6 }, { color: '#6b4431', h: 0.4 }], straw: true, strawColor: '#6fbfb0' },
   tra_tac: { size: 'M', layers: [{ color: '#f0b04a', h: 1 }], ice: 1, bits: [{ kind: 'kumquat', float: 1 }, { kind: 'kumquat', float: 1 }], straw: true },
   ca_phe_sua_da: { size: 'M', layers: [{ color: '#f2e6cc', h: 0.3 }, { color: '#6b4431', h: 0.7 }], ice: 2, straw: true, strawColor: '#8ad0e8' },
   tra_dao: { size: 'M', layers: [{ color: '#f7a868', h: 1 }], ice: 1, bits: [{ kind: 'peach' }, { kind: 'peach' }], straw: true },

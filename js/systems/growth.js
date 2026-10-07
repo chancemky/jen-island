@@ -7,10 +7,11 @@
 import { G, T } from './state.js';
 import { INK, ell, circ, box, line, poly } from '../gfx/draw.js';
 import { PLAZA } from '../world/island.js';
+import { glows } from '../gfx/props.js';
 import { eventOn } from './interact.js';
 import { npcs } from './npc.js';
 import { RESIDENTS } from '../data/looks.js';
-import { rand } from '../core/util.js';
+import { rand, bus } from '../core/util.js';
 
 const ch = () => G.state.story.chapter || 1;
 const flag = k => !!G.state.story.flags[k];
@@ -56,6 +57,56 @@ function pumpkin(c, t, x, y) {
   const glow = night() ? '#fff1a8' : '#5b3f36';
   poly(c, [x - 4, y - 8, x - 2, y - 10, x - 1, y - 7], glow, null); poly(c, [x + 4, y - 8, x + 2, y - 10, x + 1, y - 7], glow, null);
   poly(c, [x - 4, y - 4, x + 4, y - 4, x + 2, y - 2, x - 2, y - 2], glow, null);
+}
+// a bunch of balloons on strings, bobbing in the breeze
+function balloons(c, t, x, y, cols, heart = false) {
+  cols.forEach((col, i) => {
+    const bx = x + (i - (cols.length - 1) / 2) * 7 + Math.sin(t * 1.4 + i) * 1.5, by = y - 40 - (i % 2) * 7 + Math.sin(t * 1.8 + i * 2) * 1.2;
+    c.strokeStyle = 'rgba(91,63,54,.6)'; c.lineWidth = 0.5; c.beginPath(); c.moveTo(x, y - 2); c.quadraticCurveTo(x + (bx - x) * 0.3, y - 20, bx, by + 6); c.stroke();
+    if (heart) { c.beginPath(); c.moveTo(bx, by + 6); c.bezierCurveTo(bx - 8, by, bx - 6, by - 7, bx, by - 3.5); c.bezierCurveTo(bx + 6, by - 7, bx + 8, by, bx, by + 6); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke(); }
+    else { ell(c, bx, by, 5, 6.2, col, INK, 0.7); poly(c, [bx - 1.2, by + 6.6, bx + 1.2, by + 6.6, bx, by + 5.6], col, INK, 0.4); }
+    ell(c, bx - 1.8, by - 2.4, 1.2, 1.8, 'rgba(255,255,255,.55)', null);
+  });
+  box(c, x - 2.5, y - 3, 5, 3, 1, '#c9955e', INK, 0.5);
+}
+// a flag on a pole, waving (red with a gold star for National Day)
+function flagPole(c, t, x, y) {
+  line(c, x, y, x, y - 46, '#8a7a6a', 1.6); circ(c, x, y - 47, 1.6, '#ffd35a', INK, 0.4);
+  const w = 20, h = 13, pts = [];
+  for (let i = 0; i <= 8; i++) pts.push([x + w * i / 8, y - 44 + Math.sin(t * 4 - i * 0.6) * 1.4 * i / 8]);
+  c.beginPath(); pts.forEach(([px, py], i) => i ? c.lineTo(px, py) : c.moveTo(px, py)); for (let i = 8; i >= 0; i--) c.lineTo(pts[i][0], pts[i][1] + h); c.closePath(); c.fillStyle = '#d9433a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.6; c.stroke();
+  const [sx, sy] = pts[4], st = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 1.6 : 4; st.push(sx + Math.cos(a) * r, sy + h / 2 + Math.sin(a) * r); } poly(c, st, '#ffd35a', null);
+}
+// a flower stand, piled with bouquets (Women's Day)
+function flowerStand(c, t, x, y) {
+  box(c, x - 14, y - 12, 28, 12, 2, '#c9955e', INK, 0.8);
+  for (let i = 0; i < 9; i++) { const fx2 = x - 11 + (i % 5) * 5.5, fy = y - 15 - Math.floor(i / 5) * 5; line(c, fx2, fy + 4, fx2, fy + 1, '#6b8a3a', 0.8); for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; circ(c, fx2 + Math.cos(a) * 1.4, fy + Math.sin(a) * 1.4, 1.2, ['#ff8fb0', '#fff', '#f36d86', '#ffd35a', '#c9a8ff'][i % 5], null); } circ(c, fx2, fy, 0.8, '#ffd35a', null); }
+}
+// the Grand Opening arch over the road to the plaza
+function openingArch(c, t, x, y) {
+  for (const s of [-1, 1]) { box(c, x + s * 56 - 4, y - 50, 8, 50, 2, '#f7de8c', INK, 0.9); balloons(c, t, x + s * 56, y - 44, ['#f36d86', '#ffd35a', '#6fbfb0']); }
+  c.beginPath(); c.moveTo(x - 60, y - 52); c.quadraticCurveTo(x, y - 76, x + 60, y - 52); c.lineTo(x + 60, y - 40); c.quadraticCurveTo(x, y - 62, x - 60, y - 40); c.closePath(); c.fillStyle = '#f36d86'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+  c.save(); c.fillStyle = '#fffaf0'; c.font = '900 8px Nunito, sans-serif'; c.textAlign = 'center'; c.fillText(T('GRAND OPENING!', 'KHAI TRƯƠNG!'), x, y - 54); c.restore();
+  for (let i = 0; i < 9; i++) { const u = i / 8, px = x - 56 + u * 112, py = y - 50 - Math.sin(u * Math.PI) * 20; circ(c, px, py + 3, 1.3, Math.sin(t * 6 + i) > 0 ? '#fff6b0' : '#ffd35a', null); }
+}
+const boomed = [];
+const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${Math.max(0, a).toFixed(2)})`;
+// fireworks over a spot, after dark: rockets rise, burst into rings of sparks and fade
+function fireworks(c, t, x, y) {
+  if (!night()) return;
+  const P = 2.6;
+  for (let k = 0; k < 3; k++) {
+    const tt = t + k * (P / 3), cyc = Math.floor(tt / P), u = (tt % P) / P, seed = Math.sin(cyc * 12.9898 + k * 78.233) * 43758.5453, r1 = seed - Math.floor(seed), r2 = (r1 * 7.13) % 1;
+    const fx2 = x + (r1 - 0.5) * 300, top = y - 60 - r2 * 90, col = ['#ffd35a', '#f36d86', '#8fd3f0', '#b7f28a', '#c9a8ff'][Math.floor(r1 * 5)];
+    if (u < 0.28) { const v = u / 0.28, py = y - 20 + (top - y + 20) * (1 - Math.pow(1 - v, 2)); circ(c, fx2, py, 1.4, '#fff6d8', null); c.strokeStyle = 'rgba(255,230,170,.5)'; c.lineWidth = 1; c.beginPath(); c.moveTo(fx2, py); c.lineTo(fx2, py + 10); c.stroke(); continue; }
+    if (boomed[k] !== cyc && u < 0.4) { boomed[k] = cyc; bus.emit('sfx', 'firework'); }
+    const v = (u - 0.28) / 0.72, R = 10 + 46 * (1 - Math.pow(1 - v, 3)), fade = 1 - v;
+    c.save(); c.globalAlpha = Math.max(0, fade); c.globalCompositeOperation = 'lighter';
+    c.fillStyle = col; c.beginPath(); c.arc(fx2, top, R * 0.5, 0, Math.PI * 2); c.globalAlpha = Math.max(0, fade * 0.12); c.fill(); c.globalAlpha = Math.max(0, fade);
+    for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2, px = fx2 + Math.cos(a) * R, py = top + Math.sin(a) * R + v * v * 18; circ(c, px, py, 1.5 * (1 - v * 0.5), i % 2 ? col : '#fff6d8', null); if (i % 3 === 0) glows.push([px, py, 9 * fade + 3, hexA(col, 0.9 * fade)]); }
+    glows.push([fx2, top, R * 1.3, hexA(col, 0.35 * fade)]);
+    c.restore();
+  }
 }
 // a little decorated tree with twinkling lights, for Christmas
 function xmasTree(c, t, x, y) {
@@ -120,6 +171,31 @@ export function growthDrawables() {
     add(900, 1100, 1300, (c, t) => { bunting(c, t, 700, 1098, 1100, 1098, 58, ['#d9433a', '#3f8f5a', '#fff5df', '#f2c14e']); });
     add(PLAZA.x + 150, PLAZA.y + 120, PLAZA.y + 120, (c, t) => xmasTree(c, t, PLAZA.x + 150, PLAZA.y + 120));
   }
+  if (ev?.id === 'valentine') {
+    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#f36d86', '#fff5df', '#ffb3c6']); });
+    for (const [x, y] of [[PLAZA.x - 116, PLAZA.y + 44], [PLAZA.x + 116, PLAZA.y + 44], [PLAZA.x - 40, PLAZA.y + 168], [PLAZA.x + 40, PLAZA.y + 168]]) add(x, y, y, (c, t) => balloons(c, t, x, y, ['#f36d86', '#ff8fb0', '#e8584e'], true));
+  }
+  if (ev?.id === 'womensday') {
+    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#ff8fb0', '#fff5df', '#c9a8ff']); });
+    for (const [x, y] of [[PLAZA.x - 120, PLAZA.y + 50], [PLAZA.x + 120, PLAZA.y + 50], [900, 1240]]) add(x, y, y, (c, t) => flowerStand(c, t, x, y));
+  }
+  if (ev?.id === 'childrensday') {
+    for (const [x, y] of [[PLAZA.x - 116, PLAZA.y + 44], [PLAZA.x + 116, PLAZA.y + 44], [PLAZA.x - 40, PLAZA.y + 168], [PLAZA.x + 40, PLAZA.y + 168], [640, 2300], [1180, 2300]]) add(x, y, y, (c, t) => balloons(c, t, x, y, ['#ffd35a', '#6fbfb0', '#f36d86', '#8fb7e0']));
+    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#ffd35a', '#6fbfb0', '#f36d86', '#8fb7e0']); });
+  }
+  if (ev?.id === 'nationalday') {
+    for (const [x, y] of [[PLAZA.x - 120, PLAZA.y + 40], [PLAZA.x + 120, PLAZA.y + 40], [PLAZA.x - 40, PLAZA.y + 170], [PLAZA.x + 40, PLAZA.y + 170], [700, 1240], [1100, 1240], [860, 2330], [940, 2330]]) add(x, y, y, (c, t) => flagPole(c, t, x, y));
+    add(900, 1100, 1300, (c, t) => { bunting(c, t, 700, 1098, 1100, 1098, 58, ['#d9433a', '#ffd35a']); });
+  }
+  if (ev?.id === 'newyear') {
+    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#8f7fd0', '#ffd35a', '#fff5df']); });
+  }
+  if (ev?.id === 'launch') {
+    add(900, 1780, 1780, (c, t) => openingArch(c, t, 900, 1780));
+    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#f36d86', '#ffd35a', '#6fbfb0', '#8fb7e0']); });
+    for (const [x, y] of [[PLAZA.x - 116, PLAZA.y + 44], [PLAZA.x + 116, PLAZA.y + 44], [PLAZA.x - 40, PLAZA.y + 168], [PLAZA.x + 40, PLAZA.y + 168], [880, 2380], [920, 2380]]) add(x, y, y, (c, t) => balloons(c, t, x, y, ['#f36d86', '#ffd35a', '#6fbfb0', '#c9a8ff']));
+  }
+  if (ev?.fireworks) add(PLAZA.x, PLAZA.y, 99999, (c, t) => fireworks(c, t, PLAZA.x, PLAZA.y + 60));
   if (ev?.id === 'summer') {
     for (const [x, y, col] of [[640, 2330, '#f28f7c'], [760, 2350, '#8fcfc0'], [1180, 2360, '#f2c14e'], [1300, 2320, '#f28f7c'], [2420, 2330, '#8fcfc0'], [2540, 2300, '#f2c14e']]) add(x, y, y, (c, t) => beachUmbrella(c, t, x, y, col));
   }
@@ -147,6 +223,8 @@ export function updateSeasonal(dt) {
   if (ev.id === 'midautumn' && h >= 17.5 && h < 22.5) { spawn(430, 820, 'nightmarket', 2); spawn(900, 1760, 'plaza', 1); }
   if (ev.id === 'summer' && h >= 9 && h < 18) spawn(900, 2400, 'beach', 2);
   if (ev.id === 'nmnight' && h >= 18 && h < 23) spawn(430, 820, 'nightmarket', 3);
+  if ((ev.id === 'launch' || ev.id === 'nationalday' || ev.id === 'newyear') && h >= 9 && h < 23) spawn(900, 2400, 'plaza', 2);
+  if ((ev.id === 'valentine' || ev.id === 'womensday' || ev.id === 'childrensday') && h >= 8 && h < 21) spawn(900, 2400, 'plaza', 1);
 }
 // Tết best: some neighbours wear red and gold
 function dressResidents(on) {

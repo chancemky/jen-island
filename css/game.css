@@ -822,3 +822,25 @@ body.hide-controls #joyBase, body.hide-controls #joyHint, body.cutscene #joyHint
 /* settings: volume sliders */
 .vol-row .info { display: flex; flex-direction: column; gap: 4px; }
 .vol-row input[type=range] { width: 100%; accent-color: var(--pink2, #e56b8b); height: 28px; }
+
+/* photo mode */
+body.photo-mode #hud, body.photo-mode #toasts, body.photo-mode #actions, body.photo-mode #touch, body.photo-mode #pointer, body.photo-mode .emote-bar, body.photo-mode .toast { visibility: hidden !important; }
+.side-btn.cam-btn { bottom: calc(244px + var(--sab)); width: 40px; height: 40px; right: calc(32px + var(--sar)); font-size: 18px; }
+body.decorating #camBtn, body.lookout #camBtn { visibility: hidden; }
+.photo-ui { position: absolute; inset: 0; z-index: 60; pointer-events: none; }
+.photo-ui .ph-drag { position: absolute; inset: 0; pointer-events: auto; touch-action: none; cursor: grab; }
+.ph-top { position: absolute; top: calc(12px + env(safe-area-inset-top)); left: 12px; right: 12px; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+.ph-top span { background: rgba(40,28,24,.55); color: #fff; font-weight: 800; font-size: 12px; border-radius: 999px; padding: 6px 12px; }
+.ph-x { pointer-events: auto; width: 44px; height: 44px; border-radius: 50%; background: #fffaf0; border: 3px solid #5b3f36; font-size: 18px; font-weight: 900; }
+.ph-panel { position: absolute; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); pointer-events: auto; background: rgba(255,250,240,.94); border: 3px solid #5b3f36; border-radius: 22px; padding: 10px; display: grid; gap: 8px; }
+.ph-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.ph-row input { flex: 1; accent-color: var(--pink2, #e56b8b); }
+.ph-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.ph-chips button { flex: none; padding: 6px 11px; border-radius: 999px; border: 2px solid #e9d8bf; background: #fff; font-weight: 900; font-size: 12.5px; }
+.ph-poses button { font-size: 20px; padding: 3px 8px; }
+.ph-chips button.on { border-color: var(--pink2, #e56b8b); color: var(--pink2, #e56b8b); background: #fff2f4; }
+.ph-shoot { padding: 12px; border-radius: 999px; border: 3px solid #5b3f36; background: #f08ca0; color: #fff; font-weight: 900; font-size: 17px; box-shadow: 0 4px 0 rgba(91,63,54,.3); }
+.ph-shoot:active { transform: translateY(2px); box-shadow: none; }
+.ph-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.ph-flash.go { animation: phFlash .45s ease-out; }
+@keyframes phFlash { 0% { opacity: .95; } 100% { opacity: 0; } }

@@ -928,3 +928,15 @@ function trophy(c, t, p, [col, hi, dk, num]) {
   if (num === '1') g(p, 0, -38, 26, 'rgba(255,214,90,.35)');
 }
 for (const [id, cols] of Object.entries(CUPS)) FURN_DRAW[id] = (c, t, p) => trophy(c, t, p, cols);
+
+// the Grand Opening keepsake (31 October 2026): a bunch of balloons tied to a little weight
+FURN_DRAW.opening_balloons = (c, t, p) => {
+  shadow(c, 0, 1, 8, 2.5, 0.18);
+  const cols = ['#f36d86', '#ffd35a', '#6fbfb0', '#c9a8ff', '#8fb7e0'];
+  cols.forEach((col, i) => {
+    const bx = (i - 2) * 6.5 + Math.sin(t * 1.4 + i) * 1.4, by = -46 - (i % 2) * 8 + Math.sin(t * 1.8 + i * 2) * 1.2;
+    c.strokeStyle = 'rgba(91,63,54,.6)'; c.lineWidth = 0.5; c.beginPath(); c.moveTo(0, -5); c.quadraticCurveTo(bx * 0.3, -24, bx, by + 7); c.stroke();
+    ell(c, bx, by, 5.6, 7, col, INK, 0.8); poly(c, [bx - 1.2, by + 7.4, bx + 1.2, by + 7.4, bx, by + 6.4], col, INK, 0.4); ell(c, bx - 2, by - 2.6, 1.3, 2, 'rgba(255,255,255,.55)', null);
+  });
+  box(c, -5, -6, 10, 6, 2, '#f2c14e', INK, 0.8); stext(c, '31·10', 0, -2.3, 2.6, INK, 900);
+};

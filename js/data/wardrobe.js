@@ -80,6 +80,12 @@ export const CLOTHES = {
   lucky_nonla:   { slot: 'hat', store: true, price: 0, en: 'Lucky Red Nón Lá', vi: 'Nón lá đỏ may mắn', look: { hat: 'nonla', hatColor: '#d9433a' } },
   moon_bow:      { slot: 'hat', store: true, price: 0, en: 'Full Moon Bow', vi: 'Nơ trăng rằm', look: { hat: 'bow', hatColor: '#ffd35a' } },
   black_cat_ears:{ slot: 'hat', store: true, price: 0, en: 'Black Cat Ears', vi: 'Tai mèo đen', look: { hat: 'catears', hatColor: '#3a3440' } },
+  sweetheart_boppers: { slot: 'hat', store: true, price: 0, en: 'Sweetheart Boppers', vi: 'Băng đô trái tim', look: { hat: 'hearts', hatColor: '#f36d86' } },
+  ao_dai_crown:  { slot: 'hat', store: true, price: 0, en: 'Women\'s Day Flower Crown', vi: 'Vòng hoa Ngày Phụ nữ', look: { hat: 'flowercrown', hatColor: '#ff8fb0' } },
+  propeller_cap: { slot: 'hat', store: true, price: 0, en: 'Propeller Cap', vi: 'Mũ chong chóng', look: { hat: 'propeller', hatColor: '#8fb7e0' } },
+  star_band:     { slot: 'hat', store: true, price: 0, en: 'Gold Star Headband', vi: 'Băng đô sao vàng', look: { hat: 'starband', hatColor: '#d9433a', hatRibbon: '#ffd35a' } },
+  newyear_party: { slot: 'hat', store: true, price: 0, en: 'New Year Party Hat', vi: 'Mũ tiệc năm mới', look: { hat: 'party', hatColor: '#8f7fd0', hatRibbon: '#ffd35a' } },
+  opening_party: { slot: 'hat', store: true, price: 0, en: 'Opening Day Party Hat', vi: 'Mũ tiệc ngày khai trương', look: { hat: 'party', hatColor: '#f2c14e', hatRibbon: '#f36d86' } },
   snow_beanie:   { slot: 'hat', store: true, price: 0, en: 'Snowy Pom Beanie', vi: 'Mũ len tuyết', look: { hat: 'beanie', hatColor: '#d9433a', hatRibbon: '#ffffff' } },
   // a seven-day play streak (systems/daily.js)
   streak_bow:    { slot: 'hat', store: true, price: 0, en: 'Sunrise Bow', vi: 'Nơ bình minh', look: { hat: 'bow', hatColor: '#ff9a6b' } },

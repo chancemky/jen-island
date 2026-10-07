@@ -5,10 +5,10 @@
 // Supermarket aisles.
 export const AISLES = [
   { id: 'all', en: 'All', vi: 'Tất cả', icon: 'bag' },
-  { id: 'produce', en: 'Fruit & Veg', vi: 'Rau củ quả', icon: 'kumquat', items: ['kumquat', 'peach', 'avocado', 'lime', 'orange', 'cane', 'cucumber', 'cilantro', 'herbs', 'sprouts', 'scallion', 'chili'] },
+  { id: 'produce', en: 'Fruit & Veg', vi: 'Rau củ quả', icon: 'kumquat', items: ['kumquat', 'peach', 'avocado', 'lime', 'orange', 'mango', 'dragonfruit', 'passionfruit', 'coconut', 'cane', 'cucumber', 'cilantro', 'herbs', 'sprouts', 'scallion', 'chili'] },
   { id: 'meat', en: 'Meat, Seafood & Eggs', vi: 'Thịt, hải sản & trứng', icon: 'pork', items: ['pork', 'beef', 'shrimp', 'squid', 'scallop', 'snails', 'skewers', 'egg', 'egg_yolk'] },
   { id: 'bakery', en: 'Bakery & Grains', vi: 'Bánh & ngũ cốc', icon: 'bread', items: ['bread', 'rice', 'noodles', 'rice_paper', 'batter'] },
-  { id: 'dairy', en: 'Dairy & Drinks', vi: 'Sữa & đồ uống', icon: 'milk', items: ['milk', 'condensed_milk', 'cream', 'coconut_milk', 'cheese_foam', 'tea', 'coffee', 'peach_syrup'] },
+  { id: 'dairy', en: 'Dairy & Drinks', vi: 'Sữa & đồ uống', icon: 'milk', items: ['milk', 'condensed_milk', 'yogurt', 'cream', 'coconut_milk', 'cheese_foam', 'tea', 'coffee', 'peach_syrup'] },
   { id: 'sweets', en: 'Sweets & Toppings', vi: 'Đồ ngọt & topping', icon: 'sugar', items: ['sugar', 'tapioca', 'jelly', 'beans'] },
   { id: 'deli', en: 'Sauces & Deli', vi: 'Nước sốt & đồ nguội', icon: 'fish_sauce', items: ['fish_sauce', 'pickles', 'pate', 'broth', 'broth_spicy', 'peanuts', 'sea_salt'] },
   { id: 'frozen', en: 'Frozen', vi: 'Đồ đông lạnh', icon: 'ice', items: ['ice'] },
@@ -60,12 +60,18 @@ export const INGREDIENTS = {
   snails:         { vi: 'Ốc',            en: 'Sea snails',      cost: 14, pack: 6, prep: { to: 'snails_cooked', method: 'boil', verb: 'Boil' } },
   cane:           { vi: 'Mía cây',       en: 'Sugarcane',       cost: 4, pack: 8, prep: { to: 'cane_juice', method: 'press', verb: 'Press' } },
   skewers:        { vi: 'Xiên que',      en: 'Meat skewers',    cost: 7, pack: 8 },
+  // the Beach Smoothie Bar
+  mango:          { vi: 'Xoài cát',      en: 'Mangoes',         cost: 9, pack: 6, prep: { to: 'mango_cut', method: 'chop', verb: 'Cube' } },
+  dragonfruit:    { vi: 'Thanh long',    en: 'Dragon fruit',    cost: 10, pack: 5, prep: { to: 'dragonfruit_cut', method: 'scoop', verb: 'Scoop' } },
+  passionfruit:   { vi: 'Chanh dây',     en: 'Passion fruit',   cost: 9, pack: 8, prep: { to: 'passion_pulp', method: 'scoop', verb: 'Scoop' } },
+  coconut:        { vi: 'Dừa xiêm',      en: 'Young coconuts',  cost: 14, pack: 6, prep: { to: 'coconut_water', method: 'chop', verb: 'Open' } },
+  yogurt:         { vi: 'Sữa chua',      en: 'Yogurt',          cost: 5, pack: 8 },
 };
 // The price on the shelf is per pack: portion cost × portions.
 for (const g of Object.values(INGREDIENTS)) g.price = Math.max(1, Math.round(g.cost * g.pack));
 export const PREPPED = {};
-const CUT_EN = { salt_cream: 'Salted cream', egg_cream: 'Egg cream', orange_cut: 'Fresh orange juice', squid_cut: 'Cleaned squid', kumquat_cut: 'Sliced kumquat', peach_cut: 'Sliced peach', avocado_cut: 'Scooped avocado', bread_split: 'Split baguette', pork_grilled: 'Grilled pork', cucumber_cut: 'Sliced cucumber', egg_fried: 'Fried egg', shrimp_cooked: 'Cooked shrimp', beef_sliced: 'Sliced beef', snails_cooked: 'Boiled snails', cane_juice: 'Pressed cane juice', lime_cut: 'Lime wedges', scallion_oil: 'Scallion oil' };
-const CUT_VI = { salt_cream: 'Kem muối', egg_cream: 'Kem trứng', orange_cut: 'Nước cam vắt', squid_cut: 'Mực làm sạch', kumquat_cut: 'Tắc cắt', peach_cut: 'Đào cắt', avocado_cut: 'Bơ nạo', bread_split: 'Bánh mì xẻ', pork_grilled: 'Thịt nướng', cucumber_cut: 'Dưa leo cắt', egg_fried: 'Trứng chiên', shrimp_cooked: 'Tôm luộc', beef_sliced: 'Bò thái', snails_cooked: 'Ốc luộc', cane_juice: 'Nước mía ép', lime_cut: 'Chanh cắt', scallion_oil: 'Mỡ hành' };
+const CUT_EN = { mango_cut: 'Mango cubes', dragonfruit_cut: 'Dragon fruit', passion_pulp: 'Passion fruit pulp', coconut_water: 'Coconut water', salt_cream: 'Salted cream', egg_cream: 'Egg cream', orange_cut: 'Fresh orange juice', squid_cut: 'Cleaned squid', kumquat_cut: 'Sliced kumquat', peach_cut: 'Sliced peach', avocado_cut: 'Scooped avocado', bread_split: 'Split baguette', pork_grilled: 'Grilled pork', cucumber_cut: 'Sliced cucumber', egg_fried: 'Fried egg', shrimp_cooked: 'Cooked shrimp', beef_sliced: 'Sliced beef', snails_cooked: 'Boiled snails', cane_juice: 'Pressed cane juice', lime_cut: 'Lime wedges', scallion_oil: 'Scallion oil' };
+const CUT_VI = { mango_cut: 'Xoài cắt hạt lựu', dragonfruit_cut: 'Thanh long nạo', passion_pulp: 'Ruột chanh dây', coconut_water: 'Nước dừa', salt_cream: 'Kem muối', egg_cream: 'Kem trứng', orange_cut: 'Nước cam vắt', squid_cut: 'Mực làm sạch', kumquat_cut: 'Tắc cắt', peach_cut: 'Đào cắt', avocado_cut: 'Bơ nạo', bread_split: 'Bánh mì xẻ', pork_grilled: 'Thịt nướng', cucumber_cut: 'Dưa leo cắt', egg_fried: 'Trứng chiên', shrimp_cooked: 'Tôm luộc', beef_sliced: 'Bò thái', snails_cooked: 'Ốc luộc', cane_juice: 'Nước mía ép', lime_cut: 'Chanh cắt', scallion_oil: 'Mỡ hành' };
 for (const [id, g] of Object.entries(INGREDIENTS)) if (g.prep) PREPPED[g.prep.to] = { from: id, vi: CUT_VI[g.prep.to] || g.vi, en: g.en + ' (prepped)', enCut: CUT_EN[g.prep.to] || g.en, method: g.prep.method };
 export const PREP_VERB = { whip: ['Whip', 'Đánh bông'], chop: ['Slice', 'Cắt'], split: ['Split', 'Xẻ'], scoop: ['Scoop', 'Nạo'], grill: ['Grill', 'Nướng'], fry: ['Fry', 'Chiên'], boil: ['Boil', 'Luộc'], press: ['Press', 'Ép'] };
 export const PREP_BATCH = 4;
@@ -102,6 +108,11 @@ export const STATION = {
   avocado_cut:    { label: 'Bơ', en: 'Avocado',         icon: 'avocado_cut',    uses: 'avocado_cut',    layer: { color: '#c5e08a', h: 0.55 } },
   lime_cut:       { label: 'Chanh', en: 'Lime',      icon: 'lime_cut',       uses: 'lime_cut',       bits: 'lime' },
   blend:          { label: 'Xay', en: 'Blend',        icon: 'blend',          action: true },
+  mango_cut:      { label: 'Xoài', en: 'Mango',       icon: 'mango_cut',      uses: 'mango_cut',      layer: { color: '#ffc23d', h: 0.55 } },
+  dragonfruit_cut:{ label: 'Thanh long', en: 'Dragon fruit', icon: 'dragonfruit_cut', uses: 'dragonfruit_cut', layer: { color: '#e8457a', h: 0.55 } },
+  passion_pulp:   { label: 'Chanh dây', en: 'Passion fruit', icon: 'passion_pulp', uses: 'passion_pulp',  layer: { color: '#f2b51e', h: 0.45 } },
+  coconut_water:  { label: 'Nước dừa', en: 'Coconut water', icon: 'coconut_water', uses: 'coconut_water', layer: { color: '#eef6ea', h: 0.7 } },
+  yogurt:         { label: 'Sữa chua', en: 'Yogurt',   icon: 'yogurt',         uses: 'yogurt',         layer: { color: '#fbf6ee', h: 0.3 } },
   // bánh mì
   bread_split:    { label: 'Bánh mì', en: 'Baguette',    icon: 'bread_split',    uses: 'bread_split' },
   pate:           { label: 'Pa tê', en: 'Pâté',      icon: 'pate',           uses: 'pate' },
@@ -198,6 +209,16 @@ Object.assign(RECIPES, {
   muc_nuong:    { vi: 'Mực nướng', en: 'Grilled Squid', blurbVi: 'Mực tươi nướng than, chấm muối ớt chanh. Mùi thơm kéo khách cả bãi biển.', blurb: 'Fresh squid over charcoal with chili-lime salt. The smell pulls in the whole beach.', biz: 'grill', price: 78, vessel: 'grill', steps: ['squid_cut', 'grill'], options: ['chili'], icon: 'squid', chapter: 17, starter: true },
   so_diep_nuong:{ vi: 'Sò điệp nướng mỡ hành', en: 'Scallops with Scallion Oil', blurbVi: 'Sò điệp nướng mỡ hành, rắc đậu phộng. Món nhậu của biển.', blurb: 'Scallops grilled with scallion oil and crushed peanuts. The sea\'s favourite snack.', biz: 'grill', price: 82, vessel: 'grill', steps: ['scallop', 'scallion_oil', 'peanuts', 'grill'], options: ['chili'], icon: 'scallop', chapter: 17, starter: true },
 });
+// The Beach Smoothie Bar on Sunny Beach (chapter 15): blended fruit and fresh coconuts
+Object.assign(RECIPES, {
+  sinh_to_xoai:  { vi: 'Sinh tố xoài', en: 'Mango Smoothie', blurbVi: 'Xoài cát chín cây xay với sữa đặc và đá. Vàng như nắng.', blurb: 'Tree-ripened mango blended with condensed milk and ice. Yellow as the sun.', biz: 'smoothie', price: 31, vessel: 'cup', steps: ['mango_cut', 'condensed_milk', 'blend'], options: ['size', 'ice'], icon: 'drink:sinh_to_xoai', chapter: 15 },
+  nuoc_dua:      { vi: 'Nước dừa tươi', en: 'Fresh Coconut Water', blurbVi: 'Dừa xiêm chặt tại chỗ. Ngọt mát, không cần thêm gì.', blurb: 'A young coconut opened while you wait. Sweet, cool, nothing added.', biz: 'smoothie', price: 26, vessel: 'cup', steps: ['coconut_water'], options: ['size', 'ice'], icon: 'drink:nuoc_dua', chapter: 15 },
+  chanh_day:     { vi: 'Nước chanh dây', en: 'Passion Fruit Cooler', blurbVi: 'Chanh dây chua ngọt, hạt giòn tanh tách, thêm chút tắc.', blurb: 'Sweet-tart passion fruit with crunchy seeds and a squeeze of lime.', biz: 'smoothie', price: 26, vessel: 'cup', steps: ['passion_pulp', 'lime_cut'], options: ['size', 'sugar', 'ice'], icon: 'drink:chanh_day', chapter: 15 },
+  sinh_to_thanh_long: { vi: 'Sinh tố thanh long', en: 'Dragon Fruit Smoothie', blurbVi: 'Thanh long ruột đỏ xay với sữa chua. Màu hồng ai cũng muốn chụp ảnh.', blurb: 'Red dragon fruit blended with yogurt. A pink everyone wants to photograph.', biz: 'smoothie', price: 35, vessel: 'cup', steps: ['dragonfruit_cut', 'yogurt', 'blend'], options: ['size', 'ice'], icon: 'drink:sinh_to_thanh_long', chapter: 15, needRep: 900 },
+  sua_chua_xoai: { vi: 'Sữa chua xoài', en: 'Mango Yogurt Cup', blurbVi: 'Sữa chua mát lạnh, xoài cắt hạt lựu và chút chanh dây trên cùng.', blurb: 'Cold yogurt, mango cubes and a spoon of passion fruit on top.', biz: 'smoothie', price: 46, vessel: 'cup', steps: ['yogurt', 'mango_cut', 'passion_pulp'], options: ['size'], icon: 'drink:sua_chua_xoai', chapter: 15, needRep: 1200 },
+  // and for the Harbour Café: coconut coffee, blended like a cloud
+  ca_phe_dua:    { vi: 'Cà phê cốt dừa', en: 'Coconut Coffee', blurbVi: 'Cốt dừa xay với đá như mây, rót cà phê đậm lên trên.', blurb: 'Coconut cream blended to a cloud with ice, strong coffee poured over.', biz: 'cafe', price: 37, vessel: 'cup', steps: ['coconut_milk', 'condensed_milk', 'blend', 'coffee'], options: ['size'], icon: 'drink:ca_phe_dua', chapter: 15, needRep: 1000 },
+});
 // The Night Market stalls each have their own speciality (handed over by the owner when you buy the stall)
 Object.assign(RECIPES, {
   oc_luoc:    { vi: 'Ốc luộc sả', en: 'Lemongrass Snails', blurbVi: 'Ốc luộc sả, chấm muối tiêu chanh. Ăn chậm, nói chuyện nhiều.', blurb: 'Snails boiled with lemongrass, dipped in salt, pepper and lime. You eat slowly and talk a lot.', biz: 'night', price: 38, vessel: 'plate', steps: ['snails_cooked', 'herbs', 'lime_wedge'], options: ['chili'], icon: 'oc_luoc', chapter: 9, stallOnly: true },
@@ -249,6 +270,7 @@ export const BUSINESSES = {
   // outdoor kiosks: bought (no repair), run from the counter
   cafe: { kind: 'stall', biz: 'cafe', name: 'Cà Phê Bến Cảng', en: 'Harbour Café', chapter: 13, buy: 5000, queueMax: 5, hours: [6 * 60, 22 * 60], tolerance: 1.12 },
   grill: { kind: 'stall', biz: 'grill', name: 'Quán Nướng Vịnh Dừa', en: 'Coconut Cove Grill', chapter: 17, buy: 9000, queueMax: 5, hours: [10 * 60, 23 * 60], tolerance: 1.12 },
+  smoothie: { kind: 'stall', biz: 'smoothie', name: 'Sinh Tố Bãi Biển', en: 'Beach Smoothie Bar', chapter: 15, buy: 7000, queueMax: 5, hours: [8 * 60, 21 * 60], tolerance: 1.1, pace: 1.1, menu: ['sinh_to_xoai', 'nuoc_dua', 'chanh_day'] },
   // the other Night Market stalls, bought one by one from their owners
   // Each has its own menu and personality (pace: customers per hour; serve: time per order; tolerance: how
   // much a pricier menu is forgiven). Chè is quick and cheap; sugarcane is quicker and cheaper still; snails are
@@ -371,6 +393,7 @@ export const FURNITURE = {
   ship_model:  { vi: 'Mô hình thuyền', en: 'Model ferry',        price: 2500, w: 36, h: 12, collector: true, unlock: 12, fixed: true },
   art_commission:{ vi: 'Tranh đặt vẽ của Vy', en: 'A painting commissioned from Vy', price: 3500, w: 50, h: 8, wall: true, collector: true, unlock: 14, need: 'vy_brushes', fixed: true },
   // prizes for the weekly board's top 10 (systems/weekboard.js); never sold
+  opening_balloons: { vi: 'Bóng bay khai trương', en: 'Grand Opening balloons', price: 0, w: 16, h: 10, reward: true, fixed: true },
   trophy_gold:   { vi: 'Cúp vàng của tuần', en: 'Weekly gold cup', price: 0, w: 18, h: 12, reward: true, fixed: true, light: true },
   trophy_silver: { vi: 'Cúp bạc của tuần', en: 'Weekly silver cup', price: 0, w: 18, h: 12, reward: true, fixed: true },
   trophy_bronze: { vi: 'Cúp đồng của tuần', en: 'Weekly bronze cup', price: 0, w: 18, h: 12, reward: true, fixed: true },

@@ -182,8 +182,9 @@ export function spawnCustomer(bizId, opts = {}) {
   // who is coming?
   let resident = null, key, name, look, personality;
   const residentChance = G.npcs?.freeResidents?.().length ? 0.28 : 0;
-  if (!opts.tourist && chance(residentChance)) resident = G.npcs.borrowResident(bizId);
-  if (resident) {
+  if (!opts.tourist && !opts.special && chance(residentChance)) resident = G.npcs.borrowResident(bizId);
+  if (opts.special) { const sp = opts.special; key = 'rare:' + sp.id; name = sp.name; personality = sp.personality || 'picky'; look = sp.look; }
+  else if (resident) {
     key = 'res:' + resident.data.rid; name = RESIDENTS[resident.data.rid].name; personality = RESIDENTS[resident.data.rid].personality;
   } else if (opts.tourist || chance(G.runtime.boatBoost > 0 ? 0.5 : 0.28)) {
     const seed = randi(1000, 999999); key = 'tour:' + seed; name = choice(TOURIST_NAMES); personality = 'tourist'; look = visitorLook(seed, 'tourist');
@@ -206,7 +207,8 @@ export function spawnCustomer(bizId, opts = {}) {
   const P = PERSONALITIES[personality];
   const recipeLv = 1;
   const base = 52 * P.patience * (G.state.story.chapter <= 2 ? 1.4 : 1) * recipeLv * eq(bizId, 'patience');
-  const c = new Customer({ bizId, actor, key, name, personality, resident: !!resident, patience: base, patienceMax: base, friendOf: opts.friendOf || null });
+  const c = new Customer({ bizId, actor, key, name, personality, resident: !!resident, patience: base * (opts.special ? 1.6 : 1), patienceMax: base * (opts.special ? 1.6 : 1), friendOf: opts.friendOf || null });
+  if (opts.special) { c.special = opts.special.id; actor.data.special = opts.special.id; }
   c.order = makeOrder(bizId, c);
   if (c.order?.walk) { G.state.today.priceWalk = (G.state.today.priceWalk || 0) + 1; bus.emit('customer:pricey', bizId); if (!resident) { actor.showEmote?.('sweat', 1.2); setTimeout(() => { actor.fadeOut = true; }, 900); } else G.npcs.returnResident(resident); return null; }
   if (!c.order) { if (!resident) island.remove(actor); else G.npcs.returnResident(resident); return null; }
@@ -376,7 +378,8 @@ export function completeOrder(c, quality) {
   tipRate *= P.tip * (lv?.tip || 1) * (order.special ? 1.25 : 1);
   if (G.state.regulars[c.key]?.visits >= 3) tipRate *= 1.15 * eq(c.bizId, 'regTip');
   tipRate *= eq(c.bizId, 'tip') * Math.min(1.4, Math.pow(priceMul(order.recipe), -1.2)); // pricey food, smaller tips
-  const tip = Math.round(price * tipRate);
+  const L = G.runtime.luck, luck = L && L.day === G.state.day && G.state.time < L.until ? L.tip : 1;   // a busker's song, the golden cat (systems/rare.js)
+  const tip = Math.round(price * tipRate * luck);
   addXP(quality === 'perfect' ? 12 + (order.special ? 3 : 0) : 7, 'serve');
   addMoney(price, 'sale');
   if (tip > 0) { addMoney(tip, 'tip'); s.today.tips += tip; s.stats.tipsTotal += tip; }

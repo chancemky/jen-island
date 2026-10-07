@@ -567,28 +567,42 @@ export function drawDinh(c, t, b) {
 // and the Coconut Cove grill. Shuttered with a FOR SALE board until you own them.
 export function drawKiosk(c, t, b) {
   const s = b.state?.() || {}, w = b.w || 112, h = 46, own = s.owned, open = s.open;
-  const cafe = b.style === 'cafe';
-  const wall = cafe ? '#f6ecdc' : '#e9d3ae', trim = s.branded ? s.signCol : cafe ? '#6b4431' : '#c9674a';
+  const cafe = b.style === 'cafe', smoothie = b.style === 'smoothie';
+  const wall = cafe ? '#f6ecdc' : smoothie ? '#eaf7f2' : '#e9d3ae', trim = s.branded ? s.signCol : cafe ? '#6b4431' : smoothie ? '#2f9e8f' : '#c9674a';
   shadow(c, 0, 2, w * 0.6, 10, 0.2);
   box(c, -w / 2, -h, w, h, 4, wall, INK, 1.2);
-  if (!cafe) for (let x = -w / 2 + 6; x < w / 2; x += 8) line(c, x, -h + 2, x, -2, 'rgba(120,80,40,.25)', 1);   // bamboo slats
+  if (smoothie) for (let x = -w / 2 + 4; x < w / 2; x += 12) box(c, x, -h + 34, 6, h - 36, 0, 'rgba(255,143,176,.35)', null);   // candy stripes below the hatch
+  else if (!cafe) for (let x = -w / 2 + 6; x < w / 2; x += 8) line(c, x, -h + 2, x, -2, 'rgba(120,80,40,.25)', 1);   // bamboo slats
   // serving hatch
   const hx = 0, hy = -h + 8, hw = w - 30, hh = 24;
-  box(c, hx - hw / 2, hy, hw, hh, 2, open ? (cafe ? '#fff1d6' : '#ffe2c0') : '#6e5a4e');
-  if (open) {
+  box(c, hx - hw / 2, hy, hw, hh, 2, open ? (cafe ? '#fff1d6' : smoothie ? '#fff8ea' : '#ffe2c0') : '#6e5a4e');
+  if (open && smoothie) {
+    // a fruit bowl, the blender whirring, and a row of finished cups
+    ell(c, -22, hy + 18, 10, 4, '#f7de8c', INK, 0.7); for (const [x, y, col] of [[-27, 14, '#ffc23d'], [-21, 12, '#e8457a'], [-16, 14, '#a7c96a'], [-24, 10, '#f2b51e']]) circ(c, x, hy + y, 3, col, INK, 0.5);
+    const k = Math.sin(t * 30) * 0.5; box(c, 2 + k, hy + 4, 10, 15, 2, 'rgba(255,194,61,.85)', INK, 0.7); box(c, 0, hy + 18, 14, 5, 1, '#5b6f7a', INK, 0.6); box(c, 4, hy + 2, 6, 3, 1, '#5b6f7a', INK, 0.5);
+    for (let i = 0; i < 3; i++) { box(c, 20 + i * 8, hy + 12, 6, 10, 1.5, ['#ffc23d', '#e8457a', '#eef6ea'][i], INK, 0.5); line(c, 23 + i * 8, hy + 12, 25 + i * 8, hy + 6, ['#f36d86', '#ffd35a', '#6fbf73'][i], 1); }
+    glow(b, 0, hy + 12, 40, 'rgba(255,230,160,.4)');
+  } else if (open) {
     if (cafe) { for (let i = 0; i < 3; i++) box(c, -24 + i * 16, hy + 12, 8, 10, 2, ['#6b4431', '#f3e2c4', '#e9a24a'][i], INK, 0.6); line(c, 18, hy + 4, 18, hy + 20, '#8f9aa3', 1.4); ell(c, 18, hy + 4, 4, 2, '#8f9aa3', INK, 0.5); }
     else { box(c, -26, hy + 16, 52, 7, 2, '#4a4550', INK, 0.8); for (let i = 0; i < 5; i++) { circ(c, -20 + i * 10, hy + 15, 2.4, i % 2 ? '#f0b04a' : '#e8e2d8', INK, 0.5); } steamPuffs(c, t, 0, hy + 8); }
     glow(b, 0, hy + 12, 40, 'rgba(255,210,130,.45)');
   } else { for (let y = hy + 3; y < hy + hh; y += 4) line(c, hx - hw / 2 + 2, y, hx + hw / 2 - 2, y, 'rgba(255,255,255,.18)', 1); }
   box(c, hx - hw / 2 - 4, hy + hh - 1, hw + 8, 5, 2, shade(wall, -40));
   // roof: a café awning or a thatched palm roof
-  if (cafe) awning(c, 0, -h - 2, w + 12, s.branded ? s.awning : ['#fff8ea', trim], 14);
+  if (cafe || smoothie) awning(c, 0, -h - 2, w + 12, s.branded ? s.awning : smoothie ? ['#fff8ea', '#ff8fb0'] : ['#fff8ea', trim], 14);
   else { c.beginPath(); c.moveTo(-w / 2 - 10, -h + 2); c.quadraticCurveTo(0, -h - 36, w / 2 + 10, -h + 2); c.closePath(); c.fillStyle = '#d9b36a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.1; c.stroke(); c.strokeStyle = '#b98a4a'; c.lineWidth = 0.8; for (let i = -5; i <= 5; i++) { c.beginPath(); c.moveTo(i * 9, -h - 14 + Math.abs(i) * 2); c.lineTo(i * 11, -h + 1); c.stroke(); } }
   // sign
-  const label = s.sign || (cafe ? T('HARBOUR CAFÉ', 'CÀ PHÊ BẾN CẢNG') : T('COVE GRILL', 'QUÁN NƯỚNG VỊNH DỪA'));
-  signBoard(c, 0, cafe ? -h - 26 : -h - 30, cafe ? 78 : 88, 13, label, trim, '#fff', { style: s.signStyle });
-  if (own) hoursPlate(c, b.biz, 0, cafe ? -h - 15 : -h - 19, 76);
-  if (cafe) { // coffee cup icon and two little bistro tables
+  const label = s.sign || (cafe ? T('HARBOUR CAFÉ', 'CÀ PHÊ BẾN CẢNG') : smoothie ? T('SMOOTHIE BAR', 'SINH TỐ BÃI BIỂN') : T('COVE GRILL', 'QUÁN NƯỚNG VỊNH DỪA'));
+  const sy = cafe || smoothie ? -h - 26 : -h - 30;
+  signBoard(c, 0, sy, cafe ? 78 : 88, 13, label, trim, '#fff', { style: s.signStyle });
+  if (smoothie) { // a big mango on the sign's corner, and surfboards leaning on the side
+    c.save(); c.translate(44, sy - 4); c.rotate(-0.4 + Math.sin(t * 2) * 0.06); ell(c, 0, 0, 7, 9, '#ffc23d', INK, 0.9); ell(c, 2, 3, 4, 5, '#f59a2f', null); c.restore();
+    for (const [x, col] of [[-w / 2 - 14, '#6fbfb0'], [-w / 2 - 22, '#f36d86']]) { ell(c, x, -24, 5, 24, col, INK, 0.9); line(c, x, -46, x, -2, '#fff', 1); }
+  }
+  if (own) hoursPlate(c, b.biz, 0, cafe || smoothie ? -h - 15 : -h - 19, 76);
+  if (smoothie) { // two beach stools
+    for (const x of [w / 2 + 16, w / 2 + 30]) { ell(c, x, -10, 5, 2, '#ff8fb0', INK, 0.7); limb(c, [x, -9, x, 0], 1.2, '#8a8f99'); }
+  } else if (cafe) { // coffee cup icon and two little bistro tables
     for (const x of [-w / 2 - 20, w / 2 + 20]) { ell(c, x, -14, 9, 3, '#fff8ea', INK, 0.8); limb(c, [x, -13, x, 0], 1.4, '#6b4431'); }
   } else { // tiki torches
     for (const x of [-w / 2 - 12, w / 2 + 12]) { limb(c, [x, 0, x, -30], 2, '#8a5f3e'); const k = Math.sin(t * 8 + x) * 1.2; c.beginPath(); c.moveTo(x - 3, -30); c.quadraticCurveTo(x + k, -42, x + 3, -30); c.fillStyle = '#ff9a3a'; c.fill(); if (nightA() > 0.05) glow(b, x, -34, 26, 'rgba(255,170,90,.5)'); }

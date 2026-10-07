@@ -27,6 +27,13 @@ export function snapshot(title, delay = 1200) {
     } catch (e) { console.warn('album', e); }
   }, delay);
 }
+// a picture you took yourself in photo mode (ui/photo.js)
+export function addPhoto(title, img) {
+  if (!key()) return false;
+  const list = albumPhotos(); list.push({ day: G.state.day, t: Date.now(), title, img, mine: true });
+  while (list.length > MAX) list.shift();
+  save(list); return true;
+}
 const MOMENTS = {
   first_repair: ['The first shed, fixed', 'Căn chòi đầu tiên, đã sửa xong'], first_sale: ['My very first customer', 'Vị khách đầu tiên'],
   first_keeper: ['My first helper', 'Người phụ giúp đầu tiên'], truck: ['The truck is ours', 'Chiếc xe là của mình'],

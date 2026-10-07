@@ -161,6 +161,7 @@ export function sfx(name, opt = {}) {
     case 'horn': tone(220, 0.5, { type: 'sawtooth', vol: 0.05, attack: 0.05 }); tone(277, 0.5, { type: 'sawtooth', vol: 0.04, attack: 0.05 }); break;
     case 'beep': horn(0, 0.13); horn(0.2, 0.26); break;          // a scooter's two-tone electric horn: bíp-bíiip
     case 'blend': noise(0.7, { vol: 0.16, freq: 400, q: 3, to: 900 }); tone(120, 0.7, { type: 'sawtooth', vol: 0.06, slide: 80, lp: 700 }); for (let i = 0; i < 4; i++) noise(0.03, { vol: 0.06, freq: 2500, q: 8, when: 0.1 + i * 0.13 }); break;   // the motor, and ice knocking the jar
+    case 'firework': noise(0.3, { vol: 0.03, freq: 2000, q: 8, to: 5000 }); tone(140, 0.5, { type: 'sine', vol: 0.2, slide: -90, when: 0.25, wet: 0.5 }); noise(0.5, { vol: 0.12, freq: 300, q: 0.7, when: 0.25, wet: 0.5 }); for (let i = 0; i < 10; i++) noise(0.015, { vol: 0.05, freq: 3000 + Math.random() * 4000, q: 3, when: 0.45 + Math.random() * 0.6 }); break;   // whistle, boom, crackle
     case 'page': noise(0.14, { vol: 0.07, freq: 2600, q: 0.8, to: 4200 }); noise(0.05, { vol: 0.05, freq: 1500, q: 1, when: 0.1 }); break;
   }
 }

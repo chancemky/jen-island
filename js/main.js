@@ -34,7 +34,7 @@ import { talkToResident, talkToMerchant, talkToStaff, talkToVisitor } from './sy
 import { questDelivery } from './systems/sidequests.js';
 import { loadGame, saveLocal, saveCloudNow, tickSave, initSaveHooks, peekLocalLanguage } from './systems/save.js';
 import * as cloud from './systems/cloud.js';
-import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, bizName, recipeName, HARBOUR_BRIDGE, COVE_BRIDGE, BRIDGE_REPAIR, FESTIVAL_REQ, KEEPER_REQ } from './data/game.js';
+import { BUSINESSES, NIGHT_MARKET_RESTORE, STATUE_COST, RECIPES, bizName, recipeName, HARBOUR_BRIDGE, COVE_BRIDGE, BRIDGE_REPAIR, FESTIVAL_REQ, KEEPER_REQ, FURNITURE } from './data/game.js';
 import { applyStaticText, bootText } from './ui/statictext.js';
 import { MERCHANTS, RESIDENTS, playerLook } from './data/looks.js';
 import { tapAnimals, react as reactAnimal } from './systems/animals.js';
@@ -42,7 +42,7 @@ import { nearestSeat, sitDown, standUp, updateSeat, clearSeat, inSeat } from './
 import { meoAntic } from './systems/fun.js';
 import { initLedger } from './systems/ledger.js';
 import { initAlbum } from './systems/album.js';
-import { nearbyThing, outdoorAction, updateWorldEvents, lookText, realEvent } from './systems/interact.js';
+import { nearbyThing, outdoorAction, updateWorldEvents, lookText, realEvent, eventOn } from './systems/interact.js';
 import { updateSeasonal } from './systems/growth.js';
 import { fishingAction } from './systems/fishing.js';
 import { plaqueAction } from './systems/garden.js';
@@ -58,6 +58,8 @@ import { setHaptics } from './core/haptics.js';
 import { initNotify } from './systems/notify.js';
 import { initReview } from './systems/review.js';
 import { initBoard, BOARD, boardOpen } from './systems/board.js';
+import { initRare, rareAction } from './systems/rare.js';
+import { openPhotoMode } from './ui/photo.js';
 import { openBoard } from './ui/board.js';
 import { CLOTHES } from './data/wardrobe.js';
 import { initAds } from './systems/ads.js';
@@ -143,7 +145,7 @@ async function boot() {
   initBadges();
   initSocial();
   initBoard();
-  initNotify(); initReview();
+  initNotify(); initReview(); initRare();
   setTimeout(initWeekBoard, 4000);          // after the morning mail settles
   showMorningMail();
   festivalGift();
@@ -160,6 +162,7 @@ function festivalGift() {
   const ev = realEvent(), w = G.state.wardrobe;
   if (!ev?.hat || !CLOTHES[ev.hat] || w.owned.includes(ev.hat) || !G.state.story.flags.freeRoam) return;
   w.owned.push(ev.hat); markDirty(true); track('festival_gift', { event: ev.id });
+  if (ev.gift && FURNITURE[ev.gift]) (G.state.home.owned ||= []).push(ev.gift);      // (the Grand Opening also leaves balloons for your home)
   showReward({ kicker: T(ev.en, ev.vi), title: T('A festival gift!', 'Quà lễ hội!'), sub: T(CLOTHES[ev.hat].en, CLOTHES[ev.hat].vi), icon: 'shirt', text: T(`${ev.line[0]} Wear it from the wardrobe in your room.`, `${ev.line[1]} Mặc nó từ tủ quần áo trong phòng nhé.`), button: T('Thank you!', 'Cảm ơn!') });
 }
 // Morning mail: today's gift (and tomorrow's, if you come back)
@@ -175,6 +178,7 @@ function songNow() {
   if (G.runtime.cinematic || !sc) return 'title';
   if (cs.name === 'festival' || cs.name === 'keeper' || cs.name === 'statue') return 'festival';
   if (sc.id === 'meo') return 'meo';
+  const fest = eventOn(); if (sc === scenes.island && fest && ['launch', 'newyear', 'nationalday', 'tet'].includes(fest.id) && G.player && areaIdAt(G.player.x, G.player.y) === 'Wind Plaza') return 'festival';
   if (sc.id === 'house' || sc.id.startsWith('home_')) return 'home';
   if (COZY.has(sc.id)) return 'cafe';
   if (sc.id === 'night') return 'nightmarket';
@@ -524,6 +528,8 @@ function updateInteraction(dt) {
   }
   // fishing off the end of the pier (once Chú Hải has shown you how)
   const fish = fishingAction(pl); if (fish) { setAction(fish.label, fish.run, fish.icon); return; }
+  // a rare visitor (the golden cat)
+  const rv = rareAction(pl); if (rv) { setAction(rv.label, rv.run, rv.icon); return; }
   // the fountain, the pier, the shore
   const od = outdoorAction(pl); if (od) { setAction(od.label, od.run, od.icon); return; }
   // lore on restored places
@@ -584,6 +590,7 @@ async function talkTo(a) {
     else if (a.data?.emp) await talkToStaff(a);
     else if (a.data?.tourist) await talkToVisitor(a);
     else if (a.data?.cart) await buyFromVendor(a);
+    else if (a.data?.onTalk) await a.data.onTalk(a);
     else await say(a, T('Hello!', 'Xin chào!'));
   }, { bars: false, keepHud: true }); }
   finally { if (a.data) { const d = a.data; d.inTalk = false; if (!a.path && ['walking', 'going-home', 'boarding'].includes(d.state)) d.state = 'idle'; if (d.state === 'idle') d.until = Math.max(d.until || 0, G.state.time + 4); } }
@@ -854,6 +861,7 @@ function specialLine() {
 
 // ---------------------------------------------------------------- HUD buttons
 $('bagBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen() || isPresenting()) return; sfx('ui'); openBag(); });
+$('camBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen() || isPresenting() || G.runtime.inCutscene) return; openPhotoMode(); });
 $('mapBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen() || isPresenting()) return; sfx('ui'); openMenu({ onLogout: logout }); });
 $('menuBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen() || isPresenting()) return; sfx('ui'); openMenu({ onLogout: logout }); });
 $('questPill').addEventListener('click', () => { if (cs.active) return; const st = currentStep(); if (st?.text) toast({ text: T('Objective', 'Mục tiêu'), sub: st.text(), icon: 'star', ms: 4000 }); });

@@ -1,7 +1,6 @@
 // Scratch play-tests: node tools/play.mjs <steps.mjs> <out-prefix>. Opens a fresh dev island,
 // jumps it to free play (chapter 20), dismisses the start-up popups, then runs the default
 // export of steps.mjs as (page, shot). Supabase calls answer [] unless the steps route them.
-// scratch play-test harness: node tools/_play.mjs <script.js> <outprefix>
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import { chromium, devices } from 'playwright';
 const ROOT = process.cwd(), [scriptFile, OUT] = process.argv.slice(2);
 const T = { '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.woff2': 'font/woff2', '.webmanifest': 'application/json', '.svg': 'image/svg+xml' };

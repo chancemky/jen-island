@@ -447,6 +447,39 @@ function drawHat(c, L, S, yawFace, t) {
     if (q.dz > 0.1) poly(c, [x - 1.4, y + 1.8, x + sx * 0.4, y - 2.2, x + 1.4, y + 1.8], '#ffc0d0', null);
     c.restore();
   }
+  // heart boppers: two hearts on springy wires that wobble as you move
+  if (h === 'hearts') for (const s of [-1, 1]) {
+    const q = onHead(S, yawFace, s * 0.55, 1.2, HR * 1.04);
+    const b = proj(q.p), wob = Math.sin(t * 6 + s) * 1.6, tip = [b[0] + s * 3 + wob, b[1] - 10];
+    c.save();
+    c.strokeStyle = INK; c.lineWidth = 0.7; c.beginPath(); c.moveTo(b[0], b[1]); c.quadraticCurveTo(b[0] + s * 3, b[1] - 5, tip[0], tip[1]); c.stroke();
+    const hx = tip[0], hy = tip[1] - 1.6; c.beginPath(); c.moveTo(hx, hy + 3.6); c.bezierCurveTo(hx - 5, hy, hx - 3.6, hy - 4.4, hx, hy - 1.9); c.bezierCurveTo(hx + 3.6, hy - 4.4, hx + 5, hy, hx, hy + 3.6); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke();
+    circ(c, hx - 1, hy - 1.2, 0.6, 'rgba(255,255,255,.8)', null); c.restore();
+  }
+  // a striped party cone with a pom, tipped a little to one side
+  if (h === 'party') { const q = onHead(S, yawFace, 0.3, 1.3, HR * 1.05), pp = proj(q.p), x = pp[0], y = pp[1] + 1; {
+    const lean = Math.sin(yawFace) * 1.2, ap = [x + 2 + lean, y - 12];
+    c.beginPath(); c.moveTo(x - 5, y + 1.4); c.lineTo(ap[0], ap[1]); c.lineTo(x + 5, y + 1.4); c.quadraticCurveTo(x, y + 3.2, x - 5, y + 1.4); c.closePath();
+    c.fillStyle = col; c.fill(); c.save(); c.clip(); c.strokeStyle = L.hatRibbon || '#fff6d8'; c.lineWidth = 1.5; for (let i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(x - 7, y - 2 + i * 3.6); c.lineTo(x + 7, y - 5 + i * 3.6); c.stroke(); } c.restore();
+    c.beginPath(); c.moveTo(x - 5, y + 1.4); c.lineTo(ap[0], ap[1]); c.lineTo(x + 5, y + 1.4); c.quadraticCurveTo(x, y + 3.2, x - 5, y + 1.4); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+    for (let i = 0; i < 6; i++) { const an = i / 6 * TAU + t * 2; circ(c, ap[0] + Math.cos(an) * 1.4, ap[1] + Math.sin(an) * 1.4, 1.25, i % 2 ? '#ffd35a' : '#f36d86', null); }
+  } }
+  // a propeller beanie: the little rotor spins when you walk
+  if (h === 'propeller') {
+    const latF = () => 0.42; capRegion(c, S, yawFace, latF, HR * 1.07, col, null);
+    c.save(); c.beginPath(); c.ellipse(hc[0], hc[1], HR * 1.07, HR * 1.06, 0, Math.PI * 1.05, Math.PI * 1.95); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); c.restore();
+    for (let i = 0; i < 4; i++) { const q = onHead(S, yawFace, i / 4 * TAU + 0.3, 0.75, HR * 1.075); if (q.dz < 0.05) continue; const pp = proj(q.p); circ(c, pp[0], pp[1], 1.1, ['#f36d86', '#ffd35a', '#6fbfb0', '#8fb7e0'][i], null); }
+    const px = top[0], py = top[1] - 2.6, spin = t * 14, len = 6.5;
+    line(c, px, top[1] + 0.6, px, py, INK, 0.9);
+    for (const s of [0, Math.PI]) { const dx = Math.cos(spin + s) * len; c.beginPath(); c.ellipse(px + dx / 2, py, Math.abs(dx) / 2 + 0.4, 1.1, 0, 0, TAU); c.fillStyle = s ? '#f36d86' : '#ffd35a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.5; c.stroke(); }
+    circ(c, px, py, 0.9, '#fffaf0', INK, 0.5);
+  }
+  // a cloth headband with a star at the front (red and gold for National Day)
+  if (h === 'starband') {
+    const pts = []; for (let i = 0; i <= 32; i++) { const lon = -Math.PI + i / 32 * TAU, q = onHead(S, yawFace, lon, 0.5, HR * 1.08); pts.push([proj(q.p), q.dz]); }
+    c.lineCap = 'round'; c.lineJoin = 'round'; for (const [w, cl] of [[3.8, INK], [2.6, col]]) { c.strokeStyle = cl; c.lineWidth = w; c.beginPath(); let on = false; for (const [p, z] of pts) { if (z < -0.05) { on = false; continue; } on ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); on = true; } c.stroke(); }
+    onPt(0, 0.5, (x, y, k) => { const sp = []; for (let i = 0; i < 10; i++) { const an = -Math.PI / 2 + i * Math.PI / 5, r = (i % 2 ? 1.1 : 2.6) * k; sp.push(x + Math.cos(an) * r, y + Math.sin(an) * r); } poly(c, sp, L.hatRibbon || '#ffd35a', INK, 0.4); });
+  }
   if (h === 'flowercrown') for (let i = 0; i < 12; i++) { const lon = -Math.PI + i / 12 * TAU; const q = onHead(S, yawFace, lon, 0.42, HR * 1.07); if (q.dz < 0) continue; const pp = proj(q.p); circ(c, pp[0], pp[1], 1.6, ['#ff8fb0', '#fff', '#ffd35a', '#c9a8ff'][i % 4], INK, 0.4); if (i % 2) ell(c, pp[0] + 1.4, pp[1] + 0.6, 1.2, 0.6, '#7fc062', null); }
 }
 

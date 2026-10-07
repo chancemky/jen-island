@@ -271,6 +271,9 @@ function goat(c, t, a) {
 }
 const DRAW = { chicken, dog, cat: vcat, crab, pigeon, goat };
 
+// a visiting animal (systems/rare.js): added for a while, then taken away again
+export function addAnimal(kind, x, y, o = {}) { const a = { kind, x, y, hx: x, hy: y, vx: 0, vy: 0, t: 0, state: 'idle', until: 2, face: 1, seed: Math.random() * 99, ...o }; A.push(a); return a; }
+export function removeAnimal(a) { const i = A.indexOf(a); if (i >= 0) A.splice(i, 1); }
 export function animalDrawables() {
   const out = [];
   const SC = { chicken: 1.4, pigeon: 1.3, crab: 1.35, cat: 1.2, dog: 1.15, goat: 1.05 };
@@ -281,10 +284,12 @@ export function animalDrawables() {
     if (a.react && a.kind === 'dog') c.rotate(Math.sin(k * 20) * 0.08);          // excited wiggle
     if (a.react && a.kind === 'crab') c.translate(Math.sin(k * 30) * 1.5, 0);   // side shuffle
     if (a.sleeping) c.scale(1.06, 0.84);                                        // curled up low
+    if (a.golden) { const k3 = 0.25 + Math.sin(t * 2.4) * 0.08; c.fillStyle = `rgba(255,214,90,${k3})`; c.beginPath(); c.ellipse(0, -5, 15, 9, 0, 0, Math.PI * 2); c.fill(); }
     DRAW[a.kind](c, t, a);
     if (a.react && a.kind === 'chicken' && k < 1) { c.strokeStyle = INK; c.lineWidth = 0.8; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * 5, -8); c.lineTo(s * (9 + Math.sin(k * 40) * 2), -12 - Math.abs(Math.sin(k * 40)) * 3); c.stroke(); } }
     c.restore();
     if (a.sleeping) for (let i = 0; i < 2; i++) { const k2 = (t * 0.35 + i * 0.5 + a.seed) % 1; c.globalAlpha = Math.sin(k2 * Math.PI) * 0.8; const zs = (4 + k2 * 3) / 6; c.save(); c.translate(5 + k2 * 6, -TOP[a.kind] * SC[a.kind] * 0.7 - k2 * 12); c.scale(zs, zs); stext(c, 'z', 0, 0, 6, '#fff', 900, 'center', INK, 1.2); c.restore(); c.globalAlpha = 1; }   // (one cached size, scaled — a new size every frame meant a new bitmap every frame)
+    if (a.golden) for (let i = 0; i < 3; i++) { const k2 = (t * 0.6 + i / 3 + a.seed) % 1; c.save(); c.globalAlpha = Math.sin(k2 * Math.PI); c.fillStyle = '#fff6b0'; const sx = (i - 1) * 9 + Math.sin(t + i) * 2, sy = -14 - k2 * 18, r = 1.6; c.beginPath(); c.moveTo(sx, sy - r * 2); c.lineTo(sx + r * 0.5, sy); c.lineTo(sx, sy + r * 2); c.lineTo(sx - r * 0.5, sy); c.closePath(); c.fill(); c.fillRect(sx - r * 2, sy - 0.3, r * 4, 0.6); c.restore(); }
     drawReact(c, a, TOP[a.kind] * SC[a.kind] + hop);
   } });
   for (const f of fish) if (f.jump) {

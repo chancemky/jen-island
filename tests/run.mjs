@@ -363,7 +363,8 @@ if (run('features')) {
     // morning mail once a day
     s.dailyGift = null; const m1 = daily.morningMail(), m2 = daily.morningMail(); out.mail = !!m1 && !m2;
     // real festivals on their dates, nothing on an ordinary day
-    out.festivals = [interact.realEvent(new Date(Date.UTC(2027, 1, 6)))?.id, interact.realEvent(new Date(Date.UTC(2026, 9, 31)))?.id, interact.realEvent(new Date(Date.UTC(2026, 11, 25)))?.id, interact.realEvent(new Date(Date.UTC(2027, 4, 10)))?.id];
+    out.festivals = [interact.realEvent(new Date(Date.UTC(2027, 1, 6)))?.id, interact.realEvent(new Date(Date.UTC(2026, 9, 31)))?.id, interact.realEvent(new Date(Date.UTC(2027, 9, 31)))?.id, interact.realEvent(new Date(Date.UTC(2026, 11, 25)))?.id, interact.realEvent(new Date(Date.UTC(2027, 4, 10)))?.id,
+      interact.realEvent(new Date(Date.UTC(2027, 1, 14)))?.id, interact.realEvent(new Date(Date.UTC(2026, 9, 20)))?.id, interact.realEvent(new Date(Date.UTC(2027, 5, 1)))?.id, interact.realEvent(new Date(Date.UTC(2027, 8, 2)))?.id, interact.realEvent(new Date(Date.UTC(2027, 0, 1)))?.id];
     out.festivalHats = ['lucky_nonla', 'moon_bow', 'black_cat_ears', 'snow_beanie'].every(id => wardrobe.CLOTHES[id]?.store);
     out.songs = music.checkSongs();
     return out;
@@ -374,7 +375,7 @@ if (run('features')) {
   if (r.storeNotCounted) pass('features', 'store clothes never count for milestones'); else fail('features', 'a store item counted for a milestone');
   if (r.weekly) pass('features', 'three weekly goals; a finished goal pays out once'); else fail('features', 'weekly goals wrong');
   if (r.mail) pass('features', 'morning mail comes once a day'); else fail('features', 'morning mail wrong');
-  if (r.festivals.join() === 'tet,halloween,christmas,') pass('features', 'real festivals fall on their dates'); else fail('features', `festival dates wrong: ${r.festivals.join()}`);
+  if (r.festivals.join() === 'tet,launch,halloween,christmas,,valentine,womensday,childrensday,nationalday,newyear') pass('features', 'real festivals fall on their dates (and the Grand Opening only in 2026)'); else fail('features', `festival dates wrong: ${r.festivals.join()}`);
   if (r.festivalHats && r.songs >= 12) pass('features', `festival hats exist; ${r.songs} songs all valid`); else fail('features', 'festival hats or songs missing');
   // the Island Board: three notes a day, the same all day, counted as you play, paid once
   const board = await p.evaluate(async () => {

@@ -3,9 +3,22 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.7.0';
+export const APP_VERSION = '5.8.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.8.0', date: '2026-10-07T15:42:12Z',
+    title: ['Sunny Days & Surprise Guests', 'Ngày Nắng & Vị Khách Bất Ngờ'],
+    items: [
+      ['New shop: the Beach Smoothie Bar on Sunny Beach (Chapter 15) with mango smoothies, fresh coconut water, passion fruit coolers, dragon fruit smoothies and mango yogurt cups', 'Quán mới: Sinh Tố Bãi Biển ở Bãi Biển (Chương 15) với sinh tố xoài, nước dừa tươi, nước chanh dây, sinh tố thanh long và sữa chua xoài'],
+      ['New at the Harbour Café: Coconut Coffee', 'Mới ở Cà Phê Bến Cảng: Cà phê cốt dừa'],
+      ['Rare visitors: a food critic, a travel vlogger, a busker by the fountain and a lucky golden cat might turn up any day', 'Khách hiếm: nhà phê bình ẩm thực, vlogger du lịch, nghệ sĩ đường phố bên đài phun nước và chú mèo vàng may mắn có thể ghé bất cứ ngày nào'],
+      ['Photo mode (the 📷 button): frame your shot, pick a filter and a pose, add a Polaroid or postcard frame, then save or share it', 'Chế độ chụp ảnh (nút 📷): chọn khung hình, bộ lọc và tư thế, thêm khung Polaroid hoặc bưu thiếp, rồi lưu hoặc chia sẻ'],
+      ['New festivals on their real dates: New Year\'s Eve, Sweethearts\' Day, Women\'s Day, Children\'s Day and National Day, each with decorations and a free hat', 'Lễ hội mới đúng ngày thật: Đón Năm Mới, Lễ Tình Nhân, Ngày Phụ Nữ, Tết Thiếu Nhi và Quốc Khánh, mỗi dịp có trang trí và một chiếc mũ miễn phí'],
+      ['Grand Opening Festival, 30 Oct – 1 Nov: balloons, fireworks over the plaza, an Opening Day Party Hat and a keepsake for your home', 'Lễ Hội Khai Trương, 30/10 – 1/11: bóng bay, pháo hoa trên quảng trường, Mũ tiệc ngày khai trương và một món kỷ niệm cho nhà bạn'],
+      ['New badges: Critic\'s Choice and Rare Spotter', 'Huy hiệu mới: Được giới phê bình chọn và Người săn điều hiếm'],
+    ],
+  },
   {
     v: '5.7.0', date: '2026-10-07T14:41:43Z',
     title: ['Sounds of the Island', 'Âm Thanh Của Đảo'],

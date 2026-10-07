@@ -178,6 +178,8 @@ export const BUILDINGS = [
   { id: 'h_hb1', type: 'house', interior: 'home_chi_ngoc', home: 'chi_ngoc', label: ['GUESTHOUSE', 'NHÀ NGHỈ'], door: [0, 0], x: 2230, y: 620, w: 96, fp: 50, wall: '#e6f0fa', roof: '#6f9fc8', shutter: '#f2c14e', style: 'wood', region: 'harbour' },
   { id: 'h_hb2', type: 'house', door: [0, 0], x: 2660, y: 560, w: 96, fp: 50, wall: '#fbe7d6', roof: '#c9674a', shutter: '#6fbfb0', style: 'flowers', label: ['HARBOUR', 'BẾN CẢNG'], region: 'harbour' },
   { id: 'h_hb3', type: 'house', interior: 'home_ong_loc', home: 'ong_loc', door: [0, 0], x: 3010, y: 560, w: 96, fp: 50, wall: '#eef6e8', roof: '#5f8fb8', shutter: '#e8584e', style: 'tin', fisher: true, region: 'harbour' },
+  // Sunny Beach: the smoothie bar (chapter 15)
+  { id: 'smoothie', type: 'kiosk', style: 'smoothie', x: 780, y: 2236, w: 112, fp: 40, biz: 'smoothie' },
   // Coconut Cove
   { id: 'grill', type: 'kiosk', style: 'grill', x: 2250, y: 2204, w: 112, fp: 40, biz: 'grill', region: 'cove' },
   { id: 'h_cove', type: 'house', interior: 'home_co_dua', home: 'co_dua', door: [0, 0], x: 2450, y: 2130, w: 96, fp: 50, wall: '#fff3d6', roof: '#7fae4d', shutter: '#e9a23b', style: 'wood', region: 'cove' },
@@ -251,6 +253,7 @@ export const QUEUES = {
   // night market: customers wait in the open aisle beside each counter (not under the next row's roof)
   night: [[486, 672], [466, 680], [446, 686]],
   cafe: [[2790, 728], [2766, 740], [2742, 752], [2718, 762], [2694, 770]],
+  smoothie: [[780, 2276], [756, 2288], [732, 2298], [708, 2306], [684, 2312]],
   grill: [[2240, 2242], [2214, 2252], [2188, 2260], [2162, 2266], [2136, 2270]],
   nm1: [[384, 582], [404, 590], [424, 596]],
   nm2: [[486, 582], [466, 590], [446, 596]],

@@ -24,7 +24,7 @@ export const PLACES = {
   house: { en: 'Your home', vi: 'Nhà của bạn', rent: 30, payback: 55 },
   shed1: { rent: 40, payback: 45 }, shed2: { rent: 50, payback: 50 }, truck: { rent: 60, payback: 50, en2: 'Parking spot', vi2: 'Chỗ đậu xe' }, night: { rent: 55, payback: 55 },
   nm1: { rent: 55, payback: 55 }, nm2: { rent: 55, payback: 55 }, nm3: { rent: 55, payback: 55 }, nm5: { rent: 55, payback: 55 }, nm6: { rent: 55, payback: 55 },
-  restaurant: { rent: 180, payback: 60 }, cafe: { rent: 120, payback: 60 }, grill: { rent: 150, payback: 65 },
+  restaurant: { rent: 180, payback: 60 }, cafe: { rent: 120, payback: 60 }, grill: { rent: 150, payback: 65 }, smoothie: { rent: 130, payback: 62 },
 };
 // rent is 1.5× the list above and buying a place pays back over twice as long
 for (const P of Object.values(PLACES)) { P.rent = Math.round(P.rent * 1.5); P.payback = P.payback * 2; }
