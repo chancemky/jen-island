@@ -106,23 +106,74 @@ function keeperGrow(id, k) {
 }
 export function fireKeeper(id) {
   const a = actors[id]; if (a) { G.scenes.island.remove(a); delete actors[id]; }
+  insideKeeper(id, false);
   delete G.state.keepers[id]; markDirty(true);
 }
-// the keeper stands at the counter on the island
-const actors = {};
-function keeperSpot(id) {
-  const isl = G.scenes.island, b = isl.buildings[id] || isl.buildings[{ night: 'night' }[id]] || Object.values(isl.buildings).find(x => x.biz === id);
-  if (!b) return null;
-  if (b.type === 'stall') return { x: b.x + 12, y: b.y - 34 };       // behind the open counter
-  return { x: b.x + (b.w || 100) / 2 - 12, y: b.y + 12 };             // beside the service window
+// The keeper works behind the shop's opening: you see them through the service window
+// (waist up, clipped to the opening) or behind a market stall's counter, moving between
+// the prep side and the window, doing the work that shop does, and turning to the customer
+// to hand over each order. When the shop is shut they're out of sight inside. Step into a
+// shop with an interior and they're at the counter in there too.
+const actors = {}, inside = {};
+const buildingOf = id => { const isl = G.scenes.island; return isl.buildings[id] || Object.values(isl.buildings).find(x => x.biz === id) || null; };
+// the opening for each kind of building, in its own coordinates (x, y: top-left; ground is y 0)
+function opening(b) {
+  if (b.type === 'shed') return { x: -39, y: -35, w: 50, h: 20, at: [-26, -2], feet: 4 };
+  if (b.type === 'truck') return { x: -40, y: -54, w: 60, h: 24, at: [-26, 6], feet: -13 };
+  if (b.type === 'kiosk') { const w = (b.w || 112) - 30; return { x: -w / 2, y: -38, w, h: 24, at: [-w / 2 + 12, w / 2 - 14], feet: 3 }; }
+  if (b.type === 'stall') { const w = b.w || 66, h = 30; return { x: -w / 2 + 3, y: -h - 23, w: w - 6, h: 17, at: [-w / 2 + 14, w / 2 - 14], feet: -22 }; }
+  return null;
+}
+// what each kind of shop is busy with, and the uniform cap in the shop's colours
+const WORK = {
+  drinks: { acts: ['work', 'stir', 'clean'], held: 'cup', hat: 'cap' }, cafe: { acts: ['stir', 'work', 'clean'], held: 'cup', hat: 'beret' },
+  smoothie: { acts: ['work', 'clean', 'work'], held: 'cup', hat: 'bucket' }, banhmi: { acts: ['chop', 'work', 'clean'], hat: 'bandana' },
+  truck: { acts: ['work', 'chop', 'clean'], hat: 'cap' }, grill: { acts: ['stir', 'work', 'chop'], hat: 'bandana' }, night: { acts: ['stir', 'chop', 'work'], hat: 'bandana' },
+};
+const workOf = id => WORK[BUSINESSES[id]?.biz] || WORK.drinks;
+function keeperLook(id, k) {
+  const look = { ...visitorLook(k.seed * 13 + 7, 'regular'), apron: '#fff6e6', scale: 0.86 };
+  delete look.backpack; delete look.camera; delete look.tote; delete look.guitar; delete look.surf; delete look.suitcase;
+  const w = workOf(id), st = bizOf(id);
+  look.hat = w.hat; look.hatColor = st.signCol || st.awning?.[1] || '#f28f7c'; look.hatRibbon = '#fff6e6';
+  return look;
+}
+function placeKeeper(id, a) {
+  const b = buildingOf(id), o = b && opening(b); if (!o) return;
+  const x = a.data.slot === 1 ? o.at[1] : o.at[0];
+  a.x = b.x + x; a.y = b.y + o.feet; a.sortY = b.y + 0.6;
+  a.clip = { x: b.x + o.x, y: b.y + o.y, w: o.w, h: o.h };
 }
 function spawnKeeperActor(id) {
-  const k = keeperOf(id), sp = keeperSpot(id); if (!k || !sp || actors[id]) return;
-  const look = { ...visitorLook(k.seed + 7, 'regular'), apron: '#fff6e6', scale: 1 };
-  delete look.backpack; delete look.camera; delete look.tote;
-  const a = new Actor({ kind: 'human', look, name: k.name, x: sp.x, y: sp.y, data: { emp: { role: 'keeper', trait: 'steady' }, keeper: id } });
-  a.talkable = true; a.face('down'); a.noCollide = true;
-  G.scenes.island.add(a); actors[id] = a;
+  const k = keeperOf(id); if (!k || actors[id] || !buildingOf(id) || !opening(buildingOf(id))) return;
+  const a = new Actor({ kind: 'human', look: keeperLook(id, k), name: k.name, x: 0, y: 0, data: { emp: { role: 'keeper', trait: 'steady' }, keeper: id, slot: 0, workT: 0 } });
+  a.talkable = true; a.face('down'); a.noCollide = true; a.noSteer = true;
+  G.scenes.island.add(a); actors[id] = a; placeKeeper(id, a);
+}
+// the keeper at the counter inside the shop (shed1, shed2, truck)
+function insideKeeper(id, show) {
+  const sc = G.scenes[id]; if (!sc?.serveSpot) return;
+  let a = inside[id];
+  if (!show) { if (a) { sc.remove(a); delete inside[id]; } return; }
+  if (!a) {
+    const k = keeperOf(id);
+    a = inside[id] = new Actor({ kind: 'human', look: { ...keeperLook(id, k), scale: 1 }, name: k.name, x: sc.serveSpot.x + 22, y: sc.serveSpot.y, data: { emp: { role: 'keeper', trait: 'steady' }, keeper: id, workT: 0 } });
+    a.talkable = true; a.face('down'); a.noCollide = true; sc.add(a);
+  }
+}
+// what the keeper is doing right now (called every frame for each keeper)
+function animateKeeper(id, a, dt, serving) {
+  const d = a.data, w = workOf(id);
+  d.workT -= dt;
+  if (serving) { if (a.act !== 'work' && d.workT < 0) { a.face(d.slot ? 'left' : 'right'); a.setAct(w.acts[0]); d.workT = 9; } return; }
+  if (d.workT > 0) return;
+  // between customers: tidy up, prep at the side, now and then wave at someone passing
+  const r = Math.random();
+  if (r < 0.18 && G.player && Math.abs(G.player.x - a.x) < 90 && Math.abs(G.player.y - a.y) < 70) { a.face('down'); a.setAct('wave'); d.workT = 1.6; return; }
+  if (r < 0.5) { d.slot = 1 - (d.slot || 0); a.data.slot = d.slot; if (a.clip) placeKeeper(id, a); }
+  a.face(Math.random() < 0.5 ? 'down' : d.slot ? 'left' : 'right');
+  a.setAct(w.acts[Math.floor(Math.random() * w.acts.length)]); a.held = a.act === 'stir' || a.act === 'chop' ? null : w.held || null;
+  d.workT = rand(2.5, 5);
 }
 export const keeperActor = id => actors[id] || null;
 export function spawnKeepers() { for (const id of Object.keys(G.state.keepers || {})) spawnKeeperActor(id); }
@@ -147,7 +198,11 @@ export function updateKeepers(dt) {
   for (const [id, k] of Object.entries(s.keepers || {})) {
     if (!BUSINESSES[id] || !s.biz[id]?.owned) continue;
     const b = s.biz[id], r = rt(id), a = actors[id];
-    if (a) a.visible = isOpenHours(id);
+    const working = b.open && G.runtime.serviceOpen !== id;
+    if (a) { a.visible = working; if (a.clip && working) { const bl = buildingOf(id); if (bl && (a.clip.x !== bl.x + opening(bl).x || Math.abs(a.y - (bl.y + opening(bl).feet)) > 1)) placeKeeper(id, a); } }
+    insideKeeper(id, working && G.scene?.id === id);
+    if (working && a) animateKeeper(id, a, dt, !!r.kServe);
+    if (working && inside[id]) animateKeeper(id, inside[id], dt, !!r.kServe);
     // open up during opening hours (unless you're serving there yourself)
     if (!b.open && isOpenHours(id) && G.runtime.serviceOpen !== id) {
       r.kT = (r.kT ?? 2) - dt;
@@ -158,11 +213,12 @@ export function updateKeepers(dt) {
     // keep a few portions prepped
     r.kPrep = (r.kPrep ?? 5) - dt; if (r.kPrep <= 0) { r.kPrep = 12; autoPrep(id); }
     const c = r.queue.find(q => q.slot === 0 && q.state !== 'walking' && !q.actor.path);
-    if (!c) { r.kServe = null; if (a && a.act === 'work') a.setAct(null); continue; }
-    if (r.kServe !== c.id) { r.kServe = c.id; r.kT2 = rand(4.5, 7) * keeperSpeed(k) * (BUSINESSES[id].serve || 1); a?.setAct('work'); }
+    if (!c) { r.kServe = null; continue; }
+    if (r.kServe !== c.id) { r.kServe = c.id; r.kT2 = rand(4.5, 7) * keeperSpeed(k) * (BUSINESSES[id].serve || 1); if (a) a.data.workT = 0; }
     r.kT2 -= dt;
     if (r.kT2 > 0) continue;
-    r.kServe = null; a?.setAct(null);
+    r.kServe = null;
+    for (const who of [a, inside[id]]) if (who) { who.face('down'); who.setAct(null); who.held = workOf(id).held || null; who.data.workT = 1.4; }
     const o = c.order;
     if (!o || !canMake(id, o.recipe, o.opts)) { a?.showEmote('sweat', 1.2); customerLeave(c, 'sad'); continue; }
     useStock(id, o);
@@ -170,7 +226,8 @@ export function updateKeepers(dt) {
     k.served = (k.served || 0) + 1; k.today = (k.today || 0) + 1; keeperGrow(id, k);
     completeOrder(c, q);
     noteKeeperSale(id, k, o);
-    a?.doHop(50); a?.showEmote(q === 'perfect' ? 'heart' : 'happy', 1);
+    for (const who of [a, inside[id]]) if (who) { who.doHop(50); who.showEmote(q === 'perfect' ? 'heart' : 'happy', 1); }
+    setTimeout(() => { if (a?.act === null) a.setAct('wave'); }, 250);
   }
 }
 function useStock(id, o) {

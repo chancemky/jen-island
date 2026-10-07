@@ -7,7 +7,7 @@ const T = { '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css', 
 const server = http.createServer((q, r) => { let p = decodeURIComponent(q.url.split('?')[0]); if (p.endsWith('/')) p += 'index.html'; const f = path.join(ROOT, p); if (!fs.existsSync(f)) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': T[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r); });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const b = await chromium.launch(), ctx = await b.newContext({ ...devices['iPhone 13'] }), p = await ctx.newPage();
-const errs = []; p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text().slice(0, 300)));
+const errs = []; p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => m.type() === 'error' ? errs.push(m.text().slice(0, 300)) : m.type() === 'log' && process.env.LOGS && console.log('page:', m.text()));
 await p.route(/supabase\.co/, r => r.fulfill({ json: [] }));
 const tag = 'play' + Date.now(), base = `http://127.0.0.1:${server.address().port}/?dev=${tag}`;
 await p.goto(base + '&fresh');

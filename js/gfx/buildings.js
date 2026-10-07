@@ -538,8 +538,8 @@ export function drawNightStall(c, t, b) {
   // your own colours on the cloth roof — still a striped Night Market canopy with its lantern
   const cols = broken ? ['#9d8a80', '#b3a79a'] : s.awning ? [s.awning[1], s.awning[0]] : b.cloth || ['#e8584e', '#fff5df'];
   clothRoof(c, w, 18, h + 34, cols, { torn: broken });
-  if (!broken && (s.label || b.label)) signBoard(c, 0, -h - 30, w - 12, 10, tr(s.label || b.label), s.signCol || (s.owned ? '#f08ca0' : '#fff5df'), s.owned ? '#fff' : '#a8563f', { style: s.signStyle });
-  if (!broken && (s.owned || b.biz === 'night')) hoursPlate(c, b.biz, 0, -h - 20, 62);
+  if (!broken && (s.label || b.label)) signBoard(c, 0, -h - 36, w - 12, 10, tr(s.label || b.label), s.signCol || (s.owned ? '#f08ca0' : '#fff5df'), s.owned ? '#fff' : '#a8563f', { style: s.signStyle });
+  if (!broken && (s.owned || b.biz === 'night')) hoursPlate(c, b.biz, 0, -h - 27, 62);
   if (!broken && nightA() > 0.05) { lanternShape(c, w / 2 - 4, -h - 40, 0.7, '#ea5a4f', t, b.x); glow(b, 0, -h - 20, 50, 'rgba(255,190,110,.6)'); }   // hangs from the post, clear of the sign
   if (broken) { poly(c, [-w / 2 + 6, -h - 2, w / 2 - 10, -h - 2, w / 2 - 14, -h + 10, -w / 2 + 10, -h + 12], 'rgba(90,70,60,.35)', null); }
 }

@@ -133,6 +133,7 @@ export class Actor {
     c.save();
     c.translate(Math.round(this.x * 4) / 4, Math.round(this.y * 4) / 4);
     if (this.alpha !== undefined) c.globalAlpha = this.alpha;
+    if (this.clip) { const r = this.clip; c.beginPath(); c.rect(r.x - this.x, r.y - this.y, r.w, r.h); c.clip(); }   // seen through a shop's window
     if (this.kind === 'cat') drawCat(c, this, t);
     else if (this.kind === 'pet') this.petDraw?.(c, this, t);
     else if (this.lie?.prop) drawLying(c, this, t);        // lying in a hammock (gfx/hammock.js)
