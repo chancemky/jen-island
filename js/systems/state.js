@@ -41,7 +41,7 @@ export function defaultState() {
     usage: {},               // shop → ingredient → portions used per day (running average)
     nightMarket: { restored: false },
     statue: false,
-    settings: { music: true, sfx: true, musicVol: 0.8, sfxVol: 0.8, haptics: true, notify: true, arrow: true, lang: null, smooth: false, stats: true },
+    settings: { music: true, sfx: true, musicVol: 0.8, sfxVol: 0.8, haptics: true, notify: true, textSize: 'normal', contrast: false, lefty: false, arrow: true, lang: null, smooth: false, stats: true },
     pos: null,               // {scene, x, y} last position for resume
     level: 1, xp: 0, xpTotal: 0, // uncapped levels (systems/progress.js)
     milestones: {},          // track id → tiers claimed

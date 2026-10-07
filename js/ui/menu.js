@@ -10,6 +10,7 @@ import { chooseIsland } from './conflict.js';
 import { setAudio, sfx } from '../core/audio.js';
 import { escapeHtml, clock, money, moneyPair, moneyShort, nativeApp } from '../core/util.js';
 import { setHaptics } from '../core/haptics.js';
+import { applyComfort } from './comfort.js';
 import { openJournal, renderAchievements } from './shops.js';
 import { CHAPTERS, FURNITURE, BUSINESSES, RECIPES, bizName } from '../data/game.js';
 import { TRACKS, trackState, claimMilestone, xpNeed, trackGift, leaderboardRow } from '../systems/progress.js';
@@ -285,6 +286,12 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
         slider(T('Music', 'Nhạc nền'), 'music', 'musicVol');
         slider(T('Sound effects', 'Âm thanh'), 'sfx', 'sfxVol');
         toggle(T('Haptics (vibration)', 'Rung phản hồi'), 'haptics', () => setHaptics(s.settings.haptics));
+        // comfort: bigger text, high contrast, the buttons on the left
+        { const r = h('div', 'row', `<div class="info"><b>${T('Text size', 'Cỡ chữ')}</b></div>`), seg = h('div', 'seg');
+          for (const [k, en, vi] of [['normal', 'Normal', 'Thường'], ['l', 'Large', 'Lớn'], ['xl', 'Extra', 'Rất lớn']]) { const b = h('button', s.settings.textSize === k ? 'on' : '', T(en, vi)); b.type = 'button'; b.onclick = () => { s.settings.textSize = k; applyComfort(); markDirty(true); sfx('ui'); [...seg.children].forEach(x => x.classList.toggle('on', x === b)); }; seg.appendChild(b); }
+          r.appendChild(seg); list.appendChild(r); }
+        toggle(T('High contrast', 'Tương phản cao'), 'contrast', applyComfort);
+        toggle(T('Left-handed controls', 'Nút bấm bên trái'), 'lefty', applyComfort);
         if (nativeApp()) toggle(T('Reminders (morning mail, weekly board)', 'Nhắc nhở (thư buổi sáng, bảng tuần)'), 'notify', () => import('../systems/notify.js').then(m => m.notifySettingChanged()));
         toggle(T('Quest arrow', 'Mũi tên chỉ đường'), 'arrow');
         toggle(T('Smooth 60 FPS (uses more battery)', 'Mượt 60 FPS (tốn pin hơn)'), 'smooth', () => G.renderer?.resize());

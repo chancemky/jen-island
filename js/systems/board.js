@@ -120,6 +120,8 @@ export function takeNote(n) {
   bus.emit('sfx', 'page');
   return true;
 }
+// changed your mind: the note goes back on the board for someone else (no hard feelings)
+export function dropNote(n) { if (n.state !== 'taken') return false; n.state = 'open'; n.got = 0; markDirty(true); bus.emit('sfx', 'page'); return true; }
 export function handIn(n) {
   if (!canHandIn(n)) return null;
   if (n.kind === 'bring') addPantry(n.item, -n.n); else addMat(n.item, -n.n);

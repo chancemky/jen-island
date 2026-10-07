@@ -28,7 +28,20 @@ function walletTrail(sum) {
 }
 import { catName } from '../systems/ledger.js';
 
-export function showSummary(sum) { return present(() => summaryCard(sum)); }
+export function showSummary(sum) {
+  // remember the last two weeks of results for the little chart (kept in the save)
+  const hist = (G.state.netHistory ||= []);
+  if (!hist.length || hist[hist.length - 1].day !== sum.day) { hist.push({ day: sum.day, net: Math.round(sum.net ?? 0), rev: Math.round(sum.revenue || 0) }); while (hist.length > 14) hist.shift(); }
+  return present(() => summaryCard(sum));
+}
+// two weeks of days as bars: revenue (light) with the net result on top (green up, red down)
+function chart() {
+  const hist = G.state.netHistory || []; if (hist.length < 2) return '';
+  const max = Math.max(1, ...hist.map(d => Math.max(d.rev, Math.abs(d.net)))), W = 100 / hist.length;
+  const bars = hist.map((d, i) => { const hr = d.rev / max * 40, hn = Math.abs(d.net) / max * 40, x = i * W + W * 0.12, w = W * 0.76;
+    return `<rect x="${x}" y="${46 - hr}" width="${w}" height="${hr}" rx="1" fill="rgba(255,248,234,.25)"/><rect x="${x + w * 0.2}" y="${d.net >= 0 ? 46 - hn : 46}" width="${w * 0.6}" height="${hn}" rx="1" fill="${d.net >= 0 ? '#8fe07a' : '#ff8a7a'}"/>`; }).join('');
+  return `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('The last two weeks', 'Hai tuần qua')}</div><svg viewBox="0 0 100 56" style="width:100%;height:110px" preserveAspectRatio="none">${bars}<line x1="0" y1="46" x2="100" y2="46" stroke="rgba(255,248,234,.4)" stroke-width=".4"/></svg><div style="display:flex;justify-content:space-between;font-size:11px;opacity:.7"><span>${T('Day', 'Ngày')} ${hist[0].day}</span><span>${T('pale: revenue · green/red: net', 'nhạt: doanh thu · xanh/đỏ: lãi')}</span><span>${T('Day', 'Ngày')} ${hist[hist.length - 1].day}</span></div></div>`;
+}
 function summaryCard(sum) {
   return new Promise(res => {
     const el = h('div', 'summary');
@@ -51,6 +64,7 @@ function summaryCard(sum) {
         <div class="sum-stat"><small>${T('Reputation', 'Danh tiếng')}</small><b data-n="${sum.repDelta}" data-sign="1">0</b></div>
         ${sum.lost ? `<div class="sum-stat wide"><small>${T('Customers who left', 'Khách bỏ đi')}</small><b data-n="${sum.lost}">0</b></div>` : ''}
       </div></div>
+      ${chart()}
       ${biz.length ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Your shops', 'Cửa hàng')}</div><ul class="sum-list">${biz.map(([id, v]) => `<li><span>${escapeHtml(bizName(id))}</span><span>${T(`${v.served} served`, `${v.served} khách`)} · ${money(v.revenue)}${pl[id] ? ` · ${T('net', 'lãi')} <b>${money(pl[id].net)}</b>` : ''}</span></li>`).join('')}</ul></div>` : ''}
       ${spend.length ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Where the money went', 'Tiền đã chi vào')}</div><ul class="sum-list">${spend.map(([c, v]) => `<li><span>${escapeHtml(catName(c))}</span><span>${money(v)}</span></li>`).join('')}</ul></div>` : ''}
       ${sum.staff?.length ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Your team today', 'Đội của bạn hôm nay')}</div><ul class="sum-list">${sum.staff.map(st => `<li><span>${escapeHtml(staffLine(st))}</span></li>`).join('')}</ul></div>` : ''}

@@ -9,6 +9,7 @@ import { bus, islandNow, money } from '../core/util.js';
 import { grantServerBadge } from './badges.js';
 import { FURNITURE } from '../data/game.js';
 import { track } from './telemetry.js';
+import { present } from '../ui/sheets.js';
 
 export const BOARDS = {
   served: { en: 'Most served', vi: 'Phục vụ nhiều nhất', unit: ['served', 'khách'] },
@@ -47,7 +48,8 @@ export async function syncAwards() {
   if (fresh.length) { markDirty(true); celebrate(fresh); }
   return fresh;
 }
-function celebrate(list) {
+function celebrate(list) { present(() => new Promise(res => celebrateCard(list, res))); }
+function celebrateCard(list, done) {
   const best = list.reduce((a, b) => (b.rank < a.rank ? b : a));
   const el = document.createElement('div'); el.className = 'modal';
   el.innerHTML = `<div class="card week-prize"><div class="wp-cup r${Math.min(best.rank, 4)}">${best.rank === 1 ? '🏆' : best.rank <= 3 ? '🥈' : '🎖️'}</div>
@@ -57,9 +59,20 @@ function celebrate(list) {
     <button class="btn primary" type="button">${T('Wonderful!', 'Tuyệt quá!')}</button></div>`;
   (document.getElementById('app') || document.body).appendChild(el);
   bus.emit('stinger', 'award'); bus.emit('weekAward');
-  el.querySelector('button').onclick = () => { bus.emit('sfx', 'ui'); el.remove(); };
+  el.querySelector('button').onclick = () => { bus.emit('sfx', 'ui'); el.remove(); done(); };
+}
+// your place on this week's "Most served" board, shown as a small badge on the level chip
+export async function refreshWeekRank() {
+  if (!cloud.hasSession() || !G.user || G.user.local) return;
+  let rows; try { rows = await cloud.fetchWeekly('served'); } catch { return; }
+  const me = (rows || []).find(r => r.is_me), chip = document.getElementById('repChip'); if (!chip) return;
+  let b = chip.querySelector('.week-rank');
+  if (!me) { b?.remove(); return; }
+  if (!b) { b = document.createElement('i'); b.className = 'week-rank'; chip.appendChild(b); }
+  b.textContent = '#' + me.rank; b.title = T('Your place on this week\'s board', 'Thứ hạng tuần này của bạn');
+  b.classList.toggle('top', me.rank <= 10);
 }
 export function initWeekBoard() {
-  syncAwards();
+  syncAwards(); refreshWeekRank(); setInterval(refreshWeekRank, 10 * 60 * 1000);
   setInterval(syncAwards, 30 * 60 * 1000);       // a board can close while you play (Monday 00:10)
 }

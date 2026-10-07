@@ -57,10 +57,12 @@ import { morningMail } from './systems/daily.js';
 import { initSocial } from './systems/social.js';
 import { initWeekBoard } from './systems/weekboard.js';
 import { setHaptics } from './core/haptics.js';
+import { applyComfort } from './ui/comfort.js';
 import { initNotify } from './systems/notify.js';
 import { initReview } from './systems/review.js';
 import { initBoard, BOARD, boardOpen } from './systems/board.js';
 import { initRare, rareAction } from './systems/rare.js';
+import { initTips } from './systems/tips.js';
 import { openPhotoMode } from './ui/photo.js';
 import { updatePlayerIdle } from './systems/idle.js';
 import { openBoard } from './ui/board.js';
@@ -148,7 +150,7 @@ async function boot() {
   initBadges();
   initSocial();
   initBoard();
-  initNotify(); initReview(); initRare();
+  initNotify(); initReview(); initRare(); initTips();
   setTimeout(initWeekBoard, 4000);          // after the morning mail settles
   showMorningMail();
   festivalGift();
@@ -213,7 +215,7 @@ function startGame() {
   const s = G.state;
   if (G.runtime.paused) { G.runtime.paused = false; document.getElementById('pauseCard')?.remove(); }   // a new start is never paused
   setAudio({ music: s.settings.music, sfx: s.settings.sfx, musicVol: s.settings.musicVol, sfxVol: s.settings.sfxVol });
-  setHaptics(s.settings.haptics);
+  setHaptics(s.settings.haptics); applyComfort();
   soundHint(s.settings.music || s.settings.sfx);
   // one piece that fails (an odd save, a missing item) is reported and skipped, never a blank screen
   const safe = (name, fn) => { try { fn(); } catch (e) { console.error('[start]', name, e); reportError(e, { where: 'start:' + name }); } };

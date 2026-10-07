@@ -23,9 +23,9 @@ input, select { touch-action: manipulation; }
 
 #app { position: fixed; inset: 0; margin: 0 auto; max-width: 520px; overflow: hidden; background: #5ec2cf; }
 @media (min-width: 521px) { #app { box-shadow: 0 0 0 1px #0004, 0 0 60px #0006; } }
-/* a computer with a mouse: the island fills the window; menus and the counter screens
+/* a tablet or a computer: the island fills the screen; menus and the counter screens
    stay a comfortable phone-like column in the middle */
-@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+@media (min-width: 700px) {
   #app { max-width: none; box-shadow: none; }
   .sheet { width: 540px; max-width: 100%; margin: 0 auto; }
   .svc, .prep { left: 50%; right: auto; width: 540px; transform: translateX(-50%); box-shadow: 0 0 0 3px var(--ink), 0 0 80px #0007; }
@@ -844,3 +844,28 @@ body.decorating #camBtn, body.lookout #camBtn { visibility: hidden; }
 .ph-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
 .ph-flash.go { animation: phFlash .45s ease-out; }
 @keyframes phFlash { 0% { opacity: .95; } 100% { opacity: 0; } }
+/* weekly rank badge on the level chip */
+.chip-rep { position: relative; }
+.chip-rep .week-rank { position: absolute; right: -6px; bottom: -8px; font-style: normal; font-size: 10px; font-weight: 900; color: #5b3f36; background: #fffaf0; border: 2px solid #5b3f36; border-radius: 999px; padding: 0 5px; line-height: 15px; }
+.chip-rep .week-rank.top { background: #ffd35a; }
+.note-drop { display: block; margin-top: 4px; font-size: 11px; font-weight: 800; color: #a07a62; text-decoration: underline; background: none; border: 0; padding: 0; }
+
+/* left-handed controls: the action button and the side buttons move to the left */
+body.lefty .act-btn { right: auto; left: calc(18px + var(--sal)); }
+body.lefty .open-btn { right: auto; left: calc(112px + var(--sal)); }
+body.lefty .side-btn { right: auto; left: calc(26px + var(--sal)); }
+body.lefty .side-btn.map-btn { left: calc(30px + var(--sal)); }
+body.lefty .side-btn.cam-btn { left: calc(32px + var(--sal)); }
+body.lefty .emote-bar { left: auto; right: 12px; }
+/* bigger text (Settings → Text size) */
+body.text-l :is(.sheet, .toast, #dialog, .reward-card, .modal .card, .summary, .svc-order, .quest) { zoom: 1.12; }
+body.text-xl :is(.sheet, .toast, #dialog, .reward-card, .modal .card, .summary, .svc-order, .quest) { zoom: 1.25; }
+/* high contrast: solid backgrounds, darker text, bolder outlines */
+body.hc { --ink: #1f1512; }
+body.hc :is(.toast, #dialog .dlg-box, .quest, .sheet, .modal .card) { background: #fffdf8 !important; color: #1f1512; }
+body.hc :is(.empty-note, small, .muted) { opacity: 1 !important; color: #3a2a24; }
+body.hc .quest { color: #1f1512; text-shadow: none; }
+body.hc :is(.chip, .tag, .pill, .opt-tag) { border-width: 3px; }
+/* the album's celebration photo: HUD out of the way, a white flash after */
+body.snapping #hud, body.snapping #toasts, body.snapping #actions, body.snapping #touch, body.snapping #pointer, body.snapping .emote-bar { visibility: hidden !important; }
+.snap-flash { position: absolute; inset: 0; background: #fff; pointer-events: none; z-index: 70; animation: phFlash .5s ease-out forwards; }

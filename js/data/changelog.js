@@ -3,9 +3,24 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.12.1';
+export const APP_VERSION = '5.13.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.13.0', date: '2026-10-07T22:41:29Z',
+    title: ['Picture Perfect', 'Đẹp Như Tranh'],
+    items: [
+      ['Milestone photos are real celebrations now: the camera comes in close, you cheer with confetti while neighbours clap, and it\'s framed as a Polaroid in your album', 'Ảnh cột mốc giờ là khoảnh khắc ăn mừng thật: máy quay đến gần, bạn reo hò giữa pháo giấy, hàng xóm vỗ tay, và ảnh được đóng khung Polaroid trong album'],
+      ['Tablets and iPads use the whole screen', 'Máy tính bảng và iPad dùng toàn bộ màn hình'],
+      ['Popups and messages wait their turn instead of piling up', 'Thông báo lần lượt hiện ra thay vì chồng lên nhau'],
+      ['Your place on this week\'s board shows on the level chip', 'Thứ hạng tuần này hiện ngay trên ô cấp độ'],
+      ['Island Board: put a note back if you can\'t finish it', 'Bảng tin đảo: trả lại lời nhờ nếu bạn không làm kịp'],
+      ['Settings: text size, high contrast and left-handed controls', 'Cài đặt: cỡ chữ, tương phản cao và nút bấm bên trái'],
+      ['Helpful one-time tips (shopkeepers, supply runners, the Island Board, photo mode, decorating)', 'Mẹo hữu ích hiện một lần (người trông quán, giao hàng, Bảng tin, chụp ảnh, trang trí)'],
+      ['The end-of-day summary shows your last two weeks as a chart', 'Bảng tổng kết cuối ngày có biểu đồ hai tuần gần nhất'],
+      ['Flags and lantern strings now hang above people\'s heads', 'Dây cờ và dây lồng đèn giờ treo phía trên đầu mọi người'],
+    ],
+  },
   {
     v: '5.12.1', date: '2026-10-07T17:40:44Z',
     title: ['Steady Hands', 'Tay Vững'],

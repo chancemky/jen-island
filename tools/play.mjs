@@ -6,7 +6,7 @@ const ROOT = process.cwd(), [scriptFile, OUT] = process.argv.slice(2);
 const T = { '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.woff2': 'font/woff2', '.webmanifest': 'application/json', '.svg': 'image/svg+xml' };
 const server = http.createServer((q, r) => { let p = decodeURIComponent(q.url.split('?')[0]); if (p.endsWith('/')) p += 'index.html'; const f = path.join(ROOT, p); if (!fs.existsSync(f)) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': T[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r); });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
-const b = await chromium.launch(), ctx = await b.newContext({ ...devices['iPhone 13'] }), p = await ctx.newPage();
+const b = await chromium.launch(), ctx = await b.newContext(process.env.VIEW ? { viewport: { width: +process.env.VIEW.split('x')[0], height: +process.env.VIEW.split('x')[1] }, deviceScaleFactor: 2, hasTouch: true } : { ...devices['iPhone 13'] }), p = await ctx.newPage();   // VIEW=1024x1366 for a tablet
 const errs = []; p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => m.type() === 'error' ? errs.push(m.text().slice(0, 300)) : m.type() === 'log' && process.env.LOGS && console.log('page:', m.text()));
 await p.route(/supabase\.co/, r => r.fulfill({ json: [] }));
 const tag = 'play' + Date.now(), base = `http://127.0.0.1:${server.address().port}/?dev=${tag}`;

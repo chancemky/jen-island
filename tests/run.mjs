@@ -144,6 +144,35 @@ if (run('save')) {
   if (r.day === 5 && r.name === 'Tester') pass('save', `damaged save recovered from backup (${r.note})`); else fail('save', `damaged save not recovered: ${JSON.stringify(r)}`);
   if (r.corrupt) pass('save', 'the damaged copy was kept aside, not deleted'); else fail('save', 'the damaged copy was not kept');
   await ctx.close();
+  // two phones, one account: a write from a device holding an old copy is refused (never
+  // silently overwrites), the refused device can reload and save again, and nothing is lost
+  {
+    const store = { row: null, n: 0 };
+    const fake = async route => {
+      const req = route.request(), u = new URL(req.url()), m = req.method();
+      if (u.pathname.startsWith('/auth/v1/token')) return route.fulfill({ json: { access_token: 'a.b.c', refresh_token: 'r', expires_in: 3600, user: { id: '00000000-0000-0000-0000-0000000000aa' } } });
+      if (!u.pathname.endsWith('/jen_island_saves')) return route.fulfill({ json: [] });
+      const at = u.searchParams.get('updated_at');
+      if (m === 'GET') return route.fulfill({ json: store.row ? [store.row] : [] });
+      if (m === 'PATCH') { if (!store.row || at !== 'eq.' + store.row.updated_at) return route.fulfill({ json: [] }); store.row = { save_data: JSON.parse(req.postData()).save_data, updated_at: 't' + (++store.n) }; return route.fulfill({ json: [{ updated_at: store.row.updated_at }] }); }
+      if (m === 'POST') { store.row = { save_data: JSON.parse(req.postData()).save_data, updated_at: 't' + (++store.n) }; return route.fulfill({ json: [{ updated_at: store.row.updated_at }] }); }
+      return route.fulfill({ json: [] });
+    };
+    const phone = async () => { const ctx = await browser.newContext(); const pg = await ctx.newPage(); await pg.route(/supabase\.co/, fake); await pg.goto(`${BASE}/tests/render.html`); await pg.evaluate(async () => { localStorage.setItem('jenisland.session', JSON.stringify({ access_token: 'a.b.c', refresh_token: 'r', expires_at: Date.now() + 9e6, user: { id: '00000000-0000-0000-0000-0000000000aa' } })); const c = await import('/js/systems/cloud.js'); await c.resume(); window.__c = c; }); return { ctx, pg }; };
+    const A = await phone(), B = await phone();
+    const save = (P, day) => P.pg.evaluate(async d => { try { await window.__c.saveCloud({ v: 9, day: d, money: d * 10, reputation: 1 }); return 'ok'; } catch (e) { return e.conflict ? 'conflict' : 'error ' + e.message; } }, day);
+    const load = P => P.pg.evaluate(async () => (await window.__c.loadCloud())?.day ?? null);
+    const r = [];
+    r.push(await load(A), await save(A, 1));          // A starts the island
+    r.push(await load(B), await save(B, 2));          // B picks it up and plays on
+    r.push(await save(A, 3));                         // A still holds day 1: refused
+    r.push(await load(A), await save(A, 4));          // A reloads (sees B's day 2) and saves
+    r.push(await save(B, 5));                         // now B is the stale one
+    const got = r.join(',');
+    if (got === ',ok,1,ok,conflict,2,ok,conflict' && store.row.save_data.day === 4) pass('save', 'two phones on one account: stale writes are refused, nothing is overwritten silently');
+    else fail('save', `two-phone sync went wrong: ${got} (cloud has day ${store.row?.save_data?.day})`);
+    await A.ctx.close(); await B.ctx.close();
+  }
 }
 
 // ---------------------------------------------------------------- story

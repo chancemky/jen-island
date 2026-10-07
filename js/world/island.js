@@ -567,7 +567,7 @@ export class Island extends Scene {
     const nmBroken = () => { const k = G.runtime?.nm?.restoreAnim; return k !== undefined && k !== null ? k < 0.55 : !G.state.nightMarket.restored; };
     for (const [x1, y1, x2, y2, h] of [[378, 540, 494, 540, 54], [378, 628, 494, 628, 54], [378, 716, 494, 716, 54], [262, 486, 596, 486, 60], [262, 486, 262, 790, 0], [300, 800, 420, 800, 48], [470, 800, 596, 800, 48]]) {
       if (!h) continue;
-      const p = this.add2('lanternString', x1, y1, { x2, y2, h, n: Math.max(4, Math.round((x2 - x1) / 28)), cull: { x: x1 - 10, y: y1 - 90, w: x2 - x1 + 20, h: 100 }, cols: ['#ea5a4f', '#f2c14e', '#f08ca0', '#ea5a4f', '#6fbfb0'] });
+      const p = this.add2('lanternString', x1, y1, { sortY: 99990, x2, y2, h, n: Math.max(4, Math.round((x2 - x1) / 28)), cull: { x: x1 - 10, y: y1 - 90, w: x2 - x1 + 20, h: 100 }, cols: ['#ea5a4f', '#f2c14e', '#f08ca0', '#ea5a4f', '#6fbfb0'] });
       Object.defineProperty(p, 'broken', { get: nmBroken });
     }
     for (const [x, y] of [[268, 560], [268, 700], [590, 560], [590, 700]]) { const p = this.add2('lampPost', x, y, { solidR: 3, cullR: 40, cullH: 60 }); Object.defineProperty(p, 'broken', { get: nmBroken }); }
@@ -585,7 +585,7 @@ export class Island extends Scene {
     this.add2('banyan', 700, 1690, { s: 0.9, cullR: 110, cullH: 150, solidR: 14 });
     for (const [x, y] of [[830, 1640], [970, 1640], [830, 1450], [970, 1450]]) this.add2('bench', x, y, { solidRect: [-18, -8, 36, 8] });
     // lantern strings over the market street
-    for (let i = 0; i < 4; i++) this.add2('lanternString', 560 + i * 200, 1214, { x2: 560 + i * 200 + 150, h: 50, cullR: 160, cullH: 80, cull: { x: 560 + i * 200 - 10, y: 1150, w: 180, h: 80 } });
+    for (let i = 0; i < 4; i++) this.add2('lanternString', 560 + i * 200, 1214, { sortY: 99990, x2: 560 + i * 200 + 150, h: 50, cullR: 160, cullH: 80, cull: { x: 560 + i * 200 - 10, y: 1150, w: 180, h: 80 } });
     // grandma carts line the road from the Wind Plaza down to the dock
     this.add2('foodCart', 962, 1812, { type: 'icecream', label: ['ICE CREAM', 'KEM'], solidRect: [-20, -8, 40, 8], cullR: 48, cullH: 80 }); this.circle(962, 1806, 20);
     this.add2('foodCart', 838, 1930, { type: 'banhtrang', label: ['RICE PAPER SALAD', 'BÁNH TRÁNG TRỘN'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 60 }); this.circle(838, 1924, 20);

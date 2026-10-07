@@ -2,7 +2,7 @@
 
 import { G, T } from '../systems/state.js';
 import { openSheet, h, btn } from './sheets.js';
-import { todaysNotes, noteText, giverName, have, takeNote, handIn, canHandIn } from '../systems/board.js';
+import { todaysNotes, noteText, giverName, have, takeNote, handIn, canHandIn, dropNote } from '../systems/board.js';
 import { RESIDENTS } from '../data/looks.js';
 import { drawVillagerHead } from '../gfx/villager.js';
 import { escapeHtml } from '../core/util.js';
@@ -29,6 +29,7 @@ export function openBoard() {
       if (n.state === 'open') card.appendChild(btn(T('Take note', 'Nhận lời'), () => { takeNote(n); toast({ text: T(`You took ${giverName(n)}'s note`, `Bạn nhận lời nhờ của ${giverName(n)}`), sub: escapeHtml(noteText(n)), icon: 'notebook', ms: 2600 }); api.rebuild(); }, 'buy note-btn'));
       else if (n.state === 'taken' && (n.kind === 'bring' || n.kind === 'mats')) card.appendChild(btn(T('Hand over', 'Gửi đồ'), () => { if (handIn(n)) api.rebuild(); }, 'buy note-btn', !canHandIn(n)));
       else if (n.state === 'done') card.appendChild(h('div', 'note-stamp', T('THANKS!', 'CẢM ƠN!')));
+      if (n.state === 'taken') { const d = h('button', 'note-drop', T('Put it back', 'Trả lại')); d.type = 'button'; d.onclick = () => { if (dropNote(n)) api.rebuild(); }; info.appendChild(d); }
       wall.appendChild(card);
     });
     wall.appendChild(h('div', 'note-foot', T('Notes you take are counted as you play. Bring-notes are handed over here. Unfinished notes come down at midnight.', 'Lời nhờ đã nhận được tính khi bạn chơi. Mang đồ thì gửi ở đây. Lời nhờ chưa xong sẽ được gỡ lúc nửa đêm.')));

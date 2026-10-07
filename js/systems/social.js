@@ -11,6 +11,7 @@ import { scenes, setScene } from './scenes.js';
 import { Actor } from '../world/actor.js';
 import { FURNITURE } from '../data/game.js';
 import { track } from './telemetry.js';
+import { present } from '../ui/sheets.js';
 
 export const GIFTS = {
   basket: { icon: 'bag', label: ['Basket', 'Giỏ quà'], en: 'a gift basket', vi: 'một giỏ quà', give: () => { addPantry('tea', 6); addPantry('kumquat', 6); addPantry('sugar', 6); addPantry('ice', 6); return T('tea, kumquats, sugar and ice', 'trà, tắc, đường và đá'); } },
@@ -133,11 +134,13 @@ async function showVisitors() {
   cloud.visitsSeen().catch(() => {});
   social().visitorsGot += rows.length; markDirty(true);
   const names = [...new Map(rows.map(r => [r.from_id, r])).values()];
+  present(() => new Promise(done => {
   const el = document.createElement('div'); el.className = 'modal';
   el.innerHTML = `<div class="card visitors"><div class="kicker">${T('While you were away', 'Khi bạn vắng nhà')}</div><h2>${T(names.length === 1 ? 'A friend came by!' : `${names.length} friends came by!`, names.length === 1 ? 'Có bạn ghé chơi!' : `${names.length} người bạn ghé chơi!`)}</h2>
     <div class="vis-list">${names.slice(0, 6).map(r => `<div class="vis"><span class="vis-e">${EMOTES[r.emote]?.glyph || '👋'}</span><b>${r.player_name.replace(/[<>&]/g, '')}</b><small>${T(`left a ${EMOTES[r.emote]?.en.toLowerCase() || 'wave'}`, `để lại: ${EMOTES[r.emote]?.vi.toLowerCase() || 'vẫy tay'}`)}</small></div>`).join('')}</div>
     <button class="btn primary" type="button">${T('Aww, thanks!', 'Dễ thương quá!')}</button></div>`;
   (document.getElementById('app') || document.body).appendChild(el);
   bus.emit('sfx', 'sparkle');
-  el.querySelector('button').onclick = () => { bus.emit('sfx', 'ui'); el.remove(); };
+  el.querySelector('button').onclick = () => { bus.emit('sfx', 'ui'); el.remove(); done(); };
+  }));
 }

@@ -210,7 +210,28 @@ export function setBizButton(label, handler, closing = false) {
 bizBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (bizHandler) { sfx('ui'); bizHandler(); } });
 
 // ---------------------------------------------------------------- toasts
-export function toast({ text, sub = '', icon = null, cls = '', bad = false, ms = 2800, onClick = null, quiet = false }) {
+// Toasts wait their turn: while a card or menu-blocking popup is up they queue, the same
+// message is never shown twice in a row, achievements and warnings go first, and at most
+// two are on screen (a short gap between them so each can be read).
+const tq = []; let tTimer = null, lastShown = { text: '', at: 0 };
+const blocking = () => !!document.querySelector('.reward:not(.out), .levelup:not(.out), .summary, .modal, .wn-wrap:not(.out)');
+export function toast(o) {
+  if (lastShown.text === o.text && Date.now() - lastShown.at < 2500) return;
+  if (tq.some(q => q.text === o.text && q.sub === o.sub)) return;
+  const urgent = o.cls === 'ach' || o.bad;
+  if (urgent) tq.unshift(o); else tq.push(o);
+  while (tq.length > 8) { const i = tq.findIndex(q => q.cls !== 'ach' && !q.bad); tq.splice(i < 0 ? 0 : i, 1); }
+  pumpToasts();
+}
+function pumpToasts() {
+  if (tTimer) return;
+  const box = $('toasts'); if (!box || !tq.length) return;
+  if (blocking() || [...box.children].filter(e => !e.classList.contains('out')).length >= 2) { tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 450); return; }
+  showToast(tq.shift());
+  tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 650);
+}
+function showToast({ text, sub = '', icon = null, cls = '', bad = false, ms = 2800, onClick = null, quiet = false }) {
+  lastShown = { text, at: Date.now() };
   const box = $('toasts');
   const el = document.createElement('div');
   el.className = 'toast ' + cls + (bad ? ' bad' : '');

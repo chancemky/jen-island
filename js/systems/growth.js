@@ -14,6 +14,7 @@ import { RESIDENTS } from '../data/looks.js';
 import { rand, bus } from '../core/util.js';
 
 const ch = () => G.state.story.chapter || 1;
+const OVERHEAD = 99990;            // strings of flags and lanterns hang above everyone's heads: drawn last
 const flag = k => !!G.state.story.flags[k];
 const ach = k => (G.state.achievements || []).includes(k);
 const night = () => { const m = G.state.time; return m >= 18.5 * 60 || m < 6 * 60; };
@@ -136,63 +137,63 @@ export function growthDrawables() {
   const isl = G.scenes?.island; if (G.scene !== isl) return [];
   const out = [], add = (x, y, sortY, draw) => out.push({ x, y, sortY, draw: (c, t) => { c.save(); c.translate(-x, -y); draw(c, t); c.restore(); } });
   // Chapter 3: word is spreading — bunting over Market Street
-  if (ch() >= 3) add(900, 1100, 1300, (c, t) => { bunting(c, t, 700, 1098, 1100, 1098, 58, ['#f28f7c', '#fff5df', '#6fbfb0', '#f2c14e']); });
+  if (ch() >= 3) add(900, 1100, OVERHEAD, (c, t) => { bunting(c, t, 700, 1098, 1100, 1098, 58, ['#f28f7c', '#fff5df', '#6fbfb0', '#f2c14e']); });
   // Chapter 5: planters beside your first shops
   if (ch() >= 5) add(600, 2240, 2240, c => { planter(c, 520, 2236, '#f4a9b8'); planter(c, 686, 2232, '#f2c14e'); if (G.state.biz.shed2?.repair >= 1) { planter(c, 486, 1602, '#f08ca0'); planter(c, 640, 1606, '#fff5df'); } });
   // Chapter 11: the island is a destination — bunting around Wind Plaza
-  if (ch() >= 11) add(PLAZA.x, PLAZA.y - 60, PLAZA.y + 150, (c, t) => { bunting(c, t, PLAZA.x - 120, PLAZA.y - 70, PLAZA.x + 120, PLAZA.y - 70, 64, ['#e8584e', '#fff5df', '#f2c14e']); });
+  if (ch() >= 11) add(PLAZA.x, PLAZA.y - 60, OVERHEAD, (c, t) => { bunting(c, t, PLAZA.x - 120, PLAZA.y - 70, PLAZA.x + 120, PLAZA.y - 70, 64, ['#e8584e', '#fff5df', '#f2c14e']); });
   // after the Lantern Festival: lanterns stay strung over the plaza for good
-  if (ach('lantern_festival')) add(PLAZA.x, PLAZA.y + 90, PLAZA.y + 200, (c, t) => { lanternString(c, t, PLAZA.x - 124, PLAZA.y + 96, PLAZA.x + 124, PLAZA.y + 96, 60); });
+  if (ach('lantern_festival')) add(PLAZA.x, PLAZA.y + 90, OVERHEAD, (c, t) => { lanternString(c, t, PLAZA.x - 124, PLAZA.y + 96, PLAZA.x + 124, PLAZA.y + 96, 60); });
   // Chapter 12+: more boats in the water off the pier
   if (ch() >= 12) add(760, 2520, 2380, (c, t) => { boat(c, t, 760, 2500, '#8fb7e0'); if (ch() >= 17) boat(c, t, 1080, 2560, '#f7de8c'); });
   // Chapter 19+: a banner on the ferry gate
   if (ch() >= 19) add(900, 2370, 2420, c => { box(c, 852, 2322, 96, 12, 3, '#fff5df', INK, 0.9); c.fillStyle = '#e8584e'; c.font = '900 7px Nunito, sans-serif'; c.textAlign = 'center'; c.fillText(T('WELCOME BACK!', 'CHÀO MỪNG TRỞ LẠI!'), 900, 2331); });
   // after the Keeper's Harbour Day: bunting along the quay for good
-  if (flag('harbour_day')) add(2600, 700, 900, (c, t) => { bunting(c, t, 2470, 740, 2730, 740, 56, ['#8fb7e0', '#fff5df', '#e8584e', '#f2c14e']); });
+  if (flag('harbour_day')) add(2600, 700, OVERHEAD, (c, t) => { bunting(c, t, 2470, 740, 2730, 740, 56, ['#8fb7e0', '#fff5df', '#e8584e', '#f2c14e']); });
   // the island dinner: a long table set at the plaza every evening
   if (flag('community_dinner') && G.state.time >= 17 * 60 && G.state.time < 22 * 60) add(PLAZA.x, PLAZA.y + 70, PLAZA.y + 70, c => { const x = PLAZA.x, y = PLAZA.y + 70; box(c, x - 60, y - 14, 120, 14, 3, '#fff5df', INK, 0.9); for (let i = 0; i < 6; i++) { ell(c, x - 48 + i * 19, y - 12, 5, 2, ['#f2c14e', '#e8584e', '#9fd67a'][i % 3], INK, 0.4); } });
   // ---- the island calendar, made visible
   const ev = eventOn();
   if (ev?.id === 'tet') {
-    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#d9433a', '#f2c14e']); });
+    add(PLAZA.x, PLAZA.y - 64, OVERHEAD, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#d9433a', '#f2c14e']); });
     add(900, 1140, 1320, c => { box(c, 820, 1072, 160, 16, 3, '#d9433a', INK, 1); c.fillStyle = '#ffd35a'; c.font = '900 8px Nunito, sans-serif'; c.textAlign = 'center'; c.fillText('CHÚC MỪNG NĂM MỚI', 900, 1083); });
     for (const [x, y] of [[PLAZA.x - 118, PLAZA.y + 40], [PLAZA.x + 118, PLAZA.y + 40], [PLAZA.x - 38, PLAZA.y + 168], [PLAZA.x + 38, PLAZA.y + 168]]) add(x, y, y, (c, t) => maiPot(c, t, x, y));
   }
   if (ev?.id === 'midautumn') {
     for (const [x, y] of [[PLAZA.x - 100, PLAZA.y - 50], [PLAZA.x + 100, PLAZA.y - 50], [PLAZA.x - 110, PLAZA.y + 60], [PLAZA.x + 110, PLAZA.y + 60], [380, 610], [480, 610], [380, 720], [480, 720]]) add(x, y, y + 40, (c, t) => starLantern(c, t, x, y - 40));
-    add(430, 560, 820, (c, t) => { lanternString(c, t, 300, 580, 560, 580, 64); });
+    add(430, 560, OVERHEAD, (c, t) => { lanternString(c, t, 300, 580, 560, 580, 64); });
   }
   if (ev?.id === 'halloween') {
     for (const [x, y] of [[PLAZA.x - 110, PLAZA.y + 50], [PLAZA.x + 110, PLAZA.y + 50], [PLAZA.x - 40, PLAZA.y + 170], [PLAZA.x + 40, PLAZA.y + 170], [380, 640], [480, 640], [560, 2240], [700, 2240]]) add(x, y, y, (c, t) => pumpkin(c, t, x, y));
-    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#f08a2c', '#4a3a60', '#f7de8c']); });
+    add(PLAZA.x, PLAZA.y - 64, OVERHEAD, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#f08a2c', '#4a3a60', '#f7de8c']); });
   }
   if (ev?.id === 'christmas') {
-    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#d9433a', '#3f8f5a', '#fff5df']); });
-    add(900, 1100, 1300, (c, t) => { bunting(c, t, 700, 1098, 1100, 1098, 58, ['#d9433a', '#3f8f5a', '#fff5df', '#f2c14e']); });
+    add(PLAZA.x, PLAZA.y - 64, OVERHEAD, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#d9433a', '#3f8f5a', '#fff5df']); });
+    add(900, 1100, OVERHEAD, (c, t) => { bunting(c, t, 700, 1098, 1100, 1098, 58, ['#d9433a', '#3f8f5a', '#fff5df', '#f2c14e']); });
     add(PLAZA.x + 150, PLAZA.y + 120, PLAZA.y + 120, (c, t) => xmasTree(c, t, PLAZA.x + 150, PLAZA.y + 120));
   }
   if (ev?.id === 'valentine') {
-    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#f36d86', '#fff5df', '#ffb3c6']); });
+    add(PLAZA.x, PLAZA.y - 64, OVERHEAD, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#f36d86', '#fff5df', '#ffb3c6']); });
     for (const [x, y] of [[PLAZA.x - 116, PLAZA.y + 44], [PLAZA.x + 116, PLAZA.y + 44], [PLAZA.x - 40, PLAZA.y + 168], [PLAZA.x + 40, PLAZA.y + 168]]) add(x, y, y, (c, t) => balloons(c, t, x, y, ['#f36d86', '#ff8fb0', '#e8584e'], true));
   }
   if (ev?.id === 'womensday') {
-    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#ff8fb0', '#fff5df', '#c9a8ff']); });
+    add(PLAZA.x, PLAZA.y - 64, OVERHEAD, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#ff8fb0', '#fff5df', '#c9a8ff']); });
     for (const [x, y] of [[PLAZA.x - 120, PLAZA.y + 50], [PLAZA.x + 120, PLAZA.y + 50], [900, 1240]]) add(x, y, y, (c, t) => flowerStand(c, t, x, y));
   }
   if (ev?.id === 'childrensday') {
     for (const [x, y] of [[PLAZA.x - 116, PLAZA.y + 44], [PLAZA.x + 116, PLAZA.y + 44], [PLAZA.x - 40, PLAZA.y + 168], [PLAZA.x + 40, PLAZA.y + 168], [640, 2300], [1180, 2300]]) add(x, y, y, (c, t) => balloons(c, t, x, y, ['#ffd35a', '#6fbfb0', '#f36d86', '#8fb7e0']));
-    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#ffd35a', '#6fbfb0', '#f36d86', '#8fb7e0']); });
+    add(PLAZA.x, PLAZA.y - 64, OVERHEAD, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#ffd35a', '#6fbfb0', '#f36d86', '#8fb7e0']); });
   }
   if (ev?.id === 'nationalday') {
     for (const [x, y] of [[PLAZA.x - 120, PLAZA.y + 40], [PLAZA.x + 120, PLAZA.y + 40], [PLAZA.x - 40, PLAZA.y + 170], [PLAZA.x + 40, PLAZA.y + 170], [700, 1240], [1100, 1240], [860, 2330], [940, 2330]]) add(x, y, y, (c, t) => flagPole(c, t, x, y));
-    add(900, 1100, 1300, (c, t) => { bunting(c, t, 700, 1098, 1100, 1098, 58, ['#d9433a', '#ffd35a']); });
+    add(900, 1100, OVERHEAD, (c, t) => { bunting(c, t, 700, 1098, 1100, 1098, 58, ['#d9433a', '#ffd35a']); });
   }
   if (ev?.id === 'newyear') {
-    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#8f7fd0', '#ffd35a', '#fff5df']); });
+    add(PLAZA.x, PLAZA.y - 64, OVERHEAD, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#8f7fd0', '#ffd35a', '#fff5df']); });
   }
   if (ev?.id === 'launch') {
     add(900, 1780, 1780, (c, t) => openingArch(c, t, 900, 1780));
-    add(PLAZA.x, PLAZA.y - 64, PLAZA.y + 160, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#f36d86', '#ffd35a', '#6fbfb0', '#8fb7e0']); });
+    add(PLAZA.x, PLAZA.y - 64, OVERHEAD, (c, t) => { bunting(c, t, PLAZA.x - 124, PLAZA.y + 100, PLAZA.x + 124, PLAZA.y + 100, 60, ['#f36d86', '#ffd35a', '#6fbfb0', '#8fb7e0']); });
     for (const [x, y] of [[PLAZA.x - 116, PLAZA.y + 44], [PLAZA.x + 116, PLAZA.y + 44], [PLAZA.x - 40, PLAZA.y + 168], [PLAZA.x + 40, PLAZA.y + 168], [880, 2380], [920, 2380]]) add(x, y, y, (c, t) => balloons(c, t, x, y, ['#f36d86', '#ffd35a', '#6fbfb0', '#c9a8ff']));
   }
   if (ev?.fireworks) add(PLAZA.x, PLAZA.y, 99999, (c, t) => fireworks(c, t, PLAZA.x, PLAZA.y + 60));
@@ -200,7 +201,7 @@ export function growthDrawables() {
     for (const [x, y, col] of [[640, 2330, '#f28f7c'], [760, 2350, '#8fcfc0'], [1180, 2360, '#f2c14e'], [1300, 2320, '#f28f7c'], [2420, 2330, '#8fcfc0'], [2540, 2300, '#f2c14e']]) add(x, y, y, (c, t) => beachUmbrella(c, t, x, y, col));
   }
   if (ev?.id === 'nmnight' || ev?.id === 'midautumn') {
-    add(430, 640, 900, (c, t) => { lanternString(c, t, 300, 660, 560, 660, 70); lanternString(c, t, 300, 760, 560, 760, 70); });
+    add(430, 640, OVERHEAD, (c, t) => { lanternString(c, t, 300, 660, 560, 660, 70); lanternString(c, t, 300, 760, 560, 760, 70); });
   }
   // Minh's exhibition: photos pinned on a board at the plaza
   if (flag('minh_exhibit')) add(PLAZA.x + 150, PLAZA.y + 40, PLAZA.y + 40, c => { const x = PLAZA.x + 150, y = PLAZA.y + 40; line(c, x - 18, y, x - 18, y - 30, '#8a5f3e', 2); line(c, x + 18, y, x + 18, y - 30, '#8a5f3e', 2); box(c, x - 22, y - 44, 44, 22, 2, '#c9955e', INK, 0.9); for (let i = 0; i < 3; i++) box(c, x - 18 + i * 13, y - 41, 10, 8 + (i % 2) * 2, 0.8, ['#aee4ed', '#f7de8c', '#f4a9b8'][i], INK, 0.5); });

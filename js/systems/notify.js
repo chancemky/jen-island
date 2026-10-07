@@ -9,6 +9,7 @@
 import { G, T, markDirty } from './state.js';
 import { bus, islandNow } from '../core/util.js';
 import { weekEndsAt } from './weekboard.js';
+import { present } from '../ui/sheets.js';
 
 const LN = () => window.Capacitor?.isNativePlatform?.() ? window.Capacitor.Plugins?.LocalNotifications : null;
 const IDS = [101, 102, 103];
@@ -30,12 +31,12 @@ async function schedule() {
 async function askOnce() {
   const ln = LN(), s = G.state; if (!ln || s.story.flags.notifyAsked || s.day < 2) return;
   s.story.flags.notifyAsked = true; markDirty(true);
-  const yes = await new Promise(res => {
+  const yes = await present(() => new Promise(res => {
     const el = document.createElement('div'); el.className = 'modal';
     el.innerHTML = `<div class="card" style="text-align:center"><div style="font-size:48px">🔔</div><h2>${T('A little reminder?', 'Nhắc nhẹ một chút nhé?')}</h2><p style="font-weight:800;line-height:1.4">${T('We can tell you when your morning mail arrives and when the weekly board is about to close. Never more than once a day.', 'Chúng mình có thể báo khi thư buổi sáng tới và khi bảng tuần sắp đóng. Không quá một lần mỗi ngày.')}</p><button class="btn primary" data-a="y" type="button">${T('Yes, please', 'Có, nhắc mình nhé')}</button><button class="btn ghost" data-a="n" type="button" style="margin-top:8px">${T('Not now', 'Để sau')}</button></div>`;
     (document.getElementById('app') || document.body).appendChild(el);
     el.onclick = e => { const a = e.target.closest('button')?.dataset.a; if (!a) return; el.remove(); res(a === 'y'); };
-  });
+  }));
   if (!yes) { s.settings.notify = false; markDirty(true); return; }
   try { const r = await ln.requestPermissions(); s.story.flags.notifyOk = r?.display === 'granted'; } catch { s.story.flags.notifyOk = false; }
   if (!s.story.flags.notifyOk) s.settings.notify = false;
