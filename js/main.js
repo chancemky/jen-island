@@ -10,7 +10,7 @@ import { buildRestaurant, updateRestaurant, initRestaurantRuntime, restRT, guest
 import { Player } from './systems/player.js';
 import { Actor } from './world/actor.js';
 import { initInput, input, moveVector, releaseJoystick } from './core/input.js';
-import { unlockAudio, audioRunning, sfx, musicTick, setAudio, suspendAudio, setMood, setSongChooser } from './core/audio.js';
+import { unlockAudio, audioRunning, sfx, musicTick, setAudio, suspendAudio, setMood, setSongChooser, stinger } from './core/audio.js';
 import { showReward, isUiOpen, isPresenting, openSheet, h, btn } from './ui/sheets.js';
 import { scenes, setScene, enterBuilding, exitBuilding, updateDoors, isTransitioning, fadeOut, fadeIn } from './systems/scenes.js';
 import { cs, updateFollow, say, ask, wait, camTo, activity as csActivity } from './systems/cutscene.js';
@@ -54,6 +54,9 @@ import { initBadges, grantServerBadge, FOUNDER_BEFORE } from './systems/badges.j
 import { morningMail } from './systems/daily.js';
 import { initSocial } from './systems/social.js';
 import { initWeekBoard } from './systems/weekboard.js';
+import { setHaptics } from './core/haptics.js';
+import { initNotify } from './systems/notify.js';
+import { initReview } from './systems/review.js';
 import { initBoard, BOARD, boardOpen } from './systems/board.js';
 import { openBoard } from './ui/board.js';
 import { CLOTHES } from './data/wardrobe.js';
@@ -140,6 +143,7 @@ async function boot() {
   initBadges();
   initSocial();
   initBoard();
+  initNotify(); initReview();
   setTimeout(initWeekBoard, 4000);          // after the morning mail settles
   showMorningMail();
   festivalGift();
@@ -201,7 +205,8 @@ function soundHint(wanted) {
 function startGame() {
   const s = G.state;
   if (G.runtime.paused) { G.runtime.paused = false; document.getElementById('pauseCard')?.remove(); }   // a new start is never paused
-  setAudio({ music: s.settings.music, sfx: s.settings.sfx });
+  setAudio({ music: s.settings.music, sfx: s.settings.sfx, musicVol: s.settings.musicVol, sfxVol: s.settings.sfxVol });
+  setHaptics(s.settings.haptics);
   soundHint(s.settings.music || s.settings.sfx);
   // one piece that fails (an odd save, a missing item) is reported and skipped, never a blank screen
   const safe = (name, fn) => { try { fn(); } catch (e) { console.error('[start]', name, e); reportError(e, { where: 'start:' + name }); } };
@@ -679,7 +684,7 @@ async function buyKiosk(id) {
   addMoney(-def.buy, 'business'); z.owned = true; z.unlocked = true; z.repair = 1; G.state.keys[id] = true;
   for (const [rid, r] of Object.entries(RECIPES)) if (r.biz === def.biz && r.starter && !G.state.recipes.includes(rid)) learnRecipe(rid);
   for (const rid of def.menu || []) if (!G.state.recipes.includes(rid)) learnRecipe(rid);      // the family's speciality comes with the stall
-  markDirty(true); sfx('fanfare'); addXP(150, 'buy');
+  markDirty(true); stinger('newshop'); addXP(150, 'buy');
   if (def.stall) await stallHandover(id);                 // the family says goodbye and passes on their speciality
   fx.burst('confetti', G.player.x, G.player.y - 30, 30, { up: 80, speed: 70, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 60, life: 1.6 });
   await showReward({ icon: KIOSK_ICON[def.biz] || 'key', kicker: T('New shop!', 'Quán mới!'), title: bizName(id), text: T('Open it from the counter. You can hire a shopkeeper for it in the Business tab.', 'Mở cửa ở quầy. Có thể thuê người trông quán trong mục Kinh doanh.') });
@@ -833,7 +838,7 @@ async function doSleep(dawn) {
       await wait(0.3);
       await fadeIn(900);
       sfx('bell');
-      pl.doHop(); pl.setAct('cheer'); await wait(0.9); pl.setAct(null);
+      pl.doHop(); pl.setAct('cheer'); stinger('morning'); await wait(0.9); pl.setAct(null);
       toast({ text: T(`Day ${G.state.day} · Good morning!`, `Ngày ${G.state.day} · Chào buổi sáng!`), sub: specialLine(), icon: 'star', ms: 3600 });
     });
   } finally { G.runtime.inCutscene = false; G.runtime.sleeping = false; }
@@ -904,6 +909,8 @@ bus.on('leave', id => {
 
 // progression hooks
 bus.on('sfx', k => sfx(k));
+// little musical moments for the big ones (core/music.js)
+bus.on('stinger', id => stinger(id));
 bus.on('recipe', () => addXP(30, 'recipe'));
 bus.on('achievement', () => addXP(40, 'achievement'));
 let msSeen = 0;

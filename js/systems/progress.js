@@ -180,7 +180,7 @@ export function tickCelebrations(canShow) {
 function celebrate({ lv, reward, gift, unlocks }) {
   return new Promise(res => {
     G.runtime.pause++;
-    bus.emit('sfx', 'fanfare');
+    bus.emit('stinger', 'levelup');
     const el = document.createElement('div'); el.className = 'levelup';
     const confetti = Array.from({ length: 36 }, (_, i) => `<i style="--x:${(Math.random() * 2 - 1).toFixed(2)};--d:${(0.6 + Math.random() * 0.9).toFixed(2)}s;--r:${Math.floor(Math.random() * 360)}deg;--c:${['#ffd35a', '#f36d86', '#6fbfb0', '#8fb7e0', '#b9e07a'][i % 5]}"></i>`).join('');
     el.innerHTML = `<div class="lu-rays"></div><div class="lu-confetti">${confetti}</div>

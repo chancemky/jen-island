@@ -3,10 +3,15 @@
 // Music: composed songs (core/music.js, data/songs.js) chosen by the game for the place
 // and the time of day; a radio or record player in a room plays its own little tune.
 
-import { initMusic, musicFrame } from './music.js';
+import { initMusic, musicFrame, instNote, stinger as musicStinger } from './music.js';
+import { hapticFor } from './haptics.js';
 
-let ctx = null, master = null, musicGain = null, sfxGain = null, started = false;
-const state = { music: true, sfx: true, mood: 'day', nextNote: 0, step: 0, lastBlip: 0 };
+let ctx = null, master = null, musicGain = null, sfxGain = null, sfxWet = null, started = false;
+const state = { music: true, sfx: true, musicVol: 0.8, sfxVol: 0.8, mood: 'day', nextNote: 0, step: 0, lastBlip: 0 };
+// slider 0..1 → gain, on a gentle curve so the low end of the slider stays usable
+const curve = v => Math.pow(Math.max(0, Math.min(1, v)), 1.6);
+const musicLevel = () => state.music ? 0.28 * curve(state.musicVol) : 0;
+const sfxLevel = () => state.sfx ? 0.7 * curve(state.sfxVol) : 0;
 
 export function unlockAudio() {
   try {
@@ -15,8 +20,12 @@ export function unlockAudio() {
       if (!AC) return;
       ctx = new AC();
       master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
-      musicGain = ctx.createGain(); musicGain.gain.value = state.music ? 0.22 : 0; musicGain.connect(master);
-      sfxGain = ctx.createGain(); sfxGain.gain.value = state.sfx ? 0.55 : 0; sfxGain.connect(master);
+      musicGain = ctx.createGain(); musicGain.gain.value = musicLevel(); musicGain.connect(master);
+      sfxGain = ctx.createGain(); sfxGain.gain.value = sfxLevel(); sfxGain.connect(master);
+      // a small, warm room for the effects (a wet send most sounds use a little of)
+      const len = Math.floor(ctx.sampleRate * 0.9), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4); }
+      const verb = ctx.createConvolver(); verb.buffer = ir; sfxWet = ctx.createGain(); sfxWet.gain.value = 0.22; sfxWet.connect(verb); verb.connect(sfxGain);
       initMusic(ctx, musicGain);
     }
     if (ctx.state !== 'running') ctx.resume?.().catch?.(() => {});
@@ -26,10 +35,11 @@ export function unlockAudio() {
   } catch (e) { console.warn('audio', e); }
 }
 export const audioRunning = () => !!ctx && ctx.state === 'running';
+export const __audioProbe = () => ({ ctx, master });     // (tests/audio.html measures levels here)
 export function setAudio(opts) {
   Object.assign(state, opts);
-  if (musicGain) musicGain.gain.setTargetAtTime(state.music ? 0.22 : 0, ctx.currentTime, 0.3);
-  if (sfxGain) sfxGain.gain.setTargetAtTime(state.sfx ? 0.55 : 0, ctx.currentTime, 0.05);
+  if (musicGain) musicGain.gain.setTargetAtTime(musicLevel(), ctx.currentTime, 0.15);
+  if (sfxGain) sfxGain.gain.setTargetAtTime(sfxLevel(), ctx.currentTime, 0.05);
 }
 export function suspendAudio(on) { if (!ctx) return; if (on) ctx.suspend?.(); else ctx.resume?.(); }
 export function setMood(m) { state.mood = m; }
@@ -47,7 +57,7 @@ export function playNote(n, vol = 0.14) {
   tone(hz, 1.2, { type: 'triangle', vol, attack: 0.004, decay: 1.3 }); tone(hz * 2, 0.5, { type: 'sine', vol: vol * 0.25, attack: 0.004, decay: 0.6 });
 }
 
-function tone(freq, dur, { type = 'sine', vol = 0.3, attack = 0.005, decay = null, slide = 0, dest = sfxGain, when = 0, detune = 0 } = {}) {
+function tone(freq, dur, { type = 'sine', vol = 0.3, attack = 0.005, decay = null, slide = 0, dest = sfxGain, when = 0, detune = 0, wet = 0, pan = 0, lp = 0 } = {}) {
   if (!ctx || !dest) return;
   const t = ctx.currentTime + when;
   const o = ctx.createOscillator(), g = ctx.createGain();
@@ -56,9 +66,14 @@ function tone(freq, dur, { type = 'sine', vol = 0.3, attack = 0.005, decay = nul
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(vol, t + attack);
   g.gain.exponentialRampToValueAtTime(0.0001, t + (decay ?? dur));
-  o.connect(g); g.connect(dest);
+  let src = o; if (lp) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); src = f; }
+  src.connect(g);
+  let out = g; if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); out = p; }
+  out.connect(dest); if (wet && sfxWet && dest === sfxGain) { const w = ctx.createGain(); w.gain.value = wet; out.connect(w); w.connect(sfxWet); }
   o.start(t); o.stop(t + (decay ?? dur) + 0.05);
 }
+// a note from the band (core/music.js) as a sound effect: m is a midi number
+const inst = (name, m, vol, when = 0, dur = 0.3, pan = 0) => instNote(name, sfxGain, m, dur, vol, when, pan);
 // Scooter horn: two slightly dissonant buzzy tones through a small speaker (band-limited), with a flutter
 function horn(when, dur) {
   if (!ctx || !sfxGain) return;
@@ -70,16 +85,17 @@ function horn(when, dur) {
   for (const [hz, type] of [[415, 'sawtooth'], [498, 'square']]) { const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(hz * 0.97, t); o.frequency.linearRampToValueAtTime(hz, t + 0.03); o.connect(f); o.start(t); o.stop(t + dur + 0.05); }
   f.connect(lp); lp.connect(g); g.connect(sfxGain); lfo.start(t); lfo.stop(t + dur + 0.05);
 }
-function noise(dur, { vol = 0.2, freq = 1200, q = 1, when = 0, type = 'bandpass' } = {}) {
+function noise(dur, { vol = 0.2, freq = 1200, q = 1, when = 0, type = 'bandpass', to = 0, wet = 0 } = {}) {
   if (!ctx) return;
   const t = ctx.currentTime + when;
   const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
   const buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
   for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
   const s = ctx.createBufferSource(); s.buffer = buf;
-  const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const f = ctx.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(freq, t); f.Q.value = q;
+  if (to) f.frequency.exponentialRampToValueAtTime(to, t + dur);
   const g = ctx.createGain(); g.gain.value = vol;
-  s.connect(f); f.connect(g); g.connect(sfxGain); s.start(t);
+  s.connect(f); f.connect(g); g.connect(sfxGain); if (wet && sfxWet) { const w = ctx.createGain(); w.gain.value = wet; g.connect(w); w.connect(sfxWet); } s.start(t);
 }
 
 
@@ -102,6 +118,7 @@ function voice(pts, { vol = 0.12, type = 'sawtooth', vib = 0, vibRate = 7, when 
 }
 
 export function sfx(name, opt = {}) {
+  hapticFor(name);
   if (!ctx || !started || !state.sfx || ctx.state !== 'running') return;
   switch (name) {
     case 'blip': { const now = performance.now(); if (now - state.lastBlip < 45) return; state.lastBlip = now; tone((opt.pitch || 620) * (0.94 + Math.random() * 0.12), 0.05, { type: 'triangle', vol: 0.09 }); break; }
@@ -121,31 +138,38 @@ export function sfx(name, opt = {}) {
     case 'meow': voice([[0, 620, 420, 2300], [0.14, 880, 800, 1800], [0.4, 760, 750, 1200], [0.62, 560, 500, 900]], { vol: 0.15, q: 7, vib: 10, vibRate: 6 }); break;
     case 'tap': tone(520, 0.06, { type: 'sine', vol: 0.18, slide: 180 }); break;
     case 'hop': tone(300, 0.12, { type: 'sine', vol: 0.12, slide: 360 }); break;
-    case 'pop': tone(420, 0.09, { type: 'sine', vol: 0.22, slide: 520 }); break;
-    case 'ui': tone(700, 0.05, { type: 'triangle', vol: 0.12 }); break;
-    case 'back': tone(520, 0.08, { type: 'triangle', vol: 0.12, slide: -200 }); break;
-    case 'coin': tone(988, 0.08, { type: 'square', vol: 0.07 }); tone(1319, 0.22, { type: 'square', vol: 0.07, when: 0.07 }); break;
-    case 'cash': for (let i = 0; i < 3; i++) tone(1200 + i * 180, 0.07, { type: 'square', vol: 0.05, when: i * 0.05 }); noise(0.08, { vol: 0.08, freq: 5000, when: 0.05 }); break;
-    case 'buy': tone(660, 0.07, { type: 'triangle', vol: 0.15 }); tone(880, 0.12, { type: 'triangle', vol: 0.15, when: 0.06 }); break;
-    case 'error': tone(220, 0.14, { type: 'square', vol: 0.06 }); tone(180, 0.16, { type: 'square', vol: 0.06, when: 0.1 }); break;
+    case 'pop': tone(380, 0.08, { type: 'sine', vol: 0.2, slide: 560, wet: 0.2 }); tone(1400, 0.03, { type: 'sine', vol: 0.04, when: 0.05 }); break;
+    case 'ui': inst('marimba', 84, 0.11, 0, 0.1); break;
+    case 'back': inst('marimba', 79, 0.09); inst('marimba', 72, 0.08, 0.06); break;
+    case 'coin': inst('bells', 95, 0.09, 0, 0.1, 0.2); inst('bells', 100, 0.1, 0.07, 0.3, 0.3); tone(1976, 0.05, { type: 'square', vol: 0.02, lp: 4000 }); break;
+    case 'cash': noise(0.07, { vol: 0.12, freq: 2200, q: 2 }); noise(0.1, { vol: 0.08, freq: 900, q: 3, when: 0.05 }); inst('bells', 96, 0.11, 0.1, 0.4, 0.25); inst('bells', 100, 0.08, 0.16, 0.6, 0.3); break;   // cha-ching: the drawer, then the bell
+    case 'buy': [72, 76, 79].forEach((m, i) => inst('marimba', m, 0.13, i * 0.055)); inst('bells', 91, 0.04, 0.17); break;
+    case 'error': tone(196, 0.14, { type: 'triangle', vol: 0.14, lp: 900 }); tone(165, 0.2, { type: 'triangle', vol: 0.13, when: 0.11, lp: 800 }); break;
     case 'step': noise(0.03, { vol: 0.035, freq: 900 + Math.random() * 300, q: 2 }); break;
-    case 'door': noise(0.18, { vol: 0.12, freq: 380, q: 3 }); tone(160, 0.12, { type: 'sine', vol: 0.08, slide: -40 }); break;
-    case 'chop': noise(0.05, { vol: 0.25, freq: 2400, q: 1.5 }); tone(300, 0.05, { type: 'triangle', vol: 0.08 }); break;
-    case 'sizzle': noise(0.5, { vol: 0.12, freq: 6000, q: 0.6, type: 'highpass' }); break;
-    case 'pour': for (let i = 0; i < 6; i++) tone(500 + i * 90, 0.06, { type: 'sine', vol: 0.06, when: i * 0.035 }); break;
-    case 'ice': for (let i = 0; i < 3; i++) tone(2400 + Math.random() * 800, 0.04, { type: 'triangle', vol: 0.06, when: i * 0.06 }); break;
+    case 'door': noise(0.22, { vol: 0.1, freq: 420, q: 4, to: 300 }); tone(150, 0.1, { type: 'sine', vol: 0.1, slide: -40 }); inst('bells', 88, 0.05, 0.06, 0.5, 0.3); inst('bells', 93, 0.035, 0.13, 0.5, -0.3); break;   // a creak, the latch and the shop bell
+    case 'chop': noise(0.035, { vol: 0.22, freq: 3200, q: 1.2 }); tone(170, 0.08, { type: 'sine', vol: 0.18, slide: -60 }); break;   // the knife, then the wooden board
+    case 'sizzle': noise(0.6, { vol: 0.1, freq: 5000, q: 0.6, type: 'highpass' }); for (let i = 0; i < 6; i++) noise(0.012, { vol: 0.12, freq: 3000 + Math.random() * 3000, q: 4, when: Math.random() * 0.55 }); break;
+    case 'pour': noise(0.5, { vol: 0.2, freq: 500, q: 6, to: 1400, wet: 0.2 }); for (let i = 0; i < 5; i++) tone(500 + i * 120 + Math.random() * 60, 0.05, { type: 'sine', vol: 0.09, slide: 240, when: 0.05 + i * 0.08 }); break;   // liquid rising in the cup, with bubbles
+    case 'ice': for (let i = 0; i < 4; i++) { const w = i * 0.055 + Math.random() * 0.02; noise(0.03, { vol: 0.18, freq: 4200 + Math.random() * 1500, q: 18, when: w }); tone(2600 + Math.random() * 900, 0.05, { type: 'sine', vol: 0.09, when: w, pan: (Math.random() - 0.5) * 0.6 }); } break;   // cubes clinking against glass
     case 'whoosh': noise(0.25, { vol: 0.14, freq: 800, q: 0.8 }); break;
     case 'hammer': noise(0.06, { vol: 0.3, freq: 900, q: 2 }); tone(180, 0.08, { type: 'square', vol: 0.06 }); break;
-    case 'sparkle': for (let i = 0; i < 5; i++) tone(1568 * Math.pow(1.122, i), 0.12, { type: 'sine', vol: 0.06, when: i * 0.05 }); break;
-    case 'success': [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, { type: 'triangle', vol: 0.12, when: i * 0.08 })); break;
-    case 'fanfare': [523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, { type: 'triangle', vol: 0.13, when: i * 0.11 })); break;
+    case 'sparkle': [84, 88, 91, 93, 96].forEach((m, i) => inst('musicbox', m, 0.07, i * 0.05, 0.2, (i - 2) * 0.15)); break;
+    case 'success': [60, 64, 67, 72].forEach((m, i) => inst('kalimba', m + 12, 0.13, i * 0.07)); inst('bells', 91, 0.05, 0.3, 0.6); break;
+    case 'fanfare': [[72, 0], [76, 0.1], [79, 0.2], [76, 0.33], [79, 0.43], [84, 0.55]].forEach(([m, w]) => { tone(440 * Math.pow(2, (m - 69) / 12), 0.22, { type: 'sawtooth', vol: 0.05, when: w, lp: 2200, wet: 0.3 }); inst('bells', m + 12, 0.04, w); }); [60, 64, 67].forEach(m => inst('strings', m, 0.04, 0.55, 0.8)); break;
     case 'sad': tone(392, 0.2, { type: 'triangle', vol: 0.1 }); tone(330, 0.3, { type: 'triangle', vol: 0.1, when: 0.16 }); break;
     case 'bell': tone(1318, 0.8, { type: 'sine', vol: 0.12, decay: 0.9 }); tone(1975, 0.6, { type: 'sine', vol: 0.05, decay: 0.7 }); break;
     case 'horn': tone(220, 0.5, { type: 'sawtooth', vol: 0.05, attack: 0.05 }); tone(277, 0.5, { type: 'sawtooth', vol: 0.04, attack: 0.05 }); break;
     case 'beep': horn(0, 0.13); horn(0.2, 0.26); break;          // a scooter's two-tone electric horn: bíp-bíiip
-    case 'blend': noise(0.6, { vol: 0.1, freq: 500, q: 3 }); tone(140, 0.6, { type: 'sawtooth', vol: 0.03, slide: 60 }); break;
-    case 'page': noise(0.12, { vol: 0.08, freq: 3000, q: 0.8 }); break;
+    case 'blend': noise(0.7, { vol: 0.16, freq: 400, q: 3, to: 900 }); tone(120, 0.7, { type: 'sawtooth', vol: 0.06, slide: 80, lp: 700 }); for (let i = 0; i < 4; i++) noise(0.03, { vol: 0.06, freq: 2500, q: 8, when: 0.1 + i * 0.13 }); break;   // the motor, and ice knocking the jar
+    case 'page': noise(0.14, { vol: 0.07, freq: 2600, q: 0.8, to: 4200 }); noise(0.05, { vol: 0.05, freq: 1500, q: 1, when: 0.1 }); break;
   }
+}
+
+// a short musical moment over the song (level up, a new chapter, a prize…)
+export function stinger(id) {
+  if (!ctx || !started || ctx.state !== 'running') return;
+  if (!state.music) { if (id !== 'morning') sfx(id === 'friend' ? 'sparkle' : 'fanfare'); return; }    // music off: the plain effect instead
+  musicStinger(id, musicGain);
 }
 
 // ---------------------------------------------------------------- music

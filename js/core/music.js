@@ -73,8 +73,11 @@ export function initMusic(audioCtx, dest) {
 
 // ---------------------------------------------------------------- instruments
 function env(g, t, vol, a, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
+const PAN = { pluck: -0.25, flute: 0.2, danbau: 0.15, marimba: -0.15, musicbox: 0.3, epiano: -0.1, pad: 0, bass: 0, kalimba: 0.25, nylon: -0.3, strings: 0, bells: 0.35 };
+let panNext = 0;
 function voice(bus, sendAmt = 0.25) {
-  const g = ctx.createGain(); g.connect(bus);
+  const g = ctx.createGain();
+  if (panNext && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = panNext; g.connect(p); p.connect(bus); } else g.connect(bus);
   if (sendAmt) { const s = ctx.createGain(); s.gain.value = sendAmt; g.connect(s); s.connect(verb); }
   return g;
 }
@@ -132,6 +135,35 @@ const INST = {
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100; lp.Q.value = 0.4; lp.connect(g);
     osc('sawtooth', hz(m), t, stop, lp, -7); osc('sawtooth', hz(m), t, stop, lp, 7);
   },
+  // kalimba: thumb piano, a bright tine with a hollow wooden body
+  kalimba(bus, t, m, dur, vol) {
+    const stop = t + 1.8, g = voice(bus, 0.35); env(g, t, vol, 0.002, 1.3);
+    osc('sine', hz(m), t, stop, g); const h = ctx.createGain(); env(h, t, vol * 0.4, 0.001, 0.09); osc('sine', hz(m) * 5.4, t, stop, h); h.connect(g);
+    const b = ctx.createGain(); env(b, t, vol * 0.2, 0.002, 0.25); osc('triangle', hz(m) / 2, t, stop, b); b.connect(g);
+  },
+  // nylon guitar: a plucked string through a wooden body (two resonances), warmer than the đàn tranh
+  nylon(bus, t, m, dur, vol) {
+    const s = ctx.createBufferSource(); s.buffer = pluckBuffer(m);
+    const body = ctx.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 220; body.gain.value = 6; body.Q.value = 1.2;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
+    const g = voice(bus, 0.28); g.gain.setValueAtTime(vol * 1.5, t); g.gain.setTargetAtTime(0.0001, t + Math.max(0.3, dur), 0.35);
+    s.connect(body); body.connect(lp); lp.connect(g); s.start(t); s.stop(t + Math.max(0.3, dur) + 1.6);
+  },
+  // a soft string section: detuned saws, slow bow, gentle vibrato
+  strings(bus, t, m, dur, vol) {
+    const stop = t + dur + 1, g = voice(bus, 0.55);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.25); g.gain.setValueAtTime(vol, t + dur); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.8);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800; lp.Q.value = 0.3; lp.connect(g);
+    const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 5; lg.gain.value = 4; lfo.connect(lg);
+    for (const d of [-9, 0, 9]) { const o = osc('sawtooth', hz(m), t, stop, lp, d); lg.connect(o.detune); }
+    lfo.start(t); lfo.stop(stop);
+  },
+  // glass bells: inharmonic partials, long shimmer
+  bells(bus, t, m, dur, vol) {
+    const stop = t + 2.6, g = voice(bus, 0.5); env(g, t, vol, 0.002, 2.2);
+    osc('sine', hz(m), t, stop, g);
+    for (const [r, k, d] of [[2.76, 0.35, 0.9], [5.4, 0.18, 0.4], [8.93, 0.08, 0.2]]) { const h = ctx.createGain(); env(h, t, vol * k, 0.001, d); osc('sine', hz(m) * r, t, stop, h); h.connect(g); }
+  },
   bass(bus, t, m, dur, vol) {
     const stop = t + dur + 0.3, g = voice(bus, 0.05); env(g, t, vol, 0.01, Math.max(0.2, dur));
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 650; lp.connect(g);
@@ -174,6 +206,7 @@ function playStep(S, step, t) {
     if (light && L.light === 'rest' && barI < S.bars / 2) continue;
     for (const ev of L.bars[barI]) if (ev.at === inBar) {
       const dur = ev.len * S.beat, vol = L.vol * (ev.accent ? 1.25 : 1) * (0.9 + Math.random() * 0.15);
+      panNext = PAN[L.inst] || 0;
       for (const n of ev.notes) INST[L.inst](cur.bus, tt, n + (L.oct || 0) * 12, dur, vol, ev, cur.prevLead[k]);
       cur.prevLead[k] = ev.notes[ev.notes.length - 1];
     }
@@ -183,7 +216,9 @@ function playStep(S, step, t) {
   for (const A of S.arps || []) {
     if (light && A.light === 'rest') continue;
     const p = A.pattern[inBar % A.pattern.length]; if (p === '.') continue;
+    panNext = PAN[A.inst] || 0;
     INST[A.inst](cur.bus, tt, tone(ch, +p, A.oct), S.beat * (A.len || 2), A.vol * (0.9 + Math.random() * 0.15));
+    panNext = 0;
   }
   if (S.bass) { const p = S.bass.pattern[inBar % S.bass.pattern.length]; if (p !== '.') INST[S.bass.inst || 'bass'](cur.bus, tt, tone(ch, +p, S.bass.oct ?? 2), S.beat * (S.bass.len || 3), S.bass.vol); }
   if (S.pad && inBar % (S.steps / 2) === 0 && (!light || S.pad.light !== 'rest')) for (const d of [1, 3, 5]) INST.pad(cur.bus, t, tone(ch, d, S.pad.oct ?? 3), S.beat * S.steps / 2, S.pad.vol);
@@ -215,6 +250,37 @@ export function musicFrame(want) {
   }
 }
 export const currentSong = () => cur?.id || null;
+// one note of a band instrument, for sound effects (into the effects bus, panned)
+export function instNote(inst, bus, m, dur, vol, when = 0, pan = 0) {
+  if (!ctx || !INST[inst]) return;
+  panNext = pan; INST[inst](bus, ctx.currentTime + when, m, dur, vol); panNext = 0;
+}
+// ---------------------------------------------------------------- stingers
+// Short musical moments for big events, played over the song (which ducks for a moment).
+const STING = {
+  levelup:  { inst: 'bells', bpm: 150, notes: [[72, 0], [76, 1], [79, 2], [84, 3, 4]], bed: [[60, 64, 67], 3] },
+  chapter:  { inst: 'strings', bpm: 96, notes: [[67, 0, 2], [72, 2, 2], [76, 4, 2], [79, 6, 6]], bed: [[48, 55, 64], 6], also: 'bells' },
+  morning:  { inst: 'kalimba', bpm: 132, notes: [[72, 0], [74, 1], [76, 2], [79, 3], [81, 4, 3]] },
+  award:    { inst: 'bells', bpm: 140, notes: [[79, 0], [84, 1], [88, 2], [91, 3, 3], [96, 6, 4]], bed: [[60, 67, 76], 7], also: 'strings' },
+  newshop:  { inst: 'marimba', bpm: 160, notes: [[67, 0], [71, 1], [74, 2], [79, 3], [83, 4], [86, 5, 3]], bed: [[55, 62, 71], 5] },
+  rare:     { inst: 'musicbox', bpm: 120, notes: [[81, 0], [79, 1], [84, 2], [88, 4, 4]], also: 'bells' },
+  friend:   { inst: 'nylon', bpm: 120, notes: [[64, 0], [67, 1], [71, 2], [76, 3, 3]], bed: [[52, 59, 64], 4] },
+};
+const SVOL = { bells: 0.42, marimba: 0.34, musicbox: 0.4, nylon: 0.3, kalimba: 0.2, strings: 0.09 };
+export function stinger(id, bus) {
+  const S = STING[id]; if (!ctx || !S) return 0;
+  const beat = 60 / S.bpm / 2, t0 = ctx.currentTime + 0.02;
+  for (const [m, at, len = 1] of S.notes) {
+    panNext = PAN[S.inst] || 0; INST[S.inst](bus, t0 + at * beat, m, len * beat, SVOL[S.inst] || 0.16);
+    if (S.also) { panNext = -(PAN[S.also] || 0.2); INST[S.also](bus, t0 + at * beat, m + 12, len * beat, (SVOL[S.also] || 0.16) * 0.3); }
+  }
+  if (S.bed) { panNext = 0; for (const m of S.bed[0]) INST.pad(bus, t0, m, S.bed[1] * beat, 0.03); }
+  panNext = 0;
+  const end = (Math.max(...S.notes.map(([, at, len = 1]) => at + len)) + 1) * beat;
+  // duck the song under the stinger
+  if (cur) { const g = cur.bus.gain, now = ctx.currentTime; g.cancelScheduledValues(now); g.setTargetAtTime(0.35, now, 0.05); g.setTargetAtTime(1, now + end, 0.4); }
+  return end;
+}
 // told when a new song starts (the HUD shows its name)
 let onSong = null;
 export function onSongStart(fn) { onSong = fn; }

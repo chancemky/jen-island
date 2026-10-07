@@ -8,7 +8,8 @@ import { askText } from './naming.js';
 import { showAuth } from './auth.js';
 import { chooseIsland } from './conflict.js';
 import { setAudio, sfx } from '../core/audio.js';
-import { escapeHtml, clock, money, moneyPair, moneyShort } from '../core/util.js';
+import { escapeHtml, clock, money, moneyPair, moneyShort, nativeApp } from '../core/util.js';
+import { setHaptics } from '../core/haptics.js';
 import { openJournal, renderAchievements } from './shops.js';
 import { CHAPTERS, FURNITURE, BUSINESSES, RECIPES, bizName } from '../data/game.js';
 import { TRACKS, trackState, claimMilestone, xpNeed, trackGift, leaderboardRow } from '../systems/progress.js';
@@ -271,8 +272,20 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
         const seg = h('div', 'seg'); seg.style.minWidth = '170px';
         for (const [code, label] of [['en', 'English'], ['vi', 'Tiếng Việt']]) { const b = h('button', G.lang === code ? 'on' : '', label); b.type = 'button'; b.onclick = () => { if (G.lang === code) return; setLang(code); sfx('ui'); api.close(true); openMenu({ onLogout }); }; seg.appendChild(b); }
         lr.appendChild(seg); list.appendChild(lr);
-        toggle(T('Music', 'Nhạc nền'), 'music', () => setAudio({ music: s.settings.music }));
-        toggle(T('Sound effects', 'Âm thanh'), 'sfx', () => setAudio({ sfx: s.settings.sfx }));
+        // sound: on/off plus a volume slider for each
+        const slider = (label, key, volKey) => {
+          const r = h('div', 'row vol-row', `<div class="info"><b>${label}</b><input type="range" min="0" max="100" step="5" value="${Math.round((s.settings[volKey] ?? 0.8) * 100)}" aria-label="${label}"></div>`);
+          const inp = r.querySelector('input'), on = () => T('On', 'Bật'), off = () => T('Off', 'Tắt');
+          const apply = () => setAudio({ [key]: s.settings[key], [volKey]: s.settings[volKey] });
+          inp.oninput = () => { s.settings[volKey] = +inp.value / 100; if (!s.settings[key] && +inp.value > 0) { s.settings[key] = true; b.innerHTML = on(); b.className = 'buy'; } apply(); };
+          inp.onchange = () => { markDirty(true); if (key === 'sfx') sfx('coin'); };
+          const b = btn(s.settings[key] ? on() : off(), (el) => { s.settings[key] = !s.settings[key]; el.innerHTML = s.settings[key] ? on() : off(); el.className = s.settings[key] ? 'buy' : 'buy alt'; apply(); markDirty(true); sfx('ui'); }, s.settings[key] ? 'buy' : 'buy alt');
+          r.appendChild(b); list.appendChild(r);
+        };
+        slider(T('Music', 'Nhạc nền'), 'music', 'musicVol');
+        slider(T('Sound effects', 'Âm thanh'), 'sfx', 'sfxVol');
+        toggle(T('Haptics (vibration)', 'Rung phản hồi'), 'haptics', () => setHaptics(s.settings.haptics));
+        if (nativeApp()) toggle(T('Reminders (morning mail, weekly board)', 'Nhắc nhở (thư buổi sáng, bảng tuần)'), 'notify', () => import('../systems/notify.js').then(m => m.notifySettingChanged()));
         toggle(T('Quest arrow', 'Mũi tên chỉ đường'), 'arrow');
         toggle(T('Smooth 60 FPS (uses more battery)', 'Mượt 60 FPS (tốn pin hơn)'), 'smooth', () => G.renderer?.resize());
         toggle(T('Share anonymous stats & error reports', 'Gửi thống kê ẩn danh & báo lỗi'), 'stats');

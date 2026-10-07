@@ -283,7 +283,7 @@ function titleCard(n) {
   const ch = CHAPTERS[n];
   setFlag('card:' + n);
   caption(T(`Chapter ${n}: ${ch.title}`, `Chương ${n}: ${ch.vi}`));
-  sfx('bell');
+  bus.emit('stinger', 'chapter');
   return wait(2.4).then(() => caption(null));
 }
 

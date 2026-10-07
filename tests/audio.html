@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><pre id="o"></pre>
+<script type="module">
+// Audio check: plays every sound effect and stinger through an analyser and reports its
+// peak (0..1). Silent (< 0.003), clipping (> 0.98) or throwing sounds are listed as problems.
+import { unlockAudio, sfx, stinger, setAudio, __audioProbe } from '../js/core/audio.js';
+const src = await (await fetch('../js/core/audio.js')).text();
+const names = [...src.matchAll(/case '([a-z]+)'/g)].map(m => m[1]);
+const stings = ['levelup', 'chapter', 'morning', 'award', 'newshop', 'rare', 'friend'];
+unlockAudio(); setAudio({ music: true, sfx: true, musicVol: 1, sfxVol: 1 });
+const { ctx, master } = __audioProbe(); await ctx.resume();
+const an = ctx.createAnalyser(); an.fftSize = 2048; master.connect(an);
+const buf = new Float32Array(an.fftSize), wait = ms => new Promise(r => setTimeout(r, ms));
+async function measure(fn, ms) { let peak = 0, err = null; try { fn(); } catch (e) { err = e.message; } const t0 = performance.now(); while (performance.now() - t0 < ms) { an.getFloatTimeDomainData(buf); for (const v of buf) peak = Math.max(peak, Math.abs(v)); await wait(15); } return { peak: +peak.toFixed(3), err }; }
+const out = {};
+for (const n of names) { out['sfx:' + n] = await measure(() => sfx(n), 900); await wait(250); }
+for (const n of stings) { out['sting:' + n] = await measure(() => stinger(n), 2600); await wait(400); }
+const bad = Object.entries(out).filter(([, r]) => r.err || r.peak < 0.003 || r.peak > 0.98);
+document.getElementById('o').textContent = JSON.stringify(out);
+window.__result = { out, bad }; window.__ready = true;
+</script></body></html>

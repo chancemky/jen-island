@@ -3,9 +3,22 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.6.0';
+export const APP_VERSION = '5.7.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.7.0', date: '2026-10-07T14:41:43Z',
+    title: ['Sounds of the Island', 'Âm Thanh Của Đảo'],
+    items: [
+      ['Volume sliders for music and sound effects (Menu → Settings)', 'Thanh chỉnh âm lượng cho nhạc và hiệu ứng (Menu → Cài đặt)'],
+      ['Brand-new sound effects: a real cash-register cha-ching, the shop door bell, ice clinking in the glass, drinks pouring, the blender and more', 'Âm thanh hoàn toàn mới: tiếng két tiền leng keng, chuông cửa quán, đá lanh canh trong ly, tiếng rót nước, máy xay và nhiều nữa'],
+      ['New instruments in the island\'s music: kalimba, nylon guitar, soft strings and glass bells, now in stereo', 'Nhạc cụ mới trong nhạc nền: kalimba, guitar dây nylon, dàn dây nhẹ và chuông thủy tinh, giờ có âm thanh nổi'],
+      ['Little musical moments for level-ups, new chapters, new shops, weekly prizes and good mornings', 'Những đoạn nhạc nhỏ khi lên cấp, sang chương mới, có quán mới, nhận giải tuần và mỗi buổi sáng'],
+      ['Haptics: a gentle tap under your thumb (in the app and on Android). Turn it off in Settings', 'Rung phản hồi: chạm nhẹ dưới ngón tay (trong ứng dụng và trên Android). Tắt trong Cài đặt'],
+      ['In the app: optional reminders for your morning mail and the weekly board', 'Trong ứng dụng: nhắc nhở (tùy chọn) cho thư buổi sáng và bảng tuần'],
+      ['Fixed: the open menu tab\'s name could be cut off', 'Đã sửa: tên thẻ menu đang mở có thể bị cắt chữ'],
+    ],
+  },
   {
     v: '5.6.0', date: '2026-10-07T14:24:32Z',
     title: ['Neighbours & Champions', 'Hàng Xóm & Nhà Vô Địch'],

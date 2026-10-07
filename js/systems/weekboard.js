@@ -56,7 +56,7 @@ function celebrate(list) {
     <p class="note">${T('The trophies are waiting in your home (Decorate). Your new badge can be shown on the leaderboard.', 'Cúp đã được gửi về nhà (Trang trí). Bạn có thể khoe huy hiệu mới trên bảng xếp hạng.')}</p>
     <button class="btn primary" type="button">${T('Wonderful!', 'Tuyệt quá!')}</button></div>`;
   (document.getElementById('app') || document.body).appendChild(el);
-  bus.emit('sfx', 'fanfare');
+  bus.emit('stinger', 'award'); bus.emit('weekAward');
   el.querySelector('button').onclick = () => { bus.emit('sfx', 'ui'); el.remove(); };
 }
 export function initWeekBoard() {
