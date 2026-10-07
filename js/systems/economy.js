@@ -8,6 +8,7 @@ import { G, T, addMoney, canAfford, markDirty, bizOf, pantry, addPantry } from '
 import { BUSINESSES, INGREDIENTS, PREPPED, RECIPES, STATION, bizName, recipeName } from '../data/game.js';
 import { rt, openBiz, makeableRecipes, canMake, completeOrder, customerLeave, isOpenHours, ingredientsForBiz, recipeUses, bizRecipes, LOCAL_NAMES } from './business.js';
 import { Actor } from '../world/actor.js';
+import { visitorLook } from '../data/looks.js';
 import { bus, rand, chance, money } from '../core/util.js';
 import {addXP } from './progress.js';
 import { COUNTS } from '../core/counts.js';

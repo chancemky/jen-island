@@ -15,3 +15,4 @@ www
 ios
 android
 capacitor.config.json
+eslint.config.mjs

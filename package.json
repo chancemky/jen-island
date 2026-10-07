@@ -1,6 +1,6 @@
 {
   "name": "jen-island",
-  "version": "5.5.3",
+  "version": "5.5.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -18,14 +18,17 @@
     "test:clock": "node tests/run.mjs clock",
     "check:launch": "node tests/launch-check.mjs",
     "deploy:launch": "node tests/launch-check.mjs && npx wrangler deploy",
-    "test:quick": "node tests/run.mjs quick",
+    "test:quick": "eslint js sw.js && node tests/run.mjs quick",
     "test:ui": "node tests/run.mjs ui",
     "sw": "node tools/sw-shell.mjs",
     "app": "node tools/app-web.mjs && npx cap sync",
-    "test:features": "node tests/run.mjs features"
+    "test:features": "node tests/run.mjs features",
+    "lint": "eslint js sw.js"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.6.9",
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0",
     "playwright": "1.63.0"
   },
   "dependencies": {

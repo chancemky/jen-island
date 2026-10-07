@@ -4,7 +4,7 @@
 
 import { bus, clamp, useLanguage } from '../core/util.js';
 import { BUSINESSES, RECIPES, ACHIEVEMENTS } from '../data/game.js';
-import { APP_VERSION } from '../data/changelog.js';
+import { APP_VERSION, CHANGELOG } from '../data/changelog.js';
 
 // SAVE_VERSION: the shape of a save today. When it changes, bump it and add a step to
 // UPGRADES below so older saves are carried forward (never wiped).

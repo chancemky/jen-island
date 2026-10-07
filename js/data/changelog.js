@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.5.3';
+export const APP_VERSION = '5.5.4';
 
 export const CHANGELOG = [
+  {
+    v: '5.5.4', date: '2026-10-07T13:47:30Z',
+    title: ['Shopkeepers Are Back', 'Chủ Quán Trở Lại'],
+    items: [
+      ['Fixed: on islands with shopkeepers, the keepers didn\'t show up at their shops', 'Đã sửa: trên đảo có chủ quán, chủ quán không xuất hiện ở quán'],
+      ['Fixed: very old saves could fail to load', 'Đã sửa: các bản lưu rất cũ có thể không tải được'],
+    ],
+  },
   {
     v: '5.5.3', date: '2026-10-07T13:15:28Z',
     title: ['Steady Start', 'Khởi Động Vững Vàng'],
