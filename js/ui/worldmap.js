@@ -196,12 +196,15 @@ function draw(cv, view) {
   }
   // area names
   c.globalAlpha = 0.55;
-  for (const [x, y, en, vi, reg] of [[520, 1760, 'West Village', 'Xóm Tây'], [1330, 1880, 'East Village', 'Xóm Đông'], [900, 2350, 'Sunny Beach', 'Bãi Biển'], [1460, 1180, 'Rice Paddies', 'Ruộng Lúa'], [900, 1080, 'Market Street', 'Phố Chợ'], [430, 450, 'Night Market', 'Chợ Đêm'], [900, 1700, 'Wind Plaza', 'Quảng trường gió'], [2690, 820, 'Harbour Town', 'Phố Cảng', 'harbour'], [2330, 2420, 'Coconut Cove', 'Vịnh Dừa', 'cove'], [2250, 1760, 'Firefly Islet', 'Cù Lao Đom Đóm', 'islet']]) {
+  // each name sits on (or just beside) its place: the plaza's right above the fountain square, the
+  // market's under its stalls, Market Street under its row of shops
+  for (const [x, y, en, vi, reg] of [[900, 1418, 'Wind Plaza', 'Quảng trường gió'], [430, 822, 'Night Market', 'Chợ Đêm'], [1000, 1262, 'Market Street', 'Phố Chợ'],
+    [560, 1690, 'West Village', 'Xóm Tây'], [1300, 1720, 'East Village', 'Xóm Đông'], [900, 2340, 'Sunny Beach', 'Bãi Biển'], [1505, 822, 'Rice Paddies', 'Ruộng Lúa'],
+    [860, 585, 'Lotus Spring', 'Hồ Sen'], [900, 238, 'Lighthouse Point', 'Mũi Hải Đăng'], [1200, 640, 'Restaurant Hill', 'Đồi Nhà Hàng'],
+    [2690, 820, 'Harbour Town', 'Phố Cảng', 'harbour'], [2330, 2420, 'Coconut Cove', 'Vịnh Dừa', 'cove'], [2250, 1560, 'Firefly Islet', 'Cù Lao Đom Đóm', 'islet']]) {
     if (reg && !regionOpen(reg)) continue;
     const at = fits(T(en, vi), x, y, 13 * k, 'italic 900'); if (at) label(c, T(en, vi), at[0], at[1], 13 * k, '#5b3f36', null, 'italic 900');
   }
-  const nightMarketBridge = BRIDGES.find(b => b.x === 424 && b.y === 900);
-  if (nightMarketBridge) { const t = T('Bridge to Night Market', 'Cầu vào Chợ Đêm'), at = fits(t, nightMarketBridge.x + nightMarketBridge.w / 2, nightMarketBridge.y + nightMarketBridge.h / 2, 13 * k, 'italic 900'); if (at) label(c, t, at[0], at[1], 13 * k, '#5b3f36', null, 'italic 900'); }
   c.globalAlpha = 1;
   // building badges with icons
   for (const bd of BUILDINGS) {

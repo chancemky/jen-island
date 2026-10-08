@@ -12,6 +12,7 @@ import { friendLevel } from './friends.js';
 import { FURNITURE } from '../data/game.js';
 import { RESIDENTS } from '../data/looks.js';
 import { residentMenu, randomJoke } from './fun.js';
+import { MORE_LINES, MORE_MERCH, MORE_VISITOR, MORE_STAFF } from '../data/chatter.js';
 
 // Three tiers per resident: early game, mid game (chapter 3+), late game (chapter 5+).
 const LINES = {
@@ -93,6 +94,11 @@ const STAFF = {
   steady: [['Just doing my job, boss!', '{Me} làm việc thôi, sếp!'], ['The kitchen is running smoothly today.', 'Hôm nay bếp chạy êm ru.']],
 };
 const VISITOR = [['What a pretty island! We came on the morning ferry.', 'Đảo đẹp quá! {Me} đi chuyến tàu sáng tới đó.'], ['Do you know where the tea stand is? Everyone says it\'s the best!', '{You} ơi, quán trà ở đâu vậy? Ai cũng khen ngon nhất!'], ['I want to live here forever. Or at least until the last ferry.', '{Me} muốn ở đây mãi luôn. Hoặc ít nhất tới chuyến tàu cuối.'], ['Have you seen the lanterns at the Night Market? Magical!', '{You} thấy lồng đèn ở Chợ Đêm chưa? Đẹp như mơ!'], ['This island smells like grilled pork and sea breeze. Perfect.', 'Hòn đảo này thơm mùi thịt nướng và gió biển. Tuyệt vời.']];
+// …and the extra things everyone has to say (data/chatter.js)
+for (const [rid, tiers] of Object.entries(MORE_LINES)) tiers.forEach((lines, t) => { if (LINES[rid]?.[t]) LINES[rid][t].push(...lines); });
+for (const [mid, lines] of Object.entries(MORE_MERCH)) (MERCH[mid] ||= []).push(...lines);
+VISITOR.push(...MORE_VISITOR);
+for (const [k, lines] of Object.entries(MORE_STAFF)) (STAFF[k] ||= []).push(...lines);
 const pickT = pair => T(pair[0], pair[1]);
 
 export async function talkToResident(a) {

@@ -132,7 +132,7 @@ const HANDS = ['rock', 'paper', 'scissors'];
 const HAND_LABEL = { rock: ['✊ Rock', '✊ Búa'], paper: ['✋ Paper', '✋ Bao'], scissors: ['✌️ Scissors', '✌️ Kéo'] };
 const beats = (x, y) => (x === 'rock' && y === 'scissors') || (x === 'paper' && y === 'rock') || (x === 'scissors' && y === 'paper');
 export async function playRPS(a, who) {
-  const s = G.state, key = 'rps:' + (who || a.name);
+  const s = G.state, key = 'rps:' + (who || a.name), cat = a === G.meo || a.kind === 'cat' || who === 'meo';
   const played = s.story.flags[key]?.day === s.day ? s.story.flags[key].n : 0;
   if (played >= 3) { await say(a, T('No more today! My hand is tired. Tomorrow — rematch!', 'Hôm nay đủ rồi! Tay mỏi quá. Mai tái đấu nha!'), { emo: 'happy' }); return; }
   for (let round = 0; round < 3; round++) {
@@ -150,7 +150,8 @@ export async function playRPS(a, who) {
       sfx('success'); if (prize) addMoney(prize, 'game'); addXP(8, 'game');
       if (a.data?.rid) s.friends[a.data.rid] = (s.friends[a.data.rid] || 0) + 1;
       if (!prize) await say(a, choice([T('You win! I\'m out of coins today — take my admiration instead.', '{You} thắng! Hôm nay {me} hết tiền lẻ rồi — nhận lời khen của {me} nhé.'), T('Again?! You\'re too good. No prize — just glory.', 'Lại thắng?! {You} giỏi quá. Không có quà — chỉ có vinh quang thôi.')]), { emo: 'happy' });
-      else await say(a, choice([T(`Nooo! You win. Here's ${prize}k — a deal's a deal.`, `Khônggg! {You} thắng. ${prize}k nè — chơi là chịu.`), T(`How?! Fine, ${prize}k. You must have practised on Mèo Mây.`, `Sao được vậy?! Thôi, ${prize}k. Chắc {you} luyện với Mèo Mây rồi.`)]), { emo: 'sad' });
+      else if (cat) await say(a, choice([T(`Paws can't make scissors! That's not fair. Fine — ${prize}k.`, `Chân mèo đâu ra được cái kéo! Không công bằng. Thôi — ${prize}k nè.`), T(`I demand a rematch… after my nap. Here's ${prize}k.`, `Tôi đòi đấu lại… sau giấc ngủ trưa. ${prize}k nè.`), T(`You read my whiskers. ${prize}k, and not a word to the ducks.`, `Bạn đọc được râu tôi rồi. ${prize}k, và không được kể với lũ vịt.`)]), { emo: 'sad' });
+      else await say(a, choice([T(`Nooo! You win. Here's ${prize}k — a deal's a deal.`, `Khônggg! {You} thắng. ${prize}k nè — chơi là chịu.`), T(`How?! Fine, ${prize}k. You must have practised on Mèo Mây.`, `Sao được vậy?! Thôi, ${prize}k. Chắc {you} luyện với Mèo Mây rồi.`), T(`Best of three? No? Fine, ${prize}k.`, `Ba ván thắng hai nha? Không hả? Thôi, ${prize}k.`)]), { emo: 'sad' });
     } else {
       sfx('sad');
       await say(a, choice([T('Ha! I win! I\'ll tell the whole island.', 'Ha! {Me} thắng! {Me} kể cả đảo nghe.'), T('Victory! I\'m the rock-paper-scissors champion of this beach.', 'Chiến thắng! {Me} là vua oẳn tù tì của bãi biển này.'), T('Better luck next time. My scissors are undefeated. Mostly.', 'Lần sau may hơn nha {you}. Cái kéo của {me} bất bại. Gần như vậy.')]), { emo: 'happy' });

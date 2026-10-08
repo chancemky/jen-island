@@ -856,9 +856,16 @@ async function doSleep(dawn) {
     await cs.run('sleep', async () => {
       G.runtime.inCutscene = true;
       if (dawn) {
-        pl.setEmo('sleepy', 3); pl.showEmote('zzz', 2); await wait(1.2);
+        // up all night: a big yawn, a wobble… and down you go, fast asleep on the ground
+        pl.stop?.(); pl.face('down'); pl.setEmo('sleepy', 4); pl.setAct('stretch'); sfx('whoosh'); await wait(1.1);
+        pl.setAct(null); pl.showEmote('zzz', 3); await wait(0.4);
+        const side = Math.random() < 0.5 ? -1 : 1; pl.nap = { k: 0, side };
+        for (let i = 0; i <= 10; i++) { pl.nap.k = i / 10; await wait(0.045); }
+        sfx('pop'); fx.burst('dust', pl.x + side * 10, pl.y, 6, { up: 14, col: '#e8dccb' }); cam.shake = 0.25;
+        fx.float(pl.x + side * 12, pl.y - 26, 'z z z', '#7e8fc9', { life: 2.6, size: 8 });
+        await camTo(pl.x, pl.y - 10, { zoom: 1.45, rate: 2 }); await wait(1.4);
         await fadeOut(1000, true);
-        document.getElementById('caption').innerHTML = T('The sky is getting light… you nod off for a moment.', 'Trời hửng sáng… bạn chợp mắt một lát.');
+        document.getElementById('caption').innerHTML = T('You fell asleep right there on the ground…', 'Bạn ngủ gục ngay trên mặt đất…');
         document.getElementById('caption').classList.add('on');
         await wait(1.8); document.getElementById('caption').classList.remove('on');
       } else {
@@ -876,14 +883,16 @@ async function doSleep(dawn) {
       if (cloud.hasSession()) cloud.saveDailySummary(sum.day, sum).catch(() => {});
       setMood('day');
       await showSummary(sum);
-      // morning in the bedroom (or wherever you nodded off at dawn)
+      // morning in the bedroom — or, after a night on the ground, curled up in Mèo Mây's cat bed
       pl.setAct(null); pl.setEmo('happy', 2); pl.emote = null; pl.visible = true; G.runtime.sleeper = null;
       const bed = scenes.house.bedPos;
-      if (here && scenes[here.id]) setScene(here.id, here.x, here.y, here.dir);
-      else setScene('house', bed.x + 34, bed.y + 40, 'down');
-      cam.snap(pl.x, pl.y - 18);
-      await wait(0.3);
-      await fadeIn(900);
+      if (here && scenes.meo?.catBed) await wakeInCatBed(here);
+      else {
+        setScene('house', bed.x + 34, bed.y + 40, 'down');
+        cam.snap(pl.x, pl.y - 18);
+        await wait(0.3);
+        await fadeIn(900);
+      }
       sfx('bell');
       pl.doHop(); pl.setAct('cheer'); stinger('morning'); await wait(0.9); pl.setAct(null);
       const skipped = G.runtime.skippedSummary; G.runtime.skippedSummary = null;
@@ -895,6 +904,29 @@ async function doSleep(dawn) {
   await checkStory();
   await morningHooks();
   refreshQuest();
+}
+// Mèo Mây found you asleep outside at dawn and dragged you back to her place: you wake up
+// squashed into her cat bed, and she has opinions about it
+const CAT_RESCUE = [
+  [['Good morning! I found you snoring on the ground at {where}, so I dragged you home. You are heavier than a fish.', 'Chào buổi sáng! Mình thấy bạn ngáy trên đất ở {where}, nên kéo bạn về đây. Bạn nặng hơn cá nhiều.'], ['That\'s MY bed, by the way. You\'re welcome.', 'Mà đó là giường của MÌNH nha. Khỏi cảm ơn.']],
+  [['You fell asleep at {where}. A crab was sitting on your head. I negotiated.', 'Bạn ngủ gục ở {where}. Có con cua ngồi trên đầu bạn. Mình đã thương lượng.'], ['The bed fits you badly. I could see that. Everyone could see that.', 'Cái giường này chật với bạn lắm. Mình thấy hết. Ai cũng thấy hết.']],
+  [['Up all night again? I found you at {where}, talking in your sleep about bánh mì.', 'Lại thức trắng đêm hả? Mình thấy bạn ở {where}, nói mớ về bánh mì.'], ['I pulled you home by your sleeve. It took forty-five minutes and three naps.', 'Mình kéo tay áo bạn về. Mất bốn mươi lăm phút và ba giấc ngủ trưa.']],
+  [['Rise and shine! You were asleep at {where} like a big sad dumpling.', 'Dậy đi nào! Bạn ngủ ở {where} như một cái bánh bao buồn bã.'], ['Next time, sleep in a bed. A human one. Not mine. …Okay, mine is fine.', 'Lần sau ngủ trên giường nha. Giường người. Đừng giường mình. …Thôi, giường mình cũng được.']],
+];
+async function wakeInCatBed(here) {
+  const pl = G.player, sc = scenes.meo, b = sc.catBed, m = G.meo;
+  const where = here.id === 'island' ? areaAt(here.x, here.y).name : BUSINESSES[here.id] ? bizName(here.id) : T('the shop', 'trong quán');
+  setScene('meo', b.x, b.y + 4, 'down'); pl.nap = { k: 1, side: 1 }; pl.setEmo('sleepy', 4);
+  const mx = m?.x, my = m?.y, msc = m && Object.values(scenes).find(q => q.actors?.includes(m));      // (wherever her day had her)
+  if (m) { if (msc !== sc) { msc?.remove(m); sc.add(m); } m.x = b.x + 34; m.y = b.y + 6; m.face('left'); m.stop?.(); }
+  cam.snap(b.x + 16, b.y - 18);
+  await wait(0.3); await fadeIn(900);
+  await wait(0.6); sfx('meow');
+  const lines = choice(CAT_RESCUE);
+  for (const [en, vi] of lines) await say('meo', T(en, vi).replace('{where}', where), { emo: 'happy' });
+  for (let i = 10; i >= 0; i--) { pl.nap.k = i / 10; await wait(0.04); }
+  pl.nap = null; pl.y += 10; pl.face('down'); pl.showEmote('sweat', 1.2);
+  if (m && msc && msc !== sc) { sc.remove(m); msc.add(m); m.x = mx; m.y = my; }
 }
 function specialLine() {
   const parts = [];

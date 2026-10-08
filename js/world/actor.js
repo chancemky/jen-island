@@ -137,6 +137,12 @@ export class Actor {
     if (this.kind === 'cat') drawCat(c, this, t);
     else if (this.kind === 'pet') this.petDraw?.(c, this, t);
     else if (this.lie?.prop) drawLying(c, this, t);        // lying in a hammock (gfx/hammock.js)
+    else if (this.nap) {                                   // dozed off on the floor (or curled up in a cat bed): tipped onto one side, eyes shut
+      const k = Math.min(1, this.nap.k), e = k * k * (3 - 2 * k), s = this.nap.side || 1;
+      c.save(); c.translate(s * 2 * e, -2 * e); c.rotate(s * (Math.PI / 2) * 0.92 * e); c.translate(0, 4 * e);
+      drawHuman(c, { ...this, dir: 'down', moving: 0, act: null, held: null, emo: e > 0.6 ? 'sleepy' : this.emo, blinkAmt: e > 0.6 ? 1 : this.blinkAmt, sit: false }, t);
+      c.restore();
+    }
     else drawHuman(c, this, t);
     c.restore();
   }

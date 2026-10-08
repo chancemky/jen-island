@@ -1303,6 +1303,13 @@ const MEO_LINES = () => [
   T('The best time to visit the beach is when the ferry leaves. So quiet. So many dropped snacks.', 'Lúc đẹp nhất để ra biển là khi tàu vừa đi. Yên tĩnh ghê. Lại còn nhiều đồ ăn vặt rơi.'),
   T('If a customer is in a hurry, their patience bar drops faster. Rushed people tip better, though!', 'Khách vội thì thanh kiên nhẫn tụt nhanh hơn. Nhưng người vội lại hay boa nhiều!'),
   T('Daily specials are 10% pricier and people love them. Check the menu board in each shop.', 'Món đặc biệt hôm nay đắt hơn 10% mà ai cũng thích. Xem bảng thực đơn ở mỗi quán nhé.'),
+  T('I counted the fish in the pond. Eleven. Then twelve. One of them was a leaf.', 'Mình đếm cá trong hồ. Mười một con. Rồi mười hai. Một con là cái lá.'),
+  T('Ông Lộc lets me sit on his nets. I pretend I\'m guarding them. I am napping.', 'Ông Lộc cho mình nằm trên lưới. Mình giả vờ canh lưới. Thật ra là ngủ.'),
+  T('The night market smells like grilled corn and happiness. Mostly corn.', 'Chợ đêm thơm mùi bắp nướng và hạnh phúc. Chủ yếu là bắp.'),
+  T('Rainy days are for staying inside and judging people through the window.', 'Ngày mưa là để ở trong nhà và nhận xét thiên hạ qua cửa sổ.'),
+  T('I tried to catch a firefly once. It turned off. Rude.', 'Có lần mình bắt đom đóm. Nó tắt đèn luôn. Bất lịch sự.'),
+  T('Your basement is the perfect temperature for a nap. I checked. Thoroughly.', 'Tầng hầm nhà bạn nhiệt độ vừa đúng để ngủ trưa. Mình kiểm tra rồi. Rất kỹ.'),
+  T('Don\'t forget to rest. A tired shopkeeper drops the bánh mì. I would know — I eat what drops.', 'Đừng quên nghỉ ngơi. Chủ quán mệt là làm rơi bánh mì. Mình biết mà — mình ăn những gì rơi.'),
   T('Tourists love it when you do everything perfectly. They tip like they\'re on holiday — because they are.', 'Du khách thích khi bạn làm hoàn hảo. Họ boa như đang đi nghỉ — vì họ đang đi nghỉ thật.'),
 ];
 export async function talkToMeo() {

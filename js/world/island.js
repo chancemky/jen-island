@@ -532,17 +532,20 @@ export class Island extends Scene {
     this.build();
     this.tidyUnderTrees();
     // keep the market's dining tables clear of bushes and tall grass
-    this.props = this.props.filter(p => !(['bush', 'tallGrass', 'grassTuft', 'flowerPatch', 'mushrooms', 'reeds'].includes(p.kind) && NM_TABLES.some(([x, y]) => Math.abs(p.x - x) < 44 && Math.abs(p.y - y) < 34)));
+    this.dropProps(p => ['bush', 'tallGrass', 'grassTuft', 'flowerPatch', 'mushrooms', 'reeds'].includes(p.kind) && NM_TABLES.some(([x, y]) => Math.abs(p.x - x) < 44 && Math.abs(p.y - y) < 34));
+  }
+  // remove decor props (and the little collision circle each one stood on)
+  dropProps(pred) {
+    const gone = this.props.filter(pred); if (!gone.length) return;
+    this.props = this.props.filter(p => !gone.includes(p));
+    this.circles = (this.circles || []).filter(c => !gone.some(p => Math.abs(c.x - p.x) < 0.5 && Math.abs(c.y - (p.y - 2)) < 0.5));
   }
   // little upright plants (tall grass, bushes, mushrooms…) standing just in front of a big tree's
   // trunk get drawn over its low canopy and look like they float on the leaves: clear them away
   tidyUnderTrees() {
     const BIG = { tree: 30, flameTree: 34, banyan: 70, palm: 16, frangipani: 22 }, SMALL = new Set(['tallGrass', 'bush', 'mushrooms', 'reeds', 'flowerPatch', 'grassTuft', 'pot', 'stump']);
     const trees = this.props.filter(p => BIG[p.kind]);
-    this.props = this.props.filter(p => {
-      if (!SMALL.has(p.kind) || p.flat) return true;
-      return !trees.some(tr => { const r = BIG[tr.kind] * (tr.s || 1); return Math.abs(p.x - tr.x) < r && p.y > tr.y - 6 && p.y < tr.y + 18; });
-    });
+    this.dropProps(p => SMALL.has(p.kind) && !p.flat && trees.some(tr => { const r = BIG[tr.kind] * (tr.s || 1); return Math.abs(p.x - tr.x) < r && p.y > tr.y - 6 && p.y < tr.y + 18; }));
   }
 
   terrain(x, y) { return !isWater(x, y) && !isPaddy(x, y) && x > 0 && y > 0 && x < W && y < H; }

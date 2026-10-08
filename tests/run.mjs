@@ -960,11 +960,11 @@ if (run('clock')) {
   // 1) up all night in a closed stand: the clock runs past 5:30 to 6:00 and a new day starts right there
   const day0 = await J(() => { const j = window.__jen; j.setScene('shed1', 150, 200, 'up'); j.G.state.time = 29 * 60 + 20; j.G.runtime.devClock = 30; return j.G.state.day; });
   let dawn = null;
-  for (let i = 0; i < 30 && !dawn; i++) { await pump(1000); dawn = await J(() => { const j = window.__jen, s = j.G.state; return s.day > 0 && !j.G.runtime.sleeping && !j.cs.active && s.time < 7 * 60 ? { day: s.day, time: s.time, scene: j.G.scene.id } : null; }); }
+  for (let i = 0; i < 30 && !dawn; i++) { await pump(1000); dawn = await J(() => { const j = window.__jen, s = j.G.state; return s.day > 0 && !j.G.runtime.sleeping && !j.cs.active && s.time < 7 * 60 ? { day: s.day, time: s.time, scene: j.G.scene.id, nap: !!j.G.player.nap, meo: Object.values(j.scenes).filter(q => q.actors?.includes(j.G.meo)).length === 1 } : null; }); }
   await J(() => { window.__jen.G.runtime.devClock = 1; });
   if (!dawn || dawn.day !== day0 + 1) fail('clock', `staying up all night never reached a new morning: ${JSON.stringify(dawn)} (day was ${day0})`);
-  else if (dawn.scene !== 'shed1') fail('clock', `woke up in ${dawn.scene} instead of where you nodded off`);
-  else pass('clock', `stayed up past 5:30 in a closed stand → day ${dawn.day} at ${Math.floor(dawn.time / 60)}:${String(Math.floor(dawn.time % 60)).padStart(2, '0')}, still in the stand`);
+  else if (dawn.scene !== 'meo' || dawn.nap || !dawn.meo) fail('clock', `after falling asleep outside you should wake in Mèo Mây's cat bed, standing, with Mèo in exactly one place: ${JSON.stringify(dawn)}`);
+  else pass('clock', `stayed up past 5:30 → fell asleep, woke on day ${dawn.day} at ${Math.floor(dawn.time / 60)}:${String(Math.floor(dawn.time % 60)).padStart(2, '0')} in Mèo Mây's cat bed`);
   const opens = await J(() => window.__jen.G.state.time >= 6 * 60);
   if (!opens) fail('clock', 'the new morning starts before opening time');
   // 2) the bed offers Sleep at night from the foot and from the side, and a pet doesn't steal it
