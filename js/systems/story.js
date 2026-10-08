@@ -671,6 +671,7 @@ export async function morningHooks() {
   const s = G.state;
   morningEvent();
   import('./seasonal.js').then(m => m.seasonalCheck());
+  npcs.spawnIsletResidents?.();                   // newcomers move in as the island grows
   for (const rid of birthdaysToday()) toast({ text: T(`It's ${RESIDENTS[rid]?.name}'s birthday!`, `Hôm nay là sinh nhật ${RESIDENTS[rid]?.name}!`), sub: T(`They love ${(BIRTHDAYS[rid]?.likes || []).map(k => ingName(k)).join(' and ')} — chat → Give a gift.`, `Họ thích ${(BIRTHDAYS[rid]?.likes || []).map(k => ingName(k)).join(' và ')} — trò chuyện → Tặng quà.`), icon: 'heart', ms: 5200 });
   if (S().step === 'grow' && !flag('ch3intro')) await wordSpreadingIntro();
   else if (availableRecipes().length && !flag('recipeNote' + s.day)) { setFlag('recipeNote' + s.day); toast({ text: T('Mèo Mây has a new recipe!', 'Mèo Mây có công thức mới!'), sub: T('Visit Mèo Mây\'s house to learn it.', 'Ghé nhà Mèo Mây để học nhé.'), icon: 'notebook' }); }

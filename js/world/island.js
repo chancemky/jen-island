@@ -177,7 +177,7 @@ export const BUILDINGS = [
   { id: 'petshop', type: 'shop', kind: 'petshop', x: 2380, y: 606, w: 140, fp: 56, door: [46, 0], interior: 'petshop', wall: '#fff6e0', region: 'harbour' },
   { id: 'cafe', type: 'kiosk', style: 'cafe', x: 2800, y: 690, w: 112, fp: 40, biz: 'cafe', region: 'harbour' },
   { id: 'h_hb1', type: 'house', interior: 'home_chi_ngoc', home: 'chi_ngoc', label: ['GUESTHOUSE', 'NHÀ NGHỈ'], door: [0, 0], x: 2230, y: 620, w: 96, fp: 50, wall: '#e6f0fa', roof: '#6f9fc8', shutter: '#f2c14e', style: 'wood', region: 'harbour' },
-  { id: 'h_hb2', type: 'house', door: [0, 0], x: 2660, y: 560, w: 96, fp: 50, wall: '#fbe7d6', roof: '#c9674a', shutter: '#6fbfb0', style: 'flowers', label: ['HARBOUR', 'BẾN CẢNG'], region: 'harbour' },
+  { id: 'h_hb2', type: 'house', home: 'anh_bao', door: [0, 0], x: 2660, y: 560, w: 96, fp: 50, wall: '#fbe7d6', roof: '#c9674a', shutter: '#6fbfb0', style: 'flowers', label: ['HARBOUR', 'BẾN CẢNG'], region: 'harbour' },
   { id: 'h_hb3', type: 'house', interior: 'home_ong_loc', home: 'ong_loc', door: [0, 0], x: 3010, y: 560, w: 96, fp: 50, wall: '#eef6e8', roof: '#5f8fb8', shutter: '#e8584e', style: 'tin', fisher: true, region: 'harbour' },
   // Sunny Beach: the smoothie bar (chapter 15)
   { id: 'smoothie', type: 'kiosk', style: 'smoothie', x: 780, y: 2236, w: 112, fp: 40, biz: 'smoothie' },

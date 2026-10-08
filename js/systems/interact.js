@@ -369,6 +369,7 @@ export const BIRTHDAYS = {   // (days of the island year, 1–60: the same day f
   ba_tu: { day: 8, likes: ['kumquat', 'tea'] }, chu_hai: { day: 14, likes: ['shrimp', 'squid'] }, linh: { day: 25, likes: ['milk', 'tapioca'] },
   minh: { day: 31, likes: ['coffee', 'condensed_milk'] }, co_lan: { day: 18, likes: ['herbs', 'peach'] }, be_na: { day: 5, likes: ['beans', 'coconut_milk'] },
   anh_tuan: { day: 44, likes: ['bread', 'pork'] }, chi_mai: { day: 37, likes: ['lime', 'orange'] }, vy: { day: 52, likes: ['avocado', 'peach'] },
+  anh_bao: { day: 22, likes: ['squid', 'coffee'] }, co_thu: { day: 58, likes: ['tea', 'peach'] },
   ong_loc: { day: 12, likes: ['tea', 'rice'] }, chi_ngoc: { day: 28, likes: ['coffee', 'egg_yolk'] }, co_dua: { day: 47, likes: ['coconut_milk', 'lime'] },
 };
 export function isBirthday(rid, now = islandNow()) { const b = BIRTHDAYS[rid]; return !!b && yearDay(now) === b.day; }

@@ -23,7 +23,7 @@ import { sfx } from '../core/audio.js';
 
 const HOME_OF = Object.fromEntries(BUILDINGS.filter(b => b.home).map(b => [b.home, b]));
 // family households: Bé Na lives with her grandma, Minh rooms with Anh Tuấn
-HOME_OF.be_na = HOME_OF.ba_tu; HOME_OF.minh = HOME_OF.anh_tuan;
+HOME_OF.be_na = HOME_OF.ba_tu; HOME_OF.minh = HOME_OF.anh_tuan; HOME_OF.co_thu = HOME_OF.chi_ngoc;   // (Cô Thu rents a room at the guesthouse)
 const FERRY_TIMES = [8 * 60, 11 * 60, 14 * 60, 17 * 60];
 const BERTH = { x: 1004, y: 2584 };
 
@@ -48,6 +48,8 @@ npcs.spawnIsletResidents = () => {
   const island = G.scenes.island;
   for (const [rid, def] of Object.entries(RESIDENTS)) {
     if (!def.region || !G.state.story.flags[def.region] || npcs.residents.some(a => a.data.rid === rid)) continue;
+    if (def.arrive && !def.arrive(G.state)) continue;
+    if (def.arrive && !G.state.story.flags['movedIn:' + rid]) { G.state.story.flags['movedIn:' + rid] = G.state.day; bus.emit('toast', { cat: 'island', text: T(`${def.name} has moved to the island!`, `${def.name} vừa chuyển tới đảo!`), sub: T(`${def.role}. Say hello — Harbour Town.`, `Ghé chào nhé — Phố Cảng.`), icon: 'heart', ms: 5200 }); }
     const home = HOME_OF[rid];
     const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: home.x, y: home.y + 16, speed: rand(46, 58), data: { rid, state: 'idle', until: 0, npc: true } });
     Object.defineProperty(a, 'name', { get: () => def.name, set() {}, configurable: true });   // follows the language (e.g. Doctor An / Bác sĩ An)
@@ -75,6 +77,7 @@ export function initNPCs(island) {
   npcs.residents.length = 0;
   for (const [rid, def] of Object.entries(RESIDENTS)) {
     if (def.region && !G.state.story.flags[def.region]) continue;
+    if (def.arrive && !def.arrive(G.state)) continue;
     const home = HOME_OF[rid];
     const a = new Actor({ kind: 'human', look: def.look, name: def.name, x: home ? home.x : 900, y: home ? home.y + 16 : 1600, speed: rand(46, 58), data: { rid, state: 'idle', until: 0, npc: true } });
     Object.defineProperty(a, 'name', { get: () => def.name, set() {}, configurable: true });   // follows the language (e.g. Doctor An / Bác sĩ An)
