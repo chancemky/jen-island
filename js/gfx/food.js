@@ -49,6 +49,11 @@ export function drawHeld(c, what, x, y, t, view, P) {
       if (b >= 3) box(c, -1, -2, 2, 6, 1, '#e8d9a8', INK, 0.5);
       break;
     }
+    case 'bun': {   // a bánh bao in a paper wrapper; it gets smaller bite by bite
+      const b = P?.bites || 0; poly(c, [-3.4, 0, 3.4, 0, 2.6, 4, -2.6, 4], '#fff1d0', INK, 0.5);
+      if (b < 3) { ell(c, 0, -1 + b * 0.6, 3.4 - b * 0.7, 2.8 - b * 0.6, '#fffaf2', INK, 0.6); line(c, -0.8, -3 + b * 0.6, 0.8, -3.4 + b * 0.6, 'rgba(91,63,54,.4)', 0.5); }
+      break;
+    }
     case 'xoi': {   // sticky rice in a folded banana leaf
       const b = P?.bites || 0; poly(c, [-4, -1, 4, -1, 3, 4, -3, 4], '#6fae4c', INK, 0.6);
       if (b < 3) { ell(c, 0, -1.6 + b * 0.8, 3.4 - b * 0.8, 2 - b * 0.4, '#f2c94e', INK, 0.5); circ(c, -1, -2 + b, 0.5, '#fff', null); }

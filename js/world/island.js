@@ -609,6 +609,7 @@ export class Island extends Scene {
     // grandma carts line the road from the Wind Plaza down to the dock
     this.add2('foodCart', 962, 1812, { type: 'icecream', label: ['ICE CREAM', 'KEM'], solidRect: [-20, -8, 40, 8], cullR: 48, cullH: 80 }); this.circle(962, 1806, 20);
     this.add2('foodCart', 838, 1930, { type: 'xoi', label: ['STICKY RICE', 'XÔI'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 60 }); this.circle(838, 1924, 20);
+    this.add2('foodCart', 1060, 1272, { type: 'bakery', label: ['BAKERY', 'BÁNH BAO'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 80 }); this.circle(1060, 1266, 20);
     this.add2('cornCart', 964, 2098, { label: ['GRILLED CORN', 'BẮP NƯỚNG'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 70 }); this.circle(964, 2092, 20);
     // stools sit on the far side of each cart from its grandma, so talking to her isn't mistaken for sitting down
     for (const [x, y, col] of [[926, 1830, '#e8584e'], [942, 1842, '#6f9fc8'], [796, 1946, '#e8584e'], [818, 1956, '#6fbf73'], [932, 2116, '#f2c14e']]) this.add2('stool', x, y, { col });
@@ -1064,7 +1065,7 @@ export const AREAS = [
   { name: 'Bến Tàu', en: 'Ferry Dock', test: (x, y) => y > 2380 },
   { name: 'Bãi Biển', en: 'Sunny Beach', test: (x, y) => y > 2150 || (x > 1450 && y > 1900) },
   { name: 'Quảng trường gió', en: 'Wind Plaza', test: (x, y) => dist(x, y, PLAZA.x, PLAZA.y) < 190 },
-  { name: 'Phố Chợ', en: 'Market Street', test: (x, y) => y > 1060 && y < 1290 && x > 460 && x < 1480 },
+  { name: 'Phố Chợ', en: 'Market Street', test: (x, y) => y > 1060 && y < 1330 && x > 460 && x < 1480 },
   { name: 'Xóm Đông', en: 'East Village', test: (x, y) => x > 1040 && y > 1500 && y < 1900 },
   { name: 'Xóm Tây', en: 'West Village', test: (x, y) => x < 820 && y > 1290 && y < 1900 },
   { name: 'Chợ Đêm', en: 'Night Market', test: (x, y) => x < 640 && y < 840 },

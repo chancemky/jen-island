@@ -28,6 +28,12 @@ export const VENDORS = {
     menu: [{ id: 'corn', en: 'Grilled corn', vi: 'Bắp nướng', price: 4 }, { id: 'corn', en: 'With scallion oil', vi: 'Bắp nướng mỡ hành', price: 5 }],
     act: 'eat', done: [['Smoky and sweet!', 'Thơm khói mà ngọt ghê!'], ['Butter… scallions… perfect.', 'Mỡ hành… ngon hết sảy.']],
   },
+  bakery: {
+    name: 'Bà Bảy', x: 1090, y: 1270, hours: [6, 10.5], look: GRANNY('#f7d6a0', '#fffaf0', '#cfc8cc'),
+    hi: [['Bánh bao nóng đây! Steamed buns, fresh from the basket.', 'Bánh bao nóng hổi đây! Mới hấp xong nè.'], ['Get them before ten — after that, only crumbs and stories.', 'Mua trước mười giờ nha — sau đó chỉ còn vụn bánh với chuyện kể.']],
+    menu: [{ id: 'bun', en: 'Steamed pork bun (bánh bao)', vi: 'Bánh bao nhân thịt', price: 5 }, { id: 'bun', en: 'Honeycomb cake (bánh bò)', vi: 'Bánh bò nướng', price: 4 }],
+    act: 'eat', done: [['Fluffy and hot!', 'Mềm xốp, nóng hổi!'], ['Perfect breakfast.', 'Bữa sáng hoàn hảo.']],
+  },
   xoi: {
     name: 'Bà Út', x: 868, y: 1928, look: GRANNY('#f7de8c', '#e9c9a2', '#b9b3ba'),
     hi: [['Xôi đây! Sticky rice — gấc, mung bean or pandan, wrapped in a banana leaf.', 'Xôi đây! Xôi gấc, xôi đậu xanh, xôi lá dứa, gói lá chuối nè.'], ['A handful of xôi keeps you going till lunch, cháu.', 'Một gói xôi là no tới trưa đó cháu.']],
@@ -54,7 +60,7 @@ function homeDoor(v) {
   return (v.home = best ? { x: best.x, y: best.y + 12 } : { x: v.x, y: v.y + 200 });
 }
 function vendorHours(v, a) {
-  const h = G.state.time / 60, open = h >= OPEN_H && h < CLOSE_H, island = G.scenes?.island, d = a.data;
+  const h = G.state.time / 60, [oh, ch] = v.hours || [OPEN_H, CLOSE_H], open = h >= oh && h < ch, island = G.scenes?.island, d = a.data;
   if (!island) return false;
   if (!open && !d.away && !d.walking) {
     CART_CLOSED[a.data.cart] = true;

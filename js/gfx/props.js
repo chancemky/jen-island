@@ -480,6 +480,18 @@ export function foodCart(c, t, p) {
       c.save(); c.translate(12, -48); poly(c, [-3.2, 0, 3.2, 0, 0, 10], '#e3a85a', INK, 0.8); line(c, -1.6, 2, 1.6, 5, '#b9803e', 0.5); line(c, 1.6, 2, -1.6, 5, '#b9803e', 0.5); circ(c, 0, -2, 3.6, '#f7b6c8', INK, 0.8); circ(c, 0.4, -5.6, 2.8, '#fff4d8', INK, 0.8); circ(c, 0.4, -8.6, 1, '#e8584e', null); c.restore();
     }
     { const lab = tr(p.label) || T('ICE CREAM', 'KEM'); stext(c, lab, 0, -16, fitSize(lab, 5.4, 34), '#e56b8b', 900); }
+  } else if (p.type === 'bakery') {
+    // bánh bao & bánh bò: a tall bamboo steamer, puffy white buns and golden honeycomb cakes
+    cartBase(c, '#fff1d6', '#c98f5a');
+    if (closed) cartCover(c, 36, -44, 14);
+    else {
+      for (let k = 0; k < 3; k++) { ell(c, 8, -32 - k * 7, 10, 3, '#d9b27a', INK, 0.7); box(c, -2, -38 - k * 7, 20, 6, 2, k % 2 ? '#e3c08a' : '#d9b27a', INK, 0.6); }   // stacked bamboo baskets
+      ell(c, 8, -54, 10, 3, '#c99a52', INK, 0.7); circ(c, 8, -57, 1.6, '#8a5a3a', null);
+      for (let i = 0; i < 3; i++) { const k = (t * 0.5 + i / 3) % 1; c.globalAlpha = 0.5 * (1 - k); circ(c, 4 + i * 4 + Math.sin(k * 6) * 2, -60 - k * 12, 1.8 + k * 2, '#ffffff', null); } c.globalAlpha = 1;
+      for (const [x, y] of [[-15, -32], [-9, -33], [-12, -37]]) { ell(c, x, y, 3.4, 2.6, '#fffaf2', INK, 0.5); line(c, x - 0.8, y - 2, x + 0.8, y - 2.4, 'rgba(91,63,54,.4)', 0.5); }       // bánh bao
+      for (const x of [-4, 0]) { ell(c, x, -31, 2.4, 1.6, '#f2c46b', INK, 0.4); }                                                                                                                     // bánh bò
+    }
+    { const lab = tr(p.label) || T('BAKERY', 'BÁNH BAO'); stext(c, lab, 0, -16, fitSize(lab, 5.4, 34), '#a8563f', 900); }
   } else if (p.type === 'xoi') {
     // xôi: a big aluminium steamer, trays of red gấc, yellow mung bean and green pandan rice, banana leaves
     cartBase(c, '#fff5df', '#7fae4d');
