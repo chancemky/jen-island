@@ -1,7 +1,9 @@
 // Friends: your showcase (names, level, badge, look and home layout) is published under
 // a friend code; friends can visit each other's homes and send one gift a day.
 
-import { G, T, addPantry, addMat, markDirty } from './state.js';
+import { G, T, addPantry, addMat, markDirty, addMoney } from './state.js';
+import { weekKey } from './weekly.js';
+import { addXP } from './progress.js';
 import * as cloud from './cloud.js';
 import { bus } from '../core/util.js';
 import { showcaseBadge, earnedBadges } from './badges.js';
@@ -10,16 +12,21 @@ import { rebuildHouseFurniture } from '../ui/decorate.js';
 import { scenes, setScene } from './scenes.js';
 import { Actor } from '../world/actor.js';
 import { FURNITURE, RECIPES, BUSINESSES } from '../data/game.js';
-import { lendAHand, buySpeciality, checkInbox } from './together.js';
+import { lendAHand, buySpeciality, checkInbox, keepPostcard, POST_DESIGNS } from './together.js';
 import { track } from './telemetry.js';
 import { present } from '../ui/sheets.js';
 import { visitHouse, restoreHome } from './home.js';
+import { PRODUCTS } from './store.js';
 
 export const GIFTS = {
   basket: { icon: 'bag', label: ['Basket', 'Giỏ quà'], en: 'a gift basket', vi: 'một giỏ quà', give: () => { addPantry('tea', 6); addPantry('kumquat', 6); addPantry('sugar', 6); addPantry('ice', 6); return T('tea, kumquats, sugar and ice', 'trà, tắc, đường và đá'); } },
   flowers: { icon: 'heart', label: ['Flowers', 'Hoa'], en: 'a pot of flowers', vi: 'một chậu hoa', give: () => { (G.state.home.owned ||= []).push(FURNITURE.plant_big ? 'plant_big' : 'plant'); return T('a potted plant for your home', 'một chậu cây cho nhà bạn'); } },
   lanterns: { icon: 'lantern', label: ['Lanterns', 'Lồng đèn'], en: 'silk lanterns', vi: 'lồng đèn lụa', give: () => { addMat('lantern', 2); return T('2 silk lanterns', '2 lồng đèn lụa'); } },
 };
+// a piece of furniture from your storage. Paid items and keepsakes stay with you.
+let paid = null;
+const PAID = { has: id => (paid ||= new Set(Object.values(PRODUCTS).flatMap(p => p.furniture || []))).has(id) };
+export const giftable = () => [...new Set((G.state.home.owned || []).filter(id => FURNITURE[id] && !FURNITURE[id].fixed && !PAID.has(id)))];
 export const myCode = () => G.runtime.friendCode || null;
 const online = () => cloud.hasSession() && G.user && !G.user.local;
 
@@ -37,14 +44,22 @@ export async function openGifts() {
   let waiting = [];
   try { waiting = await cloud.giftsWaiting(); } catch { return; }
   for (const g of waiting) {
+    if (g.kind === 'item') {
+      const f = FURNITURE[g.item]; if (!f || PAID.has(g.item) || !(await cloud.claimGift(g.id).catch(() => false))) continue;
+      (G.state.home.owned ||= []).push(g.item);
+      bus.emit('toast', { cat: 'friends', text: T(`${g.from} sent you a ${f.en}!`, `${g.from} gửi bạn ${f.vi}!`), sub: T('It\'s in your storage — place it from Decorate.', 'Đồ đang trong kho — đặt nó trong mục Trang trí nhé.'), icon: 'sofa', ms: 4200 });
+      continue;
+    }
     if (!GIFTS[g.kind] || !(await cloud.claimGift(g.id).catch(() => false))) continue;
     const what = GIFTS[g.kind].give();
     bus.emit('toast', { cat: 'friends', text: T(`${g.from} sent you ${GIFTS[g.kind].en}!`, `${g.from} gửi bạn ${GIFTS[g.kind].vi}!`), sub: what, icon: GIFTS[g.kind].icon, ms: 4200 });
   }
   if (waiting.length) markDirty(true);
 }
-export async function sendGift(friend, kind) {
-  await cloud.sendGift(friend, kind); track('gift_sent', { kind });
+export async function sendGift(friend, kind, item = null) {
+  if (kind === 'item' && !giftable().includes(item)) throw new Error('not giftable');
+  await cloud.sendGift(friend, kind, item); track('gift_sent', { kind });
+  if (item) { const o = G.state.home.owned, i = o.indexOf(item); if (i >= 0) o.splice(i, 1); }
   social().giftsSent++; markDirty(true);
 }
 // counters for the friendship badges (data/badges.js)
@@ -81,6 +96,7 @@ export async function visitFriend(id) {
   bus.emit('toast', { text: T(`Visiting ${f.player_name}'s home`, `Đang thăm nhà ${f.player_name}`), sub: T(f.island_name ? `on ${f.island_name}` : 'Walk out the door to go home.', f.island_name ? `trên ${f.island_name}` : 'Ra cửa để về nhà.'), icon: 'heart', ms: 3600 });
   track('visit', {});
   social().visitsMade++; markDirty(true);
+  keepPostcard({ design: Object.keys(POST_DESIGNS)[[...String(id)].reduce((a, ch) => a + ch.charCodeAt(0), 0) % Object.keys(POST_DESIGNS).length], name: f.player_name, island: f.island_name }, true);
   cloud.leaveVisit(id, 'wave').catch(() => {});
   showEmoteBar();
   return true;
@@ -153,4 +169,22 @@ async function showVisitors() {
   bus.emit('sfx', 'sparkle');
   el.querySelector('button').onclick = () => { bus.emit('sfx', 'ui'); el.remove(); done(); };
   }));
+}
+
+// the weekly friend challenge: you and your friends serve customers towards one shared goal
+// (scaled to the size of the group). Everyone's own island counts; whoever reaches the goal
+// claims the prize on their own island, once a week. No live server: it's this week's
+// leaderboard rows, added up.
+export const CHALLENGE_PER = 150;
+export async function friendChallenge() {
+  const rows = await cloud.fetchFriendsWeek('served');
+  const members = rows || [], total = members.reduce((a, r) => a + Number(r.score || 0), 0);
+  const goal = CHALLENGE_PER * Math.max(2, members.length);
+  return { members, total, goal, ready: members.length >= 2, done: total >= goal, claimed: G.state.friendChallenge === weekKey() };
+}
+export function claimFriendChallenge(c) {
+  if (!c?.done || !c.ready || G.state.friendChallenge === weekKey()) return false;
+  G.state.friendChallenge = weekKey(); addMoney(200, 'gift'); addXP(80, 'friends'); markDirty(true);
+  bus.emit('toast', { cat: 'friends', text: T('Friend challenge complete!', 'Hoàn thành thử thách bạn bè!'), sub: T('+200k and 80 XP — nice teamwork.', '+200k và 80 XP — phối hợp ăn ý ghê.'), icon: 'heart', cls: 'ach', ms: 4000 });
+  return true;
 }

@@ -93,7 +93,7 @@ const ACTIONS = {
 export function nearbyThing(sc, pl) {
   let best = null, bd = 1e9;
   for (const p of sc.props || []) {
-    const k = kindOf(p); if (!ACTIONS[k]) continue;
+    const k = kindOf(p); if (!ACTIONS[k] || p.covered) continue;
     let d;
     if (WALL.has(k) || p.sortY === -1) { if (Math.abs(p.x - pl.x) > 20 || pl.y - p.y > 46 || pl.y < p.y) continue; d = Math.abs(p.x - pl.x); }
     else { d = dist(p.x, p.y + 12, pl.x, pl.y); if (d > 30) continue; }

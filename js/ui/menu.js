@@ -27,9 +27,9 @@ import { toast } from './hud.js';
 import { BADGES, TIER_ORDER } from '../data/badges.js';
 import { hasBadge, showcaseBadge, setShowcase } from '../systems/badges.js';
 import { weeklyGoals, claimGoal, goalReward } from '../systems/weekly.js';
-import { myCode, visitFriend, sendGift, GIFTS, noteFriendCount } from '../systems/social.js';
+import { myCode, visitFriend, sendGift, GIFTS, giftable, noteFriendCount, friendChallenge, claimFriendChallenge } from '../systems/social.js';
 import { timeLeftText } from '../systems/weekboard.js';
-import { POST_DESIGNS, STICKERS, MESSAGES, postcardHTML } from '../systems/together.js';
+import { POST_DESIGNS, STICKERS, MESSAGES, postcardHTML, postcardBox } from '../systems/together.js';
 import { slimLook } from '../data/looks.js';
 import { drawVillagerHead } from '../gfx/villager.js';
 
@@ -44,6 +44,8 @@ function renderFriends(pane, api) {
     try { if (navigator.share) await navigator.share({ title: 'Bistro Island', text, url: link }); else { await navigator.clipboard.writeText(`${text} ${link}`); b.textContent = T('Link copied ✓', 'Đã chép link ✓'); } } catch {}
   }, 'buy alt'));
   pane.appendChild(me);
+  const pb = h('div', 'row', `<div class="info"><b>📮 ${T('Postcard box', 'Hộp bưu thiếp')}</b><small>${T(`${(G.state.postbox || []).length} postcards kept`, `Đã giữ ${(G.state.postbox || []).length} bưu thiếp`)}</small></div>`);
+  pb.appendChild(btn(T('Open', 'Mở'), () => postcardBox(), 'buy alt')); pane.appendChild(pb);
   const add = h('div', 'row', `<div class="info"><b>${T('Add a friend', 'Thêm bạn')}</b><label class="field" style="margin:6px 0 0"><input class="fcode" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="${T('Their code', 'Mã của bạn ấy')}"></label></div>`);
   add.appendChild(btn(T('Add', 'Thêm'), async b => {
     const v = add.querySelector('.fcode').value.trim().toUpperCase(); if (v.length !== 6) { sfx('error'); return; }
@@ -52,6 +54,13 @@ function renderFriends(pane, api) {
     if (id) { sfx('success'); toast({ text: T('Friend added!', 'Đã kết bạn!'), icon: 'heart' }); api.rebuild(); } else { sfx('error'); toast({ text: T('No island with that code', 'Không có đảo nào với mã này'), bad: true }); b.disabled = false; }
   }, 'buy'));
   pane.appendChild(add);
+  const ch = h('div', 'row friend-challenge'); pane.appendChild(ch);
+  friendChallenge().then(c => {
+    const pct = Math.min(100, Math.round(c.total / c.goal * 100));
+    ch.innerHTML = `<div class="info"><b>🤝 ${T('This week\'s friend challenge', 'Thử thách bạn bè tuần này')}</b><small>${c.ready ? T(`Serve ${c.goal} customers together · ${c.total} so far · ${timeLeftText()}`, `Cùng phục vụ ${c.goal} khách · đã được ${c.total} · ${timeLeftText()}`) : T('Add a friend to start one — every island\'s customers count.', 'Thêm một người bạn để bắt đầu — khách ở đảo nào cũng được tính.')}</small><div class="fc-bar"><i style="width:${c.ready ? pct : 0}%"></i></div></div>`;
+    if (c.claimed) ch.appendChild(h('small', 'fc-done', T('Claimed ✓', 'Đã nhận ✓')));
+    else if (c.done && c.ready) ch.appendChild(btn(T('Claim', 'Nhận'), b => { b.disabled = true; if (claimFriendChallenge(c)) { sfx('fanfare'); api.rebuild(); } }, 'buy'));
+  }).catch(() => ch.remove());
   const list = h('div', 'list'); list.innerHTML = `<div class="empty-note">${T('Loading your friends…', 'Đang tải bạn bè…')}</div>`; pane.appendChild(list);
   Promise.all([cloud.listFriends(), cloud.giftsSentToday()]).then(([friends, sent]) => {
     noteFriendCount(friends?.length || 0);
@@ -78,6 +87,25 @@ function renderFriends(pane, api) {
           catch { sfx('error'); toast({ text: T('One gift per friend each day', 'Mỗi ngày một món quà cho mỗi người bạn'), bad: true }); }
         };
         gifts.appendChild(gb);
+      }
+      // or a piece of furniture from storage: pick it from a little list
+      if (!gave.has(f.user_id)) {
+        const fb = h('button', 'gift-pick', `<img src="${iconURL('sofa', 32)}" alt=""><span>${T('Furniture', 'Nội thất')}</span>`); fb.type = 'button';
+        fb.onclick = () => {
+          const items = giftable(), pick = h('div', 'gift-items scroll');
+          if (!items.length) { toast({ text: T('Nothing in storage to give', 'Kho không có đồ để tặng'), sub: T('Put a piece away in Decorate first. Shop-bought items stay with you.', 'Cất bớt đồ trong Trang trí trước. Đồ mua ở cửa hàng thì không tặng được.'), icon: 'sofa' }); return; }
+          for (const id of items) {
+            const ib = h('button', 'gift-item', escapeHtml(T(FURNITURE[id].en, FURNITURE[id].vi))); ib.type = 'button';
+            ib.onclick = async () => {
+              pick.querySelectorAll('button').forEach(x => { x.disabled = true; });
+              try { await sendGift(f.user_id, 'item', id); sfx('success'); gifts.innerHTML = `<small>${T('Gift sent today ✓', 'Đã tặng quà hôm nay ✓')}</small>`; pick.remove(); toast({ text: T(`You sent ${f.player_name} a ${FURNITURE[id].en}`, `Bạn đã tặng ${f.player_name} ${FURNITURE[id].vi}`), icon: 'sofa' }); }
+              catch { sfx('error'); pick.querySelectorAll('button').forEach(x => { x.disabled = false; }); toast({ text: T('One gift per friend each day', 'Mỗi ngày một món quà cho mỗi người bạn'), bad: true }); }
+            };
+            pick.appendChild(ib);
+          }
+          fb.disabled = true; gifts.after(pick);
+        };
+        gifts.appendChild(fb);
       }
       const rm = h('button', 'link-btn', T('Remove friend', 'Xóa bạn')); rm.type = 'button';
       rm.onclick = async () => { if (rm.dataset.sure) { await cloud.removeFriend(f.user_id).catch(() => {}); sfx('back'); api.rebuild(); } else { rm.dataset.sure = 1; rm.textContent = T('Tap again to remove', 'Chạm lần nữa để xóa'); } };

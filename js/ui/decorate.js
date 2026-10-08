@@ -70,7 +70,7 @@ export function floorGrid(sc = house()) {
 // the nearest grid position for a piece whose base (front, centre) is near x, y
 export function snapTo(sel, x, y, rot = 0) {
   const def = defOf(sel), sc = house();
-  if (def.wall) return { x: Math.round(x / 8) * 8, y: sc.WH };
+  if (def.wall) { const [lo, hi] = wallLift(sel, sc.WH); return { x: Math.round(x / 4) * 4, y: sc.WH + clamp(Math.round((y - sc.WH) / 4) * 4, lo, hi) }; }
   const g = floorGrid(sc), fp = footprint(def.w, def.h, rot, keyOf(sel));
   const left = clamp(g.ox + Math.round((x - fp.w / 2 - g.ox) / TILE) * TILE, g.ox, g.ox + g.cols * TILE - fp.w);
   const bottom = clamp(g.oy + Math.round((y - g.oy) / TILE) * TILE, g.oy + fp.h, g.oy + g.rows * TILE);
@@ -114,29 +114,76 @@ export function rebuildHouseFurniture(home = null, only = null) {
   }
   }
   for (const f of (visit ? home.furniture : furnList(sc)) || []) if (D?.lifted?.f !== f) addFurnProp(sc, f);
+  coverFixtures(sc, visit ? home.furniture : furnList(sc));
 }
 // Wall pieces were drawn for walls of different heights. Measure each one once (its topmost
 // painted pixel) and lower it just enough that it hangs inside the wall, below the cornice.
-const DROP = {};
-export function wallDrop(id, WH = 64) {
-  const k = id + ':' + WH; if (k in DROP) return DROP[k];
-  let top = 0;
+// The painted area of a drawing, relative to its anchor (measured once, then cached).
+const BOX = {};
+function paintedBox(k, draw) {
+  if (BOX[k]) return BOX[k];
+  let l = 0, r = 0, t = 0, b = 0, any = false;
   try {
-    const cv = document.createElement('canvas'); cv.width = 160; cv.height = 200; const c = cv.getContext('2d');
-    c.translate(80, 180); FURN_DRAW[id]?.(c, 0, { ...FURNITURE[id], x: 0, y: 0, off: true });
-    const d = c.getImageData(0, 0, 160, 200).data;
-    outer: for (let y = 0; y < 200; y++) for (let x = 0; x < 160; x++) if (d[(y * 160 + x) * 4 + 3] > 40) { top = y - 180; break outer; }
-  } catch { top = 0; }
-  return (DROP[k] = Math.max(0, Math.round(-(WH - 7) - top)));
+    const cv = document.createElement('canvas'); cv.width = 200; cv.height = 200; const c = cv.getContext('2d');
+    c.translate(100, 180); draw(c);
+    const d = c.getImageData(0, 0, 200, 200).data;
+    for (let y = 0; y < 200; y++) for (let x = 0; x < 200; x++) if (d[(y * 200 + x) * 4 + 3] > 60) {
+      if (!any) { l = r = x; t = b = y; any = true; } else { l = Math.min(l, x); r = Math.max(r, x); b = y; }
+    }
+  } catch { /* no canvas: fall back to the catalogue size */ }
+  return (BOX[k] = any ? { l: l - 100, r: r - 100 + 1, t: t - 180, b: b - 180 + 1 } : null);
 }
+const furnBox = id => paintedBox('f:' + id, c => FURN_DRAW[id]?.(c, 0, { ...FURNITURE[id], x: 0, y: 0, off: true })) || { l: -FURNITURE[id].w / 2, r: FURNITURE[id].w / 2, t: -40, b: -14 };
+export function wallDrop(id, WH = 64) { return Math.max(0, Math.round(-(WH - 7) - furnBox(id).t)); }
+// A wall piece's anchor is (x, WH + lift): it can hang anywhere along the back wall, at any
+// height that keeps it on the wall (below the cornice, above the skirting).
+function wallLift(id, WH) {
+  const bx = furnBox(id), drop = wallDrop(id, WH), top = WH + bx.t + drop, bot = WH + bx.b + drop;
+  return [Math.min(0, 4 - top), Math.max(0, WH - 3 - bot)];
+}
+function wallRect(id, x, y, WH, rot = 0) {
+  const bx = furnBox(id), dy = y + wallDrop(id, WH), [l, r] = rot === 2 ? [-bx.r, -bx.l] : [bx.l, bx.r];   // (mirrored)
+  return { l: x + l, r: x + r, t: dy + bx.t, b: dy + bx.b };
+}
+// the room's own fixtures on the back wall (windows, the clock, the calendar, shelves…). Windows
+// stay put; the little decorations (clock, calendar, family photo, shelf) step aside when you
+// hang something of your own over them.
+const isFixture = q => q.sortY === -1 && !q.homeFurn && !q.flat && q.kind && (q.draw || q.drawOwn);
+const yields = q => q.kind !== 'window';
+export function fixtureRect(q, WH) {
+  const bx = paintedBox(`q:${q.kind}:${q.w}:${q.h}:${q.hgt}`, c => (q.drawOwn || q.draw)(c, 0)); if (!bx) return null;
+  return { l: q.x + bx.l, r: q.x + bx.r, t: q.y + bx.t, b: Math.min(WH, q.y + bx.b) };
+}
+// your wall pieces hide the room's little decorations they're hung over
+function coverFixtures(sc, list) {
+  const mine = (list || []).filter(f => FURNITURE[f.id]?.wall).map(f => wallRect(f.id, f.x, f.y, sc.WH, f.rot || 0));
+  for (const q of sc.props) {
+    if (!isFixture(q) || !yields(q)) continue;
+    q.drawOwn ||= q.draw;
+    const R = fixtureRect(q, sc.WH);
+    q.covered = !!R && mine.some(m => overlaps(m, R, -1));
+    q.draw = q.covered ? () => {} : q.drawOwn;
+  }
+}
+// tall things standing against the back wall (wardrobe, kitchen, bed head…) hide the wall behind them
+export function hidesWall(sc) {
+  const out = [];
+  for (const q of sc.props) {
+    if (q.flat || q.sortY === -1 || !q.draw || q.y > sc.WH + 48 || (q.homeFurn && FURNITURE[q.homeFurn.id]?.wall)) continue;
+    const k = q.homeFurn ? `o:${q.homeFurn.id}:${q.homeFurn.rot || 0}` : `o:${q.kind || q.builtin || 'x'}:${q.w}:${q.h}`;
+    const bx = paintedBox(k, c => q.draw(c, 0)); if (bx) out.push({ l: q.x + bx.l, r: q.x + bx.r, t: q.y + bx.t, b: q.y + bx.b });
+  }
+  return out;
+}
+const overlaps = (a, b, gap = 1) => a.l < b.r + gap && a.r > b.l - gap && a.t < b.b + gap && a.b > b.t - gap;
 function addFurnProp(sc, f) {
   const def = FURNITURE[f.id]; if (!def) return;
   const rot = f.rot || 0, fp = footprint(def.w, def.h, rot, f.id);
-  const dy = def.wall ? wallDrop(f.id, sc.WH) : 0;
+  const dy = def.wall ? wallDrop(f.id, sc.WH) + (f.y - sc.WH) : 0;
   const plain = (c, t) => drawTurned(c, t, f.id, rot, () => FURN_DRAW[f.id](c, t, { ...def, ...(f.fs || {}), x: f.x, y: f.y }));
   // a piece you've recoloured is drawn from a cached image in its new colour (lights keep their glow: they can't be recoloured)
   const draw = f.hue && !def.light ? c => drawRecoloured(c, `${f.id}:${rot}`, f.hue, cc => plain(cc, 0)) : plain;
-  const p = { homeFurn: f, x: f.x, y: f.y, draw: (c, t) => { if (dy) c.translate(0, dy); draw(c, t); }, cull: { x: f.x - 70, y: f.y - 100, w: 140, h: 140 } };
+  const p = { homeFurn: f, x: f.x, y: def.wall ? sc.WH : f.y, draw: (c, t) => { if (dy) c.translate(0, dy); draw(c, t); }, cull: { x: f.x - 70, y: f.y - 100, w: 140, h: 140 } };
   if (def.floor) p.flat = true; // rugs sit under everything
   if (def.wall) p.sortY = -1;
   sc.prop(p);
@@ -147,14 +194,14 @@ function addFurnProp(sc, f) {
 function fits(sel, x, y, rot = 0, self = null, pad = 0) {
   const def = defOf(sel), sc = house();
   if (def.wall) {
-    if (!(x - def.w / 2 > 14 && x + def.w / 2 < sc.w - 14)) return false;
-    // not over a window or another wall piece
+    const [lo, hi] = wallLift(sel, sc.WH), R = wallRect(sel, x, y, sc.WH, rot);
+    if (y - sc.WH < lo || y - sc.WH > hi || R.l < 8 || R.r > sc.w - 8) return false;
+    // not over a window, a fixture or another wall piece
     for (const q of sc.props) {
-      const other = q.homeFurn ? FURNITURE[q.homeFurn.id] : null;
-      if (q.homeFurn && (!other?.wall || (self?.f && q.homeFurn === self.f))) continue;
-      if (!q.homeFurn && q.kind !== 'window') continue;
-      const w = q.homeFurn ? other.w : (q.w || 46);
-      if (Math.abs(q.x - x) < (w + def.w) / 2 + 2) return false;
+      let Q = null;
+      if (q.homeFurn) { if (!FURNITURE[q.homeFurn.id]?.wall || (self?.f && q.homeFurn === self.f)) continue; Q = wallRect(q.homeFurn.id, q.homeFurn.x, q.homeFurn.y, sc.WH, q.homeFurn.rot || 0); }
+      else if (isFixture(q) && !yields(q)) Q = fixtureRect(q, sc.WH);
+      if (Q && overlaps(R, Q)) return false;
     }
     return true;
   }
@@ -220,9 +267,10 @@ function pieceAt(wx, wy) {
   let best = null;
   for (const [order, pc] of pieces().entries()) {
     const def = defOf(selOf(pc)), st = posOf(pc), fp = footprint(def.w, def.h, st.rot || 0, keyOf(selOf(pc)));
-    const hw = Math.max(fp.w / 2, 12) + 3, top = def.wall ? st.y - 62 + (def.wall ? wallDrop(selOf(pc), house().WH) : 0) : def.floor ? st.y - fp.h - 2 : st.y - Math.max(fp.h, pc.key ? 44 : 30) - 12;
-    const bottom = def.wall ? top + 32 : st.y + 4;
-    if (wx < st.x - hw || wx > st.x + hw || wy < top || wy > bottom) continue;
+    const WR = def.wall ? wallRect(selOf(pc), st.x, st.y, house().WH, st.rot || 0) : null;
+    const hw = Math.max(fp.w / 2, 12) + 3, top = WR ? WR.t - 3 : def.floor ? st.y - fp.h - 2 : st.y - Math.max(fp.h, pc.key ? 44 : 30) - 12;
+    const bottom = WR ? WR.b + 3 : st.y + 4;
+    if (WR ? wx < WR.l - 3 || wx > WR.r + 3 || wy < top || wy > bottom : wx < st.x - hw || wx > st.x + hw || wy < top || wy > bottom) continue;
     const onTiles = !def.wall && wx >= st.x - fp.w / 2 && wx <= st.x + fp.w / 2 && wy >= st.y - fp.h && wy <= st.y;
     const rank = def.floor ? (pc.f ? 1 : 0) + order * 0.001 : onTiles ? 4 : def.wall ? 3 : 2;
     const d = Math.hypot(wx - st.x, (wy - (st.y - Math.min(fp.h, 20))) * 0.7);
@@ -230,10 +278,19 @@ function pieceAt(wx, wy) {
   }
   return best?.pc || null;
 }
+// the free place on the back wall nearest to x, y (anywhere along it, at any height)
+function wallSpot(sel, x0, y0, self = null, rot = 0, visible = false) {
+  const sc = house(), [lo, hi] = wallLift(sel, sc.WH), spots = [], hid = visible ? hidesWall(sc) : [];
+  if (visible === 2) for (const q of sc.props) if (isFixture(q) && !q.covered) { const R = fixtureRect(q, sc.WH); if (R) hid.push(R); }   // (first try not to cover the room's own decorations)
+  for (let x = 8; x <= sc.w - 8; x += 4) for (let k = lo; k <= hi; k += 4) spots.push({ x, y: sc.WH + k, d: Math.hypot(x - x0, (sc.WH + k - y0) * 1.5) });
+  spots.sort((a, b) => a.d - b.d);
+  for (const s of spots) if (fits(sel, s.x, s.y, rot, self) && !hid.some(o => overlaps(wallRect(sel, s.x, s.y, sc.WH, rot), o, 0))) return { x: s.x, y: s.y };
+  return visible === 2 ? wallSpot(sel, x0, y0, self, rot, 1) : null;
+}
 // a free place for something new, as close to the middle of the floor as possible
 function freeSpot(sel, pad = TILE) {   // (new pieces keep a tile of room around them where they can, so they're easy to see and grab)
   const sc = house(), def = defOf(sel);
-  if (def.wall) { for (let r = 0; r < sc.w / 2; r += 8) for (const sx of [1, -1]) { const x = Math.round((sc.w / 2 + sx * r) / 8) * 8; if (fits(sel, x, sc.WH)) return { x, y: sc.WH }; } return null; }
+  if (def.wall) return wallSpot(sel, sc.w / 2, sc.WH * 0.5, null, 0, 2);      // (somewhere you can see it)
   const g = floorGrid(sc), fp = footprint(def.w, def.h, 0, keyOf(sel)), spots = [];
   for (let gx = 0; gx * TILE + fp.w <= g.cols * TILE; gx++) for (let gy = fp.h / TILE; gy <= g.rows; gy++) {
     const x = g.ox + gx * TILE + fp.w / 2, y = g.oy + gy * TILE;
@@ -271,7 +328,7 @@ export function startDecorate() {
     if (!pc) {
       // a piece is selected and you tap somewhere empty: move it there (if it fits), like picking it up and putting it down
       if (D.sel) {
-        const sel = selOf(D.sel), st = posOf(D.sel), def = defOf(sel), to = snapTo(sel, wx, def.wall ? house().WH : wy + footprint(def.w, def.h, st.rot || 0, keyOf(sel)).h / 2, st.rot || 0);
+        const sel = selOf(D.sel), st = posOf(D.sel), def = defOf(sel), to = def.wall ? snapTo(sel, wx, st.y + wy - (wallRect(sel, st.x, st.y, house().WH).t + wallRect(sel, st.x, st.y, house().WH).b) / 2) : snapTo(sel, wx, wy + footprint(def.w, def.h, st.rot || 0, keyOf(sel)).h / 2, st.rot || 0);
         if ((to.x !== st.x || to.y !== st.y) && fits(sel, to.x, to.y, st.rot || 0, D.sel)) { const before = snap(); st.x = to.x; st.y = to.y; rebuildHouseFurniture(); changed(before); sfx('success'); fx.burst('spark', st.x, st.y - 14, 6, { up: 24, col: '#ffd35a' }); renderBar(); return; }
         D.sel = null; sfx('back'); renderBar();
       }
@@ -291,6 +348,7 @@ export function startDecorate() {
     if (D.ghost && D.ghost.x === x && D.ghost.y === y) return;
     if (D.ghost) sfx('tap');
     D.ghost = { x, y }; D.valid = fits(sel, x, y, d.from.rot, d.pc);
+    if (defOf(sel).wall) { const sc = house(), ok = []; for (let gx = 8; gx <= sc.w - 8; gx += 4) if (fits(sel, gx, y, d.from.rot, d.pc)) ok.push(gx); D.wallOK = { ok, y }; }
     renderHint();
   };
   D.onUp = e => {
@@ -300,9 +358,9 @@ export function startDecorate() {
       const st = posOf(d.pc);
       // dropped where it doesn't quite fit: settle into the nearest free spot (up to two tiles away)
       if (!D.valid && D.ghost) {
-        const sel = selOf(d.pc), def = defOf(sel), step = def.wall ? 8 : TILE; let near = null;
-        for (let r = 1; r <= 2 && !near; r++) for (let dx = -r; dx <= r && !near; dx++) for (let dy = -r; dy <= r && !near; dy++) {
-          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || (def.wall && dy)) continue;
+        const sel = selOf(d.pc), def = defOf(sel), step = TILE; let near = def.wall ? wallSpot(sel, D.ghost.x, D.ghost.y, d.pc, d.from.rot) : null;
+        for (let r = 1; r <= 2 && !near && !def.wall; r++) for (let dx = -r; dx <= r && !near; dx++) for (let dy = -r; dy <= r && !near; dy++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
           const x = D.ghost.x + dx * step, y = D.ghost.y + dy * step;
           if (fits(sel, x, y, d.from.rot, d.pc)) near = { x, y };
         }
@@ -365,7 +423,7 @@ function renderBar() {
     drawFurniturePreview(cv, id, FURNITURE[id]);
     it.onclick = () => {
       const spot = freeSpot(id);
-      if (!spot) { sfx('error'); toast({ text: T('No room for that', 'Hết chỗ rồi'), sub: T('Move or put something away first.', 'Dời hoặc cất bớt đồ trước nhé.'), icon: 'sofa' }); return; }
+      if (!spot) { sfx('error'); toast(FURNITURE[id]?.wall ? { text: T('No free wall space', 'Tường hết chỗ trống'), sub: T('Move a tall piece away from the back wall, or take a wall piece down.', 'Dời đồ cao ra khỏi tường sau, hoặc gỡ bớt một món treo tường.'), icon: 'sofa' } : { text: T('No room for that', 'Hết chỗ rồi'), sub: T('Move or put something away first.', 'Dời hoặc cất bớt đồ trước nhé.'), icon: 'sofa' }); return; }
       const before = snap(), i = owned.indexOf(id); if (i >= 0) owned.splice(i, 1);
       const f = { id, x: spot.x, y: spot.y, rot: 0 }; furnList().push(f);
       rebuildHouseFurniture(); changed(before); D.sel = { f };
@@ -388,9 +446,9 @@ function renderTools() {
     if (!fits(sel, to.x, to.y, rot, D.sel)) { sfx('error'); toast({ text: T('No room to turn it here', 'Không đủ chỗ để xoay'), icon: 'sofa', ms: 1400, now: true }); return; }
     const before = snap(); st.rot = rot; st.x = to.x; st.y = to.y; rebuildHouseFurniture(); changed(before); sfx('whoosh'); renderBar();
   };
-  // nudge one tile at a time (wall pieces slide along the wall)
+  // nudge one tile at a time (wall pieces move in small steps, up and down the wall too)
   const nudge = (dx, dy) => {
-    const st = posOf(D.sel), step = def.wall ? 8 : TILE, x = st.x + dx * step, y = def.wall ? st.y : st.y + dy * step;
+    const st = posOf(D.sel), step = def.wall ? 4 : TILE, x = st.x + dx * step, y = st.y + dy * step;
     if (!fits(sel, x, y, st.rot || 0, D.sel)) { sfx('error'); return; }
     const before = snap(); st.x = x; st.y = y; rebuildHouseFurniture(); changed(before); sfx('tap');
   };
@@ -402,7 +460,7 @@ function renderTools() {
   }));
   const pad = h('div', 'deco-nudge');
   pad.append(act('◀', 'ghost small icon', () => nudge(-1, 0)));
-  if (!def.wall) pad.append(act('▲', 'ghost small icon', () => nudge(0, -1)), act('▼', 'ghost small icon', () => nudge(0, 1)));
+  pad.append(act('▲', 'ghost small icon', () => nudge(0, -1)), act('▼', 'ghost small icon', () => nudge(0, 1)));
   pad.append(act('▶', 'ghost small icon', () => nudge(1, 0)));
   t.append(pad);
   if (D.sel.f) t.append(act(T('Put away', 'Cất đi'), 'ghost small', () => {
@@ -416,7 +474,7 @@ function renderTools() {
 function placeTools() {
   const t = D.tools; if (!D.sel || D.drag?.moved) { t.style.visibility = 'hidden'; return; }
   const st = posOf(D.sel), def = defOf(selOf(D.sel)), v = cam.view, z = cam.zoom, r = document.getElementById('game').getBoundingClientRect();
-  const top = def.wall ? st.y - 70 : st.y - Math.max(footprint(def.w, def.h, st.rot || 0, keyOf(selOf(D.sel))).h, D.sel.key ? 48 : 34) - 22;
+  const top = def.wall ? wallRect(selOf(D.sel), st.x, st.y, house().WH).t - 8 : st.y - Math.max(footprint(def.w, def.h, st.rot || 0, keyOf(selOf(D.sel))).h, D.sel.key ? 48 : 34) - 22;
   const sx = r.left + (st.x - v.x) * z, sy = r.top + (top - v.y) * z;
   const w = t.offsetWidth, hh = t.offsetHeight;
   t.style.left = clamp(sx - w / 2, 8, innerWidth - w - 8) + 'px'; t.style.top = clamp(sy - hh, 8, innerHeight - hh - 8) + 'px'; t.style.visibility = 'visible';
@@ -432,9 +490,15 @@ function drawOverlay(c, t) {
   // the piece being carried
   if (D.lifted && D.ghost) {
     const sel = selOf(D.lifted), def = defOf(sel), rot = posOf(D.lifted).rot || 0, fp = footprint(def.w, def.h, rot, keyOf(sel));
+    // carrying a wall piece: where along the wall it would fit at this height, in soft green
+    if (def.wall && D.wallOK?.y === D.ghost.y) {
+      const R = wallRect(sel, 0, D.ghost.y, house().WH, rot); c.save(); c.fillStyle = 'rgba(111,191,115,.22)';
+      for (const gx of D.wallOK.ok) c.fillRect(gx - 2, R.t, 4, R.b - R.t);
+      c.restore();
+    }
     c.save(); c.globalAlpha = 0.75; c.translate(D.ghost.x, D.ghost.y - 3 + (def.wall && !sel.startsWith('builtin:') ? wallDrop(sel, house().WH) : 0)); drawSel(c, t, sel, D.ghost.x, D.ghost.y, rot); c.restore();
     c.save(); c.strokeStyle = D.valid ? '#4fae5a' : '#e8584e'; c.fillStyle = D.valid ? 'rgba(111,191,115,.18)' : 'rgba(232,88,78,.18)'; c.lineWidth = 2; c.setLineDash([5, 4]);
-    if (def.wall) { c.fillRect(D.ghost.x - def.w / 2, D.ghost.y - 66, def.w, 26); c.strokeRect(D.ghost.x - def.w / 2, D.ghost.y - 66, def.w, 26); }
+    if (def.wall) { const R = wallRect(sel, D.ghost.x, D.ghost.y, house().WH, rot); c.fillRect(R.l, R.t, R.r - R.l, R.b - R.t); c.strokeRect(R.l, R.t, R.r - R.l, R.b - R.t); }
     else { c.fillRect(D.ghost.x - fp.w / 2, D.ghost.y - fp.h, fp.w, fp.h); c.strokeRect(D.ghost.x - fp.w / 2, D.ghost.y - fp.h, fp.w, fp.h); }
     c.restore(); return;
   }
@@ -442,7 +506,7 @@ function drawOverlay(c, t) {
   if (D.sel) {
     const sel = selOf(D.sel), def = defOf(sel), st = posOf(D.sel), fp = footprint(def.w, def.h, st.rot || 0, keyOf(sel)), k = 2 + Math.sin(t * 5) * 1.2;
     c.save(); c.strokeStyle = '#f08ca0'; c.lineWidth = 2; c.setLineDash([6, 4]); c.lineDashOffset = -t * 20;
-    if (def.wall) c.strokeRect(st.x - def.w / 2 - k, st.y - 66 - k, def.w + k * 2, 26 + k * 2);
+    if (def.wall) { const R = wallRect(selOf(D.sel), st.x, st.y, house().WH, st.rot || 0); c.strokeRect(R.l - k, R.t - k, R.r - R.l + k * 2, R.b - R.t + k * 2); }
     else c.strokeRect(st.x - fp.w / 2 - k, st.y - fp.h - k, fp.w + k * 2, fp.h + k * 2);
     c.restore();
   }

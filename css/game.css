@@ -993,3 +993,10 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
 
 .modal.chess .card canvas { width: 100%; max-width: 360px; display: block; margin: 6px auto 8px; border-radius: 12px; border: 3px solid #8a4a2a; touch-action: none; }
 .ch-msg { min-height: 2.6em; }
+.gift-items { display: flex; flex-wrap: wrap; gap: 6px; max-height: 140px; margin: -4px 4px 12px; padding: 4px; border-radius: 12px; background: rgba(233,179,106,.14); }
+.gift-item { min-height: 36px; padding: 6px 12px; border-radius: 18px; border: 1.5px solid var(--ink, #2f2a30); background: #fff8ea; font: 800 13px Nunito, sans-serif; color: inherit; }
+.gift-item:disabled { opacity: .5; }
+.pc-box { max-height: min(56vh, 460px); padding: 2px 6px; }
+.fc-bar { height: 8px; margin-top: 6px; border-radius: 4px; background: rgba(91,63,54,.15); overflow: hidden; }
+.fc-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #f2c14e, #4fae5a); }
+.fc-done { font-weight: 900; color: #3f8f4a; white-space: nowrap; }

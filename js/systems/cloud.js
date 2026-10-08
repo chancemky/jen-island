@@ -189,9 +189,9 @@ export async function sendMail(to, design, sticker, message) { await api('/rest/
 export async function mailSeen(ids) { if (ids.length) await api(`/rest/v1/jen_island_mail?id=in.(${ids.map(Number).join(',')})`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ seen: true }) }); }
 export async function myInbox() { return api('/rest/v1/rpc/jen_island_my_inbox', { method: 'POST', body: '{}' }); }
 export async function giftsSentToday() { return api(`/rest/v1/jen_island_gifts?select=to_id&from_id=eq.${session.user.id}&sent_on=eq.${new Date().toISOString().slice(0, 10)}`); }
-export async function sendGift(to, kind) { await api('/rest/v1/jen_island_gifts', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ from_id: session.user.id, to_id: to, kind }) }); }
+export async function sendGift(to, kind, item = null) { await api('/rest/v1/jen_island_gifts', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ from_id: session.user.id, to_id: to, kind, ...(item ? { item } : {}) }) }); }
 export async function giftsWaiting() {
-  const rows = await api(`/rest/v1/jen_island_gifts?select=id,kind,from_id&to_id=eq.${session.user.id}&claimed=eq.false&limit=20`);
+  const rows = await api(`/rest/v1/jen_island_gifts?select=id,kind,item,from_id&to_id=eq.${session.user.id}&claimed=eq.false&limit=20`);
   if (!rows?.length) return [];
   const names = await api(`/rest/v1/jen_island_showcase?select=user_id,player_name&user_id=in.(${[...new Set(rows.map(r => r.from_id))].join(',')})`);
   return rows.map(r => ({ ...r, from: names.find(n => n.user_id === r.from_id)?.player_name || 'A friend' }));

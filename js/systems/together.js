@@ -80,10 +80,32 @@ export async function checkInbox() {
     const el = document.createElement('div'); el.className = 'modal';
     el.innerHTML = `<div class="card postcards"><h2>${T(mail.length > 1 ? `${mail.length} postcards!` : 'A postcard!', mail.length > 1 ? `${mail.length} bưu thiếp!` : 'Một bưu thiếp!')}</h2>${mail.slice(0, 5).map(m => postcardHTML(m)).join('')}<button class="btn primary" type="button">${T('Lovely', 'Dễ thương quá')}</button></div>`;
     (document.getElementById('app') || document.body).appendChild(el); bus.emit('sfx', 'page');
-    el.querySelector('button').onclick = () => { el.remove(); cloud.mailSeen(mail.map(m => m.id)).catch(() => {}); G.state.social ||= {}; G.state.social.postcards = (G.state.social.postcards || 0) + mail.length; markDirty(); done(); };
+    el.querySelector('button').onclick = () => { el.remove(); cloud.mailSeen(mail.map(m => m.id)).catch(() => {}); G.state.social ||= {}; G.state.social.postcards = (G.state.social.postcards || 0) + mail.length; for (const m of mail) keepPostcard(m); markDirty(); done(); };
   }));
 }
 export function postcardHTML(m) {
   const d = POST_DESIGNS[m.design] || POST_DESIGNS.sunset, msg = MESSAGES[m.message] || MESSAGES[0];
   return `<div class="postcard" style="--a:${d[2][0]};--b:${d[2][1]}"><span class="pc-stamp">${STICKERS[m.sticker] || '💖'}</span><b>${T(msg[0], msg[1])}</b><small>— ${(m.name || '').replace(/[<>&]/g, '')}</small></div>`;
 }
+
+// the postcard box: every card a friend sent you, and a souvenir card from each island you've
+// visited. Kept in the save (the newest 60), so it works offline too.
+const BOX_MAX = 60;
+export function keepPostcard(m, visit = false) {
+  const box = (G.state.postbox ||= []);
+  const card = { design: POST_DESIGNS[m.design] ? m.design : 'sunset', sticker: STICKERS[m.sticker] ? m.sticker : 'heart', message: MESSAGES[m.message] ? m.message : 0, name: String(m.name || '').slice(0, 24), island: String(m.island || '').slice(0, 30), day: G.state.day, visit };
+  if (visit && box.some(b => b.visit && b.name === card.name && b.island === card.island)) return;   // one souvenir per island
+  box.unshift(card); box.length = Math.min(box.length, BOX_MAX); markDirty();
+}
+export function postcardBox() {
+  present(() => new Promise(done => {
+    const box = G.state.postbox || [], el = document.createElement('div'); el.className = 'modal';
+    const card = b => b.visit
+      ? `<div class="postcard" style="--a:${POST_DESIGNS[b.design][2][0]};--b:${POST_DESIGNS[b.design][2][1]}"><span class="pc-stamp">🏝️</span><b>${T(`Greetings from ${esc(b.island || 'their island')}!`, `Lời chào từ ${esc(b.island || 'đảo bạn')}!`)}</b><small>${T(`Visited ${esc(b.name)} · day ${b.day}`, `Thăm ${esc(b.name)} · ngày ${b.day}`)}</small></div>`
+      : postcardHTML(b);
+    el.innerHTML = `<div class="card postcards"><h2>📮 ${T('Postcard box', 'Hộp bưu thiếp')}</h2><p style="margin:0 0 8px;font-weight:800;opacity:.75">${box.length ? T(`${box.length} kept · ${box.filter(b => b.visit).length} islands visited`, `${box.length} tấm · đã thăm ${box.filter(b => b.visit).length} đảo`) : T('Postcards friends send you, and a souvenir from every island you visit, are kept here.', 'Bưu thiếp bạn bè gửi và quà lưu niệm từ mỗi hòn đảo bạn ghé thăm đều được giữ ở đây.')}</p><div class="pc-box scroll">${box.map(card).join('')}</div><button class="btn primary" type="button">${T('Close', 'Đóng')}</button></div>`;
+    (document.getElementById('app') || document.body).appendChild(el); bus.emit('sfx', 'page');
+    el.querySelector('button').onclick = () => { el.remove(); done(); };
+  }));
+}
+const esc = v => String(v).replace(/[<>&"]/g, '');
