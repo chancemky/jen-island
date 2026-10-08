@@ -19,6 +19,7 @@ import { npcs } from './npc.js';
 import { RESIDENTS } from '../data/looks.js';
 import { rand, bus } from '../core/util.js';
 import { weddingDrawables } from './wedding.js';
+import { chessDrawables } from '../ui/chess.js';
 
 const ch = () => G.state.story.chapter || 1;
 const OVERHEAD = 99990;            // strings of flags and lanterns hang above everyone's heads: drawn last
@@ -269,6 +270,7 @@ export function growthDrawables() {
   if (flag('fishing')) add(992, 2600, 2600, (c, t) => { const bob = Math.sin(t * 1.6) * 1.2; c.save(); c.translate(992, 2600 + bob); poly(c, [-22, -6, 22, -6, 16, 4, -16, 4], '#3f8f9a', INK, 1); box(c, -16, -9, 32, 4, 1, '#fffaf0', INK, 0.6); line(c, 2, -9, 2, -30, '#8a5f3e', 1.4); poly(c, [3, -29, 3, -12, 16, -12], '#fff5df', INK, 0.7); c.restore(); });
   partyDrawables(add, { box, line, circ, ell, INK });
   weddingDrawables(add, { box, line, circ, ell, INK });
+  chessDrawables(add, { box, line, circ, ell, INK });
   nightlifeDrawables(add, { box, line, circ, ell, poly, INK, glows });
   // today's special on a chalkboard easel by each of your shops (tap it to change)
   for (const sp of specialEasels()) add(sp.x, sp.y, sp.y, (c, t) => easel(c, t, sp.x, sp.y, sp.recipe));

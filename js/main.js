@@ -93,6 +93,7 @@ import { homePieces } from './data/sets.js';
 import { initHomeContest, applyShopStyles } from './systems/homestyle.js';
 import { initSeasonal } from './systems/seasonal.js';
 import { weddingAction, initWedding } from './systems/wedding.js';
+import { chessAction } from './ui/chess.js';
 
 const $ = id => document.getElementById(id);
 const bootBar = $('bootBar'), bootMsg = $('bootMsg');
@@ -529,7 +530,7 @@ function updateInteraction(dt) {
     if (tr.kind === 'act') return actAction(tr);
   }
   // a neighbour's birthday party on the plaza
-  const pa = partyAction(pl) || weddingAction(pl) || nightlifeAction(pl); if (pa) { setAction(pa.label, pa.run, pa.icon); return; }
+  const pa = partyAction(pl) || weddingAction(pl) || chessAction(pl) || nightlifeAction(pl); if (pa) { setAction(pa.label, pa.run, pa.icon); return; }
   // things in the room that do something (TV, radio, piano, lamps, fish, books…)
   const thing = nearbyThing(sc, pl);
   if (thing) { setAction(thing.label, thing.run, thing.icon); return; }

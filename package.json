@@ -23,7 +23,7 @@
     "sw": "node tools/sw-shell.mjs",
     "app": "node tools/app-web.mjs && npx cap sync",
     "test:features": "node tests/run.mjs features",
-    "lint": "eslint js sw.js && node tools/imports-check.mjs",
+    "lint": "eslint js sw.js && node tools/imports-check.mjs && node tests/xiangqi.mjs",
     "check:audio": "node tools/audio-check.mjs",
     "test:all": "eslint js sw.js && node tests/parallel.mjs all"
   },
