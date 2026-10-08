@@ -13,6 +13,7 @@ import { rebuildHouseFurniture, clearStairs } from '../ui/decorate.js';
 import { lockInput, releaseInput } from '../core/locks.js';
 import { sfx } from '../core/audio.js';
 import { track } from './telemetry.js';
+import { applyRoomStyle } from './homestyle.js';
 
 export const HOME_UPGRADES = [null, { cost: 6000, en: 'A bigger house', vi: 'Nhà rộng hơn', note: ['+1 window and a third more floor', 'Thêm cửa sổ và rộng thêm 1/3'] }, { cost: 15000, en: 'The family house', vi: 'Nhà lớn', note: ['Another window, more wall space, room for everything', 'Thêm cửa sổ, thêm tường, đủ chỗ cho mọi thứ'] }];
 export const FLOOR_UPGRADES = {
@@ -36,17 +37,18 @@ export const placedFurniture = (home = G.state.home) => [...(home.furniture || [
 
 function build() {
   const ground = buildHouse(homeLevel());
+  applyRoomStyle(ground, G.state.home.style?.house);
   scenes.house = G.scenes.house = ground;
   for (const which of ['up', 'down']) {
     const id = floorScene(which), lv = floorLevel(which);
-    if (lv) { scenes[id] = G.scenes[id] = buildFloor(which, lv); addStairs(ground, which, id, which === 'up' ? ['Go upstairs', 'Lên lầu'] : ['Go downstairs', 'Xuống tầng hầm']); }
+    if (lv) { scenes[id] = G.scenes[id] = buildFloor(which, lv); applyRoomStyle(scenes[id], G.state.home.style?.[id]); addStairs(ground, which, id, which === 'up' ? ['Go upstairs', 'Lên lầu'] : ['Go downstairs', 'Xuống tầng hầm']); }
     else { delete scenes[id]; delete G.scenes[id]; }
   }
 }
 // visiting a friend: the ground floor rebuilt at their house's size; going home puts yours back
-export function visitHouse(size) {
+export function visitHouse(size, style = null) {
   const was = G.scene === scenes.house;
-  scenes.house = G.scenes.house = buildHouse(size);
+  scenes.house = G.scenes.house = buildHouse(size); applyRoomStyle(scenes.house, style);
   if (was) G.scene = scenes.house;
 }
 export function restoreHome() { build(); clearStairs(); rebuildHouseFurniture(); }

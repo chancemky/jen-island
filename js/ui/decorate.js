@@ -15,6 +15,7 @@ import { clamp, devHost } from '../core/util.js';
 import { toast } from './hud.js';
 import { cam, fx } from '../world/render.js';
 import { input, releaseJoystick } from '../core/input.js';
+import { openRoomStyle, drawRecoloured, HUES } from '../systems/homestyle.js';
 
 let D = null;
 // the floor of your home you're decorating (or standing on): ground floor, upstairs or basement
@@ -132,7 +133,10 @@ function addFurnProp(sc, f) {
   const def = FURNITURE[f.id]; if (!def) return;
   const rot = f.rot || 0, fp = footprint(def.w, def.h, rot, f.id);
   const dy = def.wall ? wallDrop(f.id, sc.WH) : 0;
-  const p = { homeFurn: f, x: f.x, y: f.y, draw: (c, t) => { if (dy) c.translate(0, dy); drawTurned(c, t, f.id, rot, () => FURN_DRAW[f.id](c, t, { ...def, ...(f.fs || {}), x: f.x, y: f.y })); }, cull: { x: f.x - 70, y: f.y - 100, w: 140, h: 140 } };
+  const plain = (c, t) => drawTurned(c, t, f.id, rot, () => FURN_DRAW[f.id](c, t, { ...def, ...(f.fs || {}), x: f.x, y: f.y }));
+  // a piece you've recoloured is drawn from a cached image in its new colour (lights keep their glow: they can't be recoloured)
+  const draw = f.hue && !def.light ? c => drawRecoloured(c, `${f.id}:${rot}`, f.hue, cc => plain(cc, 0)) : plain;
+  const p = { homeFurn: f, x: f.x, y: f.y, draw: (c, t) => { if (dy) c.translate(0, dy); draw(c, t); }, cull: { x: f.x - 70, y: f.y - 100, w: 140, h: 140 } };
   if (def.floor) p.flat = true; // rugs sit under everything
   if (def.wall) p.sortY = -1;
   sc.prop(p);
@@ -346,6 +350,8 @@ function renderBar() {
   const acts = bar.querySelector('.deco-actions');
   acts.append(
     act(T('↶ Undo', '↶ Hoàn tác'), 'ghost small', () => { if (D.hist.length) { restore(D.hist.pop()); sfx('whoosh'); renderBar(); } }, !D.hist.length),
+    act(T('🎨 Walls', '🎨 Tường'), 'ghost small', () => openRoomStyle(house())),
+    ...(house().id === 'house' && !G.runtime.visit ? [act(T('🌷 Garden', '🌷 Vườn'), 'ghost small', () => { stopDecorate(); import('./storefront.js').then(m => m.openShopFront('house')); })] : []),
     act(D.folded ? '▴' : '▾', 'ghost small', () => { D.folded = !D.folded; sfx('ui'); renderBar(); }),
     act(T('Done', 'Xong'), 'gold', () => stopDecorate()));
   acts.children[1].title = D.folded ? T('Show your items', 'Hiện đồ') : T('Hide the tray', 'Thu gọn');
@@ -390,6 +396,10 @@ function renderTools() {
   };
   if (!def.wall && SIDE[keyOf(sel)]) t.append(act('↺', 'ghost small icon', () => turn(-1)), act('↻', 'ghost small icon', () => turn(1)));
   else t.append(act('⇋', 'ghost small icon', () => turn(2)));                       // everything else can be mirrored
+  if (D.sel.f && !def.light) t.append(act('🎨', 'ghost small icon', () => {
+    const f = D.sel.f, before = snap(), i = HUES.indexOf(f.hue || 0); f.hue = HUES[(i + 1) % HUES.length] || undefined; if (!f.hue) delete f.hue;
+    rebuildHouseFurniture(); changed(before); sfx('pop');
+  }));
   const pad = h('div', 'deco-nudge');
   pad.append(act('◀', 'ghost small icon', () => nudge(-1, 0)));
   if (!def.wall) pad.append(act('▲', 'ghost small icon', () => nudge(0, -1)), act('▼', 'ghost small icon', () => nudge(0, 1)));

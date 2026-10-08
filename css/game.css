@@ -958,3 +958,21 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
 .modal .card canvas { touch-action: none; }
 
 .deco-nudge { display: flex; gap: 4px; padding-left: 6px; margin-left: 2px; border-left: 2px solid rgba(91,63,54,.15); }
+
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
+.swatch { width: 40px; height: 40px; border-radius: 12px; border: 2.5px solid rgba(91,63,54,.35); box-shadow: inset 0 -3px 0 rgba(0,0,0,.08); padding: 0; }
+.swatch.on { border-color: var(--ink); box-shadow: 0 0 0 3px var(--gold); }
+.swatch.pick { background: conic-gradient(#f36d86, #f2c14e, #9fd67a, #6fbfb0, #8fb7e0, #c9b6e8, #f36d86); cursor: pointer; }
+.swatch.pick::-webkit-color-swatch-wrapper { padding: 0; } .swatch.pick::-webkit-color-swatch { border: 0; border-radius: 9px; opacity: 0; }
+/* decorating: the bar wraps (hint on top, buttons below) and the floating tools stay on screen in two rows */
+.deco-head { flex-wrap: wrap; }
+.deco-hint { flex: 1 1 100%; }
+.deco-actions { flex: 1 1 auto; flex-wrap: wrap; justify-content: flex-end; }
+.deco-actions .btn { padding: 8px 12px; font-size: 13px; }
+.deco-tools { flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 16px); width: max-content; }
+.deco-tools .btn { min-width: 40px; min-height: 40px; }
+.deco-nudge { border-left: 0; padding-left: 0; margin-left: 0; flex-basis: 100%; justify-content: center; }
+@media (min-width: 700px) { .deco-hint { flex: 1; } .deco-nudge { flex-basis: auto; border-left: 2px solid rgba(91,63,54,.15); padding-left: 6px; } }
+.deco-tools { max-width: min(300px, calc(100vw - 16px)); }
+.deco-tools .btn { min-width: 38px; min-height: 38px; padding: 6px 9px; }
+.deco-nudge { flex-basis: auto; }

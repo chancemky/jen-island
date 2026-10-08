@@ -135,6 +135,9 @@ export function drawDecor(c, t, k, x, y) {
   if (d.fn === 'lanternPole') { line(c, 0, 0, 0, -38, '#8a5f3e', 1.8); line(c, 0, -36, 8, -36, '#8a5f3e', 1.2); const sw = Math.sin(t * 2 + x) * 0.1; c.save(); c.translate(8, -36); c.rotate(sw); line(c, 0, 0, 0, 4, INK, 0.5); ell(c, 0, 9, 4.5, 5.5, '#e8453a', INK, 0.7); box(c, -2.5, 3.5, 5, 1.6, 0.5, '#ffd35a', null); box(c, -2.5, 13.5, 5, 1.6, 0.5, '#ffd35a', null); c.restore(); if (night()) glows.push([x + 8, y - 27, 26, 'rgba(255,170,100,.55)']); }
   else if (d.fn === 'surfboard') { ell(c, 0, -20, 5, 20, '#6fbfb0', INK, 0.9); line(c, 0, -39, 0, -1, '#fff', 0.8); ell(c, 4, 0, 6, 1.6, 'rgba(0,0,0,.12)', null); }
   else if (d.fn === 'flagPole') { c.translate(-x, -y); flagPole(c, t, x, y); }
+  else if (d.fn === 'picketFence') { line(c, -16, -6, 16, -6, '#e8dccb', 2); line(c, -16, -11, 16, -11, '#e8dccb', 2); for (let i = 0; i < 5; i++) { const px = -14 + i * 7; poly(c, [px - 2.2, 0, px + 2.2, 0, px + 2.2, -14, px, -17, px - 2.2, -14], '#fffaf0', INK, 0.7); } }
+  else if (d.fn === 'veggiePatch') { box(c, -17, -9, 34, 9, 2, '#8a5a3a', INK, 0.8); for (let i = 0; i < 4; i++) { const px = -12 + i * 8, sw = Math.sin(t * 1.5 + i) * 0.6; for (const a of [-0.5, 0, 0.5]) line(c, px, -8, px + a * 5 + sw, -15 - (i % 2) * 2, '#6fae4c', 1.4); if (i % 2) circ(c, px, -8, 2, '#e8584e', INK, 0.4); } }
+  else if (d.fn === 'sunflowerRow') { for (let i = 0; i < 3; i++) { const px = -9 + i * 9, top = -24 - (i % 2) * 5, sw = Math.sin(t * 1.2 + i) * 0.8; line(c, px, 0, px + sw, top, '#6fae4c', 1.3); for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; ell(c, px + sw + Math.cos(a) * 3.2, top + Math.sin(a) * 3.2, 1.8, 1.8, '#f2c14e', null); } circ(c, px + sw, top, 2, '#8a5a3a', INK, 0.4); } }
   else if (PR[d.fn]) PR[d.fn](c, t, p);
   if (d.light && d.fn === 'lampPost' && night()) glows.push([x, y - 40, 34, 'rgba(255,220,150,.55)']);
   c.restore();
@@ -255,6 +258,7 @@ export function growthDrawables() {
     add(430, 640, OVERHEAD, (c, t) => { lanternString(c, t, 300, 660, 560, 660, 70); lanternString(c, t, 300, 760, 560, 760, 70); });
   }
   // shop-front decor you placed (systems/storefront.js), and contest ribbons
+  { const b = G.scenes.island?.buildings?.house; if (b) for (const d of G.state.home?.yard || []) { const x = b.x + d.dx, y = b.y + d.dy; add(x, y, y, (c, t) => drawDecor(c, t, d.k, x, y)); } }   // your garden
   for (const [id, z] of Object.entries(G.state.biz || {})) {
     const b = G.scenes.island?.buildings?.[id]; if (!b || !z.owned) continue;
     for (const d of z.decor || []) { const x = b.x + d.dx, y = b.y + d.dy; add(x, y, y, (c, t) => drawDecor(c, t, d.k, x, y)); }

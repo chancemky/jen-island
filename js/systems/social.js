@@ -28,7 +28,7 @@ export async function publishShowcase() {
   if (!online() || !G.state.player.name) return;
   const s = G.state;
   try {
-    G.runtime.friendCode = await cloud.publishShowcase({ player_name: s.player.name, island_name: s.island.name, level: s.level || 1, day: s.day, chapter: s.story.chapter, badge: showcaseBadge(), look: currentLook(), home: { size: s.home.size || 0, furniture: s.home.furniture, builtins: s.home.builtins, island: { shops: Object.entries(s.biz).filter(([, b]) => b.owned).map(([id, b]) => [id, b.level || 1]), badges: earnedBadges(), served: s.stats.served, regulars: Object.values(s.regulars || {}).filter(r => r.visits >= 3).length, streak: s.streak?.best || 0 } } });
+    G.runtime.friendCode = await cloud.publishShowcase({ player_name: s.player.name, island_name: s.island.name, level: s.level || 1, day: s.day, chapter: s.story.chapter, badge: showcaseBadge(), look: currentLook(), home: { size: s.home.size || 0, style: s.home.style?.house || null, furniture: s.home.furniture, builtins: s.home.builtins, island: { shops: Object.entries(s.biz).filter(([, b]) => b.owned).map(([id, b]) => [id, b.level || 1]), badges: earnedBadges(), served: s.stats.served, regulars: Object.values(s.regulars || {}).filter(r => r.visits >= 3).length, streak: s.streak?.best || 0 } } });
   } catch (e) { console.warn('showcase', e.message); }
 }
 // gifts friends sent: open them all at once
@@ -71,7 +71,7 @@ let host = null;
 export async function visitFriend(id) {
   const f = await cloud.friendHome(id); if (!f) return false;
   G.runtime.visit = { id, name: f.player_name, island: f.island_name, shops: (f.home?.island?.shops || []).map(x => x[0]) };
-  visitHouse(f.home?.size || 0);                    // their house, at its own size (no stairs: you visit the ground floor)
+  visitHouse(f.home?.size || 0, f.home?.style || null);                    // their house, at its own size (no stairs: you visit the ground floor)
   rebuildHouseFurniture(f.home || { furniture: [] });
   const sc = scenes.house;
   host = new Actor({ kind: 'human', look: f.look || {}, name: f.player_name, x: sc.bedPos?.x ?? 150, y: 200, data: { host: true } });

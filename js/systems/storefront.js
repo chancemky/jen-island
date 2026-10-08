@@ -30,6 +30,9 @@ export const DECOR = {
   easel:     { fn: 'easel', o: {}, en: 'Painted sign', vi: 'Biển vẽ tay', price: 60, w: 18, tags: ['cosy', 'festive'] },
   surf:      { fn: 'surfboard', o: {}, en: 'Surfboard', vi: 'Ván lướt sóng', price: 120, w: 12, tags: ['beach'] },
   bunting:   { fn: 'flagPole', o: {}, en: 'Flag pole', vi: 'Cột cờ', price: 70, w: 10, tags: ['festive'] },
+  fence:     { fn: 'picketFence', o: {}, en: 'Picket fence', vi: 'Hàng rào gỗ', price: 40, w: 32, tags: ['green', 'cosy'] },
+  veggies:   { fn: 'veggiePatch', o: {}, en: 'Vegetable patch', vi: 'Luống rau', price: 80, w: 34, tags: ['green'] },
+  sunflowers:{ fn: 'sunflowerRow', o: {}, en: 'Sunflowers', vi: 'Hoa hướng dương', price: 60, w: 26, tags: ['floral', 'green'] },
 };
 export const THEMES = [
   { id: 'floral', en: 'In bloom', vi: 'Hoa nở' }, { id: 'cosy', en: 'Cosy corner', vi: 'Góc ấm cúng' }, { id: 'beach', en: 'Beach vibes', vi: 'Không khí biển' },
@@ -38,7 +41,7 @@ export const THEMES = [
 // weeks run Monday to Sunday in Japan, the same theme for everyone
 export const realWeek = (t = islandNow()) => Math.floor((jstDayNum(t) + 3) / 7);
 export const themeOf = (wk = realWeek()) => THEMES[((wk % THEMES.length) + THEMES.length) % THEMES.length];
-export const decorOf = id => { const z = G.state.biz[id]; return z ? (z.decor ||= []) : []; };
+export const decorOf = id => { if (id === 'house') return (G.state.home.yard ||= []); const z = G.state.biz[id]; return z ? (z.decor ||= []) : []; };   // (the house: your garden)
 // the strip in front of a shop where decor can go (relative to the building's ground line)
 export function frontArea(b) { const w = b.w || 100; return { x0: -w / 2 - 46, x1: w / 2 + 46, y0: 8, y1: 46 }; }
 
