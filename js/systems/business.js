@@ -430,6 +430,9 @@ export function completeOrder(c, quality) {
   const r0 = rt(c.bizId), byYou = G.runtime.serviceOpen === c.bizId;
   if (byYou) { r0.streak = quality === 'perfect' ? (r0.streak || 0) + 1 : 0; if (r0.streak > 1) tipRate *= 1 + Math.min(0.3, (r0.streak - 1) * 0.05); if (r0.streak > (G.state.stats.bestStreak || 0)) G.state.stats.bestStreak = r0.streak; bus.emit('streak', c.bizId, r0.streak); }
   const L = G.runtime.luck, luck = L && L.day === G.state.day && G.state.time < L.until ? L.tip : 1;   // a busker's song, the golden cat (systems/rare.js)
+  // garden-fresh herbs from your own vegetable patches: the customer can taste it (+20% tip)
+  const fresh = s.fresh || {}, freshKey = recipeUses(order.recipe).map(u => PREPPED[u]?.from || u).find(k => fresh[k] > 0);
+  if (freshKey) { fresh[freshKey]--; tipRate *= 1.2; c.actor?.showEmote?.('heart', 1.2); fx.float(c.actor?.x || 0, (c.actor?.y || 0) - 46, T('garden fresh!', 'rau nhà trồng!'), '#4f9f57', { life: 1.4, size: 6 }); }
   const tip = Math.round(price * tipRate * luck * (1 + comfortBonus(G.state.home)));   // a cosy home (complete furniture sets) puts you in a good mood
   addXP(quality === 'perfect' ? 12 + (order.special ? 3 : 0) : 7, 'serve');
   addMoney(price, 'sale');

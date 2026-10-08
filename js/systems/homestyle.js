@@ -3,10 +3,10 @@
 //    house — saved, and what friends see when they visit
 //  · furniture colours: give any piece a new colour (its fabric and wood shift hue; the outlines
 //    stay). Drawn once into a small cached image, so it costs nothing per frame.
-import { G, T, markDirty, addMoney } from './state.js';
-import { shade, bus } from '../core/util.js';
+import { G, T, markDirty, addMoney, addPantry } from './state.js';
+import { shade, bus, islandSeason } from '../core/util.js';
 import { openSheet, h, present } from '../ui/sheets.js';
-import { FURNITURE } from '../data/game.js';
+import { FURNITURE, ingName } from '../data/game.js';
 import { setProgress, homePieces } from '../data/sets.js';
 import { realWeek } from './storefront.js';
 import { sfx } from '../core/audio.js';
@@ -123,7 +123,18 @@ const SAY_HOME = {
   garden: [['The garden made me smile before I even knocked.', 'Chưa gõ cửa mà khu vườn đã làm tôi mỉm cười.'], ['The front garden is waiting for you.', 'Khu vườn trước nhà đang chờ bạn đó.']],
   floors: [['Upstairs and down — what a house!', 'Trên lầu dưới hầm — nhà gì mà đẹp vậy!'], ['All that space and so little in it!', 'Rộng vậy mà để trống nhiều quá!']],
 };
+// the vegetable patches in your front garden: a little harvest every morning (half in winter).
+// Garden-fresh portions make customers tip a bit more (business.js completeOrder).
+const HARVEST = { herbs: 4, scallion: 3, cilantro: 3, chili: 2 };
+function harvest() {
+  const s = G.state, n = (s.home.yard || []).filter(d => d.k === 'veggies').length; if (!n) return;
+  const k = islandSeason() === 'winter' ? 0.5 : 1, fresh = (s.fresh ||= {}), got = [];
+  for (const [id, q] of Object.entries(HARVEST)) { const m = Math.max(1, Math.round(q * n * k)); addPantry(id, m); fresh[id] = Math.min(60, (fresh[id] || 0) + m); got.push(m + ' ' + ingName(id).toLowerCase()); }
+  markDirty(true);
+  bus.emit('toast', { cat: 'island', text: T('Fresh from your garden', 'Rau nhà mới hái'), sub: got.join(', ') + T(' — garden-fresh dishes earn bigger tips', ' — món dùng rau nhà được boa nhiều hơn'), icon: 'herbs', ms: 4200 });
+}
 export function initHomeContest() {
+  bus.on('dayEnd', () => setTimeout(harvest, 3000));
   bus.on('dayEnd', sum => {
     const s = G.state, c = (s.homeContest ||= {}), wk = realWeek() - 1;
     if (!sum || c.judged === wk) return; if (c.judged == null) { c.judged = wk; markDirty(); return; }

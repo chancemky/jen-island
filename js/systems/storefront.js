@@ -31,7 +31,7 @@ export const DECOR = {
   surf:      { fn: 'surfboard', o: {}, en: 'Surfboard', vi: 'Ván lướt sóng', price: 120, w: 12, tags: ['beach'] },
   bunting:   { fn: 'flagPole', o: {}, en: 'Flag pole', vi: 'Cột cờ', price: 70, w: 10, tags: ['festive'] },
   fence:     { fn: 'picketFence', o: {}, en: 'Picket fence', vi: 'Hàng rào gỗ', price: 40, w: 32, tags: ['green', 'cosy'] },
-  veggies:   { fn: 'veggiePatch', o: {}, en: 'Vegetable patch', vi: 'Luống rau', price: 80, w: 34, tags: ['green'] },
+  veggies:   { fn: 'veggiePatch', o: {}, en: 'Vegetable patch (fresh herbs every morning)', vi: 'Luống rau (rau tươi mỗi sáng)', price: 80, w: 34, tags: ['green'] },
   sunflowers:{ fn: 'sunflowerRow', o: {}, en: 'Sunflowers', vi: 'Hoa hướng dương', price: 60, w: 26, tags: ['floral', 'green'] },
 };
 export const THEMES = [
