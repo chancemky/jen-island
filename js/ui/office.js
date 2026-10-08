@@ -8,6 +8,8 @@ import { h, btn } from './sheets.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml } from '../core/util.js';
 import { toast, moneyShortfall, setWaypoint } from './hud.js';
+import { openShopFront, canDecorateFront } from './storefront.js';
+import { scoreFront, frontAttract } from '../systems/storefront.js';
 import { fx } from '../world/render.js';
 import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName, rentToday, keeperOf, keeperWage, candidate, hireKeeper, fireKeeper, keeperTrait, canHaveKeeper, keeperUnlocked, hasSupply, buySupply, toggleSupply, SUPPLY, supplyUnlocked, staffedCount, keeperSkill, SKILL_NAMES, wageFor, hireFee, recentShopNet, canTrain, trainCost, trainKeeper, promoteCost, promoteKeeper } from '../systems/economy.js';
 import { daySheet, netWorth, lifetimeTotals, catName } from '../systems/ledger.js';
@@ -83,6 +85,7 @@ export function renderOffice(pane, api) {
       toast({ text: T(`You now own ${placeName(id)}!`, `Bạn đã sở hữu ${placeName(id)}!`), sub: T('No more rent here, ever.', 'Không bao giờ phải trả tiền thuê ở đây nữa.'), icon: 'key' });
       api.rebuild();
     }, 'buy', !affordable));
+    if (canDecorateFront(id)) { const sc = scoreFront(id), n = (G.state.biz[id].decor || []).length; row.appendChild(btn(T(`Shop front${n ? ` · ${n}` : ''}`, `Mặt tiền${n ? ` · ${n}` : ''}`), () => { api.close(true); openShopFront(id); }, 'buy alt')); if (n) card.appendChild(h('div', 'oc-line dim', T(`Shop front draws +${Math.round((frontAttract(id) - 1) * 100)}% customers`, `Mặt tiền thu hút thêm ${Math.round((frontAttract(id) - 1) * 100)}% khách`))); void sc; }
     if (id !== 'house' && canHaveKeeper(id)) {
       const k = keeperOf(id);
       if (k) {

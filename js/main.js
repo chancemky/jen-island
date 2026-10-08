@@ -70,6 +70,9 @@ import { updatePlayerIdle } from './systems/idle.js';
 import { updateAmbience } from './systems/ambience.js';
 import { updateWeather, drawRain } from './systems/weather.js';
 import { initHome } from './systems/home.js';
+import { initStorefront } from './systems/storefront.js';
+import { initParties, partyAction } from './systems/parties.js';
+import { nightlifeAction } from './systems/nightlife.js';
 import { openBoard } from './ui/board.js';
 import { CLOTHES } from './data/wardrobe.js';
 import { initAds } from './systems/ads.js';
@@ -155,7 +158,7 @@ async function boot() {
   initBadges();
   initSocial();
   initBoard();
-  initNotify(); initReview(); initRare(); initTips(); initSmoothieIntro();
+  initNotify(); initReview(); initRare(); initTips(); initSmoothieIntro(); initStorefront(); initParties();
   setTimeout(initWeekBoard, 4000);          // after the morning mail settles
   showMorningMail();
   festivalGift();
@@ -512,6 +515,8 @@ function updateInteraction(dt) {
     if (tr.kind === 'front') return frontAction(tr);
     if (tr.kind === 'act') return actAction(tr);
   }
+  // a neighbour's birthday party on the plaza
+  const pa = partyAction(pl) || nightlifeAction(pl); if (pa) { setAction(pa.label, pa.run, pa.icon); return; }
   // things in the room that do something (TV, radio, piano, lamps, fish, books…)
   const thing = nearbyThing(sc, pl);
   if (thing) { setAction(thing.label, thing.run, thing.icon); return; }

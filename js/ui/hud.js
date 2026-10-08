@@ -119,7 +119,7 @@ export function setWaypoint(target, label) {
   toast({
     text: T(`Waypoint: ${label}`, `Điểm đến: ${label}`),
     sub: T('Follow the gold arrow.', 'Đi theo mũi tên vàng nhé.'),
-    icon: 'map',
+    icon: 'map', now: true,
   });
 }
 export function updatePointer(renderer) {
@@ -218,15 +218,17 @@ const blocking = () => !!document.querySelector('.reward:not(.out), .levelup:not
 export function toast(o) {
   if (lastShown.text === o.text && Date.now() - lastShown.at < 2500) return;
   if (tq.some(q => q.text === o.text && q.sub === o.sub)) return;
-  const urgent = o.cls === 'ach' || o.bad;
+  const urgent = o.cls === 'ach' || o.bad || o.now;            // (now: the answer to something you just tapped)
   if (urgent) tq.unshift(o); else tq.push(o);
   while (tq.length > 8) { const i = tq.findIndex(q => q.cls !== 'ach' && !q.bad); tq.splice(i < 0 ? 0 : i, 1); }
+  if (urgent && !blocking()) { clearTimeout(tTimer); tTimer = null; }       // urgent ones don't wait for the gap
   pumpToasts();
 }
 function pumpToasts() {
   if (tTimer) return;
   const box = $('toasts'); if (!box || !tq.length) return;
-  if (blocking() || [...box.children].filter(e => !e.classList.contains('out')).length >= 2) { tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 450); return; }
+  const u = tq[0].now || tq[0].bad || tq[0].cls === 'ach';
+  if (blocking() || ([...box.children].filter(e => !e.classList.contains('out')).length >= 2 && !u)) { tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 450); return; }
   showToast(tq.shift());
   tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 650);
 }

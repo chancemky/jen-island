@@ -420,6 +420,9 @@ export const FURNITURE = {
   ship_model:  { vi: 'Mô hình thuyền', en: 'Model ferry',        price: 2500, w: 36, h: 12, collector: true, unlock: 12, fixed: true },
   art_commission:{ vi: 'Tranh đặt vẽ của Vy', en: 'A painting commissioned from Vy', price: 3500, w: 50, h: 8, wall: true, collector: true, unlock: 14, need: 'vy_brushes', fixed: true },
   // prizes for the weekly board's top 10 (systems/weekboard.js); never sold
+  lantern_hand_pink: { vi: 'Lồng đèn tự làm (hồng)', en: 'Handmade lantern (pink)', price: 0, w: 12, h: 10, light: true, wall: true, reward: true, fixed: true },
+  lantern_hand_teal: { vi: 'Lồng đèn tự làm (xanh)', en: 'Handmade lantern (teal)', price: 0, w: 12, h: 10, light: true, wall: true, reward: true, fixed: true },
+  lantern_hand_gold: { vi: 'Lồng đèn tự làm (vàng)', en: 'Handmade lantern (gold)', price: 0, w: 12, h: 10, light: true, wall: true, reward: true, fixed: true },
   opening_balloons: { vi: 'Bóng bay khai trương', en: 'Grand Opening balloons', price: 0, w: 16, h: 10, reward: true, fixed: true },
   trophy_gold:   { vi: 'Cúp vàng của tuần', en: 'Weekly gold cup', price: 0, w: 18, h: 12, reward: true, fixed: true, light: true },
   trophy_silver: { vi: 'Cúp bạc của tuần', en: 'Weekly silver cup', price: 0, w: 18, h: 12, reward: true, fixed: true },

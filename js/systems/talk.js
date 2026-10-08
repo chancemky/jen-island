@@ -6,7 +6,11 @@ import { G, T, markDirty, unlockAchievement } from './state.js';
 import { recipeName, ROLES } from '../data/game.js';
 import { say, ask } from '../ui/dialogue.js';
 import { questOption, questTalk } from './sidequests.js';
-import { choice } from '../core/util.js';
+import { choice, bus } from '../core/util.js';
+import { HEARTS, HEART_GIFTS } from '../data/hearts.js';
+import { friendLevel } from './friends.js';
+import { FURNITURE } from '../data/game.js';
+import { RESIDENTS } from '../data/looks.js';
 import { residentMenu, randomJoke } from './fun.js';
 
 // Three tiers per resident: early game, mid game (chapter 3+), late game (chapter 5+).
@@ -97,6 +101,15 @@ export async function talkToResident(a) {
   const tier = s.story.chapter >= 8 ? 2 : s.story.chapter >= 3 ? 1 : 0;
   a.stop(); a.sit = false; a.face(G.player); G.player.face(a);
   a.setEmo('happy', 2); a.showEmote(f > 10 ? 'heart' : 'happy', 1.2);
+  // a heart event first, when your friendship has grown enough for one (data/hearts.js)
+  const lv = friendLevel(rid), seenH = (s.hearts ||= {})[rid] || 0, story = HEARTS[rid];
+  if (story && seenH < 2 && lv >= 3 + seenH) {
+    s.hearts[rid] = seenH + 1; markDirty(true); a.showEmote('heart', 2); G.player.showEmote('heart', 1.4); bus.emit('stinger', 'friend');
+    for (const line of story[seenH]) await say(a, pickT(line), { emo: 'happy' });
+    if (seenH === 1 && FURNITURE[HEART_GIFTS[rid]]) { (s.home.owned ||= []).push(HEART_GIFTS[rid]); bus.emit('toast', { text: T(`${RESIDENTS[rid].name} gave you a keepsake`, `${RESIDENTS[rid].name} tặng bạn một kỷ vật`), sub: T(`${FURNITURE[HEART_GIFTS[rid]].en} — it's waiting at home`, `${FURNITURE[HEART_GIFTS[rid]].vi} — đang chờ ở nhà`), icon: 'heart', ms: 4200 }); }
+    bus.emit('heartEvent', rid, seenH + 1);
+    return;
+  }
   const pool = LINES[rid]?.[tier] || [['Hello!', 'Xin chào!']];
   const reg = s.regulars['res:' + rid];
   let line = pickT(choice(pool));

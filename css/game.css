@@ -896,3 +896,28 @@ body.hc :is(.chip, .tag, .pill, .opt-tag) { border-width: 3px; }
 .set-chip { background: #fff; border: 2px solid #efdcbc; border-radius: 12px; padding: 6px 10px; }
 .set-chip b { font-size: 13px; } .set-chip small { display: block; font-weight: 700; opacity: .65; font-size: 11px; }
 .set-chip.done { border-color: #8fd8a0; background: #f1fbf3; }
+/* lend a hand, postcards */
+.help-game .card { text-align: center; }
+.hg-top { display: flex; justify-content: space-between; align-items: center; } .hg-time { font-weight: 900; font-size: 20px; background: #ffd35a; border: 2.5px solid var(--ink); border-radius: 999px; padding: 0 10px; }
+.hg-order { margin: 10px 0; display: grid; justify-items: center; } .hg-order img { width: 64px; height: 64px; } .hg-order small { font-weight: 900; }
+.hg-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; } .hg-pick button { background: #fff; border: 2.5px solid #efdcbc; border-radius: 14px; padding: 6px; } .hg-pick button:active { transform: scale(.94); } .hg-pick img { width: 44px; height: 44px; }
+.hg-score { margin-top: 8px; font-weight: 800; opacity: .7; }
+.postcard { position: relative; text-align: left; margin: 8px 0; padding: 14px 44px 12px 14px; border-radius: 12px; border: 3px solid #fffaf0; box-shadow: 0 0 0 2.5px var(--ink), 0 6px 0 rgba(91,63,54,.2); background: linear-gradient(135deg, var(--a), var(--b)); color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.3); }
+.postcard b { display: block; font-size: 16px; } .postcard small { font-weight: 800; }
+.pc-stamp { position: absolute; right: 8px; top: 8px; font-size: 22px; background: #fffaf0; border: 2px dashed #e8584e; border-radius: 6px; width: 32px; height: 32px; display: grid; place-items: center; text-shadow: none; }
+.pc-pick { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; } .pc-pick button { padding: 6px 10px; border-radius: 999px; border: 2px solid #efdcbc; background: #fff; font-weight: 800; } .pc-pick button.on { border-color: var(--pink2, #e56b8b); background: #fff2f4; }
+.emote-bar .eb-wide { grid-column: span 2; width: auto; border-radius: 999px; font-size: 13px; font-weight: 900; height: 36px; } .emote-bar .eb-wide:disabled { opacity: .45; }
+.contest { text-align: center; } .contest .kicker { font-weight: 900; color: var(--pink2, #e56b8b); letter-spacing: .1em; text-transform: uppercase; font-size: 12px; }
+.stars-big { font-size: 34px; color: #f2c14e; letter-spacing: 2px; text-shadow: 0 2px 0 rgba(91,63,54,.25); }
+.judge { text-align: left; background: #fff8ea; border-radius: 12px; padding: 6px 10px; margin: 4px 0; font-weight: 700; font-size: 13px; }
+.front-ui .fr-info { pointer-events: none; } .front-ui .fr-sel { min-height: 28px; display: flex; align-items: center; } .front-ui .fr-sel small { font-weight: 800; opacity: .7; }
+.fr-tray button small { opacity: .6; font-weight: 800; }
+/* karaoke */
+.karaoke .card { text-align: center; } .karaoke .kicker { font-weight: 900; color: var(--pink2, #e56b8b); letter-spacing: .1em; text-transform: uppercase; font-size: 12px; }
+.kk-track { position: relative; height: 96px; background: linear-gradient(#2f2a4a, #4a3a6e); border-radius: 14px; margin: 10px 0; overflow: hidden; }
+.kk-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; background: #ffd35a; box-shadow: 0 0 10px #ffd35a; }
+.kk-note { position: absolute; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; border: 2px solid #fff; transition: opacity .15s; }
+.kk-note.l0 { top: 10px; background: #f36d86; } .kk-note.l1 { top: 38px; background: #6fbfb0; } .kk-note.l2 { top: 66px; background: #f2c14e; }
+.kk-pads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .kk-pads button { height: 56px; border-radius: 16px; border: 3px solid var(--ink); font-size: 24px; font-weight: 900; color: #fff; }
+.kk-pads button[data-l="0"] { background: #f36d86; } .kk-pads button[data-l="1"] { background: #6fbfb0; } .kk-pads button[data-l="2"] { background: #f2c14e; }
+.kk-pads button:active { transform: scale(.94); } .kk-score { margin-top: 8px; font-weight: 800; opacity: .75; }

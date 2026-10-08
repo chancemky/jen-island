@@ -5,6 +5,7 @@
 
 import { G, T } from './state.js';
 import { bus, sleep } from '../core/util.js';
+import { RESIDENTS } from '../data/looks.js';
 import { cam, fx } from '../world/render.js';
 
 const MAX = 36;
@@ -102,6 +103,7 @@ export function initAlbum() {
   bus.on('chapterCard', (n, title) => celebratePhoto(title));
   bus.on('levelup', lv => { if (lv % 10 === 0) celebratePhoto([`Level ${lv}!`, `Cấp ${lv}!`]); });
   bus.on('weekAward', () => celebratePhoto(['A trophy week!', 'Một tuần đoạt cúp!']));
+  bus.on('heartEvent', (rid, n) => { if (n === 2) { const nm = RESIDENTS[rid]?.name || ''; celebratePhoto([`Close friends with ${nm}`, `Bạn thân với ${nm}`]); } });
   bus.on('rareMet', id => celebratePhoto({ critic: ['Five stars from the critic', 'Năm sao từ nhà phê bình'], vlogger: ['On Kenji\'s travel vlog', 'Lên vlog của Kenji'], busker: ['A song by the fountain', 'Một bài hát bên đài phun nước'], goldcat: ['The golden cat!', 'Chú mèo vàng!'] }[id] || ['A rare visitor', 'Vị khách hiếm']));
   bus.on('quest:done', (id, title) => { if (['minh_sunset', 'minh_fireflies', 'vy_portrait', 'hai_dawn', 'post_lam', 'nm_lanterns'].includes(id) && title) snapshot(title, 200); });
 }

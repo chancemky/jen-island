@@ -9,7 +9,8 @@ import { currentLook } from '../ui/clothes.js';
 import { rebuildHouseFurniture } from '../ui/decorate.js';
 import { scenes, setScene } from './scenes.js';
 import { Actor } from '../world/actor.js';
-import { FURNITURE } from '../data/game.js';
+import { FURNITURE, RECIPES, BUSINESSES } from '../data/game.js';
+import { lendAHand, buySpeciality, checkInbox } from './together.js';
 import { track } from './telemetry.js';
 import { present } from '../ui/sheets.js';
 
@@ -59,7 +60,7 @@ export async function acceptInvite() {
   if (await cloud.addFriend(code).catch(() => null)) { bus.emit('toast', { text: T('New friend added!', 'Đã thêm bạn mới!'), sub: T('Menu → Friends to visit them.', 'Menu → Bạn bè để ghé thăm.'), icon: 'heart' }); track('invite_accepted', {}); }
 }
 export function initSocial() {
-  publishShowcase(); openGifts(); acceptInvite(); setTimeout(showVisitors, 6000);
+  publishShowcase(); openGifts(); acceptInvite(); setTimeout(showVisitors, 6000); setTimeout(checkInbox, 9000);
   setInterval(() => { publishShowcase(); openGifts(); }, 5 * 60 * 1000);
   bus.on('scene', id => { if (G.runtime.visit && id !== 'house') endVisit(); });
 }
@@ -68,7 +69,7 @@ export function initSocial() {
 let host = null;
 export async function visitFriend(id) {
   const f = await cloud.friendHome(id); if (!f) return false;
-  G.runtime.visit = { id, name: f.player_name, island: f.island_name };
+  G.runtime.visit = { id, name: f.player_name, island: f.island_name, shops: (f.home?.island?.shops || []).map(x => x[0]) };
   rebuildHouseFurniture(f.home || { furniture: [] });
   const sc = scenes.house;
   host = new Actor({ kind: 'human', look: f.look || {}, name: f.player_name, x: sc.bedPos?.x ?? 150, y: 200, data: { host: true } });
@@ -85,7 +86,7 @@ export async function visitFriend(id) {
 function endVisit() {
   if (host) { scenes.house.remove(host); host = null; }
   G.runtime.visit = null;
-  bar?.remove(); bar = null;
+  bar?.remove(); bar = null; G.runtime.visitHelped = G.runtime.visitBought = false;
   rebuildHouseFurniture();
 }
 
@@ -123,6 +124,13 @@ function showEmoteBar() {
     social().emotes++; markDirty();
     if (Date.now() - lastSent > 3000) { lastSent = Date.now(); cloud.leaveVisit(G.runtime.visit.id, id).catch(() => {}); }
   };
+  // lend a hand at their counter, or buy their speciality (they accept it later)
+  const v = G.runtime.visit, menu = Object.keys(RECIPES).filter(r => (v.shops || []).some(sid => BUSINESSES[sid]?.biz === RECIPES[r].biz) && RECIPES[r].icon?.startsWith('drink:'));
+  const help = document.createElement('button'); help.type = 'button'; help.className = 'eb-wide'; help.textContent = T('🤝 Help out', '🤝 Phụ quán');
+  help.onclick = e => { e.stopPropagation(); if (G.runtime.visitHelped) return; G.runtime.visitHelped = true; help.disabled = true; lendAHand(v.id, v.name, menu); };
+  const buy = document.createElement('button'); buy.type = 'button'; buy.className = 'eb-wide'; buy.textContent = T('🧋 Their special', '🧋 Món của bạn');
+  buy.onclick = async e => { e.stopPropagation(); if (G.runtime.visitBought) return; const r = menu[0] || 'tra_tac'; if (await buySpeciality(v.id, v.name, r)) { G.runtime.visitBought = true; buy.disabled = true; } else bus.emit('toast', { text: T('Not today — maybe tomorrow', 'Hôm nay không được — mai thử lại nhé'), icon: 'heart' }); };
+  bar.append(help, buy);
   (document.getElementById('app') || document.body).appendChild(bar);
 }
 // friends who came by while you were away

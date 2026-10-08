@@ -3,9 +3,24 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.15.0';
+export const APP_VERSION = '5.16.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.16.0', date: '2026-10-08T11:07:27Z',
+    title: ['Friends & Festivities', 'Bạn Bè & Lễ Hội'],
+    items: [
+      ['Help out at a friend\'s shop while visiting (a quick rush of orders) or buy their speciality — they accept the earnings when they next play', 'Phụ quán khi ghé nhà bạn (một loạt order nhanh) hoặc mua món đặc sản — bạn ấy nhận tiền khi vào game'],
+      ['Postcards: send friends a picture, a sticker and a message', 'Bưu thiếp: gửi bạn bè hình, nhãn dán và lời nhắn'],
+      ['A Friends tab on the weekly leaderboard', 'Thêm mục Bạn bè trong bảng xếp hạng tuần'],
+      ['Decorate your shop fronts any way you like: planters, lanterns, café tables, bicycles and more. A creative front draws more customers', 'Trang trí mặt tiền quán theo ý bạn: bồn hoa, lồng đèn, bàn cà phê, xe đạp và nhiều nữa. Mặt tiền sáng tạo thu hút thêm khách'],
+      ['The Storefront Showdown every 7 days: neighbours judge your best shop front on a theme — prizes and ribbons', 'Cuộc thi mặt tiền mỗi 7 ngày: hàng xóm chấm mặt tiền đẹp nhất theo chủ đề — có giải và ruy băng'],
+      ['Birthday parties on Wind Plaza: join in for cake, cheers and a photo', 'Tiệc sinh nhật ở Quảng trường gió: ghé dự để ăn bánh, reo hò và chụp ảnh'],
+      ['Heart events: each neighbour shares two personal stories as you become close friends, and gives you a keepsake', 'Câu chuyện tâm tình: mỗi hàng xóm kể hai câu chuyện riêng khi bạn thân thiết hơn, và tặng bạn một kỷ vật'],
+      ['Saturday karaoke at the Night Market (a rhythm game) and Bà Sáu\'s Wednesday lantern class', 'Karaoke thứ Bảy ở Chợ Đêm (trò chơi nhịp điệu) và lớp làm lồng đèn thứ Tư của Bà Sáu'],
+      ['New badges: Best Shop Front, Heartfelt, Party Guest', 'Huy hiệu mới: Mặt tiền đẹp nhất, Chân thành, Khách dự tiệc'],
+    ],
+  },
   {
     v: '5.15.0', date: '2026-10-07T23:23:18Z',
     title: ['Rain or Shine', 'Mưa Hay Nắng'],

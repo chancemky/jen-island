@@ -8,8 +8,12 @@ import { G, T } from './state.js';
 import { INK, ell, circ, box, line, poly } from '../gfx/draw.js';
 import { PLAZA, QUEUES } from '../world/island.js';
 import { drawIcon } from '../gfx/food.js';
-import { RECIPES } from '../data/game.js';
+import { RECIPES, BUSINESSES } from '../data/game.js';
 import { glows } from '../gfx/props.js';
+import * as PR from '../gfx/props.js';
+import { DECOR } from './storefront.js';
+import { partyDrawables } from './parties.js';
+import { nightlifeDrawables } from './nightlife.js';
 import { eventOn } from './interact.js';
 import { npcs } from './npc.js';
 import { RESIDENTS } from '../data/looks.js';
@@ -122,10 +126,29 @@ export function drawBeam(c, t) {
   const k = (Math.sin(t * 3) + 1) / 2; c.fillStyle = `rgba(255,245,200,${0.5 + k * 0.3})`; c.beginPath(); c.arc(x, y, 7, 0, Math.PI * 2); c.fill();
   c.restore();
 }
+// one piece of shop-front decor at (x, y)
+export function drawDecor(c, t, k, x, y) {
+  const d = DECOR[k]; if (!d) return;
+  c.save(); c.translate(x, y);
+  const p = { x, y, ...d.o };
+  if (d.fn === 'lanternPole') { line(c, 0, 0, 0, -38, '#8a5f3e', 1.8); line(c, 0, -36, 8, -36, '#8a5f3e', 1.2); const sw = Math.sin(t * 2 + x) * 0.1; c.save(); c.translate(8, -36); c.rotate(sw); line(c, 0, 0, 0, 4, INK, 0.5); ell(c, 0, 9, 4.5, 5.5, '#e8453a', INK, 0.7); box(c, -2.5, 3.5, 5, 1.6, 0.5, '#ffd35a', null); box(c, -2.5, 13.5, 5, 1.6, 0.5, '#ffd35a', null); c.restore(); if (night()) glows.push([x + 8, y - 27, 26, 'rgba(255,170,100,.55)']); }
+  else if (d.fn === 'surfboard') { ell(c, 0, -20, 5, 20, '#6fbfb0', INK, 0.9); line(c, 0, -39, 0, -1, '#fff', 0.8); ell(c, 4, 0, 6, 1.6, 'rgba(0,0,0,.12)', null); }
+  else if (d.fn === 'flagPole') { c.translate(-x, -y); flagPole(c, t, x, y); }
+  else if (PR[d.fn]) PR[d.fn](c, t, p);
+  if (d.light && d.fn === 'lampPost' && night()) glows.push([x, y - 40, 34, 'rgba(255,220,150,.55)']);
+  c.restore();
+}
+function ribbon(c, t, x, y, kind) {
+  const col = { gold: '#f2c14e', silver: '#c9d3dc', bronze: '#d38b52' }[kind], sw = Math.sin(t * 2) * 0.08;
+  c.save(); c.translate(x, y); c.rotate(sw);
+  poly(c, [-3, 2, -6, 14, -2, 11, 0, 14, 0, 2], '#e8584e', INK, 0.5); poly(c, [3, 2, 6, 14, 2, 11, 0, 14, 0, 2], '#3f6fb5', INK, 0.5);
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; circ(c, Math.cos(a) * 4.8, Math.sin(a) * 4.8, 2, col, INK, 0.3); }
+  circ(c, 0, 0, 4.2, col, INK, 0.6); circ(c, 0, 0, 2.4, '#fffaf0', null); c.restore();
+}
 // where each shop's special easel stands: beside the start of its queue
 export function specialEasels() {
   const out = [];
-  for (const [id, z] of Object.entries(G.state.biz || {})) if (z.owned && (z.repair ?? 1) >= 1 && QUEUES[id] && id !== 'restaurant') { const [qx, qy] = QUEUES[id][0]; out.push({ id, x: qx + 30, y: qy + 6, recipe: RECIPES[z.special] ? z.special : null }); }
+  for (const [id, z] of Object.entries(G.state.biz || {})) if (z.owned && (z.repair ?? 1) >= 1 && QUEUES[id] && id !== 'restaurant' && BUSINESSES[id]?.biz !== 'night') {   /* (Night Market stalls each sell one speciality) */ const [qx, qy] = QUEUES[id][0]; out.push({ id, x: qx + 30, y: qy + 6, recipe: RECIPES[z.special] ? z.special : null }); }
   return out;
 }
 function easel(c, t, x, y, recipe) {
@@ -230,6 +253,14 @@ export function growthDrawables() {
   if (ev?.id === 'nmnight' || ev?.id === 'midautumn') {
     add(430, 640, OVERHEAD, (c, t) => { lanternString(c, t, 300, 660, 560, 660, 70); lanternString(c, t, 300, 760, 560, 760, 70); });
   }
+  // shop-front decor you placed (systems/storefront.js), and contest ribbons
+  for (const [id, z] of Object.entries(G.state.biz || {})) {
+    const b = G.scenes.island?.buildings?.[id]; if (!b || !z.owned) continue;
+    for (const d of z.decor || []) { const x = b.x + d.dx, y = b.y + d.dy; add(x, y, y, (c, t) => drawDecor(c, t, d.k, x, y)); }
+    const rib = G.state.contest?.ribbons?.[id]; if (rib) { const x = b.x + (b.w || 100) / 2 - 8, y = b.y - 50; add(x, y, b.y + 1, (c, t) => ribbon(c, t, x, y, rib)); }
+  }
+  partyDrawables(add, { box, line, circ, ell, INK });
+  nightlifeDrawables(add, { box, line, circ, ell, poly, INK, glows });
   // today's special on a chalkboard easel by each of your shops (tap it to change)
   for (const sp of specialEasels()) add(sp.x, sp.y, sp.y, (c, t) => easel(c, t, sp.x, sp.y, sp.recipe));
   // Minh's exhibition: photos pinned on a board at the plaza

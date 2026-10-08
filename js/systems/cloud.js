@@ -181,6 +181,13 @@ export async function friendHome(id) { return (await api(`/rest/v1/jen_island_sh
 export async function leaveVisit(to, emote) { await api('/rest/v1/jen_island_visits?on_conflict=from_id,to_id,day', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ from_id: session.user.id, to_id: to, emote }) }); }
 export async function myVisitors() { return api('/rest/v1/rpc/jen_island_my_visitors', { method: 'POST', body: '{}' }); }
 export async function visitsSeen() { await api(`/rest/v1/jen_island_visits?to_id=eq.${session.user.id}&seen=eq.false`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ seen: true }) }); }
+// friends, part two (systems/together.js): all of it waits for the other player to accept
+export async function fetchFriendsWeek(board = 'served') { return api('/rest/v1/rpc/jen_island_friends_week', { method: 'POST', body: JSON.stringify({ board }) }); }
+export async function sendHelp(to, kind, served, amount) { await api('/rest/v1/jen_island_help', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ from_id: session.user.id, to_id: to, kind, served, amount }) }); }
+export async function answerHelp(id, state) { await api(`/rest/v1/jen_island_help?id=eq.${+id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ state }) }); }
+export async function sendMail(to, design, sticker, message) { await api('/rest/v1/jen_island_mail', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ from_id: session.user.id, to_id: to, design, sticker, message }) }); }
+export async function mailSeen(ids) { if (ids.length) await api(`/rest/v1/jen_island_mail?id=in.(${ids.map(Number).join(',')})`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ seen: true }) }); }
+export async function myInbox() { return api('/rest/v1/rpc/jen_island_my_inbox', { method: 'POST', body: '{}' }); }
 export async function giftsSentToday() { return api(`/rest/v1/jen_island_gifts?select=to_id&from_id=eq.${session.user.id}&sent_on=eq.${new Date().toISOString().slice(0, 10)}`); }
 export async function sendGift(to, kind) { await api('/rest/v1/jen_island_gifts', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ from_id: session.user.id, to_id: to, kind }) }); }
 export async function giftsWaiting() {

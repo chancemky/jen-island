@@ -29,6 +29,7 @@ import { hasBadge, showcaseBadge, setShowcase } from '../systems/badges.js';
 import { weeklyGoals, claimGoal, goalReward } from '../systems/weekly.js';
 import { myCode, visitFriend, sendGift, GIFTS, noteFriendCount } from '../systems/social.js';
 import { timeLeftText } from '../systems/weekboard.js';
+import { POST_DESIGNS, STICKERS, MESSAGES, postcardHTML } from '../systems/together.js';
 import { slimLook } from '../data/looks.js';
 import { drawVillagerHead } from '../gfx/villager.js';
 
@@ -64,6 +65,7 @@ function renderFriends(pane, api) {
       const col = h('div'); col.style.cssText = 'display:flex;flex-direction:column;gap:6px';
       col.appendChild(btn(T('Visit home', 'Thăm nhà'), async () => { api.close(true); if (!(await visitFriend(f.user_id))) toast({ text: T('Could not reach their island', 'Không tới được đảo của bạn ấy'), bad: true }); }, 'buy'));
       col.appendChild(btn(T('Island', 'Hòn đảo'), () => islandPostcard(f), 'buy alt'));
+      col.appendChild(btn(T('Postcard', 'Bưu thiếp'), () => composePostcard(f), 'buy alt'));
       r.appendChild(col); list.appendChild(r);
       // today's gift: pick one of three (one per friend per day)
       const gifts = h('div', 'gift-row');
@@ -185,23 +187,40 @@ function meoCheer(completed) {
   return T(p[0], p[1]);
 }
 
+// write a postcard: a design, a sticker and one of the ready-made messages
+function composePostcard(f) {
+  const pick = { design: 'sunset', sticker: 'heart', message: 0 };
+  openSheet({ title: T(`A postcard for ${f.player_name}`, `Bưu thiếp gửi ${f.player_name}`), sub: T('Pick a picture, a sticker and a message', 'Chọn hình, nhãn dán và lời nhắn'), build: (body, api) => {
+    const prev = h('div', ''); body.appendChild(prev);
+    const draw = () => { prev.innerHTML = postcardHTML({ ...pick, name: G.state.player.name }); };
+    const row = (label, entries, key) => { body.appendChild(h('div', 'section-title', label)); const r = h('div', 'pc-pick'); for (const [k, lab] of entries) { const b = h('button', pick[key] === k ? 'on' : '', lab); b.type = 'button'; b.onclick = () => { pick[key] = k; sfx('ui'); [...r.children].forEach(x => x.classList.toggle('on', x === b)); draw(); }; r.appendChild(b); } body.appendChild(r); };
+    row(T('Picture', 'Hình'), Object.entries(POST_DESIGNS).map(([k, d]) => [k, T(d[0], d[1])]), 'design');
+    row(T('Sticker', 'Nhãn dán'), Object.entries(STICKERS), 'sticker');
+    row(T('Message', 'Lời nhắn'), MESSAGES.map((m, i) => [i, T(m[0], m[1])]), 'message');
+    body.appendChild(btn(T('Send postcard', 'Gửi bưu thiếp'), async () => { try { await cloud.sendMail(f.user_id, pick.design, pick.sticker, pick.message); sfx('success'); toast({ text: T('Postcard sent!', 'Đã gửi bưu thiếp!'), icon: 'letter' }); api.close(); } catch { sfx('error'); toast({ text: T('Couldn\'t send it (10 a day at most)', 'Không gửi được (tối đa 10 tấm mỗi ngày)'), bad: true }); } }, 'btn big pink'));
+    draw();
+  } });
+}
 // Ranks: this week's boards (reset every Monday, top 10 win prizes) and the all-time board
 function renderLeaderboard(pane) {
   const mode = h('div', 'seg lb-mode'), seg = h('div', 'seg lb-seg'), head = h('div', 'lb-head'), box = h('div', '');
-  const MODES = [['week', T('This week', 'Tuần này')], ['all', T('All time', 'Mọi thời')]];
+  const MODES = [['week', T('This week', 'Tuần này')], ['friends', T('Friends', 'Bạn bè')], ['all', T('All time', 'Mọi thời')]];
   const SORTS = {
     week: [['served', T('Served', 'Khách')], ['earned', T('Earned', 'Kiếm')], ['xp', 'XP']],
+    friends: [['served', T('Served', 'Khách')], ['earned', T('Earned', 'Kiếm')], ['xp', 'XP']],
     all: [['level', T('Level', 'Cấp độ')], ['money', T('Money', 'Tiền')], ['served', T('Served', 'Khách')]],
   };
   let m = 'week', cur = 'served', token = 0;
   const badgeHTML = r => r.badge && BADGES[r.badge] ? `<span class="badge-mini t-${BADGES[r.badge].tier}" title="${escapeHtml(T(BADGES[r.badge].en, BADGES[r.badge].vi))}">${BADGES[r.badge].glyph}</span>` : '';
   const rankHTML = r => `<div class="lb-rank g${r.rank}">${r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] : '#' + r.rank}</div>`;
+  const isWeek = () => m !== 'all';
   const weekVal = r => cur === 'earned' ? money(r.score) : cur === 'xp' ? `${r.score.toLocaleString()} XP` : `${r.score.toLocaleString()} ${T('served', 'khách')}`;
   const drawSegs = () => {
     mode.replaceChildren(...MODES.map(([k, label]) => { const b = h('button', k === m ? 'on' : '', label); b.type = 'button'; b.onclick = () => { if (m === k) return; sfx('ui'); m = k; cur = SORTS[k][0][0]; drawSegs(); load(); }; return b; }));
     seg.replaceChildren(...SORTS[m].map(([k, label]) => { const b = h('button', k === cur ? 'on' : '', label); b.type = 'button'; b.onclick = () => { if (cur === k) return; sfx('ui'); cur = k; drawSegs(); load(); }; return b; }));
     head.innerHTML = m === 'week'
       ? `<b>🏆 ${T('Weekly board', 'Bảng tuần')}</b> <span class="pill">${timeLeftText()}</span><small>${T('Top 10 on each board win a trophy for their home, coins and a badge. Resets Monday 00:00 (Vietnam time).', 'Top 10 mỗi bảng nhận cúp trang trí, tiền và huy hiệu. Làm mới lúc 00:00 thứ Hai (giờ Việt Nam).')}</small>`
+      : m === 'friends' ? `<b>🫶 ${T('You and your friends, this week', 'Bạn và bạn bè, tuần này')}</b> <span class="pill">${timeLeftText()}</span>`
       : `<b>⭐ ${T('All-time board', 'Bảng mọi thời')}</b><small>${T('Never resets.', 'Không bao giờ làm mới.')}</small>`;
   };
   const load = async () => {
@@ -210,14 +229,15 @@ function renderLeaderboard(pane) {
     if (!cloud.hasSession()) { box.innerHTML = `<div class="empty-note">${(G.user?.guest ? T('Create a free account in Menu → Account to join the global leaderboard.', 'Tạo tài khoản miễn phí ở Menu → Tài khoản để lên bảng xếp hạng toàn cầu.') : T('Sign in to see the global leaderboard.', 'Đăng nhập để xem bảng xếp hạng toàn cầu.'))}</div>`; return; }
     try {
       await cloud.pushLeaderboard(leaderboardRowNow()).catch(() => {});
-      const rows = m === 'week' ? await cloud.fetchWeekly(cur) : await cloud.fetchLeaderboard(cur);
+      const rows = m === 'week' ? await cloud.fetchWeekly(cur) : m === 'friends' ? await cloud.fetchFriendsWeek(cur) : await cloud.fetchLeaderboard(cur);
       if (my !== token) return;
       if (!rows?.length) { box.innerHTML = `<div class="empty-note">${m === 'week' ? T('A fresh week! Serve a few customers to get on the board.', 'Tuần mới! Phục vụ vài vị khách để lên bảng nhé.') : T('No one here yet. Be the first!', 'Chưa có ai. Hãy là người đầu tiên!')}</div>`; return; }
       box.replaceChildren(...rows.map(r => {
         const row = h('div', 'lb-row' + (r.is_me ? ' me' : '') + (m === 'week' && r.rank <= 10 ? ' prize' : ''));
+        const wk = isWeek();
         const face = document.createElement('canvas'); face.width = face.height = 72; face.className = 'lb-face';
-        const sub = m === 'week' ? `${escapeHtml(r.island_name || '')} · ${T('Lv', 'Cấp')} ${r.level}` : `${escapeHtml(r.island_name || '')} · ${T('Day', 'Ngày')} ${r.day}`;
-        const val = m === 'week' ? `<div class="lb-val">${weekVal(r)}${r.rank <= 10 ? `<small>${r.rank === 1 ? T('Gold cup', 'Cúp vàng') : r.rank <= 3 ? T('Silver cup', 'Cúp bạc') : T('Bronze cup', 'Cúp đồng')}</small>` : ''}</div>`
+        const sub = wk ? `${escapeHtml(r.island_name || '')} · ${T('Lv', 'Cấp')} ${r.level}` : `${escapeHtml(r.island_name || '')} · ${T('Day', 'Ngày')} ${r.day}`;
+        const val = wk ? `<div class="lb-val">${weekVal(r)}${m === 'week' && r.rank <= 10 ? `<small>${r.rank === 1 ? T('Gold cup', 'Cúp vàng') : r.rank <= 3 ? T('Silver cup', 'Cúp bạc') : T('Bronze cup', 'Cúp đồng')}</small>` : ''}</div>`
           : `<div class="lb-val">${T('Lv', 'Cấp')} ${r.level}<small>${money(r.money)} · ${r.served} ${T('served', 'khách')}</small></div>`;
         row.innerHTML = rankHTML(r) + `<div class="lb-name"><b>${badgeHTML(r)}${escapeHtml(r.player_name)}${r.is_me ? T(' (you)', ' (bạn)') : ''}</b><small>${sub}</small></div>` + val;
         row.insertBefore(face, row.children[1]);

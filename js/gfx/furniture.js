@@ -1123,3 +1123,11 @@ Object.assign(FURN_DRAW, {
     for (const x of [-15, 15]) limb(c, [x, -4, x, -30], 1.6, '#8a5a3a');
   },
 });
+
+// lanterns you made at Bà Sáu's class: a star lantern in your colour
+for (const [id, col] of [['lantern_hand_pink', '#f36d86'], ['lantern_hand_teal', '#2f9e8f'], ['lantern_hand_gold', '#f2c14e']]) FURN_DRAW[id] = (c, t, p) => onWall(c, p, () => {
+  const sw = Math.sin(t * 1.6 + (p.x || 0)) * 0.08; c.save(); c.translate(0, -70); c.rotate(sw);
+  line(c, 0, 0, 0, 8, INK, 0.6); const pts = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 4 : 9; pts.push(Math.cos(a) * r, 17 + Math.sin(a) * r); }
+  poly(c, pts, col, INK, 0.9); circ(c, 0, 17, 2.2, '#fff6c8', null); line(c, -1, 26, -2 + Math.sin(t * 2), 33, col, 0.8); line(c, 1, 26, 2 + Math.sin(t * 2 + 1), 33, col, 0.8);
+  c.restore(); if (!p.preview) g(p, 0, -53, 26, 'rgba(255,200,140,.5)');
+});

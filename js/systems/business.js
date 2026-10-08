@@ -9,6 +9,8 @@ import { addXP } from './progress.js';
 import { Actor } from '../world/actor.js';
 import { QUEUES, TRUCK_SPOTS } from '../world/island.js';
 import { comfortBonus } from '../data/sets.js';
+import { frontAttract } from './storefront.js';
+import { nightBuzz } from './nightlife.js';
 import { bus, rand, randi, choice, chance, clamp, dist, clock } from '../core/util.js';
 import { sfx } from '../core/audio.js';
 import { applyPronouns, customerProfile } from './pronouns.js';
@@ -541,7 +543,8 @@ function nextSpawnDelay(id) {
   const recs = bizRecipes(id);
   const appeal = recs.length ? recs.reduce((a, r) => a + priceAppeal(r, id), 0) / recs.length : 1;
   const gear = eq(id, 'attract') * (h >= 18 ? eq(id, 'night') : 1);
-  const rate = attract * rep * tf * boat * special * early * appeal * gear * owned * festive; // customers per ~34 game-minutes baseline
+  const front = frontAttract(id) * (def.biz === 'night' ? nightBuzz() : 1);                                 // a well-dressed shop front (storefront.js)
+  const rate = attract * rep * tf * boat * special * early * appeal * gear * owned * festive * front; // customers per ~34 game-minutes baseline
   return clamp(rand(32, 52) / rate, 7, 70);                 // a steady trickle, not a flood
 }
 
