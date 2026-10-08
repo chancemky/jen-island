@@ -92,6 +92,7 @@ import { LIGHT } from './gfx/props.js';
 import { homePieces } from './data/sets.js';
 import { initHomeContest, applyShopStyles } from './systems/homestyle.js';
 import { initSeasonal } from './systems/seasonal.js';
+import { weddingAction, initWedding } from './systems/wedding.js';
 
 const $ = id => document.getElementById(id);
 const bootBar = $('bootBar'), bootMsg = $('bootMsg');
@@ -165,7 +166,7 @@ async function boot() {
   initBadges();
   initSocial();
   initBoard();
-  initNotify(); initReview(); initRare(); initTips(); initSmoothieIntro(); initStorefront(); initParties(); initNature(); initHomeContest(); initSeasonal();
+  initNotify(); initReview(); initRare(); initTips(); initSmoothieIntro(); initStorefront(); initParties(); initNature(); initHomeContest(); initSeasonal(); initWedding();
   setTimeout(initWeekBoard, 4000);          // after the morning mail settles
   showMorningMail();
   festivalGift();
@@ -528,7 +529,7 @@ function updateInteraction(dt) {
     if (tr.kind === 'act') return actAction(tr);
   }
   // a neighbour's birthday party on the plaza
-  const pa = partyAction(pl) || nightlifeAction(pl); if (pa) { setAction(pa.label, pa.run, pa.icon); return; }
+  const pa = partyAction(pl) || weddingAction(pl) || nightlifeAction(pl); if (pa) { setAction(pa.label, pa.run, pa.icon); return; }
   // things in the room that do something (TV, radio, piano, lamps, fish, books…)
   const thing = nearbyThing(sc, pl);
   if (thing) { setAction(thing.label, thing.run, thing.icon); return; }

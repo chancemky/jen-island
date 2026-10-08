@@ -1532,3 +1532,13 @@ FURN_DRAW.museum_model = (c, t, p) => {
   for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * 13, -25); c.quadraticCurveTo(s * 17, -27, s * 16, -31); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); }
   circ(c, 0, -31, 1.4, '#f2c14e', INK, 0.4);
 };
+
+// the wedding favour: a red lantern with 囍 (double happiness)
+FURN_DRAW.song_hy_lantern = (c, t, p) => onWall(c, p, () => {
+  const sw = Math.sin(t * 1.4 + (p.x || 0)) * 0.06; c.save(); c.translate(0, -66); c.rotate(sw);
+  line(c, 0, 0, 0, 6, INK, 0.6); box(c, -6, 6, 12, 2.5, 1, '#f2c14e', INK, 0.5);
+  ell(c, 0, 17, 9, 9, p.off ? '#9a3a32' : '#d9433a', INK, 0.9); for (const x of [-4.5, 0, 4.5]) { c.beginPath(); c.ellipse(x * 0.9, 17, 1.2 + Math.abs(x) * 0.15, 8.6, 0, 0, TAU); c.strokeStyle = 'rgba(120,20,20,.35)'; c.lineWidth = 0.5; c.stroke(); }
+  c.fillStyle = '#f2c14e'; c.font = '900 8px serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('囍', 0, 17.5);
+  box(c, -6, 25.5, 12, 2.5, 1, '#f2c14e', INK, 0.5); for (const x of [-2, 0, 2]) line(c, x, 28, x + Math.sin(t * 2 + x), 34, '#f2c14e', 0.7);
+  c.restore(); if (!p.preview && !p.off) g(p, 0, -49, 26, 'rgba(255,120,90,.45)');
+});

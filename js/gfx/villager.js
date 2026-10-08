@@ -384,6 +384,17 @@ function drawHat(c, L, S, yawFace, t) {
     c.strokeStyle = shade(col, -26); c.lineWidth = 0.5; for (let i = 1; i < 4; i++) { const k = i / 4; c.beginPath(); c.moveTo(by[0] - HR * 1.5 * (1 - k), by[1] - (by[1] - apex[1]) * k); c.quadraticCurveTo(by[0], by[1] - (by[1] - apex[1]) * k + 2 * (1 - k), by[0] + HR * 1.5 * (1 - k), by[1] - (by[1] - apex[1]) * k); c.stroke(); }
     return;
   }
+  // khăn đóng / khăn vấn: the wedding headwraps — a thick wrapped ring of cloth round the crown,
+  // pleated, sitting on the forehead (the bride's in gold over her hair, the groom's in his colour)
+  if (h === 'khandong' || h === 'khanvan') {
+    const cy = hc[1] - HR * 0.42, rx = HR * 1.08, ry = HR * 0.42, th = HR * (h === 'khanvan' ? 0.42 : 0.36);
+    c.beginPath(); c.ellipse(hc[0], cy - th * 0.5, rx, ry + th * 0.5, 0, Math.PI, TAU); c.lineTo(hc[0] + rx, cy + th * 0.3); c.ellipse(hc[0], cy + th * 0.3, rx, ry, 0, 0, Math.PI); c.closePath();
+    c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    c.strokeStyle = shade(col, -25); c.lineWidth = 0.7;
+    for (let i = -3; i <= 3; i++) { const x = hc[0] + i * rx * 0.26 + Math.sin(yawFace) * 1.5; c.beginPath(); c.moveTo(x - 1.2, cy - th * 0.6); c.lineTo(x + 1.2, cy + th * 0.5); c.stroke(); }
+    if (h === 'khanvan') { c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(hc[0] - rx * 0.3, cy - th * 0.5, rx * 0.35, 1.2, 0, 0, TAU); c.fill(); }
+    return;
+  }
   const dome = (lat, fill) => capRegion(c, S, yawFace, () => lat, HR * 1.07, fill, null);
   const outline = () => { c.beginPath(); c.ellipse(hc[0], hc[1], HR * 1.07, HR * 1.06, 0, 0, TAU); };
   if (h === 'cap' || h === 'helmet' || h === 'bandana' || h === 'beanie') {
