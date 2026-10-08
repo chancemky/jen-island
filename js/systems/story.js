@@ -1184,7 +1184,7 @@ export async function stallHandover(id) {
     const v = (npcs.vendors || []).find(a => a.data.vendor === id);
     const who = v || new Actor({ kind: 'human', look: id === 'nm1' ? MERCHANTS.ba_sau.look : undefined, name: id === 'nm1' ? 'Bà Sáu' : T('Stall owner', 'Chủ sạp'), x: b.x + 30, y: b.y + 20 });
     if (!v) island().add(who);
-    who.visible = true; who.alpha = 1; who.x = b.x + 30; who.y = b.y + 22; face(who, pl); face(pl, who);
+    who.visible = true; who.alpha = 1; who.clip = null; who.sortY = undefined; who.x = b.x + 30; who.y = b.y + 22; face(who, pl); face(pl, who);
     await camTo((who.x + pl.x) / 2, pl.y - 24, { zoom: 1.4, rate: 2 });
     for (const [en, vi] of lines) await say(who, T(en, vi), { emo: 'happy' });
     who.setAct('wave'); sfx('success'); await wait(0.8); who.setAct(null);

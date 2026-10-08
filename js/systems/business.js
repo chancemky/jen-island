@@ -527,6 +527,7 @@ export function updateBusinesses(dt, gameMin) {
   for (const a of [...island.actors]) {
     if (a.fadeIn) { a.alpha = Math.min(1, (a.alpha ?? 0) + dt * 3); if (a.alpha >= 1) { a.fadeIn = false; delete a.alpha; } }
     if (a.fadeOut) { a.alpha = (a.alpha ?? 1) - dt * 2.5; if (a.alpha <= 0) island.remove(a); }
+    if (a.fadeHide) { a.alpha = (a.alpha ?? 1) - dt * 2.5; if (a.alpha <= 0) { a.fadeHide = false; a.visible = false; delete a.alpha; } }   // (fade away but stay: residents going indoors)
   }
 }
 // When people want what: each kind of business has its own day.

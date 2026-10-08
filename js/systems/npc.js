@@ -66,24 +66,10 @@ npcs.spawnVisitorAt = (x, y, tag) => {
 };
 
 import { buildStands, claimStand, claimWeighted, releaseStand } from './crowd.js';
-const VENDORS = [['nm1', 'ba_sau'], ['nm2', 0], ['nm3', 1], ['nm5', 2], ['nm6', 3]];
-function updateVendors(island) {
-  const s = G.state, open = s.nightMarket.restored && s.time >= 17 * 60 || (G.runtime.nm?.restoreAnim ?? 0) > 0.5;
-  if (!npcs.vendors) {
-    npcs.vendors = VENDORS.map(([st, who], i) => {
-      const b = island.buildings[st];
-      const look = who === 'ba_sau' ? MERCHANTS.ba_sau.look : visitorLook(9000 + i * 17, 'regular');
-      const a = new Actor({ kind: 'human', look, name: who === 'ba_sau' ? 'Bà Sáu' : T('Vendor', 'Người bán'), x: b.x + (b.x < 440 ? -44 : 44), y: b.y + 4, data: { vendor: st, mid: who === 'ba_sau' ? 'ba_sau' : null } });
-      a.talkable = who === 'ba_sau'; a.visible = false; a.face('down');
-      island.add(a); return a;
-    });
-  }
-  for (const a of npcs.vendors) {
-    const mine = G.state.biz[a.data.vendor]?.owned;           // you bought this stall: its old owner has retired
-    if (a.visible !== (open && !mine)) { a.visible = open && !mine; if (a.visible) { a.alpha = 0; a.fadeIn = true; } }
-    if (open && !mine && Math.random() < 0.004) { a.setAct(Math.random() < 0.5 ? 'wave' : 'stir'); a.showEmote(Math.random() < 0.5 ? 'note' : 'happy', 1.4); setTimeout(() => a.setAct(null), 1600); }
-  }
-}
+import { updateStallLife } from './stalllife.js';
+// the Night Market families, their customers and diners: see stalllife.js
+let lastT = 0;
+function updateVendors(island) { const now = performance.now() / 1000, dt = Math.min(0.1, now - (lastT || now)); lastT = now; updateStallLife(island, npcs, dt); }
 
 export function initNPCs(island) {
   npcs.residents.length = 0;
@@ -186,7 +172,7 @@ function updateResident(island, a, dt) {
     d.state = 'going-home'; releaseStand(a);
     if (a.sit) { a.sit = false; a.seatH = undefined; a.doHop(60); a.y += 10; }
     a.setAct(null);
-    a.walkTo(island.nav.path(a.x, a.y, home.x, home.y + 10)).then(ok => { if (d.state === 'going-home') { a.visible = false; d.state = 'home'; } });
+    a.walkTo(island.nav.path(a.x, a.y, home.x, home.y + 10)).then(ok => { if (d.state === 'going-home') { a.fadeHide = true; d.state = 'home'; } });   // (fades at the door — or wherever the walk ended)
     return;
   }
   if (d.state === 'going-home' || d.state === 'walking') return;

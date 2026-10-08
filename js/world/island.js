@@ -87,6 +87,7 @@ export const BRIDGES = [{ x: 424, y: 900, w: 64, h: 86, deck: 'v' }, { x: 116, y
 export const PLAZA = { x: 900, y: 1540, r: 104 };
 export const BOARD = { x: 1030, y: 1560 };      // the Island Board (systems/board.js), on the plaza's east side
 export const NM_PLAZA = { x: 250, y: 470, w: 360, h: 330 };
+export const NM_TABLES = [[392, 836], [478, 836]];      // two dining tables just below the market (systems/stalllife.js)
 // fields sit back from the farm road with walkable earth bunds between them
 export const PADDIES = [
   { x: 1360, y: 846, w: 92, h: 66 }, { x: 1466, y: 846, w: 92, h: 66 },
@@ -237,7 +238,7 @@ export function offRoad(x, y, r = 8) {
   }
 })();
 export const STALLS = [
-  { id: 'nm1', biz: 'nm1', x: 340, y: 580, label: ['GRANDMA SÁU', 'BÀ SÁU'], goods: ['#f2c46b', '#e3703a'], cloth: ['#e8584e', '#fff5df'] },
+  { id: 'nm1', biz: 'nm1', x: 340, y: 580, label: ['RICE PAPER SALAD', 'BÁNH TRÁNG TRỘN'], goods: ['#f2c46b', '#e3703a'], cloth: ['#e8584e', '#fff5df'] },
   { id: 'nm2', biz: 'nm2', x: 530, y: 580, label: ['SWEET SOUP', 'CHÈ'], goods: ['#a8423a', '#9fd67a'], cloth: ['#6fbfb0', '#fff5df'] },
   { id: 'nm3', biz: 'nm3', x: 340, y: 670, label: ['SNAILS', 'ỐC'], goods: ['#e0a052', '#fff5df'], cloth: ['#f2c14e', '#fff5df'] },
   { id: 'night', x: 530, y: 670, label: ['YOUR STALL', 'SẠP CỦA BẠN'], goods: ['#f2c46b', '#a8423a'], cloth: ['#f08ca0', '#fff5df'], biz: 'night' },
@@ -530,6 +531,8 @@ export class Island extends Scene {
     this.buildings = {};
     this.build();
     this.tidyUnderTrees();
+    // keep the market's dining tables clear of bushes and tall grass
+    this.props = this.props.filter(p => !(['bush', 'tallGrass', 'grassTuft', 'flowerPatch', 'mushrooms', 'reeds'].includes(p.kind) && NM_TABLES.some(([x, y]) => Math.abs(p.x - x) < 44 && Math.abs(p.y - y) < 34)));
   }
   // little upright plants (tall grass, bushes, mushrooms…) standing just in front of a big tree's
   // trunk get drawn over its low canopy and look like they float on the leaves: clear them away
@@ -574,6 +577,8 @@ export class Island extends Scene {
     // ---- buildings
     for (const b of BUILDINGS) this.addBuilding(b);
     for (const s of STALLS) this.addStall(s);
+    // dining tables below the market: a low table and three stools each
+    for (const [x, y] of NM_TABLES) { this.add2('lowTable', x, y, { onRoad: true, solidR: 10 }); for (const [dx, dy, col] of [[-22, 2, '#e8584e'], [22, 2, '#6f9fc8'], [0, 16, '#f2c14e']]) this.add2('stool', x + dx, y + dy, { onRoad: true, col }); }
     this.solid(PIER_END.x - 2, PIER_END.y + PIER_END.h - 4, PIER_END.w + 4, 8); // railing at pier end
     // ---- Night Market: lantern strings over the lane and around the square (dark until restored)
     const nmBroken = () => { const k = G.runtime?.nm?.restoreAnim; return k !== undefined && k !== null ? k < 0.55 : !G.state.nightMarket.restored; };
@@ -901,7 +906,7 @@ export class Island extends Scene {
     if (s.biz === 'night') { const bz = G.state.biz[s.biz]; return { repair: k, open: bz.open || shown, ...brand }; }
     const bz = s.biz && G.state.biz[s.biz];
     if (bz?.owned) return { repair: k, open: bz.open || shown, label: s.label, owned: true, ...brand };   // bought from its old owner
-    return { repair: k, open: k >= 1 && night };
+    return { repair: k, open: k >= 1 && night && G.state.time < 23 * 60 };   // (not yours yet: open 17:00–23:00 while its family works it)
   }
 
   buildNav() {
