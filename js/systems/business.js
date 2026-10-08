@@ -236,7 +236,7 @@ export function spawnCustomer(bizId, opts = {}) {
   if (opts.special) { c.special = opts.special.id; actor.data.special = opts.special.id; }
   if (opts.team) c.team = opts.team;
   c.order = makeOrder(bizId, c);
-  if (c.order?.walk) { G.state.today.priceWalk = (G.state.today.priceWalk || 0) + 1; bus.emit('customer:pricey', bizId); if (!resident) { actor.showEmote?.('sweat', 1.2); setTimeout(() => { actor.fadeOut = true; }, 900); } else G.npcs.returnResident(resident); return null; }
+  if (c.order?.walk) { G.state.today.priceWalk = (G.state.today.priceWalk || 0) + 1; bus.emit('customer:pricey', bizId); if (!resident) { actor.showEmote?.('sweat', 1.2); setTimeout(() => walkOff(actor), 900); } else G.npcs.returnResident(resident); return null; }
   if (!c.order) { if (!resident) island.remove(actor); else G.npcs.returnResident(resident); return null; }
   r.queue.push(c);
   c.slot = r.queue.length - 1;
@@ -289,9 +289,7 @@ export function customerLeave(c, why) {
   const island = G.scenes.island;
   setTimeout(() => {
     if (c.resident) { G.npcs.returnResident(a); return; }
-    const nodes = island.nav.nodes.filter(n => n.tags.has('path') && dist(n.x, n.y, a.x, a.y) > 260 && dist(n.x, n.y, a.x, a.y) < 600);
-    const dest = nodes.length ? choice(nodes) : island.nav.nodes[0];
-    a.walkTo(island.nav.path(a.x, a.y, dest.x, dest.y)).then(() => { a.fadeOut = true; });
+    walkOff(a);
   }, why === 'happy' ? 900 : 500);
   shiftQueue(c.bizId);
   bus.emit('customer:leave', c, why);
@@ -532,6 +530,18 @@ export function updateBusinesses(dt, gameMin) {
     if (a.fadeOut) { a.alpha = (a.alpha ?? 1) - dt * 2.5; if (a.alpha <= 0) island.remove(a); }
     if (a.fadeHide) { a.alpha = (a.alpha ?? 1) - dt * 2.5; if (a.alpha <= 0) { a.fadeHide = false; a.visible = false; delete a.alpha; } }   // (fade away but stay: residents going indoors)
   }
+}
+// a visitor heads off along the paths and only fades once they're out of sight (nobody vanishes
+// in front of you)
+export function walkOff(a) {
+  const island = G.scenes.island, v = cam.view, hidden = n => !v || n.x < v.x - 30 || n.x > v.x + v.w + 30 || n.y < v.y - 30 || n.y > v.y + v.h + 30;
+  const far = island.nav.nodes.filter(n => n.tags.has('path') && dist(n.x, n.y, a.x, a.y) > 200 && dist(n.x, n.y, a.x, a.y) < 700);
+  const out = far.filter(hidden), dest = choice(out.length ? out : far.length ? far : island.nav.nodes);
+  a.walkTo(island.nav.path(a.x, a.y, dest.x, dest.y)).then(() => {
+    if (hidden(a) || !v) { a.fadeOut = true; return; }
+    const again = island.nav.nodes.filter(n => n.tags.has('path') && hidden(n) && dist(n.x, n.y, a.x, a.y) < 500);   // still in view: a little further
+    if (again.length && !a._off) { a._off = true; const d2 = choice(again); a.walkTo(island.nav.path(a.x, a.y, d2.x, d2.y)).then(() => { a.fadeOut = true; }); } else a.fadeOut = true;
+  });
 }
 // When people want what: each kind of business has its own day.
 const DEMAND = {
