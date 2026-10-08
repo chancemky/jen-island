@@ -462,6 +462,7 @@ export const FURNITURE = {
   lotus_lamp:   { vi: 'Đèn hoa sen', en: 'Lotus lamp', price: 0, w: 16, h: 10, reward: true, fixed: true, light: true },
   harvest_basket:{ vi: 'Giỏ mùa gặt', en: 'Harvest basket', price: 0, w: 20, h: 12, reward: true, fixed: true },
   warm_lantern: { vi: 'Đèn lồng sưởi ấm', en: 'Warm winter lantern', price: 0, w: 14, h: 10, reward: true, fixed: true, light: true },
+  museum_model: { vi: 'Mô hình Đình làng', en: 'Village Hall model', price: 0, w: 30, h: 14, reward: true, fixed: true },
   firefly_jar:  { vi: 'Lọ đom đóm', en: 'Jar of fireflies', price: 0, w: 12, h: 10, reward: true, fixed: true, light: true },
   fish_plaque:  { vi: 'Bảng cá vô địch', en: 'Champion\'s mounted fish', price: 0, w: 34, h: 8, reward: true, fixed: true, wall: true },
   bottle_ship:  { vi: 'Thuyền trong chai', en: 'Ship in a bottle', price: 0, w: 22, h: 10, reward: true, fixed: true },

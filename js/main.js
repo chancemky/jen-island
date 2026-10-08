@@ -45,7 +45,8 @@ import { initAlbum } from './systems/album.js';
 import { nearbyThing, outdoorAction, updateWorldEvents, lookText, realEvent, eventOn } from './systems/interact.js';
 import { updateSeasonal } from './systems/growth.js';
 import { fishingAction } from './systems/fishing.js';
-import { plaqueAction } from './systems/garden.js';
+import { plaqueAction, plaqueDrawables } from './systems/garden.js';
+import { museumAction, museumDrawables } from './systems/museum.js';
 import { GATES, gateText, gatePaid, addXP, seedLevel, tickCelebrations, TRACKS, trackState, claimMilestone } from './systems/progress.js';
 import { ensureLatest, watchForUpdates } from './systems/version.js';
 import { syncPurchases, purchaseReturn } from './systems/store.js';
@@ -392,7 +393,7 @@ function loop(now) {
   if (G.runtime.cinematic) return; // the opening cinematic owns the canvas
   if (!G.scene) return;
   if (G.runtime.paused) { // frozen world: just keep drawing it under the pause card
-    G.renderer.render(G.scene, t, { player: G.player, light: lightingFor(G.state.time, G.scene.kind !== 'island'), worldExtra: G.scene === scenes.island ? [...npcDrawables(), ...natureDrawables()] : null, overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); drawRainbow(c, tt); } });
+    G.renderer.render(G.scene, t, { player: G.player, light: lightingFor(G.state.time, G.scene.kind !== 'island'), worldExtra: G.scene === scenes.island ? [...npcDrawables(), ...natureDrawables(), ...plaqueDrawables(), ...museumDrawables()] : null, overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); drawRainbow(c, tt); } });
     return;
   }
   const gm = updateClock(dt);
@@ -564,7 +565,7 @@ function updateInteraction(dt) {
   // the fountain, the pier, the shore
   const od = outdoorAction(pl); if (od) { setAction(od.label, od.run, od.icon); return; }
   // lore on restored places
-  const pq = plaqueAction(pl); if (pq) { setAction(pq.label, pq.run, pq.icon); return; }
+  const pq = plaqueAction(pl) || museumAction(pl); if (pq) { setAction(pq.label, pq.run, pq.icon); return; }
   // just inside a doorway (where you land when you come in): the way out is one tap
   if (sc.kind === 'interior' && sc.door && Math.abs(pl.x - sc.door.x) < 24 && pl.y > sc.h - 40) { setAction(T('Leave', 'Ra ngoài'), () => exitBuilding(), 'door'); return; }
   // the pet walking with you (it isn't talkable): feed it or send it home

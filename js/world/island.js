@@ -1068,6 +1068,7 @@ export const AREAS = [
   { name: 'Phố Chợ', en: 'Market Street', test: (x, y) => y > 1060 && y < 1330 && x > 460 && x < 1480 },
   { name: 'Xóm Đông', en: 'East Village', test: (x, y) => x > 1040 && y > 1500 && y < 1900 },
   { name: 'Xóm Tây', en: 'West Village', test: (x, y) => x < 820 && y > 1290 && y < 1900 },
+  { name: 'Đình làng', en: 'Village Hall', test: (x, y) => x > 520 && x < 730 && y > 300 && y < 460 },
   { name: 'Chợ Đêm', en: 'Night Market', test: (x, y) => x < 640 && y < 840 },
   { name: 'Ruộng Lúa', en: 'Rice Paddies', test: (x, y) => x > 1360 && y > 820 && y < 1180 },
   { name: 'Đồi Nhà Hàng', en: 'Restaurant Hill', test: (x, y) => x > 1000 && y < 980 },

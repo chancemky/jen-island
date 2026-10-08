@@ -1523,3 +1523,12 @@ FURN_DRAW.warm_lantern = (c, t, p) => {
   for (const x of [-3, 0, 3]) line(c, x, -19, x, -4, 'rgba(140,90,40,.5)', 0.6);
   if (!p.off) { const k = 0.6 + 0.4 * Math.sin(t * 3); circ(c, 0, -11, 2.4 * k, '#fff6c8', null); if (!p.preview) g(p, 0, -12, 28, 'rgba(255,190,110,.5)'); }
 };
+
+// the complete museum's prize: a little model of the Village Hall on a stand
+FURN_DRAW.museum_model = (c, t, p) => {
+  shadow(c, 0, 1, 15, 3, 0.16); box(c, -14, -6, 28, 6, 1.5, '#8a5a3a', INK, 0.8);
+  box(c, -11, -18, 22, 12, 1, '#f2e2c4', INK, 0.8); for (const x of [-8, -3, 2, 7]) box(c, x, -16, 2, 10, 0.5, '#c94c3a', null);
+  poly(c, [-15, -18, 15, -18, 11, -25, -11, -25], '#a8563f', INK, 0.8); poly(c, [-13, -25, 13, -25, 9, -30, -9, -30], '#c96b45', INK, 0.7);
+  for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * 13, -25); c.quadraticCurveTo(s * 17, -27, s * 16, -31); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); }
+  circ(c, 0, -31, 1.4, '#f2c14e', INK, 0.4);
+};
