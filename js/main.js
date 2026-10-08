@@ -375,7 +375,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   // battery saver: 30 fps (24 when you're standing still), unless Smooth 60 FPS is on
   const idle = G.player && G.player.moving < 0.05 && !cs.active && !G.player.path;
-  const minMs = G.state?.settings?.smooth ? 0 : idle ? 1000 / 24 : 1000 / 30;
+  const lp = G.state?.settings?.lowPower, minMs = lp ? (idle ? 1000 / 15 : 1000 / 24) : G.state?.settings?.smooth ? 0 : idle ? 1000 / 24 : 1000 / 30;
   if (now - lastFrame < minMs - 1.5) return;
   lastFrame = now;
   let dt = (now - last) / 1000; last = now;
@@ -882,7 +882,10 @@ async function doSleep(dawn) {
       await fadeIn(900);
       sfx('bell');
       pl.doHop(); pl.setAct('cheer'); stinger('morning'); await wait(0.9); pl.setAct(null);
-      toast({ text: T(`Day ${G.state.day} · Good morning!`, `Ngày ${G.state.day} · Chào buổi sáng!`), sub: specialLine(), icon: 'star', ms: 3600 });
+      const skipped = G.runtime.skippedSummary; G.runtime.skippedSummary = null;
+      toast(skipped
+        ? { text: T(`Day ${G.state.day} · Good morning!`, `Ngày ${G.state.day} · Chào buổi sáng!`), sub: T(`Yesterday: ${money(skipped.net ?? 0)} · tap for the summary`, `Hôm qua: ${money(skipped.net ?? 0)} · chạm để xem tổng kết`), icon: 'star', ms: 5000, onClick: () => showSummary(skipped, true) }
+        : { text: T(`Day ${G.state.day} · Good morning!`, `Ngày ${G.state.day} · Chào buổi sáng!`), sub: specialLine(), icon: 'star', ms: 3600 });
     });
   } finally { G.runtime.inCutscene = false; G.runtime.sleeping = false; }
   await checkStory();

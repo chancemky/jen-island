@@ -28,7 +28,7 @@ export function updateWeather(dt) {
   const s = G.state; if (!s) return;
   const w = weatherOn(), h = s.time / 60, want = w.rain && h >= w.start && h < w.end && G.scene === G.scenes.island ? (w.heavy ? 1 : 0.7) : 0;
   const a = (G.runtime.rainA || 0) + (want - (G.runtime.rainA || 0)) * Math.min(1, dt * 0.6);
-  if (want > 0 && !G.runtime.rainA) bus.emit('toast', { text: T('It\'s starting to rain', 'Trời bắt đầu mưa'), sub: T('Cafés fill up, the beach empties.', 'Quán cà phê đông khách, bãi biển vắng người.'), icon: 'ice', ms: 2600 });
+  if (want > 0 && !G.runtime.rainA) bus.emit('toast', { cat: 'weather', text: T('It\'s starting to rain', 'Trời bắt đầu mưa'), sub: T('Cafés fill up, the beach empties.', 'Quán cà phê đông khách, bãi biển vắng người.'), icon: 'ice', ms: 2600 });
   G.runtime.rainA = a < 0.01 ? 0 : a;
   // umbrellas up (and down again) for everyone walking around outside
   const isl = G.scenes.island, up = a > 0.3;
@@ -45,7 +45,7 @@ export function drawRain(c, t) {
   if (a < 0.02) return;
   c.save(); c.fillStyle = `rgba(70,90,120,${0.2 * a})`; c.fillRect(v.x, v.y, v.w, v.h);
   c.strokeStyle = `rgba(230,240,255,${0.45 * a})`; c.lineWidth = 0.8; c.beginPath();
-  const n = Math.round(160 * a);
+  const n = Math.round((G.state.settings.lowPower ? 60 : 160) * a);
   for (let i = 0; i < n; i++) {
     const sx = (i * 97.13) % 1, sy = (i * 57.31) % 1, sp = 0.7 + ((i * 13) % 7) / 10;
     const x = v.x + ((sx * v.w + t * 60 * sp) % v.w), y = v.y + ((sy * v.h + t * 520 * sp) % v.h);

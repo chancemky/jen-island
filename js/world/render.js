@@ -72,6 +72,7 @@ export const fx = {
   parts: [], texts: [],
   clear() { this.parts.length = 0; this.texts.length = 0; },
   burst(kind, x, y, n = 8, o = {}) {
+    if (G.state?.settings?.lowPower) n = Math.ceil(n / 2);           // low-power mode: half the sparkles
     for (let i = 0; i < n; i++) {
       const a = o.angle !== undefined ? o.angle + (Math.random() - 0.5) * (o.spread ?? 1) : Math.random() * TAU;
       const sp = (o.speed || 40) * (0.5 + Math.random() * 0.8);
@@ -141,7 +142,7 @@ export class Renderer {
   }
   resize() {
     const r = this.cv.getBoundingClientRect();
-    this.dpr = Math.min(G.state?.settings?.smooth ? 2 : 1.5, window.devicePixelRatio || 1);   // battery: 1.5x is plenty sharp
+    this.dpr = Math.min(G.state?.settings?.lowPower ? 1 : G.state?.settings?.smooth ? 2 : 1.5, window.devicePixelRatio || 1);   // (low-power: 1x)   // battery: 1.5x is plenty sharp
     this.w = Math.max(1, r.width); this.h = Math.max(1, r.height);
     this.cv.width = Math.round(this.w * this.dpr); this.cv.height = Math.round(this.h * this.dpr);
     // characters about 48px tall on a typical phone

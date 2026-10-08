@@ -937,3 +937,16 @@ body.hc :is(.chip, .tag, .pill, .opt-tag) { border-width: 3px; }
 @keyframes trWash { to { transform: translate(-50%, -120%); opacity: 0; } }
 .tr-bag { position: absolute; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); background: rgba(255,250,240,.92); border: 3px solid var(--ink); border-radius: 18px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 10px; font-size: 20px; font-weight: 900; min-height: 30px; }
 .tr-bag small { font-size: 13px; opacity: .7; }
+
+/* colour-blind palette (Settings): red/green signals become vermillion/blue */
+body.cb .patience .bar i { background: #0072b2; } body.cb .patience .bar i.mid { background: #f0e442; } body.cb .patience .bar i.low { background: #d55e00; }
+body.cb .svc-chips span.bad, body.cb .svc-steps i.bad { background: #fde3d0; color: #a14400; border-color: #d55e00; }
+body.cb .toast.bad { background: #fde3d0; }
+body.cb .ms-bar i { background: linear-gradient(90deg, #8ec5ea, #0072b2); }
+body.cb .icon-opt .cnt.low { background: #d55e00; }
+
+.alert-row { flex-wrap: wrap; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; margin-top: 6px; }
+.chip-row .chip { border: 2px solid #e6d3b8; background: #fffaf0; color: #9a8070; border-radius: 999px; padding: 7px 12px; font: 900 13px Nunito, sans-serif; min-height: 36px; }
+.chip-row .chip.on { background: #fff1d0; border-color: var(--gold2); color: var(--ink); }
+.chip-row .chip:not(.on) { text-decoration: line-through; }

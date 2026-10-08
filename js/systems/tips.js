@@ -26,7 +26,7 @@ function check() {
     let ok = false; try { ok = tip.when(s); } catch { ok = false; }
     if (!ok) continue;
     s.story.flags[k] = true; markDirty();
-    bus.emit('toast', { text: T(...tip.text), sub: T(...tip.sub), icon: tip.icon, ms: 6500 });
+    bus.emit('toast', { cat: 'tips', text: T(...tip.text), sub: T(...tip.sub), icon: tip.icon, ms: 6500 });
     return;                                                    // one at a time
   }
 }

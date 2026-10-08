@@ -38,7 +38,7 @@ export function discover(key) {
   const s = G.state, d = (s.discovered ||= {});
   if (d[key] || !DISCOVERIES[key]) return;
   d[key] = s.day; markDirty();
-  toast({ text: T(`Discovery: ${DISCOVERIES[key][0]}`, `Khám phá: ${DISCOVERIES[key][1]}`), sub: T(`${Object.keys(d).length} of ${COUNTS.discoveries} things tried · journal`, `${Object.keys(d).length}/${COUNTS.discoveries} điều đã thử · sổ tay`), icon: 'star', ms: 2200 });
+  toast({ cat: 'discover', text: T(`Discovery: ${DISCOVERIES[key][0]}`, `Khám phá: ${DISCOVERIES[key][1]}`), sub: T(`${Object.keys(d).length} of ${COUNTS.discoveries} things tried · journal`, `${Object.keys(d).length}/${COUNTS.discoveries} điều đã thử · sổ tay`), icon: 'star', ms: 2200 });
   bus.emit('discover', key);
 }
 

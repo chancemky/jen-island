@@ -312,9 +312,21 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
           r.appendChild(seg); list.appendChild(r); }
         toggle(T('High contrast', 'Tương phản cao'), 'contrast', applyComfort);
         toggle(T('Left-handed controls', 'Nút bấm bên trái'), 'lefty', applyComfort);
+        toggle(T('Colour-blind friendly colours', 'Màu dễ phân biệt (mù màu)'), 'colorblind', applyComfort);
+        toggle(T('End-of-day summary card', 'Bảng tổng kết cuối ngày'), 'summary');
+        // which kinds of little pop-up news you want (important ones always show)
+        { const r = h('div', 'row alert-row', `<div class="info"><b>${T('Pop-up news', 'Thông báo nhỏ')}</b><small>${T('Tap to switch a kind off. Warnings and rewards always show.', 'Chạm để tắt từng loại. Cảnh báo và phần thưởng luôn hiện.')}</small></div>`), chips = h('div', 'chip-row');
+          const al = (s.settings.alerts ||= {});
+          for (const [k, en, vi] of [['sales', 'Staff sales', 'Nhân viên bán'], ['weather', 'Weather', 'Thời tiết'], ['discover', 'Discoveries', 'Khám phá'], ['friends', 'Friends', 'Bạn bè'], ['island', 'Island news', 'Tin trên đảo'], ['tips', 'Tips', 'Mẹo']]) {
+            const b = h('button', 'chip' + (al[k] === false ? '' : ' on'), T(en, vi)); b.type = 'button'; b.setAttribute('aria-pressed', al[k] !== false);
+            b.onclick = () => { al[k] = al[k] === false; b.classList.toggle('on', al[k] !== false); b.setAttribute('aria-pressed', al[k] !== false); markDirty(true); sfx('ui'); };
+            chips.appendChild(b);
+          }
+          r.appendChild(chips); list.appendChild(r); }
         if (nativeApp()) toggle(T('Reminders (morning mail, weekly board)', 'Nhắc nhở (thư buổi sáng, bảng tuần)'), 'notify', () => import('../systems/notify.js').then(m => m.notifySettingChanged()));
         toggle(T('Quest arrow', 'Mũi tên chỉ đường'), 'arrow');
-        toggle(T('Smooth 60 FPS (uses more battery)', 'Mượt 60 FPS (tốn pin hơn)'), 'smooth', () => G.renderer?.resize());
+        toggle(T('Smooth 60 FPS (uses more battery)', 'Mượt 60 FPS (tốn pin hơn)'), 'smooth', () => { if (s.settings.smooth && s.settings.lowPower) { s.settings.lowPower = false; api.rebuild?.(); } G.renderer?.resize(); });
+        toggle(T('Battery saver (older phones)', 'Tiết kiệm pin (máy cũ)'), 'lowPower', () => { if (s.settings.lowPower && s.settings.smooth) { s.settings.smooth = false; api.rebuild?.(); } G.renderer?.resize(); });
         toggle(T('Share anonymous stats & error reports', 'Gửi thống kê ẩn danh & báo lỗi'), 'stats');
         // start over: a brand-new island, back on the boat (with a confirmation)
         const rs = btn(T('Reset game…', 'Chơi lại từ đầu…'), () => confirmReset(api), 'btn ghost danger'); rs.style.marginTop = '10px'; pane.appendChild(rs);

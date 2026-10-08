@@ -2,7 +2,11 @@
 // loss per business, spending by category, net worth, lifetime profit), rent or buy
 // each property, hire a shopkeeper, and pay for a supply runner.
 
-import { G, T, canAfford, bizOf } from '../systems/state.js';
+import { G, T, canAfford, bizOf, addMoney, addPantry } from '../systems/state.js';
+import { INGREDIENTS } from '../data/game.js';
+import { iconURL } from '../gfx/food.js';
+import { bus } from '../core/util.js';
+import { shoppingNeeds } from './shops.js';
 import { BUSINESSES, NIGHT_MARKET_RESTORE, ROLES, bizName } from '../data/game.js';
 import { h, btn } from './sheets.js';
 import { sfx } from '../core/audio.js';
@@ -62,6 +66,18 @@ export function renderOffice(pane, api) {
   pane.appendChild(h('div', 'oc-line dim', T('Island level unlocks features; each shop has its own upgrade level.', 'Cấp đảo mở khóa tính năng; mỗi quán có cấp nâng cấp riêng.')));
   if (s.day < 3) pane.appendChild(h('div', 'empty-note', T('Rent starts on day 3 — Mèo Mây talked the landlords into a welcome discount.', 'Tiền thuê bắt đầu từ ngày 3 — Mèo Mây đã xin chủ nhà giảm giá chào mừng.')));
   const list = h('div', 'list'); pane.appendChild(list);
+  // one tap: phone Cô Hoa and have everything your shops need delivered (+10% for the delivery)
+  { const needs = shoppingNeeds();
+    if (needs.length) {
+      const total = Math.round(needs.reduce((a, [k, n]) => a + INGREDIENTS[k].price * n, 0) * 1.1);
+      const r = h('div', 'row restock-row', `<div class="ico">🛵</div><div class="info"><b>${T('Restock all shops', 'Nhập hàng cho tất cả quán')}</b><small>${T('About 1½ days of what you sell, delivered now (+10% delivery)', 'Khoảng 1,5 ngày bán hàng, giao ngay (+10% phí giao)')}</small><div class="mini-chips">${needs.slice(0, 14).map(([k, n]) => `<span class="mini-chip"><img src="${iconURL(k, 22)}" alt="">×${INGREDIENTS[k].pack * n}</span>`).join('')}</div></div>`);
+      r.appendChild(btn(money(total), () => {
+        if (!canAfford(total)) return moneyShortfall(total);
+        addMoney(-total, 'ingredients'); for (const [k, n] of needs) addPantry(k, INGREDIENTS[k].pack * n);
+        sfx('buy'); toast({ text: T('Cô Hoa\'s scooter is on the way!', 'Xe của Cô Hoa đang tới!'), sub: T('Everything is in your pantry.', 'Mọi thứ đã vào kho.'), icon: 'bag', now: true }); bus.emit('bought', 'ingredients'); api.rebuild();
+      }, 'buy alt'));
+      list.appendChild(r);
+    } }
   renderBooks(list);
   const nightMarketRestored = !!s.nightMarket?.restored;
   if (s.story.chapter >= 8 || nightMarketRestored) {

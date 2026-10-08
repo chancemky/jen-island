@@ -86,7 +86,7 @@ function bringBusker() {
   busker.talkable = true; busker.face('down'); isl.add(busker);
   busker.tune = setInterval(() => { if (!busker) return; busker.showEmote('note', 1.4); busker.setAct(chance(0.5) ? 'dance' : null); }, 3000);
   R().today = { id: 'busker' };
-  bus.emit('toast', { text: T('A busker is playing by the fountain', 'Có nghệ sĩ đường phố đang đàn bên đài phun nước'), sub: T('Wind Plaza, today only.', 'Quảng trường gió, chỉ hôm nay.'), icon: 'note', ms: 4600 });
+  bus.emit('toast', { cat: 'island', text: T('A busker is playing by the fountain', 'Có nghệ sĩ đường phố đang đàn bên đài phun nước'), sub: T('Wind Plaza, today only.', 'Quảng trường gió, chỉ hôm nay.'), icon: 'note', ms: 4600 });
   return true;
 }
 async function tipBusker(a) {
@@ -109,7 +109,7 @@ function bringCat() {
   const [x, y] = choice(CAT_SPOTS);
   cat = addAnimal('cat', x, y, { col: '#f2c14e', golden: true, idle: 'nap', state: 'idle', until: 9999, hx: x, hy: y });
   R().today = { id: 'goldcat' };
-  bus.emit('toast', { text: T('Someone saw a golden cat on the island…', 'Có người thấy một chú mèo vàng trên đảo…'), sub: T('They say petting it brings luck. Look around!', 'Nghe nói vuốt ve nó sẽ gặp may. Tìm thử xem!'), icon: 'paw', ms: 5200 });
+  bus.emit('toast', { cat: 'island', text: T('Someone saw a golden cat on the island…', 'Có người thấy một chú mèo vàng trên đảo…'), sub: T('They say petting it brings luck. Look around!', 'Nghe nói vuốt ve nó sẽ gặp may. Tìm thử xem!'), icon: 'paw', ms: 5200 });
   return true;
 }
 export function rareAction(pl) {

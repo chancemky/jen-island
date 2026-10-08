@@ -203,7 +203,7 @@ function flushKeeperSales(dt) {
   const ids = Object.keys(keeperSold); if (!ids.length) return;
   const n = ids.reduce((a, id) => a + keeperSold[id].n, 0), total = ids.reduce((a, id) => a + keeperSold[id].total, 0);
   for (const id of ids) delete keeperSold[id]; keeperToastT = 240;
-  toast({ text: T(`Your staff sold ${n} order${n > 1 ? 's' : ''}`, `Nhân viên đã bán ${n} phần`), sub: `+${money(total)}`, icon: 'coin', ms: 2000 });
+  toast({ cat: 'sales', text: T(`Your staff sold ${n} order${n > 1 ? 's' : ''}`, `Nhân viên đã bán ${n} phần`), sub: `+${money(total)}`, icon: 'coin', ms: 2000 });
 }
 // every frame: keepers open their shop, prep, and serve the customer at the counter
 export function updateKeepers(dt) {

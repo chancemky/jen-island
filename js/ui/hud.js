@@ -218,6 +218,7 @@ const blocking = () => !!document.querySelector('.reward:not(.out), .levelup:not
 const seen = new Map();
 export function toast(o) {
   const urgent = o.cls === 'ach' || o.bad || o.now;            // (now: the answer to something you just tapped)
+  if (o.cat && !urgent && G.state?.settings?.alerts?.[o.cat] === false) return;      // the player switched this kind of news off
   if (lastShown.text === o.text && Date.now() - lastShown.at < 2500) return;
   if (tq.some(q => q.text === o.text && q.sub === o.sub)) return;
   // ambient news is rationed: the same line at most once a minute, and no backlog of it

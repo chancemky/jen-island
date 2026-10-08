@@ -38,7 +38,7 @@ export async function openGifts() {
   for (const g of waiting) {
     if (!GIFTS[g.kind] || !(await cloud.claimGift(g.id).catch(() => false))) continue;
     const what = GIFTS[g.kind].give();
-    bus.emit('toast', { text: T(`${g.from} sent you ${GIFTS[g.kind].en}!`, `${g.from} gửi bạn ${GIFTS[g.kind].vi}!`), sub: what, icon: GIFTS[g.kind].icon, ms: 4200 });
+    bus.emit('toast', { cat: 'friends', text: T(`${g.from} sent you ${GIFTS[g.kind].en}!`, `${g.from} gửi bạn ${GIFTS[g.kind].vi}!`), sub: what, icon: GIFTS[g.kind].icon, ms: 4200 });
   }
   if (waiting.length) markDirty(true);
 }

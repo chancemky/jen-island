@@ -16,6 +16,7 @@ import { escapeHtml, money, bus, TAU, clock } from '../core/util.js';
 import { h, flyIcon, flyCoins } from './sheets.js';
 import { toast } from './hud.js';
 import { releaseJoystick } from '../core/input.js';
+import { signal } from './comfort.js';
 
 const EXTRA_LAYERS = { beans: { color: '#a8423a', h: 0.3 }, coconut_milk: { color: '#fffaf0', h: 0.22 } };
 const ICE_LEVEL = { 'không đá': 0, 'ít đá': 1, 'đá bình thường': 2 };
@@ -434,7 +435,7 @@ function drawQueue(t) {
     const c = q.find(x => x.id === el.dataset.id); if (!c) continue;
     const circle = el.querySelector('circle'), k = c.patienceRatio;
     circle.setAttribute('stroke-dashoffset', String(100.5 * (1 - k)));
-    circle.setAttribute('stroke', k < 0.3 ? '#ef7a6a' : k < 0.6 ? '#f2c14e' : '#86cf8a');
+    circle.setAttribute('stroke', signal(k < 0.3 ? 0 : k < 0.6 ? 1 : 2));
   }
 }
 function drawPortrait(dt, t) {

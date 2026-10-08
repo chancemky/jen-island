@@ -235,7 +235,7 @@ export function spawnTeam(bizId) {
   const team = { col, names, size, done: 0, total: 0, members: [] };
   for (let i = 0; i < size; i++) { const c = spawnCustomer(bizId, { tourist: true, team: { ...team, i } }); if (!c) break; c.team = team; team.members.push(c); }
   team.size = team.members.length;
-  if (team.size >= 2) { team.members[0].actor.showEmote?.('happy', 1.6); if (G.runtime.teamToastDay !== G.state.day) (G.runtime.teamToastDay = G.state.day, bus.emit('toast', { text: T(`A team of ${team.size} is in line!`, `Một đội ${team.size} người đang xếp hàng!`), sub: T('Serve them all for a team bonus.', 'Phục vụ cả đội để nhận thưởng.'), icon: 'star', ms: 2600 })); }
+  if (team.size >= 2) { team.members[0].actor.showEmote?.('happy', 1.6); if (G.runtime.teamToastDay !== G.state.day) (G.runtime.teamToastDay = G.state.day, bus.emit('toast', { cat: 'sales', text: T(`A team of ${team.size} is in line!`, `Một đội ${team.size} người đang xếp hàng!`), sub: T('Serve them all for a team bonus.', 'Phục vụ cả đội để nhận thưởng.'), icon: 'star', ms: 2600 })); }
   return team.size >= 2;
 }
 export function bizMaxQueue(bizId) {

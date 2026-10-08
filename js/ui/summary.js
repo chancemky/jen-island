@@ -28,10 +28,13 @@ function walletTrail(sum) {
 }
 import { catName } from '../systems/ledger.js';
 
-export function showSummary(sum) {
+export function showSummary(sum, force = false) {
   // remember the last two weeks of results for the little chart (kept in the save)
   const hist = (G.state.netHistory ||= []);
   if (!hist.length || hist[hist.length - 1].day !== sum.day) { hist.push({ day: sum.day, net: Math.round(sum.net ?? 0), rev: Math.round(sum.revenue || 0) }); while (hist.length > 14) hist.shift(); }
+  G.runtime.lastSummary = sum;
+  // (Settings → "End-of-day summary" off: skip the card; the morning note links to it)
+  if (!force && G.state.settings.summary === false) { G.runtime.skippedSummary = sum; return Promise.resolve(); }
   return present(() => summaryCard(sum));
 }
 // two weeks of days as bars: revenue (light) with the net result on top (green up, red down)
