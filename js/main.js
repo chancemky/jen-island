@@ -89,7 +89,7 @@ import { openPetShop } from './ui/petshop.js';
 import { bus, dist, clamp, sleep, choice, money, rand, clock, devHost, nativeApp } from './core/util.js';
 import { LIGHT } from './gfx/props.js';
 import { homePieces } from './data/sets.js';
-import { initHomeContest } from './systems/homestyle.js';
+import { initHomeContest, applyShopStyles } from './systems/homestyle.js';
 
 const $ = id => document.getElementById(id);
 const bootBar = $('bootBar'), bootMsg = $('bootMsg');
@@ -248,6 +248,7 @@ function startGame() {
   safe('keepers', () => spawnKeepers());
   safe('pets', () => rebuildPets());
   safe('restaurant', () => { scenes.restaurant.applyLevel(); if (bizOf('restaurant').owned) initRestaurantRuntime(); });
+  safe('shopStyles', () => applyShopStyles());
   safe('specials', () => specialsInit());
   if (s.today.repStart === null) s.today.repStart = s.reputation;
   safe('stars', () => renderStars());

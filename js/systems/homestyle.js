@@ -27,8 +27,11 @@ export function applyRoomStyle(sc, st) {
 }
 export function applyRoomStyles() { for (const id of ['house', 'house_up', 'house_down']) applyRoomStyle(G.scenes[id], styles()[id]); }
 
-export function openRoomStyle(sc) {
-  const st = (styles()[sc.id] ||= {});
+// shop interiors keep their own look (the Business tab → Interior)
+const shopStyles = () => (G.state.shopStyle ||= {});
+export function applyShopStyles() { for (const [id, st] of Object.entries(shopStyles())) applyRoomStyle(G.scenes[id], st); }
+export function openRoomStyle(sc, shop = false) {
+  const st = ((shop ? shopStyles() : styles())[sc.id] ||= {});
   const set = (k, v) => { st[k] = v; applyRoomStyle(sc, st); markDirty(true); sfx('tap'); };
   openSheet({ title: T('Walls & floor', 'Tường & sàn'), sub: T('Paint this room any colour you like', 'Sơn phòng này màu bạn thích'), pauseTime: false, build: (body, api) => {
     const sw = (label, list, key, current) => {
@@ -50,7 +53,8 @@ export function openRoomStyle(sc) {
     sw(T('Floor colour', 'Màu sàn'), FLOOR_SWATCHES, 'floor', sc.floor);
     pat(T('Floor', 'Kiểu sàn'), FLOOR_STYLES, 'floorStyle', sc.floorStyle);
     const reset = h('button', 'link-btn', T('Back to how it was built', 'Về như lúc mới xây')); reset.type = 'button';
-    reset.onclick = () => { delete styles()[sc.id]; markDirty(true); sfx('back'); api.close(); import('./home.js').then(m => m.restoreHome()); };
+    reset.onclick = () => { delete (shop ? shopStyles() : styles())[sc.id]; markDirty(true); sfx('back'); api.close(); if (shop) location.reload(); else import('./home.js').then(m => m.restoreHome()); };
+    if (shop) reset.textContent = T('Back to the original look (reloads)', 'Về như ban đầu (tải lại)');
     body.appendChild(reset);
   } });
 }

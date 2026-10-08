@@ -14,6 +14,7 @@ import {addXP } from './progress.js';
 import { COUNTS } from '../core/counts.js';
 import { recordCost } from './ledger.js';
 import { toast } from '../ui/hud.js';
+import { wearUniform } from '../ui/uniform.js';
 
 // ---------------------------------------------------------------- places, rent & property
 // payback: how many days of rent the property costs to buy (90–130 days after the
@@ -155,6 +156,7 @@ function keeperLook(id, k) {
   delete look.backpack; delete look.camera; delete look.tote; delete look.guitar; delete look.surf; delete look.suitcase;
   const w = workOf(id), st = bizOf(id);
   look.hat = k.head ? 'chef' : w.hat; look.hatColor = k.head ? '#fffdf8' : st.signCol || st.awning?.[1] || '#f28f7c'; look.hatRibbon = '#fff6e6';
+  wearUniform(look, id); if (k.head) { look.hat = 'chef'; look.hatColor = '#fffdf8'; }   // (your uniform; the head keeper keeps the chef's hat)
   return look;
 }
 function placeKeeper(id, a) {
@@ -198,6 +200,7 @@ function animateKeeper(id, a, dt, serving) {
   d.workT = side ? rand(1.2, 2) : rand(2.5, 5);
 }
 export const keeperActor = id => actors[id] || null;
+bus.on('uniform', id => { const a = actors[id], k = keeperOf(id); if (a && k) a.look = keeperLook(id, k); if (inside[id] && k) inside[id].look = keeperLook(id, k); });
 export function spawnKeepers() { for (const id of Object.keys(G.state.keepers || {})) spawnKeeperActor(id); }
 
 const keeperSold = {}; let keeperToastT = 240;

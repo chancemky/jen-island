@@ -22,6 +22,7 @@ import { eventBoost } from './interact.js';
 import { sfx } from '../core/audio.js';
 import { fx } from '../world/render.js';
 import { seasonServed } from './store.js';
+import { wearUniform } from '../ui/uniform.js';
 
 const TABLES = [[84, 214], [176, 214], [268, 214], [84, 290], [176, 290], [268, 290], [352, 214], [352, 290]];
 const STOVES = [[96, 112], [156, 112]];
@@ -159,11 +160,14 @@ export function fire(id) {
   if (a) { scene().remove(a); restRT().staff.delete(id); }
   markDirty(true);
 }
-export function setRole(id, role) { const e = bizOf('restaurant').employees.find(x => x.id === id); if (e) { e.role = role; e.wage = wageOf(e); const a = restRT().staff.get(id); if (a) { a.look = employeeLook(e.seed, role); a.data.task = null; a.data.busy = false; } markDirty(true); } }
+// the restaurant team's look: their role's outfit, in your uniform (the manager keeps the smart shirt)
+const staffLook = e => { const L = employeeLook(e.seed, e.role); if (e.role !== 'manager') wearUniform(L, 'restaurant'); if (e.role === 'cook') L.hat = 'chef'; return L; };
+bus.on('uniform', id => { if (id !== 'restaurant') return; for (const a of restRT().staff.values()) a.look = staffLook(a.data.emp); });
+export function setRole(id, role) { const e = bizOf('restaurant').employees.find(x => x.id === id); if (e) { e.role = role; e.wage = wageOf(e); const a = restRT().staff.get(id); if (a) { a.look = staffLook(e); a.data.task = null; a.data.busy = false; } markDirty(true); } }
 
 function spawnStaff(e) {
   const r = restRT(), sc = scene();
-  const a = new Actor({ kind: 'human', look: employeeLook(e.seed, e.role), name: e.name, x: 210, y: 360, speed: 40 + e.stats.speed * 7 + (e.trait === 'speedy' ? 10 : 0), data: { emp: e, task: null, busy: false, breakT: rand(80, 200) } });
+  const a = new Actor({ kind: 'human', look: staffLook(e), name: e.name, x: 210, y: 360, speed: 40 + e.stats.speed * 7 + (e.trait === 'speedy' ? 10 : 0), data: { emp: e, task: null, busy: false, breakT: rand(80, 200) } });
   a.talkable = true;
   sc.add(a);
   r.staff.set(e.id, a);

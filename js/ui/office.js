@@ -19,6 +19,8 @@ import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName
 import { daySheet, netWorth, lifetimeTotals, catName } from '../systems/ledger.js';
 import { dailyWages } from '../systems/restaurant.js';
 import { openStaffBoard } from './staff.js';
+import { openUniform } from './uniform.js';
+import { openRoomStyle } from '../systems/homestyle.js';
 
 // ---------------------------------------------------------------- the books
 function renderBooks(pane) {
@@ -101,6 +103,10 @@ export function renderOffice(pane, api) {
       toast({ text: T(`You now own ${placeName(id)}!`, `Bạn đã sở hữu ${placeName(id)}!`), sub: T('No more rent here, ever.', 'Không bao giờ phải trả tiền thuê ở đây nữa.'), icon: 'key' });
       api.rebuild();
     }, 'buy', !affordable));
+    if (id !== 'house' && G.state.biz[id]?.owned) {
+      if (canHaveKeeper(id) || id === 'restaurant') row.appendChild(btn(T('👕 Uniform', '👕 Đồng phục'), () => openUniform(id, placeName(id)), 'buy alt'));
+      const inner = G.scenes[id]; if (inner?.kind === 'interior') row.appendChild(btn(T('🎨 Interior', '🎨 Nội thất'), () => openRoomStyle(inner, true), 'buy alt'));
+    }
     if (canDecorateFront(id)) { const sc = scoreFront(id), n = (G.state.biz[id].decor || []).length; row.appendChild(btn(T(`Shop front${n ? ` · ${n}` : ''}`, `Mặt tiền${n ? ` · ${n}` : ''}`), () => { api.close(true); openShopFront(id); }, 'buy alt')); if (n) card.appendChild(h('div', 'oc-line dim', T(`Shop front draws +${Math.round((frontAttract(id) - 1) * 100)}% customers`, `Mặt tiền thu hút thêm ${Math.round((frontAttract(id) - 1) * 100)}% khách`))); void sc; }
     if (id !== 'house' && canHaveKeeper(id)) {
       const k = keeperOf(id);
