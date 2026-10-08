@@ -23,6 +23,7 @@ import { upgradeCost, shopNeed } from '../systems/economy.js';
 import { toast, moneyShortfall } from './hud.js';
 import { STEPS, STEP_TEACHES } from '../systems/story.js';
 import { openTideBook, CREATURE_COUNT, CONSTELLATIONS } from '../systems/nature.js';
+import { stampProgress, openStampCard } from '../systems/seasonal.js';
 
 const bagBtn = () => document.getElementById('bagBtn');
 const merchantSay = () => { const a = G.scene?.merchant; if (a) { a.showEmote('happy', 1.2); a.setEmo('happy', 1.5); a.doHop(60); } };
@@ -569,6 +570,8 @@ export function openJournal() {
     list.appendChild(h('div', 'empty-note', all.map(([k, v]) => found[k] ? `✓ ${escapeHtml(T(v[0], v[1]))}` : '· ???').join('<br>')));
     // nature collections: tide pool creatures and constellations
     { const tp = G.state.tidepool || {}, st = G.state.constellations || {};
+      list.appendChild(h('div', 'section-title', T('This season', 'Mùa này')));
+      { const sp = stampProgress(), n = sp.filter(x => x.done).length, r0 = rowEl({ icon: 'star', title: T(`Season stamp card · ${n}/6`, `Thẻ đóng dấu mùa · ${n}/6`), sub: sp.map(x => (x.done ? '✓ ' : '· ') + x.icon).join('  ') }); r0.style.cursor = 'pointer'; r0.onclick = () => openStampCard(); list.appendChild(r0); }
       list.appendChild(h('div', 'section-title', T('Nature', 'Thiên nhiên')));
       const r1 = rowEl({ icon: 'fish', title: T(`Tide pool friends · ${Object.keys(tp).length}/${CREATURE_COUNT}`, `Bạn bè hồ triều · ${Object.keys(tp).length}/${CREATURE_COUNT}`), sub: T('West end of Sunny Beach, at low tide (6–9, 17–20)', 'Cuối bãi biển phía tây, khi triều xuống (6–9, 17–20 giờ)') });
       r1.style.cursor = 'pointer'; r1.onclick = () => openTideBook(); list.appendChild(r1);

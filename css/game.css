@@ -976,3 +976,17 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
 .deco-tools { max-width: min(300px, calc(100vw - 16px)); }
 .deco-tools .btn { min-width: 38px; min-height: 38px; padding: 6px 9px; }
 .deco-nudge { flex-basis: auto; }
+
+.stamp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0 10px; }
+.stamp { border: 2.5px dashed #d9c3a2; border-radius: 16px; padding: 10px 6px; text-align: center; background: #fffaf0; display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.stamp i { font-style: normal; font-size: 26px; filter: grayscale(1); opacity: .45; }
+.stamp b { font-size: 12px; line-height: 1.2; } .stamp small { font-weight: 900; opacity: .6; }
+.stamp.done { border: 2.5px solid var(--pink2); background: #fff0f3; transform: rotate(-2deg); }
+.stamp.done i { filter: none; opacity: 1; }
+.card.letter { background: #fffdf5; background-image: repeating-linear-gradient(transparent 0 23px, rgba(160,190,220,.35) 23px 24px); }
+.card.letter p { font-size: 14px; }
+.yr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+.yr-stat { background: #fff5e1; border-radius: 14px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; }
+.yr-stat b { font-size: 20px; } .yr-stat small { font-size: 11px; font-weight: 800; opacity: .7; text-align: center; }
+.yr-photos { display: flex; gap: 6px; justify-content: center; margin-bottom: 8px; } .yr-photos img { width: 30%; border-radius: 8px; border: 3px solid #fff; box-shadow: 0 2px 0 rgba(0,0,0,.15); transform: rotate(-2deg); }
+.uni-preview { width: 120px; height: 120px; margin: 0 auto 4px; display: block; background: radial-gradient(circle at 50% 60%, #fff6e2, #f8dcc4); border-radius: 50%; border: 3px solid var(--ink); }

@@ -13,7 +13,7 @@ import { INK } from '../gfx/draw.js';
 import { ingName, matName, INGREDIENTS } from '../data/game.js';
 import { addXP } from './progress.js';
 import { questOption, questTalk } from './sidequests.js';
-import { islandDay } from '../core/util.js';
+import { islandDay, bus } from '../core/util.js';
 
 // ---------------------------------------------------------------- jokes
 export const JOKES = [
@@ -197,7 +197,7 @@ async function giveResidentGift(a, rid) {
   const loved = likes.includes(k), pts = (loved ? 4 : 1) * (bday ? 2 : 1) + (bday ? 1 : 0);
   s.friends[rid] = (s.friends[rid] || 0) + pts;
   a.setEmo('love', 2.5); a.showEmote('heart', 1.8); a.doHop?.(60); sfx(loved ? 'success' : 'pop');
-  import('./interact.js').then(m => m.discover('gift'));
+  import('./interact.js').then(m => m.discover('gift')); bus.emit('gift', rid);
   await say(a, bday ? (loved ? T('For my birthday — and it\'s my favourite! You remembered!', 'Quà sinh nhật — lại đúng món {me} thích nhất! {You} nhớ luôn!') : T('A birthday present! Thank you, that\'s so thoughtful.', 'Quà sinh nhật! Cảm ơn {you}, chu đáo quá.')) : loved ? T('Oh! This is exactly what I like. How did you know?', 'Ơ! Đúng món {me} thích luôn. Sao {you} biết vậy?') : T('For me? Thank you!', 'Cho {me} hả? Cảm ơn nha!'), { emo: 'happy' });
 }
 

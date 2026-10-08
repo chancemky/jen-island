@@ -90,6 +90,7 @@ import { bus, dist, clamp, sleep, choice, money, rand, clock, devHost, nativeApp
 import { LIGHT } from './gfx/props.js';
 import { homePieces } from './data/sets.js';
 import { initHomeContest, applyShopStyles } from './systems/homestyle.js';
+import { initSeasonal } from './systems/seasonal.js';
 
 const $ = id => document.getElementById(id);
 const bootBar = $('bootBar'), bootMsg = $('bootMsg');
@@ -163,7 +164,7 @@ async function boot() {
   initBadges();
   initSocial();
   initBoard();
-  initNotify(); initReview(); initRare(); initTips(); initSmoothieIntro(); initStorefront(); initParties(); initNature(); initHomeContest();
+  initNotify(); initReview(); initRare(); initTips(); initSmoothieIntro(); initStorefront(); initParties(); initNature(); initHomeContest(); initSeasonal();
   setTimeout(initWeekBoard, 4000);          // after the morning mail settles
   showMorningMail();
   festivalGift();

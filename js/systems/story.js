@@ -25,7 +25,7 @@ import { bus, rand, choice, dist, sleep, money, moneyShort } from '../core/util.
 import { rt as bizRT, openBiz as openShop } from './business.js';
 import { availableRecipes } from '../ui/shops.js';
 import { questOption, questTalk } from './sidequests.js';
-import { morningEvent, birthdaysToday } from './interact.js';
+import { morningEvent, birthdaysToday, BIRTHDAYS } from './interact.js';
 import { npcs } from './npc.js';
 import { playCinematic } from './cinematic.js';
 import * as cloud from './cloud.js';
@@ -670,7 +670,8 @@ async function afterFirstCustomers() {
 export async function morningHooks() {
   const s = G.state;
   morningEvent();
-  for (const rid of birthdaysToday()) toast({ text: T(`It's ${RESIDENTS[rid]?.name}'s birthday!`, `Hôm nay là sinh nhật ${RESIDENTS[rid]?.name}!`), sub: T('A little gift would make their day (chat → Give a gift).', 'Một món quà nhỏ sẽ làm họ vui cả ngày (trò chuyện → Tặng quà).'), icon: 'heart', ms: 4200 });
+  import('./seasonal.js').then(m => m.seasonalCheck());
+  for (const rid of birthdaysToday()) toast({ text: T(`It's ${RESIDENTS[rid]?.name}'s birthday!`, `Hôm nay là sinh nhật ${RESIDENTS[rid]?.name}!`), sub: T(`They love ${(BIRTHDAYS[rid]?.likes || []).map(k => ingName(k)).join(' and ')} — chat → Give a gift.`, `Họ thích ${(BIRTHDAYS[rid]?.likes || []).map(k => ingName(k)).join(' và ')} — trò chuyện → Tặng quà.`), icon: 'heart', ms: 5200 });
   if (S().step === 'grow' && !flag('ch3intro')) await wordSpreadingIntro();
   else if (availableRecipes().length && !flag('recipeNote' + s.day)) { setFlag('recipeNote' + s.day); toast({ text: T('Mèo Mây has a new recipe!', 'Mèo Mây có công thức mới!'), sub: T('Visit Mèo Mây\'s house to learn it.', 'Ghé nhà Mèo Mây để học nhé.'), icon: 'notebook' }); }
 }

@@ -144,7 +144,7 @@ function lookInPool() {
   const tot = CREATURES.reduce((a, c) => a + c.w, 0); let r = Math.random() * tot, got = CREATURES[0];
   for (const cr of CREATURES) { r -= cr.w; if (r <= 0) { got = cr; break; } }
   const col = (s.tidepool ||= {}), first = !col[got.id]; col[got.id] = (col[got.id] || 0) + 1;
-  discover('tidepool'); addXP(first ? 25 : 8, 'nature'); markDirty(true);
+  discover('tidepool'); bus.emit('tidepool', got.id); addXP(first ? 25 : 8, 'nature'); markDirty(true);
   G.player.setAct('think'); setTimeout(() => G.player.act === 'think' && G.player.setAct(null), 1200);
   sfx(first ? 'sparkle' : 'pop'); fx.burst('splash', TIDE.x, TIDE.y, 6, { up: 16, col: '#dff4ff' });
   bus.emit('toast', { text: T(`In the tide pool: a ${got.en.toLowerCase()}!`, `Trong hồ triều: ${got.vi.toLowerCase()}!`), sub: first ? T(`New for your collection · ${Object.keys(col).length}/${CREATURES.length}`, `Mới trong bộ sưu tập · ${Object.keys(col).length}/${CREATURES.length}`) : T('You watch it for a while, then leave it be.', 'Bạn ngắm nó một lúc rồi để nó yên.'), icon: 'fish', ms: 3400, now: true });
@@ -208,7 +208,7 @@ function stargaze() {
       let best = -1, bd = 60; P.forEach(([px, py], i) => { const d = Math.hypot(px - x, py - y); if (d < bd && !lit.has(i)) { bd = d; best = i; } });
       if (best < 0) return; lit.add(best); sfx('tap');
       if (lit.size === P.length && !won) {
-        won = true; sfx('fanfare'); const first = !seen[con.id]; seen[con.id] = s.day; discover('stars'); addXP(first ? 40 : 10, 'nature'); markDirty(true);
+        won = true; sfx('fanfare'); const first = !seen[con.id]; seen[con.id] = s.day; discover('stars'); bus.emit('stargazed', con.id); addXP(first ? 40 : 10, 'nature'); markDirty(true);
         msg.textContent = first ? T(`New constellation: ${con.en} · ${Object.keys(seen).length}/${CONSTELLATIONS.length}`, `Chòm sao mới: ${con.vi} · ${Object.keys(seen).length}/${CONSTELLATIONS.length}`) : T(`${con.en} — an old friend.`, `${con.vi} — người bạn cũ.`);
       }
     });

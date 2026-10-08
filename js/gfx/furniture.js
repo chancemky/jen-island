@@ -1499,3 +1499,27 @@ FURN_DRAW.fish_plaque = (c, t, p) => onWall(c, p, () => {
   circ(c, -8, -46, 1, INK, null); c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.ellipse(-2, -47, 5, 1.2, 0, 0, TAU); c.fill();
   box(c, -6, -38.5, 12, 3, 1, '#f2c14e', INK, 0.4);
 });
+
+// season stamp card prizes (systems/seasonal.js)
+FURN_DRAW.blossom_branch = (c, t, p) => {
+  shadow(c, 0, 1, 7, 2, 0.14); box(c, -5, -14, 10, 14, 4, '#6f9fc8', INK, 0.8); box(c, -5, -14, 10, 3, 1.5, '#8fb7e0', null);
+  limb(c, [0, -14, -4, -30, -9, -40], 1.4, '#6b4a36'); limb(c, [-3, -26, 6, -36], 1.1, '#6b4a36'); limb(c, [-6, -34, -2, -44], 0.9, '#6b4a36');
+  for (const [x, y] of [[-9, -40], [6, -36], [-2, -44], [-4, -30], [2, -32], [-7, -36], [4, -40]]) { flower(c, x, y, 2.2, '#f6a8c4'); }
+};
+FURN_DRAW.lotus_lamp = (c, t, p) => {
+  shadow(c, 0, 1, 8, 2, 0.14); ell(c, 0, -2, 8, 2.4, '#7fae4d', INK, 0.7);
+  for (const [dx, r, col] of [[-6, -0.6, '#f6a8c4'], [6, 0.6, '#f6a8c4'], [-3, -0.25, '#fbc8da'], [3, 0.25, '#fbc8da'], [0, 0, '#fde0ea']]) { c.save(); c.translate(dx * 0.6, -6); c.rotate(r); c.beginPath(); c.moveTo(0, 2); c.quadraticCurveTo(-4, -6, 0, -12); c.quadraticCurveTo(4, -6, 0, 2); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.6; c.stroke(); c.restore(); }
+  if (!p.off) { circ(c, 0, -8, 2, '#fff6c8', null); if (!p.preview) g(p, 0, -10, 26, 'rgba(255,200,220,.5)'); }
+};
+FURN_DRAW.harvest_basket = (c, t, p) => {
+  shadow(c, 0, 1, 10, 3, 0.16);
+  for (const [x, y, col] of [[-5, -12, '#e8584e'], [1, -14, '#f2c14e'], [6, -11, '#7fae4d'], [-1, -10, '#e3a52c'], [4, -15, '#c96b45']]) circ(c, x, y, 3, col, INK, 0.5);
+  poly(c, [-10, -9, 10, -9, 8, 0, -8, 0], '#c9955e', INK, 0.8); for (let i = 0; i < 3; i++) line(c, -9 + i * 0.5, -6 + i * 2.2, 9 - i * 0.5, -6 + i * 2.2, '#a8763f', 0.6);
+  c.beginPath(); c.arc(0, -9, 8, Math.PI, 0); c.strokeStyle = INK; c.lineWidth = 2; c.stroke(); c.strokeStyle = '#c9955e'; c.lineWidth = 1.1; c.stroke();
+};
+FURN_DRAW.warm_lantern = (c, t, p) => {
+  shadow(c, 0, 1, 7, 2, 0.14); box(c, -6, -3, 12, 3, 1, '#5a3a24', INK, 0.6);
+  box(c, -6, -20, 12, 17, 3, p.off ? '#c9a07a' : '#ffcf7a', INK, 0.8); box(c, -7, -22, 14, 3, 1, '#8a5a3a', INK, 0.6);
+  for (const x of [-3, 0, 3]) line(c, x, -19, x, -4, 'rgba(140,90,40,.5)', 0.6);
+  if (!p.off) { const k = 0.6 + 0.4 * Math.sin(t * 3); circ(c, 0, -11, 2.4 * k, '#fff6c8', null); if (!p.preview) g(p, 0, -12, 28, 'rgba(255,190,110,.5)'); }
+};

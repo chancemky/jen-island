@@ -7,7 +7,7 @@ import { G, T, addMoney, canAfford } from './state.js';
 import { Actor } from '../world/actor.js';
 import { say, ask } from '../ui/dialogue.js';
 import { sfx } from '../core/audio.js';
-import { sleep, choice, money } from '../core/util.js';
+import { sleep, choice, money, bus } from '../core/util.js';
 import { addXP } from './progress.js';
 import { fx } from '../world/render.js';
 import { CART_CLOSED } from '../gfx/props.js';
@@ -96,7 +96,7 @@ export function updateVendors(dt) {
 // a treat, eaten on the spot: a few bites over ~3 seconds
 async function consume(v, item) {
   const pl = G.player;
-  lockInput('snack');
+  lockInput('snack'); bus.emit('vendorBuy', item.id);
   try {
     pl.face('down'); pl.bites = 0;
     pl.setAct(v.act, item.id);

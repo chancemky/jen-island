@@ -97,7 +97,7 @@ async function shoot(st) {
   const small = document.createElement('canvas'), sw = 480; small.width = sw; small.height = Math.round(sw * out.height / out.width);
   small.getContext('2d').drawImage(out, 0, 0, small.width, small.height);
   addPhoto(title, small.toDataURL('image/jpeg', 0.8));
-  s.stats.photos = (s.stats.photos || 0) + 1; markDirty(true); track('photo', { filter: st.filter, frame: st.frame, pose: st.pose });
+  s.stats.photos = (s.stats.photos || 0) + 1; markDirty(true); bus.emit('photo'); track('photo', { filter: st.filter, frame: st.frame, pose: st.pose });
   const blob = await new Promise(r => out.toBlob(r, 'image/jpeg', 0.92));
   const file = blob && new File([blob], `bistro-island-day-${s.day}.jpg`, { type: 'image/jpeg' });
   toast({ text: T('📷 Saved to your album', '📷 Đã lưu vào album'), sub: T('Menu → Goals → Album to see it.', 'Menu → Mục tiêu → Album để xem.'), icon: 'photo', ms: 2400 });
