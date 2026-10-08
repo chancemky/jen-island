@@ -19,6 +19,7 @@ import { addAnimal, removeAnimal } from './animals.js';
 import { addXP } from './progress.js';
 import { track } from './telemetry.js';
 import { say } from '../ui/dialogue.js';
+import { cam } from '../world/render.js';
 
 const R = () => (G.state.rare ||= { seen: {}, day: 0, today: null, critics: 0 });
 const say2 = (a, en, vi) => bus.emit('toast', { text: T(en, vi), icon: 'star', cls: 'ach', ms: 4200 });
@@ -82,8 +83,11 @@ let busker = null;
 function bringBusker() {
   const isl = G.scenes.island; if (!isl || busker) return false;
   const look = { ...visitorLook(31337, 'tourist'), guitar: true, hat: 'bucket', hatColor: '#6fbfb0', top: '#f7de8c', topStyle: 'tee', backpack: null, camera: null };
-  busker = new Actor({ kind: 'human', look, name: T('Busker', 'Nghệ sĩ đường phố'), x: PLAZA.x - 70, y: PLAZA.y + 76, data: { onTalk: tipBusker, special: 'busker' } });
-  busker.talkable = true; busker.face('down'); isl.add(busker);
+  // walks in from out of sight (the ferry path), then sets up by the fountain
+  const spot = [PLAZA.x - 70, PLAZA.y + 76], v = cam.view, from = [[PLAZA.x, PLAZA.y + 520], [PLAZA.x - 520, PLAZA.y + 60], [PLAZA.x + 520, PLAZA.y]].find(([x, y]) => !v || x < v.x || x > v.x + v.w || y < v.y || y > v.y + v.h) || [PLAZA.x, PLAZA.y + 520];
+  busker = new Actor({ kind: 'human', look, name: T('Busker', 'Nghệ sĩ đường phố'), x: from[0], y: from[1], data: { onTalk: tipBusker, special: 'busker' } });
+  busker.talkable = true; isl.add(busker);
+  busker.walkTo(isl.nav.path(from[0], from[1], spot[0], spot[1]).concat([spot])).then(() => busker?.face('down'));
   busker.tune = setInterval(() => { if (!busker) return; busker.showEmote('note', 1.4); busker.setAct(chance(0.5) ? 'dance' : null); }, 3000);
   R().today = { id: 'busker' };
   bus.emit('toast', { cat: 'island', text: T('A busker is playing by the fountain', 'Có nghệ sĩ đường phố đang đàn bên đài phun nước'), sub: T('Wind Plaza, today only.', 'Quảng trường gió, chỉ hôm nay.'), icon: 'note', ms: 4600 });

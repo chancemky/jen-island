@@ -106,7 +106,7 @@ function pose(a, t, yaw) {
     case 'cheer': { const k = Math.abs(Math.sin(t * 9)); aim(0, -SHO_X - 2.4, SHO_Y + 6.6 + k * 1.4, 1); aim(1, SHO_X + 2.4, SHO_Y + 6.6 + k * 1.4, 1); break; }
     case 'think': aim(1, 2.2, SHO_Y + 3.4, 5.4); P.headTilt += 0.1; break;
     case 'carry': aim(0, -2.6, SHO_Y - 3, 5); aim(1, 2.6, SHO_Y - 3, 5); P.held = a.held; P.heldHand = 'both'; break;
-    case 'drink': case 'eat': { const k = (Math.sin(at * 2.2) + 1) / 2, up = k > 0.72; aim(1, 1.6, up ? SHO_Y + 4 : SHO_Y - 4, up ? 6.4 : 4.6); P.held = a.held || (act === 'drink' ? 'cup' : 'bowl'); if (up && act === 'eat') P.chew = true; break; }
+    case 'drink': case 'eat': { const k = (Math.sin(at * 2.2) + 1) / 2, up = k > 0.72; aim(1, 1.6, up ? SHO_Y + 4 : SHO_Y - 4, up ? 6.4 : 4.6); P.held = a.held || (act === 'drink' ? 'cup' : 'bowl'); P.sip = up; if (up && act === 'eat') P.chew = true; break; }
     case 'hold': aim(1, 3, SHO_Y - 4, 4.8); P.held = a.held; break;
     case 'chop': case 'work': aim(1, 3, SHO_Y - 3 + Math.abs(Math.sin(at * 14)) * 2.6, 5.2); aim(0, -2.6, SHO_Y - 4, 4.6); P.held = act === 'chop' ? 'knife' : a.held; break;
     case 'stir': aim(1, 2 + Math.cos(at * 8) * 1.6, SHO_Y - 3.4, 5 + Math.sin(at * 8) * 1.2); aim(0, -2.8, SHO_Y - 4, 4.4); P.held = 'ladle'; break;
@@ -877,6 +877,12 @@ export function drawVillager(c, a, t) {
       if (facing < -0.3) {
         const hc = proj(S.head), side = Math.sign(Math.cos(yaw) * -1) || 1;
         if (Math.hypot(hx - hc[0], hy - hc[1]) < HR + 3) { hx = hc[0] + side * (HR + 2.5); if (P.held === 'hammer') hy = Math.min(hy, hc[1] - 2); circ(c, hx, hy, 1.85, L.skin, INK, 0.9); }   // the hand holding it
+      }
+      // a sip or a bite: the cup / bowl goes to the mouth — just in front of the face, never into the head
+      if (P.sip && facing > -0.3) {
+        const hc = proj(S.head), fwd = Math.sin(yaw);
+        hx = hc[0] + fwd * HR * 0.95; hy = hc[1] + HR * (0.62 - 0.12 * Math.abs(fwd));
+        circ(c, hx + (fwd >= 0 ? 1.4 : -1.4), hy + 2.2, 1.85, L.skin, INK, 0.9);   // the hand under it
       }
       drawHeld(c, P.held, hx, hy, t, facing > -0.2 ? 'front' : 'back', P);
     }

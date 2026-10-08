@@ -952,3 +952,7 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
 .chip-row .chip:not(.on) { text-decoration: line-through; }
 
 .link-btn { background: none; border: 0; color: #9a8070; font: 800 12px Nunito, sans-serif; text-decoration: underline; padding: 6px 2px; margin-top: 2px; min-height: 32px; cursor: pointer; }
+
+/* pop-up cards never run off a small screen: they scroll instead */
+.modal .card { max-height: calc(100% - 8px); overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; }
+.modal .card canvas { touch-action: none; }

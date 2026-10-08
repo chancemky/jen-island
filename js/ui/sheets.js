@@ -20,6 +20,7 @@ export function openSheet({ title, sub = '', who = null, cls = '', full = false,
   root.appendChild(wrap);
   const sheet = wrap.querySelector('.sheet'), body = wrap.querySelector('.sheet-body');
   body.style.display = 'flex'; body.style.flexDirection = 'column'; body.style.minHeight = '0'; body.style.flex = '1';
+  body.classList.add('scroll');      // (sheets without their own scrolling list — the postcard, the tide book… — still scroll when tall)
   if (who) portrait(wrap.querySelector('.who canvas'), who);
   ui.open++; if (pauseTime) G.runtime.pause++;
   document.body.classList.add('sheet-open');

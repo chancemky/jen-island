@@ -61,7 +61,7 @@ function vendorHours(v, a) {
     if (a.sit) { a.sit = false; a.seatH = undefined; }
     a.setAct(null); a.talkable = false; d.walking = true;
     const door = homeDoor(v);
-    a.walkTo(island.nav.path(a.x, a.y, door.x, door.y)).then(() => { a.visible = false; d.away = true; d.walking = false; });
+    a.walkTo(island.nav.path(a.x, a.y, door.x, door.y)).then(() => { a.fadeHide = true; d.away = true; d.walking = false; });   // (fades at her door)
     return true;
   }
   if (open && d.away && !d.walking) {

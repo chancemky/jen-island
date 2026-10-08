@@ -14,7 +14,7 @@ import { nightBuzz } from './nightlife.js';
 import { bus, rand, randi, choice, chance, clamp, dist, clock } from '../core/util.js';
 import { sfx } from '../core/audio.js';
 import { applyPronouns, customerProfile } from './pronouns.js';
-import { fx } from '../world/render.js';
+import { fx, cam } from '../world/render.js';
 import { recordSale } from './ledger.js';
 import { recordUse } from './economy.js';
 import { eventBoost } from './interact.js';
@@ -221,7 +221,10 @@ export function spawnCustomer(bizId, opts = {}) {
     const qx = q[0][0], qy = q[0][1];
     const [lo, hi] = r.first ? [70, 140] : [100, 210];
     const nodes = island.nav.nodes.filter(n => n.tags.has('path') && dist(n.x, n.y, qx, qy) > lo && dist(n.x, n.y, qx, qy) < hi);
-    const start = opts.from || (nodes.length ? choice(nodes) : island.nav.nearest(qx, qy));
+    // (preferably out of sight, a bit further along the paths: nobody pops up in front of you)
+    const v = cam.view, hidden = n => !v || n.x < v.x - 30 || n.x > v.x + v.w + 30 || n.y < v.y - 30 || n.y > v.y + v.h + 30;
+    const far = island.nav.nodes.filter(n => n.tags.has('path') && hidden(n) && dist(n.x, n.y, qx, qy) > lo && dist(n.x, n.y, qx, qy) < hi + 260);
+    const start = opts.from || (far.length ? choice(far) : nodes.length ? choice(nodes) : island.nav.nearest(qx, qy));
     actor = new Actor({ kind: 'human', look, x: start.x, y: start.y, speed: personality === 'rushed' ? 90 : personality === 'elder' ? rand(44, 52) : personality === 'kid' ? rand(84, 96) : rand(72, 82), data: { customer: true } });
     island.add(actor);
     actor.alpha = 0; actor.fadeIn = true;
