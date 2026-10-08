@@ -3,7 +3,7 @@
 
 import { Scene } from './scene.js';
 import { F } from '../gfx/furniture.js';
-import { INK, circ, box, line, text } from '../gfx/draw.js';
+import { INK, circ, box, line, text, poly } from '../gfx/draw.js';
 import { shade, rng, TAU } from '../core/util.js';
 import { LIGHT } from '../gfx/props.js';
 import * as PR from '../gfx/props.js';
@@ -25,13 +25,14 @@ export class Interior extends Scene {
     this.fitW = o.fitW || this.w + 26;
     this.entry = { x: this.door.x, y: this.h - 14 };
     this.building = o.building;
+    this.noDoor = !!o.noDoor;         // an upstairs or a basement: no way out but the stairs
     // exit through the doorway: the mat and a step either side of it, so Leave is there wherever you stand by the door
-    this.trigger({ id: 'exit', kind: 'exit', x: this.door.x - this.door.w / 2 - 14, y: this.h - 22, w: this.door.w + 28, h: 38 });
+    if (!this.noDoor) this.trigger({ id: 'exit', kind: 'exit', x: this.door.x - this.door.w / 2 - 14, y: this.h - 22, w: this.door.w + 28, h: 38 });
     this.front = this.prop({ x: 0, y: this.h + 2, sortY: this.h + 2, draw: (c, t) => this.drawLedge(c, t), cull: { x: -10, y: this.h - 20, w: this.w + 20, h: 40 } });
     this.doorOpen = 0;
   }
   terrain(x, y) {
-    const inDoor = Math.abs(x - this.door.x) < this.door.w / 2 - 2 && y < this.h + 18;
+    const inDoor = !this.noDoor && Math.abs(x - this.door.x) < this.door.w / 2 - 2 && y < this.h + 18;
     return x > 10 && x < this.w - 10 && y > this.WH + 6 && (y < this.h - 3 || inDoor);
   }
   furn(kind, x, y, o = {}, solid = null) {
@@ -56,7 +57,7 @@ export class Interior extends Scene {
     else if (this.floorStyle === 'concrete') { const R = rng(3); for (let i = 0; i < 120; i++) { c.fillStyle = 'rgba(0,0,0,.05)'; c.fillRect(R() * w, WH + R() * (h - WH), 3, 2); } }
     else if (this.floorStyle === 'rubber') { c.strokeStyle = shade(this.floor, -14); c.lineWidth = 1.2; for (let x = 6; x < w; x += 8) { c.beginPath(); c.moveTo(x, WH); c.lineTo(x, h); c.stroke(); } }
     // soft light pool from the door and a vignette
-    const g = c.createRadialGradient(this.door.x, h, 10, this.door.x, h, 140); g.addColorStop(0, 'rgba(255,240,200,.28)'); g.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = g; c.fillRect(0, WH, w, h - WH);
+    if (!this.noDoor) { const g = c.createRadialGradient(this.door.x, h, 10, this.door.x, h, 140); g.addColorStop(0, 'rgba(255,240,200,.28)'); g.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = g; c.fillRect(0, WH, w, h - WH); }
     c.fillStyle = 'rgba(80,50,40,.12)'; c.fillRect(0, WH, w, 10);
     c.restore();
     // back wall
@@ -83,11 +84,13 @@ export class Interior extends Scene {
     box(c, w - 2, 0, 10, h + 10, 3, shade(this.wall, -30), INK, 1.2);
     if (this.outside) this.drawOutside(c, t);
     // doormat is part of the floor so feet never slip under it
+    if (this.noDoor) return;
     box(c, this.door.x - this.door.w / 2 + 1, this.h - 14, this.door.w - 2, 12, 3, '#e89a8a', INK, 0.8);
     c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1; for (let i = 1; i < 4; i++) { const x = this.door.x - this.door.w / 2 + 1 + i * (this.door.w - 2) / 4; c.beginPath(); c.moveTo(x, this.h - 12); c.lineTo(x, this.h - 4); c.stroke(); }
   }
   // ---- 1: an unmistakable way out: glowing doorway, frame and a bouncing EXIT arrow
   drawOver(c, v, t) {
+    if (this.noDoor) return;
     const { door, h } = this, pl = G.player;
     const near = pl && Math.hypot(pl.x - door.x, pl.y - h) < 70;
     const k = near ? 1 : 0.7;
@@ -114,6 +117,7 @@ export class Interior extends Scene {
     const { w, h, door } = this;
     const L = door.x - door.w / 2, R = door.x + door.w / 2;
     const ledge = (x0, x1) => { box(c, x0, h - 2, x1 - x0, 12, 2, shade(this.wall, -26), INK, 1.2); c.fillStyle = 'rgba(0,0,0,.1)'; c.fillRect(x0 + 1, h + 6, x1 - x0 - 2, 3); };
+    if (this.noDoor) { ledge(-8, w + 8); return; }
     if (!this.noLedgeLeft) ledge(-8, L); else ledge(this.ledgeFrom, L);
     ledge(R, w + 8);
     // door frame + mat
@@ -146,6 +150,55 @@ export function buildHouse(level = 0) {
   if (level >= 2) { r.wallItem('window', w - 90, { w: 46, h: 28, hgt: 54, curtain: '#f7de8c' }); r.wallItem('familyPhoto', mid - 120); }
   r.bedPos = { x: 46, y: 88 };
   r.decorArea = { x: 16, y: 104, w: w - 32, h: 178 };
+  return r;
+}
+// ---- the upstairs and the basement (systems/home.js): rooms with no front door, joined to
+// the ground floor by stairs. `stairs` says where each flight stands in that room.
+export const FLOOR_SIZES = [0, 360, 450];
+export const STAIRS = { house: { up: { x: -40 }, down: { x: 172 } }, house_up: { down: { x: -40 } }, house_down: { up: { x: 172 } } };
+export const stairsX = (sc, which) => { const x = STAIRS[sc.id]?.[which]?.x; return x == null ? null : x < 0 ? sc.w + x : x; };
+export function drawStairs(c, t, p) {
+  const { x, y } = p, w = 44;
+  if (p.dir === 'up') {                                       // a flight rising to the floor above, against the back wall
+    box(c, x - w / 2 - 3, y - 50, 5, 50, 1.5, '#8a5a3a', INK, 0.9);
+    for (let i = 6; i >= 0; i--) { const sy = y - 7 - i * 6.6, d = 1 - i * 0.05; box(c, x - (w / 2) * d, sy, w * d, 7, 1.5, i % 2 ? '#c98f5a' : '#d9a06a', INK, 0.8); c.fillStyle = 'rgba(255,255,255,.22)'; c.fillRect(x - (w / 2) * d + 1, sy + 0.6, w * d - 2, 1.2); }
+    c.fillStyle = 'rgba(40,25,20,.55)'; c.fillRect(x - w / 2 + 3, y - 60, w - 6, 12);           // the opening above
+    line(c, x + w / 2 + 2, y - 2, x + w / 2 - 6, y - 52, '#6b4a36', 2.2); for (let i = 0; i < 5; i++) { const k = i / 4; line(c, x + w / 2 + 2 - k * 8, y - 2 - k * 50, x + w / 2 + 2 - k * 8, y - 14 - k * 50, '#6b4a36', 1); }
+    const bob = Math.sin(t * 3) * 1.5; poly(c, [x - 5, y - 30 + bob, x + 5, y - 30 + bob, x, y - 38 + bob], 'rgba(255,255,255,.85)', INK, 0.6);
+  } else {                                                    // a flight going down: a railed opening in the floor
+    c.save(); c.beginPath(); c.rect(x - w / 2, y - 36, w, 34); c.clip();
+    const g = c.createLinearGradient(0, y - 36, 0, y); g.addColorStop(0, '#2b1d17'); g.addColorStop(1, '#5a3e2e'); c.fillStyle = g; c.fillRect(x - w / 2, y - 36, w, 34);
+    for (let i = 0; i < 5; i++) { const sy = y - 6 - i * 7; c.fillStyle = `rgba(217,160,106,${0.85 - i * 0.16})`; c.fillRect(x - w / 2 + 3, sy, w - 6, 3); }
+    c.restore(); box(c, x - w / 2, y - 36, w, 34, 2, null, INK, 1);
+    for (const sx of [-1, 1]) { line(c, x + sx * (w / 2 + 2), y - 2, x + sx * (w / 2 + 2), y - 36, '#6b4a36', 1.8); for (const yy of [y - 2, y - 19, y - 36]) line(c, x + sx * (w / 2 + 2), yy, x + sx * (w / 2 + 2), yy - 12, '#6b4a36', 1); line(c, x + sx * (w / 2 + 2), y - 14, x + sx * (w / 2 + 2), y - 48, '#8a5a3a', 1.6); }
+    line(c, x - w / 2 - 2, y - 48, x - w / 2 - 2, y - 14, '#8a5a3a', 1.6);
+    const bob = Math.sin(t * 3) * 1.5; poly(c, [x - 5, y - 24 + bob, x + 5, y - 24 + bob, x, y - 16 + bob], 'rgba(255,255,255,.85)', INK, 0.6);
+  }
+}
+// put a flight of stairs into a room: drawn, solid, and an action spot in front of it
+export function addStairs(r, which, to, label) {
+  const x = stairsX(r, which); if (x == null) return;
+  const y = r.WH + 46, p = { kind: 'stairs', stairs: which, x, y, dir: which, draw: (c, t) => drawStairs(c, t, { x: 0, y: 0, dir: which }), cull: { x: x - 40, y: y - 70, w: 80, h: 80 } };
+  r.prop(p); r.solid(x - 24, y - 40, 48, 40, { stairs: which });
+  r.trigger({ id: 'stairs_' + which, kind: 'act', x: x - 26, y, w: 52, h: 22, label: label[1], en: label[0], icon: which === 'up' ? 'arrow_up' : 'arrow_down', action: 'floor:' + to, stairs: which });
+}
+export function buildFloor(which, level) {
+  const w = FLOOR_SIZES[Math.min(level, 2)] || FLOOR_SIZES[1], up = which === 'up', id = up ? 'house_up' : 'house_down';
+  const r = new Interior(up
+    ? { id, name: 'Tầng trên', w, h: 300, WH: 64, wall: '#e6eef7', wall2: '#dbe5f1', wallStyle: 'dots', floor: '#c98f5a', door: { x: w / 2, w: 30 }, noDoor: true, building: 'house' }
+    : { id, name: 'Tầng hầm', w, h: 300, WH: 64, wall: level >= 2 ? '#e9dccb' : '#ddd0c0', wall2: '#d3c4b2', wallStyle: 'brick', floor: level >= 2 ? '#b08158' : '#bdb2a3', floorStyle: level >= 2 ? 'wood' : 'concrete', door: { x: w / 2, w: 30 }, noDoor: true, building: 'house' });
+  if (up) {
+    r.wallItem('window', w / 2 - 40, { w: 46, h: 28, hgt: 54, curtain: '#c9b6e8' });
+    if (level >= 2) { r.wallItem('window', w / 2 + 60, { w: 70, h: 34, hgt: 56, curtain: '#f4a9b8' }); r.wallItem('familyPhoto', 60); }
+    addStairs(r, 'down', 'house', ['Go downstairs', 'Xuống lầu']);
+  } else {
+    r.wallItem('window', w / 2 + 40, { w: 34, h: 14, hgt: 58, curtain: '#e6d3b0' });        // a little window high up at ground level
+    if (level >= 2) r.wallItem('window', w - 70, { w: 34, h: 14, hgt: 58, curtain: '#e6d3b0' });
+    addStairs(r, 'up', 'house', ['Go upstairs', 'Lên lầu']);
+  }
+  r.entry = { x: stairsX(r, up ? 'down' : 'up'), y: r.WH + 70 };
+  r.decorArea = { x: 16, y: 104, w: w - 32, h: 178 };
+  r.homeFloor = which;
   return r;
 }
 export function buildInteriors() {

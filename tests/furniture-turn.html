@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap">
+<style>body{margin:0;background:#fbf3e4;font:800 12px Nunito,sans-serif;color:#5b3f36}.row{display:flex;gap:8px;align-items:end;padding:6px 10px;border-bottom:1px solid #ecd9bb}.row b{width:130px}canvas{background:#f3e3c8;border-radius:6px}</style></head><body>
+<script type="module">
+// Art check for turning: each row shows a piece from the front, turned right, from the back and
+// turned left (as decorate.js draws them), with its footprint outlined. ?ids=a,b (default: all floor pieces)
+import { FURN_DRAW, SIDE, drawSide, drawBack } from '../js/gfx/furniture.js';
+import { FURNITURE } from '../js/data/game.js';
+const q = new URLSearchParams(location.search), ids = (q.get('ids') || Object.keys(FURNITURE).filter(k => !FURNITURE[k].wall && !FURNITURE[k].floor).join(',')).split(',');
+for (const id of ids) {
+  const def = FURNITURE[id], row = document.createElement('div'); row.className = 'row'; row.innerHTML = `<b>${id}${SIDE[id] ? '' : ' (mirror)'}</b>`; document.body.appendChild(row);
+  for (const rot of [0, 1, 2, 3]) {
+    const cv = document.createElement('canvas'), S = 2; cv.width = 120 * S; cv.height = 110 * S; cv.style.width = '120px';
+    const c = cv.getContext('2d'); c.lineJoin = c.lineCap = 'round'; c.scale(S, S); c.translate(60, 96);
+    const side = rot % 2 && SIDE[id], fw = side ? def.h : def.w, fh = side ? def.w : def.h;
+    c.save(); c.setLineDash([2, 2]); c.strokeStyle = 'rgba(240,140,160,.8)'; c.strokeRect(-fw / 2, -fh, fw, fh); c.restore();
+    c.save();
+    if (side) { if (rot === 3) c.scale(-1, 1); drawSide(c, id, 0.5); }
+    else if (rot === 2 && SIDE[id]) drawBack(c, id, 0.5);
+    else { if (rot === 2) c.scale(-1, 1); FURN_DRAW[id]?.(c, 0.5, { x: 0, y: 0, ...def }); }
+    c.restore(); row.appendChild(cv);
+  }
+}
+window.__ready = true;
+</script></body></html>

@@ -28,6 +28,10 @@ export const DISCOVERIES = {
   garden: ['Grew something', 'Trồng cây'], trick: ['Taught a pet a trick', 'Dạy thú cưng làm xiếc'], meo_pet: ['Introduced Mèo Mây to a pet', 'Cho Mèo Mây gặp thú cưng'],
   fitting: ['Used the fitting room', 'Vào phòng thử đồ'], kitchen: ['Poked around a kitchen', 'Khám phá nhà bếp'], display: ['Browsed a shop display', 'Ngắm quầy trưng bày'],
   plaque: ['Read a plaque', 'Đọc bảng ghi chú'], gift: ['Gave a neighbour a gift', 'Tặng quà hàng xóm'], snack: ['Found a favourite snack', 'Tìm ra món vặt ruột'],
+  arcade: ['Played the arcade', 'Chơi máy game'], bird: ['Whistled to a canary', 'Huýt sáo với chim'], tea: ['Poured tea from the Bát Tràng set', 'Rót trà bộ Bát Tràng'],
+  games: ['Played a game at home', 'Chơi một ván ở nhà'], karaoke_home: ['Sang karaoke at home', 'Hát karaoke ở nhà'], laundry: ['Did the laundry', 'Giặt đồ'],
+  workout: ['Worked out', 'Tập thể dục'], chess: ['Played cờ tướng', 'Đánh cờ tướng'], incense: ['Lit incense for the ancestors', 'Thắp hương ông bà'],
+  sewing: ['Sewed something', 'May vá'], movie: ['Watched a film at home', 'Xem phim ở nhà'], craft: ['Fixed something at the workbench', 'Sửa đồ ở bàn thợ'],
 };
 COUNTS.discoveries = Object.keys(DISCOVERIES).length;
 export function discover(key) {
@@ -63,6 +67,25 @@ const ACTIONS = {
   arcade_cabinet: p => ({ label: T('Play a game', 'Chơi một ván'), icon: 'star', run: () => arcade(p) }),
   telescope: p => ({ label: T('Look through', 'Nhìn qua kính'), icon: 'star', run: () => stargaze() }),
   bird_cage: p => ({ label: T('Whistle to the bird', 'Huýt sáo với chim'), icon: 'note', run: () => { discover('bird'); sfx('sparkle'); G.player.setAct('wave'); setTimeout(() => G.player.act === 'wave' && G.player.setAct(null), 900); toast({ text: T('The canary sings back, very pleased with itself', 'Chim hoàng yến hót đáp lại, rất tự hào'), icon: 'note', ms: 1800 }); } }),
+  // the upstairs & basement collection
+  jukebox: p => ({ label: roomMusic() === 'record' ? T('Stop the jukebox', 'Tắt máy hát') : T('Pick a song', 'Chọn bài hát'), icon: 'note', run: () => { const on = roomMusic() !== 'record'; music(p, 'record'); stateOf(p).off = !on; p.off = !on; markDirty(); } }),
+  karaoke_set: p => ({ label: T('Sing a song', 'Hát một bài'), icon: 'note', run: () => homeKaraoke(p) }),
+  projector_screen: p => ({ label: T('Watch a film', 'Xem phim'), icon: 'star', run: () => homeFilm(p) }),
+  pool_table: p => ({ label: T('Play pool', 'Chơi bi-a'), icon: 'star', run: () => homeGame(p, 'pool') }),
+  foosball: p => ({ label: T('Play foosball', 'Chơi bi lắc'), icon: 'star', run: () => homeGame(p, 'foosball') }),
+  ping_pong: p => ({ label: T('Play ping-pong', 'Chơi bóng bàn'), icon: 'star', run: () => homeGame(p, 'pingpong') }),
+  dartboard: p => ({ label: T('Throw darts', 'Ném phi tiêu'), icon: 'star', run: () => homeGame(p, 'darts') }),
+  co_tuong_table: p => ({ label: T('Play cờ tướng', 'Đánh cờ tướng'), icon: 'star', run: () => homeGame(p, 'chess') }),
+  washing_machine: p => ({ label: T('Do the laundry', 'Giặt đồ'), icon: 'shirt', run: () => { discover('laundry'); sfx('splash'); stateOf(p).spin = G.state.day; markDirty(); toast({ text: T('The washing goes round and round', 'Máy giặt quay vòng vòng'), sub: T('Your clothes will smell of sea breeze.', 'Quần áo sẽ thơm mùi gió biển.'), icon: 'shirt', ms: 2400, now: true }); } }),
+  treadmill: p => ({ label: T('Go for a run', 'Chạy bộ'), icon: 'star', run: () => workout(p, 'run') }),
+  weights_rack: p => ({ label: T('Lift weights', 'Nâng tạ'), icon: 'star', run: () => workout(p, 'lift') }),
+  altar_cabinet: p => ({ label: T('Light incense', 'Thắp hương'), icon: 'lantern', run: () => incense(p) }),
+  sewing_table: p => ({ label: T('Sew', 'May vá'), icon: 'shirt', run: () => { discover('sewing'); sfx('click'); G.player.setAct('work'); setTimeout(() => { G.player.setAct(null); toast({ text: T(choice(['You patch a hole in your favourite apron', 'You hem a pair of trousers — perfect length', 'You sew a tiny scarf for Mèo Mây']), choice(['Bạn vá lỗ thủng trên tạp dề yêu thích', 'Bạn lên lai một chiếc quần — vừa khít', 'Bạn may một chiếc khăn tí hon cho Mèo Mây'])), icon: 'shirt', ms: 2400, now: true }); }, 1400); } }),
+  workbench: p => ({ label: T('Tinker', 'Sửa đồ'), icon: 'wood', run: () => { discover('craft'); sfx('chop'); G.player.setAct('hammer'); setTimeout(() => { G.player.setAct(null); toast({ text: T('You fix the wobbly leg of an old stool', 'Bạn sửa cái chân ghế đẩu bị lung lay'), sub: T('Anh Khoa would be proud.', 'Anh Khoa chắc sẽ tự hào lắm.'), icon: 'wood', ms: 2400, now: true }); }, 1500); } }),
+  vanity: p => ACTIONS.wall_mirror(p), floor_mirror: p => ACTIONS.wall_mirror(p),
+  nightstand: p => ACTIONS.lamp(p), spinning_lantern: p => ACTIONS.lamp(p),
+  pantry_shelf: p => ({ label: T('Look', 'Xem'), icon: 'photo', run: () => say(null, T('Jars of pickled mustard greens, dried shrimp and Bà Tư\'s kumquat jam, every lid labelled.', 'Hũ dưa cải, tôm khô và mứt tắc của Bà Tư, nắp nào cũng có nhãn.')) }),
+  fish_sauce_barrels: p => ({ label: T('Sniff', 'Ngửi thử'), icon: 'fish', run: () => say(null, T('Chú Hải\'s fish sauce, aged a whole year. It smells like the sea decided to become dinner.', 'Nước mắm của Chú Hải, ủ tròn một năm. Mùi như biển quyết định biến thành bữa tối.')) }),
   tea_set: p => ({ label: T('Pour some tea', 'Rót trà'), icon: 'tea', run: () => { discover('tea'); sfx('pour'); G.player.setAct('drink', 'cup'); setTimeout(() => G.player.act === 'drink' && G.player.setAct(null), 2200); toast({ text: T('A small cup of hot tea. Everything slows down.', 'Một chén trà nóng nhỏ. Mọi thứ chậm lại.'), icon: 'tea', ms: 1800 }); } }),
   shelfJars: p => ({ label: T('Look', 'Xem'), icon: 'photo', run: () => display(p) }), flowerCooler: p => ACTIONS.shelfJars(p), flowerBuckets: p => ACTIONS.shelfJars(p),
 };
@@ -113,6 +136,40 @@ function feedFish(p) {
   else toast({ text: T('They\'ve eaten today — they look at you hopefully anyway', 'Hôm nay tụi nó ăn rồi — mà vẫn nhìn bạn đầy hy vọng'), icon: 'fish', ms: 1600 });
 }
 function lamp(p) { const st = stateOf(p); st.off = !st.off; p.off = st.off; markDirty(); sfx('click'); discover('lamp'); }
+// games at home: a quick match against Mèo Mây (who cheats a little), best score remembered
+const GAMES = {
+  pool: { act: 'work', sfx: 'pop', win: ['You sink the black ball off two cushions!', 'Bạn đánh bi đen vào lỗ sau hai lần dội băng!'], lose: ['Mèo Mây sits on the pocket. Somehow that counts.', 'Mèo Mây ngồi lên lỗ. Không hiểu sao vẫn tính.'] },
+  foosball: { act: 'work', sfx: 'tap', win: ['GOAL! A spin shot from the back row.', 'VÀO! Một cú xoay từ hàng hậu vệ.'], lose: ['Mèo Mây spins every rod at once and wins 10–9.', 'Mèo Mây xoay hết các thanh một lúc và thắng 10–9.'] },
+  pingpong: { act: 'wave', sfx: 'pop', win: ['A 14-shot rally, and you win it!', 'Một pha đôi công 14 cú, và bạn thắng!'], lose: ['The ball rolls under the sofa. Game over.', 'Quả bóng lăn xuống gầm sofa. Hết ván.'] },
+  darts: { act: 'wave', sfx: 'tap', win: ['Bullseye! First time ever.', 'Trúng hồng tâm! Lần đầu tiên luôn.'], lose: ['All three darts hit the 1. Consistent, at least.', 'Cả ba phi tiêu trúng ô số 1. Ít ra cũng đều tay.'] },
+  chess: { act: 'think', sfx: 'click', win: ['Checkmate with a cannon and a horse. Ông Lộc would approve.', 'Chiếu bí bằng pháo và mã. Ông Lộc chắc sẽ khen.'], lose: ['Mèo Mây takes your general and refuses to give it back.', 'Mèo Mây ăn tướng của bạn và nhất quyết không trả.'] },
+};
+async function homeGame(p, k) {
+  const gm = GAMES[k]; discover(k === 'chess' ? 'chess' : 'games');
+  G.player.setAct(gm.act); sfx(gm.sfx);
+  const st = stateOf(p), won = Math.random() < 0.55; st.wins = (st.wins || 0) + (won ? 1 : 0); st.played = (st.played || 0) + 1; markDirty();
+  setTimeout(() => { G.player.setAct(won ? 'cheer' : null); setTimeout(() => G.player.act === 'cheer' && G.player.setAct(null), 1200); sfx(won ? 'success' : 'pop');
+    toast({ text: T(...(won ? gm.win : gm.lose)), sub: T(`You've won ${st.wins} of ${st.played}`, `Bạn đã thắng ${st.wins}/${st.played} ván`), icon: 'star', ms: 2800, now: true }); }, 1300);
+}
+const SONGS_HOME = [['Biển nhớ', 'Biển nhớ'], ['A ballad about a ferry that left too early', 'Bài tình ca về chuyến phà đi quá sớm'], ['Bà Sáu\'s favourite: "Lantern moon"', 'Bài ruột của Bà Sáu: “Trăng lồng đèn”']];
+function homeKaraoke(p) {
+  discover('karaoke_home'); G.player.setAct('cheer'); sfx('fanfare'); const sc = 70 + Math.floor(Math.random() * 31), st = stateOf(p); st.best = Math.max(st.best || 0, sc); markDirty();
+  setTimeout(() => { G.player.setAct(null); toast({ text: T(`"${choice(SONGS_HOME)[0]}" — the machine says ${sc} points`, `“${choice(SONGS_HOME)[1]}” — máy chấm ${sc} điểm`), sub: sc >= 95 ? T('A perfect score! The machine plays fireworks.', 'Điểm tuyệt đối! Máy bắn pháo hoa.') : T(`Your best: ${st.best}`, `Kỷ lục: ${st.best}`), icon: 'note', ms: 3000, now: true }); }, 1600);
+}
+async function homeFilm(p) {
+  discover('movie'); const st = stateOf(p); st.off = false; p.off = false; sfx('click');
+  await say(null, choice([T('An old black-and-white film about a girl who opens a noodle stall. You cry at the ending.', 'Phim đen trắng cũ về cô gái mở quán mì. Bạn khóc ở đoạn cuối.'), T('A documentary about whale sharks. Mèo Mây watches the whole thing, very seriously.', 'Phim tài liệu về cá nhám voi. Mèo Mây xem hết, rất nghiêm túc.'), T('A comedy where the hero keeps missing the ferry. You know the feeling.', 'Phim hài anh chàng cứ lỡ chuyến phà. Bạn hiểu cảm giác đó.')]));
+}
+function workout(p, how) {
+  discover('workout'); G.player.setAct(how === 'run' ? 'dance' : 'stretch'); sfx('whoosh');
+  const st = stateOf(p); st.n = (st.n || 0) + 1; markDirty();
+  setTimeout(() => { G.player.setAct(null); G.player.setEmo?.('happy', 1.5); toast({ text: how === 'run' ? T('A good run — 2 km without leaving home', 'Chạy được 2 km mà không cần ra khỏi nhà') : T('Ten reps! Carrying ice blocks will be easier now.', 'Mười lần! Khiêng đá cây giờ sẽ nhẹ hơn.'), sub: T(`Workouts: ${st.n}`, `Số buổi tập: ${st.n}`), icon: 'star', ms: 2400, now: true }); }, 1600);
+}
+async function incense(p) {
+  discover('incense'); sfx('sparkle'); G.player.face('up'); G.player.setAct('bow'); setTimeout(() => G.player.act === 'bow' && G.player.setAct(null), 1600);
+  fx.burst('dust', p.x + 4, p.y - 46, 5, { up: 20, col: '#e6e6e6', life: 1.6 });
+  await say(null, T('You light three sticks of incense and think of the people who made you who you are.', 'Bạn thắp ba nén hương và nhớ đến những người đã cho bạn trở thành chính mình.'));
+}
 async function arcade(p) {
   discover('arcade'); sfx('click'); G.player.face('up'); G.player.setAct('work');
   const score = 1000 + Math.floor(Math.random() * 9000), st = stateOf(p), best = Math.max(st.best || 0, score); st.best = best; markDirty();

@@ -29,6 +29,7 @@ import { morningEvent, birthdaysToday } from './interact.js';
 import { npcs } from './npc.js';
 import { playCinematic } from './cinematic.js';
 import * as cloud from './cloud.js';
+import { homePieces } from '../data/sets.js';
 
 const S = () => G.state.story;
 const island = () => scenes.island;
@@ -66,7 +67,7 @@ const regularGoals = () => [
 const growGoals = () => [
   [T('serve customers', 'phục vụ khách'), since('grow'), 50],
   [T('reputation', 'danh tiếng'), G.state.reputation, 40],
-  [T('furniture at home', 'nội thất ở nhà'), (G.state.home?.furniture || []).length, 3],
+  [T('furniture at home', 'nội thất ở nhà'), homePieces(G.state.home).length, 3],
   [T('cash on hand', 'tiền mặt đang có'), G.state.money, 1000, 1],
 ];
 const keeperGoals = () => [

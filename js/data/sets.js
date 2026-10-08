@@ -8,9 +8,15 @@ export const SETS = {
   cats:     { en: 'Cat Palace', vi: 'Lâu Đài Mèo', pieces: ['cat_tower', 'cat_bed', 'meo_plush'] },
   study:    { en: 'Quiet Study', vi: 'Góc Học Tập', pieces: ['bookshelf', 'lamp_table', 'telescope', 'clock'] },
   game:     { en: 'Game Room', vi: 'Phòng Giải Trí', pieces: ['arcade_cabinet', 'bean_bag', 'tv', 'radio'] },
+  bedroom:  { en: 'Dreamy Bedroom', vi: 'Phòng Ngủ Êm Đềm', pieces: ['bed_double', 'nightstand', 'vanity', 'floor_mirror'] },
+  basement: { en: 'Basement Hangout', vi: 'Tầng Hầm Vui Vẻ', pieces: ['pool_table', 'jukebox', 'foosball', 'dartboard'] },
+  workshop: { en: 'Handy Workshop', vi: 'Xưởng Nhỏ', pieces: ['workbench', 'tool_wall', 'washing_machine', 'pantry_shelf'] },
+  grandma:  { en: 'Grandma\'s House', vi: 'Nhà Bà Nội', pieces: ['sap_go', 'altar_cabinet', 'bonsai_rock', 'spinning_lantern'] },
 };
 export function setProgress(home) {
-  const placed = new Set((home?.furniture || []).map(f => f.id));
+  const placed = new Set(homePieces(home).map(f => f.id));   // (every floor counts)
   return Object.entries(SETS).map(([id, s]) => ({ id, ...s, have: s.pieces.filter(p => placed.has(p)).length, done: s.pieces.every(p => placed.has(p)) }));
 }
 export const comfortBonus = home => Math.min(0.08, setProgress(home).filter(s => s.done).length * 0.02);
+// every piece placed in a home, on every floor (ground floor, upstairs, basement)
+export function homePieces(home) { return [...(home?.furniture || []), ...Object.values(home?.rooms || {}).flat()]; }

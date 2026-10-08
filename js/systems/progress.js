@@ -10,6 +10,7 @@ import { BUSINESSES, FURNITURE, RECIPES, ACHIEVEMENTS } from '../data/game.js';
 import { CLOTHES, FREE_CLOTHES } from '../data/wardrobe.js';
 import { RESIDENTS } from '../data/looks.js';
 import { friendLevel, CLOSE_FRIEND } from './friends.js';
+import { homePieces } from '../data/sets.js';
 
 // ---------------------------------------------------------------- levels
 export const xpNeed = lv => Math.round(90 * Math.pow(lv, 1.5));   // XP to go from lv to lv+1
@@ -121,7 +122,7 @@ export const TRACKS = [
   finite({ id: 'stalls', icon: 'lantern', en: 'Night Market stalls', vi: 'Sạp Chợ Đêm', get: s => ['night', 'nm1', 'nm2', 'nm3', 'nm5', 'nm6'].filter(id => s.biz[id]?.owned).length, gifts: { last: { furniture: 'lantern_red' } } }, [1, 2, 4], () => 6),
   finite({ id: 'pets', icon: 'paw', en: 'Pets adopted', vi: 'Thú cưng nhận nuôi', get: s => (s.pets || []).length, gifts: { last: { furniture: 'cat_bed' } } }, [1, 2, 4, 6], () => COUNTS.pets || 9),
   { id: 'petlove', icon: 'heart', en: 'Pet affection', vi: 'Tình cảm thú cưng', get: s => (s.pets || []).reduce((a, p) => a + (p.love || 0), 0), tier: doubleOn([5, 20, 50, 120, 300]) },
-  { id: 'furniture', icon: 'sofa', en: 'Home decorated (pieces)', vi: 'Trang trí nhà (món)', get: s => Math.max(s.stats.furnMax || 0, (s.home?.furniture || []).length), tier: doubleOn([3, 8, 15, 25, 40]) },
+  { id: 'furniture', icon: 'sofa', en: 'Home decorated (pieces)', vi: 'Trang trí nhà (món)', get: s => Math.max(s.stats.furnMax || 0, homePieces(s.home).length), tier: doubleOn([3, 8, 15, 25, 40]) },
   finite({ id: 'quests', icon: 'star', en: 'Neighbours helped', vi: 'Giúp hàng xóm', get: s => Object.values(s.sideQuests || {}).filter(v => v === 'done').length, gifts: { last: { clothes: 'flower_crown' } } }, [1, 3, 6, 9, 15, 20], () => COUNTS.quests || 9),
   finite({ id: 'explore', icon: 'map', en: 'Places explored', vi: 'Nơi đã khám phá', get: s => Object.keys(s.explored || {}).length, gifts: { last: { clothes: 'camera' } } }, [3, 6, 10], () => COUNTS.areas || 15),
   finite({ id: 'homes', icon: 'heart', en: 'Homes visited', vi: 'Nhà đã ghé thăm', get: s => Object.keys(s.homesVisited || {}).length }, [1, 3, 6], () => COUNTS.homes || 8),

@@ -8,6 +8,7 @@
 import { G, T } from './state.js';
 import { bus } from '../core/util.js';
 import { BUSINESSES, INGREDIENTS, MATERIALS, FURNITURE } from '../data/game.js';
+import { homePieces } from '../data/sets.js';
 
 // reason passed to addMoney → category shown to the player
 const CAT = {
@@ -74,7 +75,7 @@ export function netWorth(propertyPrice) {
   let prop = 0; for (const id of Object.keys(s.property || {})) prop += propertyPrice ? propertyPrice(id) : 0;
   let stock = 0; for (const [k, n] of Object.entries(s.pantry || {})) stock += (INGREDIENTS[k]?.cost || 0) * n;
   for (const [k, n] of Object.entries(s.materials || {})) stock += (MATERIALS[k]?.price || 0) * n;
-  let home = 0; for (const f of [...(s.home?.furniture || []).map(f => f.id), ...(s.home?.owned || [])]) home += FURNITURE[f]?.price || 0;
+  let home = 0; for (const f of [...homePieces(s.home).map(f => f.id), ...(s.home?.owned || [])]) home += FURNITURE[f]?.price || 0;
   const cash = Math.floor(s.money);
   return { cash, businesses: Math.round(biz), property: Math.round(prop), stock: Math.round(stock), home: Math.round(home), total: Math.round(cash + biz + prop + stock + home) };
 }

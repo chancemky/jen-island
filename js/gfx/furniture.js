@@ -775,8 +775,15 @@ export const SIDE = {
   kitchen: () => [B(-16, 16, 0, 30, 0, 70, '#9fd8c8'), B(-17, 17, 30, 33, -1, 71, '#fff8ea'), B(-10, 2, 33, 34, 6, 30, '#b9c3cb'), B(-8, -2, 34, 40, 10, 18, '#f28f7c')],
 };
 // draw a box model: far boxes first, then lower before higher
-export function drawSide(c, key, t) {
+export function drawSide(c, key, t) { const m = SIDE[key]?.(); return m ? drawModel(c, m, t) : false; }
+// seen from behind: the same boxes, looking along the piece's depth (its back is nearest you,
+// its width runs across the screen)
+export function drawBack(c, key, t) {
   const m = SIDE[key]?.(); if (!m) return false;
+  const W = Math.max(...m.map(b => b.z1)), X0 = Math.min(...m.map(b => b.x0));
+  return drawModel(c, m.map(b => ({ ...b, x0: b.z0 - W / 2, x1: b.z1 - W / 2, z0: b.x0 - X0, z1: b.x1 - X0 })), t);
+}
+function drawModel(c, m, t) {
   const K = 0.62;                                     // depth foreshortening (z runs up the screen)
   const L = Math.max(...m.map(b => b.z1));
   shadow(c, 0, 1 - L * K * 0.5, Math.max(...m.map(b => b.x1)) + 4, L * K * 0.5 + 3, 0.16);
@@ -1178,3 +1185,298 @@ FURN_DRAW.koi_lamp = (c, t, p) => {
   line(c, 0, -4, 0, -9, '#3a3a3a', 1);
   if (!p.preview) g(p, 0, -14, 22, 'rgba(255,170,120,.45)');
 };
+
+// ---------------------------------------------------------------- the upstairs & basement collection (5.18)
+// Bedrooms and a study for the floor above; a games room, a workshop and a laundry corner
+// for the basement; and a few traditional pieces for any floor. Each has a side model
+// (SIDE, below) so it looks right however it's turned.
+Object.assign(FURN_DRAW, {
+  bed_double: (c, t, p) => {
+    shadow(c, 0, 1, 33, 6, 0.2);
+    wood(c, -32, -50, 64, 22, 5, '#b77a4f');                                    // headboard
+    for (const x of [-20, 0, 20]) box(c, x - 6, -46, 12, 14, 4, shade('#b77a4f', 10), INK, 0.6);
+    box(c, -31, -30, 62, 28, 5, '#fffaf0', INK, 1);                             // mattress
+    for (const x of [-16, 16]) { box(c, x - 12, -33, 24, 9, 4, '#fff', INK, 0.8); line(c, x - 9, -29, x + 9, -29, 'rgba(91,63,54,.18)', 0.6); }
+    box(c, -31, -22, 62, 20, 5, '#9fc4e8', INK, 1);                             // quilt
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 0.8; for (let x = -26; x < 30; x += 10) { c.beginPath(); c.moveTo(x, -21); c.lineTo(x, -3); c.stroke(); }
+    box(c, -31, -22, 62, 5, 3, '#7faad8', null);
+    for (const x of [-30, 30]) limb(c, [x, -3, x, 0], 2.4, '#8a5f3e');
+  },
+  bunk_bed: (c, t, p) => {
+    shadow(c, 0, 1, 21, 5, 0.2);
+    for (const x of [-19, 19]) wood(c, x - 2, -70, 4, 70, 1.5, '#c98f5a', 0.9);
+    for (const y of [-58, -24]) { box(c, -18, y, 36, 9, 3, '#fffaf0', INK, 0.9); box(c, -18, y + 3, 36, 6, 3, y < -40 ? '#f4a9b8' : '#9fd8c8', INK, 0.7); box(c, -16, y - 3, 10, 5, 2, '#fff', INK, 0.6); }
+    wood(c, -19, -50, 38, 3, 1, '#b77a4f', 0.7); wood(c, -19, -16, 38, 3, 1, '#b77a4f', 0.7);
+    for (let i = 0; i < 4; i++) line(c, 12, -48 + i * 8, 18, -48 + i * 8, '#8a5f3e', 1.2);          // ladder rungs
+    line(c, 12, -50, 12, -18, '#8a5f3e', 1.4);
+    star(c, -8, -64, 2.2, '#ffd35a');
+  },
+  nightstand: (c, t, p) => {
+    shadow(c, 0, 1, 10, 3, 0.16);
+    wood(c, -9, -18, 18, 17, 2, '#d9a36a'); wood(c, -7, -15, 14, 6, 1, '#e8b87e', 0.6); circ(c, 0, -12, 0.9, '#8a5f3e', null);
+    for (const x of [-7, 7]) limb(c, [x, -2, x, 0], 1.6, '#8a5f3e');
+    line(c, -2, -18, -2, -28, '#5a4a48', 1); poly(c, [-7, -28, 3, -28, 1, -35, -5, -35], p.off ? '#e6d9b8' : '#f7de8c', INK, 0.7);
+    box(c, 3, -21, 5, 3, 1, '#7aa38a', INK, 0.5);                                // a little book
+    if (!p.off && !p.preview) g(p, -2, -30, 30, 'rgba(255,214,140,.5)');
+  },
+  vanity: (c, t, p) => {
+    shadow(c, 0, 1, 18, 4, 0.18);
+    for (const x of [-15, 15]) limb(c, [x, -16, x, 0], 1.8, '#a26a42');
+    wood(c, -18, -20, 36, 6, 2, '#e3b98a'); wood(c, -16, -15, 14, 5, 1, '#ecc79c', 0.6);
+    ell(c, 0, -38, 11, 14, '#e3b98a', INK, 1); ell(c, 0, -38, 8.5, 11.5, '#d6eef7', null);
+    c.fillStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.ellipse(-3, -42, 2, 5, -0.3, 0, TAU); c.fill();
+    box(c, 8, -26, 4, 6, 1, '#f36d86', INK, 0.5); circ(c, 13, -22, 2, '#c9b6e8', INK, 0.5);  // perfume and powder
+    for (const x of [-14, -10]) flower(c, x, -25, 1.8, '#f4a9b8');
+  },
+  study_desk: (c, t, p) => {
+    shadow(c, 0, 1, 23, 4, 0.18);
+    for (const x of [-20, 20]) limb(c, [x, -18, x, 0], 2, '#8a5f3e');
+    wood(c, -22, -22, 44, 6, 2, '#c98f5a'); wood(c, 8, -17, 13, 15, 1.5, '#b77a4f', 0.8); for (const y of [-14, -8]) circ(c, 14.5, y, 0.8, '#5a3a24', null);
+    box(c, -12, -34, 18, 11, 1.5, '#3d3a42', INK, 0.8); box(c, -10.5, -32.5, 15, 8, 1, `hsl(${200 + Math.sin(t) * 10},60%,72%)`, null);  // laptop
+    poly(c, [-14, -23, 8, -23, 10, -21, -16, -21], '#8f9aa3', INK, 0.5);
+    line(c, 16, -22, 16, -34, '#5a4a48', 1); line(c, 16, -34, 10, -38, '#5a4a48', 1); poly(c, [7, -40, 14, -38, 11, -34], '#f2c14e', INK, 0.5);
+    box(c, -20, -27, 6, 5, 1, '#fff8ea', INK, 0.5);                              // a mug
+  },
+  desk_chair: (c, t, p) => {
+    shadow(c, 0, 1, 9, 3, 0.16);
+    for (const a of [-1, 0, 1]) line(c, 0, -3, a * 8, 0, '#5a5f66', 1.4); line(c, 0, -10, 0, -3, '#5a5f66', 1.6);
+    fabric(c, -8, -15, 16, 6, 3, '#6f9fc8'); fabric(c, -7, -31, 14, 16, 5, '#6f9fc8');
+  },
+  floor_cushions: (c, t, p) => {
+    shadow(c, 0, 1, 18, 5, 0.16);
+    [['#f28f7c', -9, -4], ['#f7de8c', 8, -6], ['#9fd8c8', 0, -12]].forEach(([col, x, y]) => { ell(c, x, y, 10, 5, col, INK, 0.8); ell(c, x, y - 1.5, 7, 2.6, shade(col, 14), null); circ(c, x, y - 1, 1, shade(col, -30), null); });
+  },
+  clothes_rack: (c, t, p) => {
+    shadow(c, 0, 1, 20, 3, 0.14);
+    for (const x of [-19, 19]) { line(c, x, -2, x, -46, '#5a4a48', 1.6); line(c, x - 4, 0, x + 4, 0, '#5a4a48', 1.6); }
+    line(c, -19, -46, 19, -46, '#5a4a48', 1.6);
+    ['#f4a9b8', '#6fbfb0', '#f7de8c', '#c9b6e8', '#f28f7c'].forEach((col, i) => { const x = -14 + i * 7, sw = Math.sin(t * 1.3 + i) * 0.6; line(c, x, -46, x + sw, -42, '#8f9aa3', 0.7); poly(c, [x - 4 + sw, -41, x + 4 + sw, -41, x + 5 + sw, -24, x - 5 + sw, -24], col, INK, 0.6); });
+  },
+  sewing_table: (c, t, p) => {
+    shadow(c, 0, 1, 17, 4, 0.18);
+    for (const x of [-14, 14]) limb(c, [x, -16, x, 0], 1.8, '#3d3a42');
+    line(c, -14, -6, 14, -6, '#3d3a42', 1.2); circ(c, 9, -6, 3, null, '#3d3a42', 1);    // treadle wheel
+    wood(c, -17, -20, 34, 5, 2, '#b77a4f');
+    box(c, -12, -32, 20, 9, 3, '#3d3a42', INK, 0.8); box(c, -12, -38, 7, 8, 2, '#3d3a42', INK, 0.8); line(c, -9, -23, -9, -20, '#c9ccd2', 1);
+    stext(c, 'SINGER', -2, -27, 3.2, '#f2c14e');
+    circ(c, 12, -23, 2.4, '#f36d86', INK, 0.5); line(c, 12, -23, 15, -21, '#f36d86', 0.5);
+  },
+  floor_mirror: (c, t, p) => {
+    shadow(c, 0, 1, 9, 3, 0.14);
+    for (const x of [-6, 6]) limb(c, [x, -6, x * 1.4, 0], 1.4, '#a26a42');
+    box(c, -8, -54, 16, 50, 7, '#e3b86a', INK, 1); box(c, -6, -52, 12, 46, 5, '#d6eef7', null);
+    c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.moveTo(-4, -48); c.lineTo(-1, -48); c.lineTo(-4, -30); c.closePath(); c.fill();
+  },
+  pool_table: (c, t, p) => {
+    shadow(c, 0, 1, 31, 6, 0.2);
+    for (const x of [-26, 26]) limb(c, [x, -14, x, 0], 3, '#5a3a24');
+    wood(c, -30, -36, 60, 24, 5, '#8a4a2a');
+    box(c, -26, -33, 52, 18, 3, '#2f8f5f', INK, 0.8);
+    for (const [x, y] of [[-26, -33], [0, -33], [26, -33], [-26, -15], [0, -15], [26, -15]]) circ(c, x, y, 1.8, '#1f1a1c', null);
+    [[8, -24, '#fff'], [-10, -26, '#ffd35a'], [-13, -23, '#e8584e'], [-13, -28, '#6f9fc8'], [-16, -25, '#3d3550'], [-16, -21, '#f28f7c']].forEach(([x, y, col]) => circ(c, x, y, 1.6, col, INK, 0.4));
+    line(c, 10, -23, 28, -18, '#d9b27a', 1.2);
+  },
+  foosball: (c, t, p) => {
+    shadow(c, 0, 1, 21, 5, 0.18);
+    for (const x of [-16, 16]) limb(c, [x, -12, x, 0], 2.2, '#3d3a42');
+    wood(c, -20, -28, 40, 16, 3, '#c98f5a'); box(c, -17, -26, 34, 12, 2, '#5fb070', INK, 0.6);
+    line(c, 0, -26, 0, -14, 'rgba(255,255,255,.7)', 0.6); box(c, -17, -22, 2, 4, 0, '#fff', null); box(c, 15, -22, 2, 4, 0, '#fff', null);
+    for (let i = 0; i < 4; i++) { const x = -12 + i * 8, k = Math.sin(t * 3 + i) * 1.5; line(c, x, -30, x, -10, '#c9ccd2', 0.9); circ(c, x, -30, 1.4, '#3d3a42', null); box(c, x - 1.2, -22 + k, 2.4, 4, 1, i < 2 ? '#e8584e' : '#6f9fc8', INK, 0.3); }
+    circ(c, Math.sin(t * 1.7) * 10, -20, 1, '#fff', INK, 0.3);
+  },
+  ping_pong: (c, t, p) => {
+    shadow(c, 0, 1, 29, 5, 0.18);
+    for (const x of [-24, 24]) limb(c, [x, -12, x, 0], 2, '#5a5f66');
+    box(c, -28, -26, 56, 14, 3, '#2f6f9f', INK, 1); line(c, -26, -19, 26, -19, 'rgba(255,255,255,.6)', 0.6); box(c, -27, -26, 54, 1.2, 0, '#fff', null);
+    box(c, -1, -32, 2, 7, 0.5, '#fffaf0', INK, 0.5); c.save(); c.strokeStyle = 'rgba(91,63,54,.35)'; c.lineWidth = 0.4; for (let y = -31; y < -26; y += 1.5) { c.beginPath(); c.moveTo(-1, y); c.lineTo(1, y); c.stroke(); } c.restore();
+    for (const s of [-1, 1]) { circ(c, s * 18, -29, 3, '#e8584e', INK, 0.5); line(c, s * 18, -26, s * 18, -23, '#8a5f3e', 1.2); }
+  },
+  jukebox: (c, t, p) => {
+    const on = !p.off;
+    shadow(c, 0, 1, 13, 4, 0.18);
+    c.beginPath(); c.moveTo(-12, 0); c.lineTo(-12, -34); c.arc(0, -34, 12, Math.PI, 0); c.lineTo(12, 0); c.closePath(); c.fillStyle = '#b8603f'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+    c.beginPath(); c.arc(0, -34, 9, Math.PI, 0); c.lineTo(9, -26); c.lineTo(-9, -26); c.closePath(); c.fillStyle = on ? `hsl(${(t * 60) % 360},80%,72%)` : '#e3d6c6'; c.fill();
+    box(c, -8, -24, 16, 8, 2, '#fff1d0', INK, 0.6); for (let i = 0; i < 4; i++) line(c, -6, -22 + i * 1.6, 6, -22 + i * 1.6, 'rgba(91,63,54,.4)', 0.5);
+    box(c, -9, -13, 18, 10, 2, '#3d3a42', INK, 0.6); for (let i = 0; i < 4; i++) line(c, -7 + i * 4.6, -12, -7 + i * 4.6, -4, '#5a5f66', 1);
+    if (on && !p.preview) { g(p, 0, -30, 34, 'rgba(255,170,120,.45)'); for (let i = 0; i < 2; i++) { const k = (t * 0.6 + i / 2) % 1; c.globalAlpha = 1 - k; c.fillStyle = '#ff6fae'; c.font = '900 7px Nunito'; c.fillText('♪', -8 + i * 12, -50 - k * 12); c.globalAlpha = 1; } }
+  },
+  karaoke_set: (c, t, p) => {
+    const on = !p.off;
+    shadow(c, 0, 1, 21, 4, 0.18);
+    wood(c, -14, -12, 28, 11, 2, '#5a3a24');
+    box(c, -12, -32, 24, 18, 2, '#2f2a30', INK, 1); box(c, -10.5, -30.5, 21, 15, 1, on ? '#3f5f9f' : '#24222a', null);
+    if (on) { c.fillStyle = '#fff'; c.font = '900 3.6px Nunito'; c.textAlign = 'center'; c.fillText('♪ Hello Việt Nam ♪', 0, -24); c.fillStyle = '#ffd35a'; c.fillRect(-8, -21, 16 * ((t * 0.15) % 1), 1.2); c.textAlign = 'start'; }
+    for (const s of [-1, 1]) { box(c, s * 18 - 4, -26, 8, 26, 2, '#3d3a42', INK, 0.8); circ(c, s * 18, -18, 2.8, '#6b6b6b', INK, 0.4); circ(c, s * 18, -8, 2.2, '#6b6b6b', INK, 0.4); }
+    line(c, 6, -12, 10, -6, '#3d3a42', 1); circ(c, 6, -13, 1.4, '#c9ccd2', INK, 0.4);   // microphone
+    if (on && !p.preview) g(p, 0, -24, 28, 'rgba(120,150,255,.35)');
+  },
+  workbench: (c, t, p) => {
+    shadow(c, 0, 1, 26, 5, 0.18);
+    for (const x of [-22, 22]) limb(c, [x, -18, x, 0], 2.4, '#8a5f3e');
+    line(c, -22, -6, 22, -6, '#8a5f3e', 1.6);
+    wood(c, -25, -22, 50, 6, 2, '#c99a5e');
+    box(c, -20, -5, 12, 5, 1, '#e8584e', INK, 0.6);                              // toolbox under
+    box(c, 10, -30, 10, 8, 1, '#7aa38a', INK, 0.6); circ(c, 15, -26, 1.4, '#3d3a42', null);    // vice
+    line(c, -16, -24, -6, -27, '#8f9aa3', 1.6); line(c, -6, -27, -4, -24, '#5a3a24', 2);        // hammer
+    line(c, -2, -23, 6, -24, '#c9ccd2', 0.8); box(c, -18, -26, 6, 3, 0.6, '#f2c14e', INK, 0.4);
+  },
+  washing_machine: (c, t, p) => {
+    shadow(c, 0, 1, 12, 4, 0.18);
+    box(c, -11, -28, 22, 28, 3, '#f4f8fb', INK, 1); box(c, -11, -28, 22, 5, 2, '#dfe8ee', INK, 0.6);
+    circ(c, 6, -25.5, 1.2, '#6fbf73', null); box(c, -8, -26.5, 7, 2, 0.5, '#3d3a42', null);
+    circ(c, 0, -12, 8, '#c9d3dc', INK, 0.9); c.save(); c.beginPath(); c.arc(0, -12, 6.4, 0, TAU); c.clip();
+    c.fillStyle = '#9fd4f5'; c.fillRect(-7, -18, 14, 13); const a = t * 4;
+    for (let i = 0; i < 3; i++) { const an = a + i * 2.1; ell(c, Math.cos(an) * 3, -12 + Math.sin(an) * 3, 2.4, 1.6, ['#f4a9b8', '#f7de8c', '#6fbfb0'][i], null); }
+    c.restore(); c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.arc(-2, -14, 3, Math.PI, Math.PI * 1.5); c.lineTo(-2, -14); c.fill();
+  },
+  pantry_shelf: (c, t, p) => {
+    shadow(c, 0, 1, 20, 4, 0.16);
+    wood(c, -19, -52, 38, 50, 2, '#b77a4f');
+    for (let r = 0; r < 3; r++) { const y = -48 + r * 16; box(c, -17, y + 12, 34, 2, 0.5, '#8a5a3a', null);
+      for (let i = 0; i < 4; i++) { const x = -14 + i * 8.6, col = ['#f2c14e', '#e8584e', '#9fd67a', '#f28f7c', '#c9b6e8', '#e9a24a'][(r * 4 + i) % 6]; box(c, x, y + 3, 6, 9, 1.5, 'rgba(230,240,245,.85)', INK, 0.5); box(c, x + 0.8, y + 6, 4.4, 5.6, 1, col, null); box(c, x - 0.3, y + 1.6, 6.6, 2, 0.6, '#c9955e', INK, 0.3); } }
+  },
+  fish_sauce_barrels: (c, t, p) => {
+    shadow(c, 0, 1, 19, 5, 0.18);
+    for (const [x, s] of [[-9, 1], [9, 0.9]]) { c.save(); c.translate(x, 0); c.scale(s, s);
+      ell(c, 0, -2, 9, 3, '#8a5a3a', INK, 0.8); box(c, -9, -26, 18, 24, 4, '#a8703f', INK, 1); ell(c, 0, -26, 9, 3, '#c98f5a', INK, 0.8);
+      for (const y of [-21, -7]) box(c, -9.4, y, 18.8, 2.4, 0.5, '#5a5f66', null);
+      c.restore(); }
+    box(c, -15, -18, 12, 7, 1, '#fff1d0', INK, 0.5); stext(c, 'NƯỚC MẮM', -9, -14.2, 2.4, '#a8563f');
+  },
+  weights_rack: (c, t, p) => {
+    shadow(c, 0, 1, 19, 4, 0.16);
+    for (const x of [-16, 16]) { line(c, x, 0, x, -30, '#3d3a42', 2); line(c, x - 4, 0, x + 4, 0, '#3d3a42', 1.6); }
+    line(c, -18, -26, 18, -26, '#c9ccd2', 1.6); for (const s of [-1, 1]) { box(c, s * 13 - 2, -31, 4, 10, 1, '#e8584e', INK, 0.6); box(c, s * 10 - 1.5, -30, 3, 8, 1, '#e8584e', INK, 0.6); }
+    line(c, -14, -12, 14, -12, '#5a5f66', 1.4); for (let i = 0; i < 3; i++) { const x = -9 + i * 9; box(c, x - 3, -11, 6, 4, 1.5, '#3d3a42', INK, 0.5); box(c, x - 1, -10, 2, 2, 0.5, '#8f9aa3', null); }
+  },
+  treadmill: (c, t, p) => {
+    shadow(c, 0, 1, 12, 6, 0.16);
+    box(c, -10, -12, 20, 12, 3, '#3d3a42', INK, 0.9); c.save(); c.beginPath(); c.rect(-8, -11, 16, 9); c.clip(); for (let y = -11 + ((t * 18) % 3); y < -1; y += 3) line(c, -8, y, 8, y, '#5a5f66', 0.6); c.restore();
+    for (const x of [-9, 9]) line(c, x, -10, x, -34, '#8f9aa3', 1.4);
+    box(c, -10, -38, 20, 6, 2, '#5a5f66', INK, 0.8); box(c, -5, -37, 10, 4, 1, '#9fd4f5', null);
+  },
+  co_tuong_table: (c, t, p) => {
+    shadow(c, 0, 1, 18, 6, 0.18);
+    for (const x of [-20, 20]) { box(c, x - 4, -10, 8, 3, 1.5, '#c98f5a', INK, 0.6); line(c, x - 3, -7, x - 3, 0, '#8a5f3e', 1.2); line(c, x + 3, -7, x + 3, 0, '#8a5f3e', 1.2); }
+    for (const x of [-11, 11]) limb(c, [x, -14, x, 0], 2, '#8a5f3e');
+    wood(c, -14, -20, 28, 6, 2, '#d9b27a');
+    box(c, -11, -28, 22, 10, 1, '#f3d9a4', INK, 0.6); c.strokeStyle = 'rgba(138,74,42,.6)'; c.lineWidth = 0.4;
+    for (let i = 1; i < 8; i++) { c.beginPath(); c.moveTo(-11 + i * 2.75, -28); c.lineTo(-11 + i * 2.75, -18); c.stroke(); } for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(-11, -28 + i * 2.5); c.lineTo(11, -28 + i * 2.5); c.stroke(); }
+    [[-8, -26, '#e8584e'], [-3, -26, '#e8584e'], [4, -21, '#3d3550'], [8, -21, '#3d3550'], [0, -23, '#e8584e']].forEach(([x, y, col]) => { circ(c, x, y, 1.5, '#fff8ea', col, 0.6); });
+  },
+  sap_go: (c, t, p) => {
+    shadow(c, 0, 1, 29, 6, 0.2);
+    box(c, -28, -14, 56, 12, 2, '#6b3a2a', INK, 1);
+    c.strokeStyle = '#4a2418'; c.lineWidth = 0.7; for (let x = -24; x < 26; x += 12) { c.beginPath(); c.moveTo(x, -12); c.quadraticCurveTo(x + 3, -6, x + 6, -12); c.stroke(); }
+    for (const x of [-26, 26]) { c.beginPath(); c.moveTo(x - 2, -2); c.quadraticCurveTo(x, 2, x + (x < 0 ? 3 : -3), 0); c.strokeStyle = '#4a2418'; c.lineWidth = 1.6; c.stroke(); }
+    box(c, -29, -22, 58, 9, 2, '#8a4a32', INK, 1); c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(-27, -21, 54, 1.5);
+    box(c, -6, -28, 18, 6, 2, '#e9c46f', INK, 0.6);                               // a tray with tea
+    circ(c, 0, -29, 2.6, '#6f9fc8', INK, 0.5); for (const x of [6, 10]) circ(c, x, -27.5, 1.3, '#fff', INK, 0.4);
+  },
+  altar_cabinet: (c, t, p) => {
+    shadow(c, 0, 1, 23, 4, 0.18);
+    wood(c, -22, -30, 44, 28, 3, '#7a3a26'); for (const x of [-20, 20]) limb(c, [x, -3, x, 0], 2.2, '#5a2a1c');
+    for (const x of [-13, 13]) { box(c, x - 7, -26, 14, 20, 2, '#8a4a32', INK, 0.6); circ(c, x + (x < 0 ? 5 : -5), -16, 0.9, '#f2c14e', null); }
+    box(c, -24, -33, 48, 4, 1.5, '#5a2a1c', INK, 0.8);
+    // offerings: a fruit plate, an incense bowl with three sticks, two candles
+    ell(c, -12, -35, 6, 2, '#fff1d0', INK, 0.5); for (const [x, col] of [[-15, '#f2c14e'], [-12, '#f28f7c'], [-9, '#9fd67a'], [-12, '#ffb38a']]) circ(c, x, x === -12 && col === '#ffb38a' ? -40 : -37.5, 2, col, INK, 0.4);
+    box(c, -1, -40, 8, 6, 2, '#c9a15a', INK, 0.6); for (const x of [1, 3, 5]) { line(c, x, -40, x - 0.5, -50, '#a8563f', 0.6); circ(c, x - 0.5, -50.5, 0.6, '#ff8f5a', null); const k = (t * 0.5 + x / 6) % 1; c.globalAlpha = 0.4 * (1 - k); circ(c, x - 0.5 + Math.sin(k * 5) * 2, -53 - k * 10, 0.8 + k, '#e6e6e6', null); c.globalAlpha = 1; }
+    for (const x of [13, 18]) { box(c, x - 1, -42, 2, 8, 0.5, '#e8584e', INK, 0.4); ell(c, x, -44, 1, 1.6, '#ffd35a', null); }
+    if (!p.preview) g(p, 8, -42, 22, 'rgba(255,190,110,.45)');
+  },
+  bonsai_rock: (c, t, p) => {
+    shadow(c, 0, 1, 21, 6, 0.18);
+    ell(c, 0, -6, 20, 7, '#8fa3ad', INK, 1); ell(c, 0, -7, 17, 5, '#6fb4c8', null);
+    c.fillStyle = 'rgba(255,255,255,.5)'; for (let i = 0; i < 3; i++) { const k = (t * 0.5 + i / 3) % 1; c.globalAlpha = 1 - k; c.beginPath(); c.ellipse(-4, -6, 3 + k * 8, 1 + k * 2.4, 0, 0, TAU); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 0.5; c.stroke(); } c.globalAlpha = 1;
+    poly(c, [-10, -8, -6, -30, 0, -38, 4, -26, 8, -32, 12, -8], '#9a9488', INK, 0.9); poly(c, [-6, -30, 0, -38, 2, -30], '#b2ac9f', null);
+    ell(c, -2, -36, 5, 2.6, '#6fae5c', INK, 0.5); ell(c, 7, -30, 4, 2.2, '#7fbe6a', INK, 0.5); line(c, -2, -34, -1, -31, '#5a3a24', 0.7);
+    box(c, 3, -20, 3, 3, 0.6, '#e8584e', INK, 0.4); poly(c, [2, -20, 4.5, -23, 7, -20], '#a8563f', null);                         // a tiny pagoda
+    const k = Math.sin(t * 6) * 0.5; line(c, 9, -16, 12 + k, -8, 'rgba(160,215,235,.9)', 1);                                         // the little waterfall
+  },
+  spinning_lantern: (c, t, p) => {
+    const on = !p.off;
+    shadow(c, 0, 1, 8, 3, 0.14); line(c, 0, 0, 0, -18, '#8a5a3a', 1.4); line(c, -5, 0, 5, 0, '#8a5a3a', 1.4);
+    box(c, -9, -40, 18, 22, 3, on ? '#ffe7a8' : '#f2dcae', INK, 0.9); box(c, -10, -42, 20, 3, 1, '#e8584e', INK, 0.6); box(c, -10, -19, 20, 3, 1, '#e8584e', INK, 0.6);
+    c.save(); c.beginPath(); c.rect(-8, -39, 16, 19); c.clip(); const off = on ? (t * 6) % 32 : 0;           // đèn kéo quân: shadows of riders and fish go round
+    c.fillStyle = 'rgba(90,50,40,.55)'; for (let i = -1; i < 2; i++) { const x = -16 + i * 16 + off; c.beginPath(); c.ellipse(x, -28, 3, 1.6, 0, 0, TAU); c.fill(); poly(c, [x - 3, -28, x - 6, -31, x - 6, -25], 'rgba(90,50,40,.55)', null); circ(c, x + 8, -32, 1.6, 'rgba(90,50,40,.55)', null); line(c, x + 8, -31, x + 8, -26, 'rgba(90,50,40,.55)', 1.4); }
+    c.restore(); line(c, -3, -19, -3 + Math.sin(t * 2), -14, '#e8584e', 0.6); line(c, 3, -19, 3 + Math.sin(t * 2 + 1), -14, '#e8584e', 0.6);
+    if (on && !p.preview) g(p, 0, -30, 30, 'rgba(255,200,120,.5)');
+  },
+  egg_chair: (c, t, p) => {
+    const sw = Math.sin(t * 1.1) * 0.05;
+    shadow(c, 0, 1, 14, 4, 0.16); ell(c, -6, -1, 8, 2.4, '#5a3a24', INK, 0.7);
+    c.beginPath(); c.moveTo(-8, -1); c.quadraticCurveTo(-16, -40, -6, -60); c.quadraticCurveTo(0, -68, 6, -66);         // an arched stand
+    c.strokeStyle = INK; c.lineWidth = 3.2; c.stroke(); c.strokeStyle = '#6b4a36'; c.lineWidth = 2; c.stroke();
+    for (let i = 0; i < 4; i++) circ(c, 5.4 - i * 0.3, -63 + i * 3.4, 0.9, null, '#8f9aa3', 0.6);                          // the chain
+    c.save(); c.translate(4, -50); c.rotate(sw);
+    ell(c, 0, 22, 13, 20, '#d9b27a', INK, 1);                                           // the woven shell
+    c.save(); c.beginPath(); c.ellipse(0, 22, 12.4, 19.4, 0, 0, TAU); c.clip();
+    c.strokeStyle = 'rgba(138,95,62,.5)'; c.lineWidth = 0.5; for (let i = -12; i <= 12; i += 3) { c.beginPath(); c.moveTo(i, 2); c.lineTo(i * 0.8, 42); c.stroke(); }
+    c.restore();
+    ell(c, 0, 26, 9, 12, '#b98a52', INK, 0.7);                                         // the opening
+    ell(c, 0, 33, 8, 4, '#f4a9b8', INK, 0.6); ell(c, -2, 24, 4, 4.4, '#fff8ea', INK, 0.5);
+    c.restore();
+  },
+  bamboo_bench: (c, t, p) => {
+    shadow(c, 0, 1, 23, 4, 0.16);
+    for (const x of [-19, 19]) { limb(c, [x - 2, -12, x - 2, 0], 1.8, '#b99a52'); limb(c, [x + 2, -12, x + 2, 0], 1.8, '#b99a52'); }
+    for (let i = 0; i < 4; i++) { box(c, -23, -15 + i * 1.6 - 2, 46, 2.4, 1.2, i % 2 ? '#d9c27a' : '#cdb46a', INK, 0.4); }
+    for (const x of [-15, 0, 15]) { c.strokeStyle = 'rgba(120,95,40,.6)'; c.lineWidth = 0.5; c.beginPath(); c.moveTo(x, -17); c.lineTo(x, -11); c.stroke(); }
+  },
+});
+// a tiny star (the bunk bed's glow sticker)
+function star(c, x, y, r, col) { const pts = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; pts.push(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } poly(c, pts, col, INK, 0.4); }
+Object.assign(FURN_DRAW, {
+  dartboard: (c, t, p) => onWall(c, p, () => {
+    for (const [r, col] of [[11, '#2f2a30'], [9, '#f3e3c0'], [7, '#e8584e'], [5, '#f3e3c0'], [3, '#3f9f6f'], [1.2, '#e8584e']]) circ(c, 0, -44, r, col, r === 11 ? INK : null, 0.9);
+    c.strokeStyle = 'rgba(47,42,48,.6)'; c.lineWidth = 0.4; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5; c.beginPath(); c.moveTo(0, -44); c.lineTo(Math.cos(a) * 9, -44 + Math.sin(a) * 9); c.stroke(); }
+    for (const [x, y] of [[2, -46], [-4, -40]]) { line(c, x, y, x + 5, y - 3, '#3d3a42', 0.8); poly(c, [x + 5, y - 3, x + 8, y - 5, x + 7, y - 2], '#f2c14e', null); }
+  }),
+  tool_wall: (c, t, p) => onWall(c, p, () => {
+    box(c, -22, -58, 44, 26, 2, '#c9a87a', INK, 1); c.fillStyle = 'rgba(91,63,54,.35)'; for (let x = -19; x < 21; x += 4) for (let y = -55; y < -34; y += 4) c.fillRect(x, y, 0.8, 0.8);
+    line(c, -16, -54, -16, -38, '#8f9aa3', 1.6); box(c, -19, -56, 6, 4, 1, '#3d3a42', INK, 0.4);   // hammer
+    line(c, -7, -54, -7, -38, '#e8584e', 1.6); line(c, -7, -54, -4, -51, '#c9ccd2', 0.9);             // screwdriver
+    c.beginPath(); c.arc(6, -46, 5, 0, TAU); c.strokeStyle = '#f2c14e'; c.lineWidth = 1.4; c.stroke();     // tape
+    line(c, 15, -54, 15, -36, '#c9ccd2', 1.4); poly(c, [13, -54, 17, -54, 15, -57], '#c9ccd2', null);       // saw
+  }),
+  projector_screen: (c, t, p) => onWall(c, p, () => {
+    box(c, -32, -62, 64, 4, 2, '#5a5f66', INK, 0.8);
+    box(c, -30, -58, 60, 30, 1, '#f8f6f0', INK, 0.8);
+    if (!p.off) { const k = (t * 0.2) % 1; c.fillStyle = `hsla(${190 + k * 80},55%,70%,.6)`; c.fillRect(-27, -55, 54, 24); c.fillStyle = 'rgba(255,255,255,.75)'; c.beginPath(); c.arc(-14 + k * 28, -47, 4, 0, TAU); c.fill(); poly(c, [-27, -31, -10, -40, 6, -34, 27, -42, 27, -31], 'rgba(80,140,90,.6)', null); }
+    line(c, 0, -28, 0, -25, '#5a5f66', 0.8); circ(c, 0, -24, 1, '#5a5f66', null);
+  }),
+});
+// side models for the new pieces and the ones that only mirrored before
+Object.assign(SIDE, {
+  bed_double: () => [B(-22, 22, 0, 8, 0, 64, '#b77a4f', { grain: 1 }), B(-21, 21, 8, 14, 1, 63, '#fffaf0'), B(-4, 21, 14, 16, 2, 62, '#9fc4e8', { cushion: 2 }), B(-20, -8, 14, 18, 6, 58, '#fff'), B(-25, -21, 0, 32, -1, 65, '#a26a42', { grain: 1 })],
+  bunk_bed: () => [B(-15, -12, 0, 70, 0, 3, '#c98f5a'), B(-15, -12, 0, 70, 37, 40, '#c98f5a'), B(12, 15, 0, 70, 0, 3, '#c98f5a'), B(12, 15, 0, 70, 37, 40, '#c98f5a'), B(-14, 14, 14, 22, 2, 38, '#9fd8c8'), B(-14, 14, 48, 56, 2, 38, '#f4a9b8')],
+  nightstand: () => [B(-6, 6, 0, 18, 0, 18, '#d9a36a', { grain: 1 }), B(-1, 1, 18, 28, 8, 10, '#5a4a48'), B(-4, 4, 28, 35, 5, 13, '#f7de8c', { glow: 1 })],
+  vanity: () => [...legs(14, 36, 16, '#a26a42', 1), B(-7, 7, 16, 20, 0, 36, '#e3b98a'), B(-7, -4, 20, 52, 6, 30, '#e3b98a'), B(-4, -3.6, 24, 50, 8, 28, '#d6eef7')],
+  study_desk: () => [...legs(18, 44, 18, '#8a5f3e', 1), B(-9, 9, 18, 22, 0, 44, '#c98f5a', { grain: 1 }), B(-9, 9, 2, 18, 30, 43, '#b77a4f'), B(-5, 5, 22, 23, 14, 30, '#8f9aa3'), B(-5, -4, 23, 34, 14, 30, '#3d3a42')],
+  desk_chair: () => [B(-6, 6, 0, 3, 2, 14, '#5a5f66'), B(-1, 1, 3, 10, 7, 9, '#5a5f66'), B(-6, 6, 10, 15, 1, 15, '#6f9fc8', { cushion: 1 }), B(-7, -4, 15, 31, 2, 14, '#6f9fc8')],
+  clothes_rack: () => [B(-5, 5, 0, 2, 0, 3, '#5a4a48'), B(-5, 5, 0, 2, 37, 40, '#5a4a48'), B(-1, 1, 0, 46, 1, 3, '#5a4a48'), B(-1, 1, 0, 46, 37, 39, '#5a4a48'), B(-1, 1, 45, 47, 1, 39, '#5a4a48'), B(-4, 4, 22, 42, 4, 36, '#c9b6e8', { slats: 1 })],
+  sewing_table: () => [...legs(14, 34, 16, '#3d3a42', 1), B(-7, 7, 16, 20, 0, 34, '#b77a4f'), B(-4, 4, 20, 30, 8, 28, '#3d3a42'), B(-4, 4, 30, 38, 8, 14, '#3d3a42')],
+  floor_mirror: () => [B(-1.5, 1.5, 0, 54, 0, 16, '#e3b86a'), B(-4, 4, 0, 2, 2, 14, '#a26a42')],
+  pool_table: () => [...legs(34, 60, 14, '#5a3a24', 3), B(-17, 17, 14, 24, 0, 60, '#8a4a2a', { grain: 1 }), B(-14, 14, 24, 25, 3, 57, '#2f8f5f')],
+  foosball: () => [...legs(20, 40, 12, '#3d3a42', 2), B(-10, 10, 12, 28, 0, 40, '#c98f5a'), B(-8, 8, 28, 28.5, 2, 38, '#5fb070'), B(-12, 12, 26, 27.5, 8, 9, '#c9ccd2'), B(-12, 12, 26, 27.5, 30, 31, '#c9ccd2')],
+  ping_pong: () => [...legs(30, 56, 12, '#5a5f66', 3), B(-15, 15, 12, 14, 0, 56, '#2f6f9f'), B(-15, 15, 14, 20, 27.5, 28.5, '#fffaf0')],
+  jukebox: () => [B(-7, 7, 0, 34, 0, 24, '#b8603f'), B(-6, 6, 34, 44, 2, 22, '#b8603f'), B(6, 7.5, 16, 36, 3, 21, '#fff1d0', { glow: 1 })],
+  karaoke_set: () => [B(-7, 7, 0, 12, 6, 34, '#5a3a24'), B(-3, 3, 12, 32, 8, 32, '#2f2a30'), B(-6, 6, 0, 26, 0, 6, '#3d3a42'), B(-6, 6, 0, 26, 34, 40, '#3d3a42')],
+  workbench: () => [...legs(18, 50, 18, '#8a5f3e', 2), B(-9, 9, 18, 22, 0, 50, '#c99a5e', { grain: 1 }), B(-6, 6, 0, 5, 6, 18, '#e8584e'), B(-4, 4, 22, 30, 36, 46, '#7aa38a')],
+  washing_machine: () => [B(-9, 9, 0, 28, 0, 22, '#f4f8fb'), B(-9, 9, 23, 28, 0, 22, '#dfe8ee'), B(9, 10, 6, 18, 5, 17, '#c9d3dc')],
+  pantry_shelf: () => [B(-7, 7, 0, 52, 0, 38, '#b77a4f', { grain: 1 }), B(-6, 6, 4, 50, 1, 37, '#f2c14e', { slats: 1 })],
+  fish_sauce_barrels: () => [B(-9, 9, 0, 26, 0, 18, '#a8703f', { slats: 1 }), B(-8, 8, 0, 23, 19, 35, '#a8703f', { slats: 1 })],
+  weights_rack: () => [B(-1, 1, 0, 30, 1, 3, '#3d3a42'), B(-1, 1, 0, 30, 33, 35, '#3d3a42'), B(-5, 5, 0, 2, 0, 36, '#3d3a42'), B(-2, 2, 21, 31, 0, 36, '#e8584e'), B(-3, 3, 8, 12, 4, 32, '#3d3a42')],
+  treadmill: () => [B(-20, 20, 0, 6, 1, 21, '#3d3a42'), B(14, 17, 6, 34, 1, 3, '#8f9aa3'), B(14, 17, 6, 34, 19, 21, '#8f9aa3'), B(14, 20, 34, 38, 1, 21, '#5a5f66')],
+  co_tuong_table: () => [...legs(16, 28, 14, '#8a5f3e', 2).map(q => ({ ...q, z0: q.z0 + 10, z1: q.z1 + 10 })), B(-8, 8, 14, 20, 10, 38, '#d9b27a'), B(-6, 6, 20, 21, 13, 35, '#f3d9a4'), B(-4, 4, 0, 10, 0, 8, '#c98f5a'), B(-4, 4, 0, 10, 40, 48, '#c98f5a')],
+  sap_go: () => [B(-15, 15, 0, 14, 0, 56, '#6b3a2a', { grain: 1 }), B(-15, 15, 14, 22, -1, 57, '#8a4a32'), B(-4, 4, 22, 28, 18, 36, '#e9c46f')],
+  altar_cabinet: () => [B(-8, 8, 0, 30, 0, 44, '#7a3a26', { grain: 1 }), B(-9, 9, 30, 33, -2, 46, '#5a2a1c'), B(-3, 3, 33, 40, 24, 32, '#c9a15a'), B(-2, 2, 33, 42, 4, 8, '#e8584e', { glow: 1 })],
+  bamboo_bench: () => [...legs(14, 46, 12, '#b99a52', 1), B(-7, 7, 12, 15, 0, 46, '#d9c27a', { slats: 1 })],
+  lounge_sofa: () => [B(-7, 7, 0, 10, 0, 46, '#93395e'), B(-7, -2, 10, 26, 0, 46, '#7a2f4f'), B(-2, 7, 10, 13, 4, 42, '#93395e', { cushion: 2 }), B(-7, 7, 10, 20, 0, 4, '#7a2f4f'), B(-7, 7, 10, 20, 42, 46, '#7a2f4f')],
+  arcade_cabinet: () => [B(-7, 7, 0, 46, 0, 26, '#6f5fc8'), B(2, 8, 22, 28, 2, 24, '#3d3a42'), B(-7, 4, 46, 52, 0, 26, '#f36d86')],
+  tea_set: () => [...legs(14, 36, 6, '#8a5f3e', 2), B(-7, 7, 6, 10, 0, 36, '#c98f5a'), B(-3, 3, 10, 18, 6, 14, '#6f9fc8'), B(-2, 2, 10, 13, 20, 24, '#fff'), B(-2, 2, 10, 13, 26, 30, '#fff')],
+  cat_tower: () => [B(-7, 7, 0, 4, 0, 32, '#c9b6a0'), B(-2, 2, 4, 40, 6, 10, '#d9b27a', { slats: 1 }), B(-2, 2, 4, 28, 22, 26, '#d9b27a', { slats: 1 }), B(-6, 6, 26, 30, 16, 32, '#c9b6a0'), B(-6, 6, 40, 44, 0, 16, '#c9b6a0')],
+  surfboard_rack: () => [B(-5, 5, 0, 4, 0, 32, '#8a5a3a'), B(-1.5, 1.5, 4, 44, 4, 8, '#6fbfb0'), B(-1.5, 1.5, 4, 44, 14, 18, '#ff8fb0'), B(-1.5, 1.5, 4, 44, 24, 28, '#ffd35a')],
+  ship_model: () => [B(-5, 5, 0, 4, 0, 36, '#8a5a3a'), B(-3, 3, 4, 12, 4, 32, '#a8563f'), B(-0.6, 0.6, 12, 34, 17, 19, '#5b3f36'), B(-0.4, 0.4, 16, 30, 8, 28, '#fffaf0')],
+  bottle_ship: () => [B(-5, 5, 0, 3, 0, 22, '#8a5a3a'), B(-6, 6, 3, 17, 1, 21, 'rgba(190,230,240,.6)', { water: 1 })],
+});

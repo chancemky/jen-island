@@ -2,6 +2,7 @@
 // never on top of a card). Each tip is remembered in the save and never repeats.
 import { G, T, markDirty } from './state.js';
 import { bus } from '../core/util.js';
+import { homePieces } from '../data/sets.js';
 
 const owned = s => Object.keys(s.biz || {}).filter(id => s.biz[id]?.owned);
 const TIPS = [
@@ -13,7 +14,7 @@ const TIPS = [
     text: ['Tip: the Island Board on Wind Plaza', 'Mẹo: Bảng tin đảo ở Quảng trường gió'], sub: ['Neighbours pin new requests every morning.', 'Hàng xóm ghim lời nhờ mới mỗi sáng.'], icon: 'notebook' },
   { id: 'photo', when: s => s.day >= 3 && !(s.stats.photos > 0),
     text: ['Tip: photo mode', 'Mẹo: chế độ chụp ảnh'], sub: ['Tap 📷 to frame a shot, pick a filter and strike a pose.', 'Bấm 📷 để chọn khung, bộ lọc và tạo dáng.'], icon: 'photo' },
-  { id: 'decorate', when: s => (s.home?.owned || []).length >= 1 && (s.home?.furniture || []).length < 2,
+  { id: 'decorate', when: s => (s.home?.owned || []).length >= 1 && homePieces(s.home).length < 2,
     text: ['Tip: decorate your home', 'Mẹo: trang trí nhà'], sub: ['Inside your house, tap Decorate to place what you\'ve bought.', 'Trong nhà, bấm Trang trí để đặt đồ đã mua.'], icon: 'sofa' },
   { id: 'weekly', when: s => s.day >= 2 && G.user && !G.user.local,
     text: ['Tip: the weekly board', 'Mẹo: bảng xếp hạng tuần'], sub: ['Menu → Ranks. The top 10 each week win a trophy.', 'Menu → Xếp hạng. Top 10 mỗi tuần nhận cúp.'], icon: 'trophy' },

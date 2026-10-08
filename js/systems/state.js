@@ -65,7 +65,7 @@ export function migrate(raw) {
   s.stats = { ...d.stats, ...(raw.stats || {}) };
   s.today = { ...freshDay(), ...(raw.today || {}) };
   s.settings = { ...d.settings, ...(raw.settings || {}) };
-  s.home = { furniture: Array.isArray(raw.home?.furniture) ? raw.home.furniture : [], owned: Array.isArray(raw.home?.owned) ? raw.home.owned : [], builtins: raw.home?.builtins || null };
+  s.home = { ...(raw.home || {}), furniture: Array.isArray(raw.home?.furniture) ? raw.home.furniture : [], owned: Array.isArray(raw.home?.owned) ? raw.home.owned : [], builtins: raw.home?.builtins || null };   // (keeps size, loan, the other floors…)
   s.nightMarket = { ...d.nightMarket, ...(raw.nightMarket || {}) };
   s.biz = { ...d.biz };
   for (const id of Object.keys(d.biz)) s.biz[id] = { ...d.biz[id], ...(raw.biz?.[id] || {}), open: false };

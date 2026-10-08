@@ -17,7 +17,7 @@ import { MEO_MEMORIES } from '../data/lore.js';
 import { DISCOVERIES } from '../systems/interact.js';
 import { albumPhotos } from '../systems/album.js';
 import { openPhotoViewer } from './album.js';
-import { nextHome, homeLoan, upgradeHome } from '../systems/home.js';
+import { nextHome, homeLoan, upgradeHome, nextFloor, upgradeFloor, placedFurniture } from '../systems/home.js';
 import { setProgress, comfortBonus } from '../data/sets.js';
 import { upgradeCost, shopNeed } from '../systems/economy.js';
 import { toast, moneyShortfall } from './hud.js';
@@ -171,6 +171,13 @@ export function openFurnitureShop() {
       if (up && !homeLoan()) { const col = h('div', 'btn-col'); col.append(btn(money(up.cost), () => { if (!upgradeHome('cash')) return moneyShortfall(up.cost); sfx('fanfare'); api.rebuild(); }, 'buy'), btn(T('Pay later', 'Trả dần'), () => { upgradeHome('loan'); sfx('fanfare'); api.rebuild(); }, 'buy alt')); r.appendChild(col); }
       list.appendChild(r);
     }
+    // once the house is at its biggest: build up and down
+    for (const which of ['up', 'down']) {
+      const fu = nextFloor(which); if (!fu) continue;
+      const r = h('div', 'row', `<div class="ico">${which === 'up' ? '🪜' : '🕯️'}</div><div class="info"><b>${escapeHtml(T(fu.en, fu.vi))}</b><small>${homeLoan() ? T('Pay off your home loan first', 'Trả xong tiền nhà trước đã') : escapeHtml(T(...fu.note))}</small></div>`);
+      if (!homeLoan()) { const col = h('div', 'btn-col'); col.append(btn(money(fu.cost), () => { if (!upgradeFloor(which, 'cash')) return moneyShortfall(fu.cost); sfx('fanfare'); api.rebuild(); }, 'buy'), btn(T('Pay later', 'Trả dần'), () => { upgradeFloor(which, 'loan'); sfx('fanfare'); api.rebuild(); }, 'buy alt')); r.appendChild(col); }
+      list.appendChild(r);
+    }
     // furniture sets: place every piece for the home-comfort bonus
     { const sets = setProgress(s.home), done = sets.filter(x => x.done).length;
       list.appendChild(h('div', 'section-title', T(`Furniture sets · ${done} complete · tips +${Math.round(comfortBonus(s.home) * 100)}%`, `Bộ nội thất · hoàn thành ${done} · boa +${Math.round(comfortBonus(s.home) * 100)}%`)));
@@ -183,7 +190,7 @@ export function openFurnitureShop() {
       if (f.reward || (f.unlock && s.story.chapter < f.unlock)) continue;
       if (f.need && !s.story.flags[f.need] && !(s.sideQuests?.[f.need] === 'done')) continue;
       if (f.collector && !collectorHead) { collectorHead = true; list.appendChild(h('div', 'section-title', T('✦ Collector\'s corner', '✦ Góc sưu tầm'))); }
-      const owned = s.home.owned.filter(x => x === id).length + s.home.furniture.filter(x => x.id === id).length;
+      const owned = s.home.owned.filter(x => x === id).length + placedFurniture().filter(x => x.id === id).length;
       const r = h('div', 'row');
       const cv = document.createElement('canvas'); cv.width = 96; cv.height = 96; cv.style.width = cv.style.height = '48px';
       const ico = h('div', 'ico'); ico.appendChild(cv); drawFurniturePreview(cv, id, f);

@@ -7,7 +7,7 @@ import { RECIPES, BUSINESSES } from './game.js';
 import { CLOTHES, FREE_CLOTHES } from './wardrobe.js';
 import { FISH } from '../systems/fishing.js';
 import { PLACES } from '../systems/economy.js';
-import { setProgress } from './sets.js';
+import { setProgress, homePieces } from './sets.js';
 
 const regulars = s => Object.values(s.regulars || {}).filter(r => r.visits >= 3).length;
 const owned = s => Object.keys(BUSINESSES).filter(id => s.biz[id]?.owned).length;
@@ -22,7 +22,7 @@ export const BADGES = {
   neighbour:   { tier: 'bronze', glyph: '📌', en: 'Good Neighbour', vi: 'Hàng xóm tốt', need: ['Finish 10 notes from the Island Board', 'Hoàn thành 10 lời nhờ trên Bảng tin đảo'], got: s => (s.stats.boardDone || 0) >= 10 },
   first_friend:{ tier: 'bronze', glyph: '🫶', en: 'First Friend', vi: 'Người bạn đầu tiên', need: ['Add a friend', 'Kết bạn với một người'], got: s => (s.social?.friends || 0) >= 1 },
   designer:    { tier: 'silver', glyph: '🛋️', en: 'Interior Designer', vi: 'Nhà thiết kế nội thất', need: ['Complete 3 furniture sets at home', 'Hoàn thành 3 bộ nội thất trong nhà'], got: s => setProgress(s.home).filter(x => x.done).length >= 3 },
-  homebody:    { tier: 'bronze', glyph: '🏡', en: 'Homebody', vi: 'Người yêu nhà', need: ['Place 10 pieces of furniture', 'Đặt 10 món nội thất'], got: s => (s.home?.furniture || []).length >= 10 },
+  homebody:    { tier: 'bronze', glyph: '🏡', en: 'Homebody', vi: 'Người yêu nhà', need: ['Place 10 pieces of furniture', 'Đặt 10 món nội thất'], got: s => homePieces(s.home).length >= 10 },
   // ---- silver
   crowd:       { tier: 'silver', glyph: '🎪', en: 'Crowd Pleaser', vi: 'Đắt khách', need: ['Serve 1,000 customers', 'Phục vụ 1.000 khách'], got: s => s.stats.served >= 1000 },
   barista:     { tier: 'silver', glyph: '✨', en: 'Steady Hands', vi: 'Tay nghề vững', need: ['Make 250 perfect orders', 'Làm 250 món hoàn hảo'], got: s => s.stats.perfect >= 250 },
@@ -39,7 +39,7 @@ export const BADGES = {
   showdown:    { tier: 'gold', glyph: '🎀', en: 'Best Shop Front', vi: 'Mặt tiền đẹp nhất', need: ['Win 4 or 5 stars at the Storefront Showdown', 'Đạt 4 hoặc 5 sao ở cuộc thi mặt tiền'], got: s => (s.contest?.wins || 0) >= 1 },
   heartfelt:   { tier: 'gold', glyph: '💗', en: 'Heartfelt', vi: 'Chân thành', need: ['See six neighbours\' personal stories to the end', 'Nghe trọn câu chuyện riêng của sáu người hàng xóm'], got: s => Object.values(s.hearts || {}).filter(n => n >= 2).length >= 6 },
   party_animal:{ tier: 'silver', glyph: '🎂', en: 'Party Guest', vi: 'Khách dự tiệc', need: ['Go to 3 birthday parties', 'Dự 3 buổi tiệc sinh nhật'], got: s => (s.stats.parties || 0) >= 3 },
-  collector_home:{ tier: 'silver', glyph: '🪑', en: 'Collector', vi: 'Nhà sưu tầm', need: ['Own 40 pieces of furniture', 'Sở hữu 40 món nội thất'], got: s => (s.home?.owned?.length || 0) + (s.home?.furniture?.length || 0) >= 40 },
+  collector_home:{ tier: 'silver', glyph: '🪑', en: 'Collector', vi: 'Nhà sưu tầm', need: ['Own 40 pieces of furniture', 'Sở hữu 40 món nội thất'], got: s => (s.home?.owned?.length || 0) + homePieces(s.home).length >= 40 },
   cat_stylist: { tier: 'silver', glyph: '🎀', en: 'Cat Stylist', vi: 'Stylist của mèo', need: ['Buy 4 outfits for Mèo Mây', 'Mua 4 bộ đồ cho Mèo Mây'], got: s => (s.meoStyles?.length || 1) >= 5 },
   beachcomber: { tier: 'bronze', glyph: '🐚', en: 'Beachcomber', vi: 'Người nhặt sò', need: ['Collect 50 shells at Turtle Cove', 'Nhặt 50 vỏ sò ở Vịnh Rùa'], got: s => (s.stats.shells || 0) >= 50 },
   turtle:      { tier: 'gold', glyph: '🐢', en: 'Turtle Friend', vi: 'Bạn của rùa', need: ['Meet a sea turtle at Turtle Cove', 'Gặp rùa biển ở Vịnh Rùa'], got: s => (s.stats.turtles || 0) >= 1 },

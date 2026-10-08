@@ -69,7 +69,7 @@ import { openPhotoMode } from './ui/photo.js';
 import { updatePlayerIdle } from './systems/idle.js';
 import { updateAmbience } from './systems/ambience.js';
 import { updateWeather, drawRain } from './systems/weather.js';
-import { initHome } from './systems/home.js';
+import { initHome, goFloor, isHomeScene } from './systems/home.js';
 import { initStorefront } from './systems/storefront.js';
 import { applyMeoStyle } from './systems/meostyle.js';
 import { initParties, partyAction } from './systems/parties.js';
@@ -87,6 +87,7 @@ import { rebuildPets, updatePets, petMenu, followerUid, setFollower } from './sy
 import { openPetShop } from './ui/petshop.js';
 import { bus, dist, clamp, sleep, choice, money, rand, clock, devHost, nativeApp } from './core/util.js';
 import { LIGHT } from './gfx/props.js';
+import { homePieces } from './data/sets.js';
 
 const $ = id => document.getElementById(id);
 const bootBar = $('bootBar'), bootMsg = $('bootMsg');
@@ -194,7 +195,7 @@ function songNow() {
   if (cs.name === 'festival' || cs.name === 'keeper' || cs.name === 'statue') return 'festival';
   if (sc.id === 'meo') return 'meo';
   const fest = eventOn(); if (sc === scenes.island && fest && ['launch', 'newyear', 'nationalday', 'tet'].includes(fest.id) && G.player && areaIdAt(G.player.x, G.player.y) === 'Wind Plaza') return 'festival';
-  if (sc.id === 'house' || sc.id.startsWith('home_')) return 'home';
+  if (sc.id === 'house' || sc.id.startsWith('house_') || sc.id.startsWith('home_')) return 'home';
   if (COZY.has(sc.id)) return 'cafe';
   if (sc.id === 'night') return 'nightmarket';
   const area = sc === scenes.island && G.player ? areaIdAt(G.player.x, G.player.y) : '';
@@ -302,7 +303,7 @@ function noteArea(id) {
   const s = G.state;
   if (id && !(s.explored ||= {})[id]) { s.explored[id] = true; markDirty(); }
   if (id === 'Lighthouse Point' && s.time >= 5 * 60 && s.time < 7 * 60) unlockAchievement('sunrise');
-  const n = (s.home?.furniture || []).length; if (n > (s.stats.furnMax || 0)) s.stats.furnMax = n;
+  const n = homePieces(s.home).length; if (n > (s.stats.furnMax || 0)) s.stats.furnMax = n;
 }
 bus.on('enter', id => {
   const sc = scenes[id];
@@ -752,6 +753,7 @@ function actAction(tr) {
     cookTicket: () => cookTicket(),
     deliverDish: () => playerDeliver(),
   };
+  if (a?.startsWith('floor:')) { if (G.runtime.visit) { setAction('', null); return; } setAction(L, () => goFloor(a.slice(6)), tr.icon); return; }
   if (!map[a]) { setAction('', null); return; }
   setAction(L, map[a], tr.icon);
 }
@@ -803,7 +805,7 @@ function updateBizButton() {
     const z = bizOf(bizId);
     if (z.owned && z.repair >= 1) { setBizButton(z.open ? T('Close', 'Đóng cửa') : T('OPEN', 'MỞ CỬA'), () => toggleBiz(bizId), z.open); return; }
   }
-  if (sc.id === 'house' && !G.runtime.visit) { setBizButton(T('Decorate', 'Trang trí'), () => startDecorate()); return; }
+  if (isHomeScene(sc) && !G.runtime.visit) { setBizButton(T('Decorate', 'Trang trí'), () => startDecorate()); return; }
   setBizButton(null, null);
 }
 function statueSheet() {

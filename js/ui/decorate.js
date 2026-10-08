@@ -7,7 +7,7 @@
 
 import { G, T, markDirty, unlockAchievement } from '../systems/state.js';
 import { FURNITURE, furnName } from '../data/game.js';
-import { FURN_DRAW, F, drawFurniturePreview, SIDE, drawSide } from '../gfx/furniture.js';
+import { FURN_DRAW, F, drawFurniturePreview, SIDE, drawSide, drawBack } from '../gfx/furniture.js';
 import { drawHuman } from '../gfx/character.js';
 import { h } from './sheets.js';
 import { sfx } from '../core/audio.js';
@@ -17,7 +17,12 @@ import { cam, fx } from '../world/render.js';
 import { input, releaseJoystick } from '../core/input.js';
 
 let D = null;
-const house = () => G.scenes.house;
+// the floor of your home you're decorating (or standing on): ground floor, upstairs or basement
+const FLOORS = ['house', 'house_up', 'house_down'];
+const house = () => (D?.sc || (FLOORS.includes(G.scene?.id) ? G.scene : null) || G.scenes.house);
+// the furniture placed on a floor (the ground floor keeps the original list)
+export function furnList(sc = house()) { const h = G.state.home; return sc.id === 'house' ? h.furniture : ((h.rooms ||= {})[sc.id] ||= []); }
+const hasBuiltins = sc => sc.id === 'house';
 
 // Built-in pieces of your home. They can be moved and turned but never stored.
 export const BUILTINS = {
@@ -43,9 +48,12 @@ function builtinState() {
 export function drawTurned(c, t, key, rot, front) {
   c.save();
   if (rot % 2 && SIDE[key]) { if (rot === 3) c.scale(-1, 1); drawSide(c, key, t); }
+  else if (rot === 2 && SIDE[key] && !NO_BACK.has(key)) drawBack(c, key, t);       // its real back
   else { if (rot === 2) c.scale(-1, 1); front(); }
   c.restore();
 }
+// pieces whose back is just their front (screens on a stand look odd as a plain box): mirror instead
+const NO_BACK = new Set([]);
 export function footprint(w, h, rot, key) { return rot % 2 && SIDE[key] ? { w: h, h: w } : { w, h }; }
 const defOf = sel => sel?.startsWith('builtin:') ? BUILTINS[sel.slice(8)] : FURNITURE[sel];
 const keyOf = sel => sel.startsWith('builtin:') ? BUILTINS[sel.slice(8)].kind : sel;
@@ -57,12 +65,14 @@ const drawSel = (c, t, sel, x, y, rot) => drawTurned(c, t, keyOf(sel), rot, () =
 // Build props for placed furniture and the built-ins (called on load and after edits).
 // `home` is another player's layout when visiting a friend: then the bed, wardrobe and
 // kitchen are just furniture (nothing to use in someone else's house).
-export function rebuildHouseFurniture(home = null) {
-  const sc = house();
+export function rebuildHouseFurniture(home = null, only = null) {
+  if (!home && !only) { for (const id of FLOORS) if (G.scenes[id]) rebuildHouseFurniture(null, G.scenes[id]); return; }
+  const sc = only || G.scenes.house;
   sc.props = sc.props.filter(p => !p.homeFurn && !p.builtin);
   sc.solids = sc.solids.filter(s => !s.homeFurn && !s.builtin);
   sc.triggers = sc.triggers.filter(t => !t.builtin);
   const visit = !!home;
+  if (hasBuiltins(sc)) {
   const bs = visit ? Object.fromEntries(Object.entries(BUILTINS).map(([k, b]) => [k, home.builtins?.[k] || { x: b.x, y: b.y, rot: 0 }])) : builtinState();
   for (const [k, b] of Object.entries(BUILTINS)) {
     if (D?.lifted?.key === k) continue;                  // being carried right now
@@ -81,12 +91,28 @@ export function rebuildHouseFurniture(home = null) {
     else if (tr) sc.trigger({ ...tr, kind: 'act', x: rot % 2 ? st.x + (rot === 1 ? fp.w / 2 : -fp.w / 2 - 22) : st.x + tr.dx, y: rot % 2 ? st.y - fp.h / 2 : st.y + tr.dy, w: rot % 2 ? 22 : tr.w, h: rot % 2 ? Math.min(40, fp.h) : tr.h, builtin: k });
     if (k === 'bed' && !visit) sc.bedPos = { x: st.x - 2, y: st.y - 30 };
   }
-  for (const f of (visit ? home.furniture : G.state.home.furniture) || []) if (D?.lifted?.f !== f) addFurnProp(sc, f);
+  }
+  for (const f of (visit ? home.furniture : furnList(sc)) || []) if (D?.lifted?.f !== f) addFurnProp(sc, f);
+}
+// Wall pieces were drawn for walls of different heights. Measure each one once (its topmost
+// painted pixel) and lower it just enough that it hangs inside the wall, below the cornice.
+const DROP = {};
+export function wallDrop(id, WH = 64) {
+  const k = id + ':' + WH; if (k in DROP) return DROP[k];
+  let top = 0;
+  try {
+    const cv = document.createElement('canvas'); cv.width = 160; cv.height = 200; const c = cv.getContext('2d');
+    c.translate(80, 180); FURN_DRAW[id]?.(c, 0, { ...FURNITURE[id], x: 0, y: 0, off: true });
+    const d = c.getImageData(0, 0, 160, 200).data;
+    outer: for (let y = 0; y < 200; y++) for (let x = 0; x < 160; x++) if (d[(y * 160 + x) * 4 + 3] > 40) { top = y - 180; break outer; }
+  } catch { top = 0; }
+  return (DROP[k] = Math.max(0, Math.round(-(WH - 7) - top)));
 }
 function addFurnProp(sc, f) {
   const def = FURNITURE[f.id]; if (!def) return;
   const rot = f.rot || 0, fp = footprint(def.w, def.h, rot, f.id);
-  const p = { homeFurn: f, x: f.x, y: f.y, draw: (c, t) => drawTurned(c, t, f.id, rot, () => FURN_DRAW[f.id](c, t, { ...def, ...(f.fs || {}), x: f.x, y: f.y })), cull: { x: f.x - 70, y: f.y - 100, w: 140, h: 120 } };
+  const dy = def.wall ? wallDrop(f.id, sc.WH) : 0;
+  const p = { homeFurn: f, x: f.x, y: f.y, draw: (c, t) => { if (dy) c.translate(0, dy); drawTurned(c, t, f.id, rot, () => FURN_DRAW[f.id](c, t, { ...def, ...(f.fs || {}), x: f.x, y: f.y })); }, cull: { x: f.x - 70, y: f.y - 100, w: 140, h: 140 } };
   if (def.floor) p.flat = true; // rugs sit under everything
   if (def.wall) p.sortY = -1;
   sc.prop(p);
@@ -94,21 +120,60 @@ function addFurnProp(sc, f) {
 }
 // does `sel` (a furniture id, or 'builtin:<key>') fit with its base at x,y?
 // (`self` is the piece being moved or turned, so it doesn't bump into its own outline)
-function fits(sel, x, y, rot = 0, self = null) {
+function fits(sel, x, y, rot = 0, self = null, pad = 0) {
   const def = defOf(sel), sc = house();
-  if (def.wall) return x - def.w / 2 > 14 && x + def.w / 2 < sc.w - 14;
+  if (def.wall) {
+    if (!(x - def.w / 2 > 14 && x + def.w / 2 < sc.w - 14)) return false;
+    // not over a window or another wall piece
+    for (const q of sc.props) {
+      const other = q.homeFurn ? FURNITURE[q.homeFurn.id] : null;
+      if (q.homeFurn && (!other?.wall || (self?.f && q.homeFurn === self.f))) continue;
+      if (!q.homeFurn && q.kind !== 'window') continue;
+      const w = q.homeFurn ? other.w : (q.w || 46);
+      if (Math.abs(q.x - x) < (w + def.w) / 2 + 2) return false;
+    }
+    return true;
+  }
   const fp = footprint(def.w, def.h, rot, keyOf(sel));
   // anywhere on the floor, right up against the walls
   if (x - fp.w / 2 < 4 || x + fp.w / 2 > sc.w - 4 || y > sc.h - 6) return false;
   if (y - fp.h < sc.WH - 4) return false;
   if (def.floor) return true;                              // rugs and mats lie under anything
   // don't block the doorway
-  if (Math.abs(x - sc.door.x) < fp.w / 2 + 18 && y > sc.h - 30) return false;
+  if (!sc.noDoor && Math.abs(x - sc.door.x) < fp.w / 2 + 18 && y > sc.h - 30) return false;
   for (const s of sc.solids) {
     if (s.off || (self && (self.f ? s.homeFurn === self.f : s.builtin === self.key))) continue;
-    if (x - fp.w / 2 < s.x + s.w && x + fp.w / 2 > s.x && y - fp.h < s.y + s.h && y > s.y) return false;
+    if (x - fp.w / 2 - pad < s.x + s.w && x + fp.w / 2 + pad > s.x && y - fp.h - pad * 2.4 < s.y + s.h && y + pad > s.y) return false;
   }
   return true;
+}
+
+// after stairs are built: anything standing where a flight now is moves to a free spot (or,
+// if the room is full, back into your storage). Built-ins always find a spot.
+export function clearStairs() {
+  for (const id of FLOORS) {
+    const sc = G.scenes[id]; if (!sc) continue;
+    const st = sc.solids.filter(q => q.stairs); if (!st.length) continue;
+    const hit = (x, y, w, h) => st.some(q => x - w / 2 < q.x + q.w + 6 && x + w / 2 > q.x - 6 && y - h < q.y + q.h + 24 && y > q.y);
+    const keep = D; D = { sc };
+    try {
+      rebuildHouseFurniture(null, sc);
+      const list = furnList(sc);
+      for (const f of [...list]) {
+        const def = FURNITURE[f.id]; if (!def || def.wall) continue; const fp = footprint(def.w, def.h, f.rot || 0, f.id);
+        if (!hit(f.x, f.y, fp.w, fp.h)) continue;
+        list.splice(list.indexOf(f), 1); rebuildHouseFurniture(null, sc);
+        const spot = freeSpot(f.id); if (spot) { f.x = spot.x; f.y = spot.y; list.push(f); } else G.state.home.owned.push(f.id);
+        rebuildHouseFurniture(null, sc);
+      }
+      if (hasBuiltins(sc)) for (const [k, b] of Object.entries(BUILTINS)) {
+        const p = builtinState()[k], fp = footprint(b.w, b.h, p.rot || 0, b.kind); if (b.floor || !hit(p.x, p.y, fp.w, fp.h)) continue;
+        const was = { ...p }; p.x = -999; rebuildHouseFurniture(null, sc);
+        const spot = freeSpot('builtin:' + k); Object.assign(p, spot ? { x: spot.x, y: spot.y, rot: 0 } : was); rebuildHouseFurniture(null, sc);
+      }
+    } finally { D = keep; }
+    markDirty(true);
+  }
 }
 
 // ---------------------------------------------------------------- pieces in the room
@@ -116,8 +181,8 @@ function fits(sel, x, y, rot = 0, self = null) {
 const selOf = pc => pc.f ? pc.f.id : 'builtin:' + pc.key;
 const posOf = pc => pc.f ? pc.f : builtinState()[pc.key];
 function pieces() {
-  const out = G.state.home.furniture.map(f => ({ f }));
-  for (const k of Object.keys(BUILTINS)) out.push({ key: k });
+  const out = furnList().map(f => ({ f }));
+  if (hasBuiltins(house())) for (const k of Object.keys(BUILTINS)) out.push({ key: k });
   return out;
 }
 // what's under a tap: things standing on the floor first (front-most first), then wall
@@ -134,20 +199,20 @@ function pieceAt(wx, wy) {
   return hits[0]?.pc || null;
 }
 // a free place for something new, as close to the middle of the floor as possible
-function freeSpot(sel) {
+function freeSpot(sel, pad = 12) {   // (new pieces keep a little room around them, so they're easy to see and grab)
   const sc = house(), def = defOf(sel);
   if (def.wall) { for (let r = 0; r < sc.w / 2; r += 8) for (const sx of [1, -1]) { const x = sc.w / 2 + sx * r; if (fits(sel, x, sc.WH)) return { x: Math.round(x / 4) * 4, y: sc.WH }; } return null; }
   const cx = sc.w / 2, cy = (sc.WH + sc.h) / 2 + def.h / 2;
   for (let r = 0; r < 260; r += 8) for (let k = 0; k < Math.max(1, Math.floor(r / 4)); k++) {
     const a = k / Math.max(1, Math.floor(r / 4)) * Math.PI * 2, x = Math.round((cx + Math.cos(a) * r) / 4) * 4, y = Math.round((cy + Math.sin(a) * r * 0.7) / 4) * 4;
-    if (fits(sel, x, y)) return { x, y };
+    if (fits(sel, x, y, 0, null, pad)) return { x, y };
   }
-  return null;
+  return pad ? freeSpot(sel, 0) : null;
 }
 
 // ---------------------------------------------------------------- undo
-const snap = () => JSON.stringify({ furniture: G.state.home.furniture, owned: G.state.home.owned, builtins: builtinState() });
-function restore(txt) { const o = JSON.parse(txt); Object.assign(G.state.home, { furniture: o.furniture, owned: o.owned, builtins: o.builtins }); D.sel = null; rebuildHouseFurniture(); markDirty(true); }
+const snap = () => JSON.stringify({ furniture: G.state.home.furniture, rooms: G.state.home.rooms || {}, owned: G.state.home.owned, builtins: builtinState() });
+function restore(txt) { const o = JSON.parse(txt); Object.assign(G.state.home, { furniture: o.furniture, rooms: o.rooms, owned: o.owned, builtins: o.builtins }); D.sel = null; rebuildHouseFurniture(); markDirty(true); }
 function changed(before) { if (before !== snap()) { D.hist.push(before); if (D.hist.length > 30) D.hist.shift(); markDirty(true); } }
 
 // ---------------------------------------------------------------- the mode
@@ -160,7 +225,8 @@ export function startDecorate() {
   document.body.classList.add('hide-controls', 'decorating');
   const bar = h('div', 'deco-bar'), tools = h('div', 'deco-tools hidden');
   document.getElementById('app').append(bar, tools);
-  D = { bar, tools, sel: null, lifted: null, drag: null, ghost: null, valid: false, hist: [], folded: false, padWas: house().bottomPad || 0 };
+  D = { sc: house(), bar, tools, sel: null, lifted: null, drag: null, ghost: null, valid: false, hist: [], folded: false };
+  D.padWas = D.sc.bottomPad || 0;
   renderBar();
   const touch = document.getElementById('touch');
   D.onDown = e => {
@@ -245,10 +311,10 @@ function renderBar() {
       const spot = freeSpot(id);
       if (!spot) { sfx('error'); toast({ text: T('No room for that', 'Hết chỗ rồi'), sub: T('Move or put something away first.', 'Dời hoặc cất bớt đồ trước nhé.'), icon: 'sofa' }); return; }
       const before = snap(), i = owned.indexOf(id); if (i >= 0) owned.splice(i, 1);
-      const f = { id, x: spot.x, y: spot.y, rot: 0 }; G.state.home.furniture.push(f);
+      const f = { id, x: spot.x, y: spot.y, rot: 0 }; furnList().push(f);
       rebuildHouseFurniture(); changed(before); D.sel = { f };
       fx.burst('spark', f.x, f.y - 14, 8, { up: 30, col: '#ffd35a' }); sfx('success');
-      if (G.state.home.furniture.length >= 5) unlockAchievement('cozy_home');
+      if (furnList().length >= 5) unlockAchievement('cozy_home');
       renderBar();
     };
     row.appendChild(it);
@@ -269,7 +335,7 @@ function renderTools() {
   if (!def.wall && SIDE[keyOf(sel)]) t.append(act('↺', 'ghost small icon', () => turn(-1)), act('↻', 'ghost small icon', () => turn(1)));
   else t.append(act('⇋', 'ghost small icon', () => turn(2)));                       // everything else can be mirrored
   if (D.sel.f) t.append(act(T('Put away', 'Cất đi'), 'ghost small', () => {
-    const before = snap(), list = G.state.home.furniture, i = list.indexOf(D.sel.f);
+    const before = snap(), list = furnList(), i = list.indexOf(D.sel.f);
     if (i >= 0) { list.splice(i, 1); G.state.home.owned.push(D.sel.f.id); }
     D.sel = null; rebuildHouseFurniture(); changed(before); sfx('pop'); renderBar();
   }));
@@ -289,7 +355,7 @@ function drawOverlay(c, t) {
   // the piece being carried
   if (D.lifted && D.ghost) {
     const sel = selOf(D.lifted), def = defOf(sel), rot = posOf(D.lifted).rot || 0, fp = footprint(def.w, def.h, rot, keyOf(sel));
-    c.save(); c.globalAlpha = 0.75; c.translate(D.ghost.x, D.ghost.y - 3); drawSel(c, t, sel, D.ghost.x, D.ghost.y, rot); c.restore();
+    c.save(); c.globalAlpha = 0.75; c.translate(D.ghost.x, D.ghost.y - 3 + (def.wall && !sel.startsWith('builtin:') ? wallDrop(sel, house().WH) : 0)); drawSel(c, t, sel, D.ghost.x, D.ghost.y, rot); c.restore();
     c.save(); c.strokeStyle = D.valid ? '#4fae5a' : '#e8584e'; c.fillStyle = D.valid ? 'rgba(111,191,115,.18)' : 'rgba(232,88,78,.18)'; c.lineWidth = 2; c.setLineDash([5, 4]);
     if (def.wall) { c.fillRect(D.ghost.x - def.w / 2, D.ghost.y - 66, def.w, 26); c.strokeRect(D.ghost.x - def.w / 2, D.ghost.y - 66, def.w, 26); }
     else { c.fillRect(D.ghost.x - fp.w / 2, D.ghost.y - fp.h, fp.w, fp.h); c.strokeRect(D.ghost.x - fp.w / 2, D.ghost.y - fp.h, fp.w, fp.h); }
