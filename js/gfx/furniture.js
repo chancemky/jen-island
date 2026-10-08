@@ -1480,3 +1480,22 @@ Object.assign(SIDE, {
   ship_model: () => [B(-5, 5, 0, 4, 0, 36, '#8a5a3a'), B(-3, 3, 4, 12, 4, 32, '#a8563f'), B(-0.6, 0.6, 12, 34, 17, 19, '#5b3f36'), B(-0.4, 0.4, 16, 30, 8, 28, '#fffaf0')],
   bottle_ship: () => [B(-5, 5, 0, 3, 0, 22, '#8a5a3a'), B(-6, 6, 3, 17, 1, 21, 'rgba(190,230,240,.6)', { water: 1 })],
 });
+
+// nature finds (systems/nature.js): a jar of fireflies; the fishing tournament's mounted fish
+FURN_DRAW.firefly_jar = (c, t, p) => {
+  shadow(c, 0, 1, 7, 2, 0.14);
+  c.beginPath(); c.moveTo(-6, -2); c.lineTo(-6, -16); c.quadraticCurveTo(-6, -19, -3, -19); c.lineTo(3, -19); c.quadraticCurveTo(6, -19, 6, -16); c.lineTo(6, -2); c.quadraticCurveTo(6, 0, 3, 0); c.lineTo(-3, 0); c.quadraticCurveTo(-6, 0, -6, -2);
+  c.fillStyle = 'rgba(200,235,245,.45)'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+  box(c, -4.5, -22, 9, 3.5, 1, '#c9955e', INK, 0.6); line(c, -3, -20.5, 3, -20.5, 'rgba(91,63,54,.4)', 0.5);
+  for (let i = 0; i < 6; i++) { const a = t * (0.8 + i * 0.13) + i * 2.1, x = Math.cos(a) * 3.4, y = -9 + Math.sin(a * 1.3) * 5.5, k = (Math.sin(t * 3 + i * 1.7) + 1) / 2;
+    c.fillStyle = `rgba(255,245,150,${0.35 + k * 0.65})`; c.beginPath(); c.arc(x, y, 0.9 + k * 0.5, 0, TAU); c.fill(); }
+  c.fillStyle = 'rgba(255,255,255,.4)'; c.fillRect(-4.6, -16, 1.2, 12);
+  if (!p.preview) g(p, 0, -10, 24, 'rgba(255,240,140,.45)');
+};
+FURN_DRAW.fish_plaque = (c, t, p) => onWall(c, p, () => {
+  box(c, -17, -56, 34, 22, 4, '#8a5a3a', INK, 1); box(c, -15, -54, 30, 18, 3, '#b77a4f', null);
+  c.beginPath(); c.ellipse(-1, -45, 10, 4.6, 0, 0, TAU); c.fillStyle = '#7fb3d0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+  poly(c, [8, -45, 14, -49, 14, -41], '#6a9fbf', INK, 0.7); poly(c, [-4, -49, 0, -53, 3, -49], '#6a9fbf', INK, 0.5);
+  circ(c, -8, -46, 1, INK, null); c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.ellipse(-2, -47, 5, 1.2, 0, 0, TAU); c.fill();
+  box(c, -6, -38.5, 12, 3, 1, '#f2c14e', INK, 0.4);
+});

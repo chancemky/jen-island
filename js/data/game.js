@@ -457,6 +457,8 @@ export const FURNITURE = {
   lantern_tree: { vi: 'Cây lồng đèn', en: 'Lantern tree', price: 0, w: 20, h: 12, reward: true, fixed: true, light: true },
   koi_lamp:     { vi: 'Đèn cá koi', en: 'Koi lamp', price: 0, w: 14, h: 10, reward: true, fixed: true, light: true },
   giant_shell:  { vi: 'Vỏ ốc khổng lồ', en: 'Giant conch shell', price: 0, w: 22, h: 12, reward: true, fixed: true },
+  firefly_jar:  { vi: 'Lọ đom đóm', en: 'Jar of fireflies', price: 0, w: 12, h: 10, reward: true, fixed: true, light: true },
+  fish_plaque:  { vi: 'Bảng cá vô địch', en: 'Champion\'s mounted fish', price: 0, w: 34, h: 8, reward: true, fixed: true, wall: true },
   bottle_ship:  { vi: 'Thuyền trong chai', en: 'Ship in a bottle', price: 0, w: 22, h: 10, reward: true, fixed: true },
   lantern_hand_pink: { vi: 'Lồng đèn tự làm (hồng)', en: 'Handmade lantern (pink)', price: 0, w: 12, h: 10, light: true, wall: true, reward: true, fixed: true },
   lantern_hand_teal: { vi: 'Lồng đèn tự làm (xanh)', en: 'Handmade lantern (teal)', price: 0, w: 12, h: 10, light: true, wall: true, reward: true, fixed: true },

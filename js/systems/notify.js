@@ -2,7 +2,7 @@
 // website has none). Nothing is sent from a server: when you leave the app, a few gentle
 // reminders are set on the phone, and they're all cleared again when you come back.
 //   · tomorrow 8:00 — morning mail and new Island Board notes
-//   · Sunday 19:00 Vietnam time — the weekly board closes at midnight
+//   · Sunday 19:00 Japan time — the weekly board closes at midnight
 //   · after 3 quiet days — Mèo Mây misses you
 // We ask for permission once, after your second island day, with our own card first.
 
@@ -22,7 +22,7 @@ async function schedule() {
   const s = G.state, isle = s.island.name || 'Bistro Island', now = Date.now(), list = [];
   const morning = new Date(); morning.setDate(morning.getDate() + 1); morning.setHours(8, 0, 0, 0);
   list.push({ id: 101, title: T('☀️ Morning mail', '☀️ Thư buổi sáng'), body: T(`A gift and new neighbour requests are waiting on ${isle}.`, `Một món quà và lời nhờ mới của hàng xóm đang chờ ở ${isle}.`), schedule: { at: morning } });
-  const close = weekEndsAt(islandNow()) - 5 * 3600e3;              // 19:00 Vietnam time on Sunday
+  const close = weekEndsAt(islandNow()) - 5 * 3600e3;              // 19:00 Japan time on Sunday
   if (close > now + 3600e3) list.push({ id: 102, title: T('🏆 Weekly board closes tonight', '🏆 Bảng tuần đóng tối nay'), body: T('A few more customers could win you a trophy.', 'Phục vụ thêm vài khách là có thể giành cúp đó.'), schedule: { at: new Date(close) } });
   list.push({ id: 103, title: T('🐱 Mèo Mây misses you', '🐱 Mèo Mây nhớ bạn'), body: T('The tea stand is quiet without you. Come say hi?', 'Quán trà vắng bạn buồn lắm. Ghé chào một tiếng nha?'), schedule: { at: new Date(now + 3 * 864e5) } });
   try { await ln.schedule({ notifications: list.map(n => ({ ...n, sound: null })) }); } catch (e) { console.warn('notify', e.message); }

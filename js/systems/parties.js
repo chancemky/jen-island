@@ -3,7 +3,7 @@
 // four neighbours gathered round. Walk up and join: everyone cheers, the candles go out,
 // the album gets a party photo and the birthday neighbour likes you a lot more.
 import { G, T, markDirty } from './state.js';
-import { bus, dist } from '../core/util.js';
+import { bus, dist, islandDay } from '../core/util.js';
 import { birthdaysToday } from './interact.js';
 import { RESIDENTS } from '../data/looks.js';
 import { PLAZA } from '../world/island.js';
@@ -69,7 +69,7 @@ export function initParties() {
   bus.on('hour', h => {
     const s = G.state; if (!s.story.flags.freeRoam) return;
     if (party && (party.day !== s.day || h >= 20)) end();
-    if (!party && h >= 17 && h < 20) { const rid = birthdaysToday()[0]; if (rid && s.story.flags['party:' + rid] !== s.day) { s.story.flags['party:' + rid] = s.day; markDirty(); start(rid); } }
+    if (!party && h >= 17 && h < 20) { const rid = birthdaysToday()[0]; if (rid && s.story.flags['party:' + rid] !== islandDay()) { s.story.flags['party:' + rid] = islandDay(); markDirty(); start(rid); } }
   });
   bus.on('dayEnd', () => end());
 }

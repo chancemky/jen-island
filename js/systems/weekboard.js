@@ -5,7 +5,7 @@
 
 import { G, T, addMoney, markDirty } from './state.js';
 import * as cloud from './cloud.js';
-import { bus, islandNow, money } from '../core/util.js';
+import { bus, islandNow, money, JST } from '../core/util.js';
 import { grantServerBadge } from './badges.js';
 import { FURNITURE } from '../data/game.js';
 import { track } from './telemetry.js';
@@ -21,10 +21,10 @@ export function prizeFor(rank) {
   if (rank <= 3) return { coins: 2500, trophy: 'trophy_silver', badges: ['week_podium', 'week_top10'] };
   return { coins: 1000, trophy: 'trophy_bronze', badges: ['week_top10'] };
 }
-// when this week's board closes: next Monday 00:00 in Vietnam (UTC+7)
+// when this week's board closes: next Monday 00:00 in Japan (UTC+9)
 export function weekEndsAt(now = islandNow()) {
-  const vn = new Date(now + 7 * 3600e3), dow = (vn.getUTCDay() + 6) % 7;      // 0 = Monday
-  return Date.UTC(vn.getUTCFullYear(), vn.getUTCMonth(), vn.getUTCDate() + 7 - dow) - 7 * 3600e3;
+  const jp = new Date(now + JST), dow = (jp.getUTCDay() + 6) % 7;            // 0 = Monday
+  return Date.UTC(jp.getUTCFullYear(), jp.getUTCMonth(), jp.getUTCDate() + 7 - dow) - JST;
 }
 export function timeLeftText(now = islandNow()) {
   const ms = Math.max(0, weekEndsAt(now) - now), d = Math.floor(ms / 864e5), hr = Math.floor(ms % 864e5 / 3600e3);

@@ -2,13 +2,13 @@
 // lanterns, café tables, a bicycle, a bird bath… Nothing is fixed: you choose each piece and
 // where it goes. Islanders judge it two ways:
 //  · every day, passers-by notice a good front: a well-dressed shop draws up to 15% more customers
-//  · every 7th island day, the Storefront Showdown: three neighbours judge your best shop
+//  · every week (Monday–Sunday, real time in Japan), the Storefront Showdown: three neighbours judge your best shop
 //    against the week's theme. They look at variety, how well it fits the theme, balance
 //    (both sides of the door), a sense of space (not empty, not cluttered), and lights after
 //    dark — a creative front beats an expensive one.
 import { G, T, addMoney, canAfford, markDirty } from './state.js';
 import { BUSINESSES } from '../data/game.js';
-import { bus } from '../core/util.js';
+import { bus, islandNow, jstDayNum } from '../core/util.js';
 
 // tags: floral · cosy · beach · festive · night (lights) · green
 export const DECOR = {
@@ -35,7 +35,9 @@ export const THEMES = [
   { id: 'floral', en: 'In bloom', vi: 'Hoa nở' }, { id: 'cosy', en: 'Cosy corner', vi: 'Góc ấm cúng' }, { id: 'beach', en: 'Beach vibes', vi: 'Không khí biển' },
   { id: 'festive', en: 'Festival time', vi: 'Mùa lễ hội' }, { id: 'night', en: 'Glow after dark', vi: 'Lung linh về đêm' }, { id: 'green', en: 'Green garden', vi: 'Vườn xanh' },
 ];
-export const themeOf = (day = G.state.day) => THEMES[Math.floor((day - 1) / 7) % THEMES.length];
+// weeks run Monday to Sunday in Japan, the same theme for everyone
+export const realWeek = (t = islandNow()) => Math.floor((jstDayNum(t) + 3) / 7);
+export const themeOf = (wk = realWeek()) => THEMES[((wk % THEMES.length) + THEMES.length) % THEMES.length];
 export const decorOf = id => { const z = G.state.biz[id]; return z ? (z.decor ||= []) : []; };
 // the strip in front of a shop where decor can go (relative to the building's ground line)
 export function frontArea(b) { const w = b.w || 100; return { x0: -w / 2 - 46, x1: w / 2 + 46, y0: 8, y1: 46 }; }
@@ -66,7 +68,7 @@ const SAY = {
   light: [['It\'ll glow beautifully tonight.', 'Tối nay sẽ lung linh lắm.'], ['It\'ll be dark out here at night.', 'Buổi tối ở đây sẽ tối lắm.']],
 };
 export function judgeWeek() {
-  const s = G.state, theme = themeOf(s.day - 1), shops = Object.keys(BUSINESSES).filter(id => s.biz[id]?.owned && decorOf(id).length);
+  const s = G.state, theme = themeOf(realWeek() - 1), shops = Object.keys(BUSINESSES).filter(id => s.biz[id]?.owned && decorOf(id).length);
   if (!shops.length) return null;
   const best = shops.map(id => ({ id, ...scoreFront(id, theme) })).sort((a, b) => b.total - a.total)[0];
   const stars = Math.max(1, Math.min(5, Math.round(best.total / 3)));
@@ -86,17 +88,20 @@ export function placeDecor(id, k, dx, dy) {
 export function removeDecor(id, i) { const list = decorOf(id), d = list[i]; if (!d) return; list.splice(i, 1); addMoney(Math.round((DECOR[d.k]?.price || 0) / 2), 'build'); markDirty(true); bus.emit('decor', id); }
 export function moveDecor(id, i, dx, dy) { const d = decorOf(id)[i]; if (!d) return; d.dx = Math.round(dx); d.dy = Math.round(dy); markDirty(); }
 
-// the Storefront Showdown, every 7th island day after the summary
+// the Storefront Showdown, after the first night's summary of each new (real) week
 export function initStorefront() {
   bus.on('dayEnd', sum => {
-    if (!sum || G.state.day % 7 !== 0) return;
+    // the first night after a new week starts (real time in Japan): judge last week's theme, once
+    const c = (G.state.contest ||= { ribbons: {}, wins: 0 }), wk = realWeek() - 1;
+    if (!sum || c.judged === wk) return; if (c.judged == null) { c.judged = wk; return; }      // (nothing to judge before your first full week)
+    c.judged = wk;
     const r = judgeWeek(); if (!r) return;
     import('../ui/sheets.js').then(({ present }) => present(() => new Promise(done => {
       const el = document.createElement('div'); el.className = 'modal';
       el.innerHTML = `<div class="card contest"><div class="kicker">${T('Storefront Showdown', 'Thi mặt tiền đẹp')}</div><h2>${T(r.theme.en, r.theme.vi)}</h2><p style="font-weight:800">${T(`The judges chose ${BUSINESSES[r.shop].en}`, `Ban giám khảo chọn ${BUSINESSES[r.shop].name}`)}</p><div class="stars-big">${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}</div>
         ${r.comments.map(c => `<p class="judge"><b>${(RES[c.rid] || '')}</b> “${T(c.line[0], c.line[1])}”</p>`).join('')}
         <p style="font-weight:900">${r.prize ? T(`Prize: ${r.prize}k${r.ribbon ? ` and a ${r.ribbon} ribbon for the shop` : ''}`, `Giải thưởng: ${r.prize}k${r.ribbon ? ` và ruy băng ${({ gold: 'vàng', silver: 'bạc', bronze: 'đồng' })[r.ribbon]} cho quán` : ''}`) : T('No prize this time — try mixing in the theme!', 'Lần này chưa có giải — thử thêm đồ hợp chủ đề nhé!')}</p>
-        <p class="muted" style="font-size:12px">${T(`Next week's theme: ${themeOf(G.state.day + 1).en}`, `Chủ đề tuần sau: ${themeOf(G.state.day + 1).vi}`)}</p><button class="btn primary" type="button">${T('Thank you!', 'Cảm ơn!')}</button></div>`;
+        <p class="muted" style="font-size:12px">${T(`This week's theme: ${themeOf().en}`, `Chủ đề tuần này: ${themeOf().vi}`)}</p><button class="btn primary" type="button">${T('Thank you!', 'Cảm ơn!')}</button></div>`;
       (document.getElementById('app') || document.body).appendChild(el); bus.emit('stinger', r.stars >= 4 ? 'award' : 'friend');
       el.querySelector('button').onclick = () => { el.remove(); done(); };
     })));

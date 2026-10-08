@@ -9,6 +9,9 @@ import { sfx } from '../core/audio.js';
 import { toast } from './hud.js';
 import { track } from '../systems/telemetry.js';
 import { bus } from '../core/util.js';
+import { rainbowOn } from '../systems/nature.js';
+import { discover } from '../systems/interact.js';
+import { addXP } from '../systems/progress.js';
 
 const FILTERS = {
   natural: { en: 'Natural', vi: 'Tự nhiên', css: '', px: null },
@@ -88,7 +91,9 @@ async function shoot(st) {
   // the flash and the shutter
   const fl = ui?.querySelector('.ph-flash'); if (fl) { fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go'); }
   sfx('click'); sfx('sparkle');
-  const s = G.state, title = [`${s.island.name || 'Bistro Island'} · Day ${s.day}`, `${s.island.name || 'Bistro Island'} · Ngày ${s.day}`];
+  const s = G.state, rb = rainbowOn();
+  const title = rb ? [`A rainbow over ${s.island.name || 'Bistro Island'}`, `Cầu vồng trên ${s.island.name || 'Bistro Island'}`] : [`${s.island.name || 'Bistro Island'} · Day ${s.day}`, `${s.island.name || 'Bistro Island'} · Ngày ${s.day}`];
+  if (rb && G.runtime.rainbowShot !== s.day) { G.runtime.rainbowShot = s.day; discover('rainbow'); addXP(30, 'photo'); }
   const small = document.createElement('canvas'), sw = 480; small.width = sw; small.height = Math.round(sw * out.height / out.width);
   small.getContext('2d').drawImage(out, 0, 0, small.width, small.height);
   addPhoto(title, small.toDataURL('image/jpeg', 0.8));

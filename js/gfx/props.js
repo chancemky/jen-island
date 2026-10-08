@@ -3,7 +3,7 @@
 // point (where it touches the ground) and receives (c, t, p) so it can animate.
 
 import { TAU, shade, rng } from '../core/util.js';
-import { T, tr } from '../systems/state.js';
+import { T, tr, G } from '../systems/state.js';
 import { INK, ell, circ, box, poly, line, limb, shadow, text, stext, flower, fitSize } from './draw.js';
 import { drawHammock } from './hammock.js';
 
@@ -77,8 +77,13 @@ export function palm(c, t, p) {
   for (const [x, y] of [[-4, 4], [3, 5], [0, 7], [-1, 2]]) { circ(c, x, y, 3.6, '#8a5a32'); circ(c, x - 1, y - 1.2, 1, 'rgba(255,255,255,.35)', null); }
   c.restore();
 }
+const season = () => G.runtime?.season || 'summer';
 export function tree(c, t, p) {
-  const s = p.s || 1, col = p.col || '#7cc463', w = wind(p.x, t, p.y);
+  const ss = season(), hash = ((p.x * 7 + p.y * 3) | 0) % 5;
+  // the island's season (shared 60-day year): peach blossom in spring, lush summer, autumn reds and golds, a dull winter green
+  const col = p.col || (ss === 'autumn' ? ['#d9a046', '#e07a4a', '#c9b04a', '#e39552', '#86c867'][hash] : ss === 'winter' ? '#79a868' : ss === 'summer' ? '#6cbd58' : '#8ccf6a');
+  if (!p.col && ss === 'spring' && hash < 2 && !p.flowers) p = { ...p, flowers: hash ? '#ffc0d8' : '#fff0f5' };
+  const s = p.s || 1, w = wind(p.x, t, p.y);
   const seed = (p.x * 0.37) % 6;
   shadow(c, 4 + w * 2, 1, 28 * s, 8.5 * s, 0.16);
   // trunk with a root flare, slight bend in the wind
@@ -107,7 +112,10 @@ export function tree(c, t, p) {
   if (p.fruit) { const R = rng((p.x | 0) + 1); for (let i = 0; i < 7; i++) { const [fx, fy] = inCluster(R, 0.62); circ(c, fx, fy, 2.8 * s, p.fruit, INK, 0.6); circ(c, fx - 0.8, fy - 0.9, 0.8, 'rgba(255,255,255,.6)', null); } }
 }
 // Hoa phượng — the red flame tree of Vietnamese summers.
-export function flameTree(c, t, p) { tree(c, t, { ...p, col: '#8ccf6a', flowers: '#f0553f', s: p.s || 1.15 }); }
+// the seasons: in the dry months (days 1–30 of the island year) the flame trees burst into red
+// and the leaves go a sunny yellow-green; in the rains everything is a deep, wet green
+// flame trees (phượng vĩ) burst into red in summer, are green in spring, turn gold in autumn
+export function flameTree(c, t, p) { const ss = season(); tree(c, t, { ...p, col: ss === 'autumn' ? '#d9b04a' : ss === 'winter' ? '#7fae62' : ss === 'summer' ? '#8fcb64' : '#9bd16a', flowers: ss === 'summer' ? '#f0553f' : null, s: p.s || 1.15 }); }
 // Hoa sứ — frangipani, with white-and-yellow blossoms.
 export function frangipani(c, t, p) {
   const s = p.s || 1, w = wind(p.x, t, p.y);

@@ -14,7 +14,7 @@ import { CLOTHES } from '../data/wardrobe.js';
 import { PETS } from '../systems/pets.js';
 import { PLACES } from '../systems/economy.js';
 import { endDay } from '../systems/time.js';
-import { EVENTS, YEAR } from '../systems/interact.js';
+import { islandNow, learnServerTime, SEASON_DAYS } from '../core/util.js';
 import { SIDE_QUESTS } from '../systems/sidequests.js';
 import { setScene } from '../systems/scenes.js';
 import { saveLocal, saveCloudNow } from '../systems/save.js';
@@ -133,7 +133,9 @@ export function renderDevPane(pane, api) {
   b(g, 'End the day now', () => { endDay(); toast({ text: `Dev: it's day ${s().day}`, icon: 'sleep_moon' }); });
   b(g, 'Day +7', () => { t.day += 7; });
   for (const m of [1, 3, 10]) b(g, `Clock ×${m}`, () => { G.runtime.devClock = m; }, (G.runtime.devClock || 1) === m ? 'gold' : 'ghost');
-  for (const ev of EVENTS) b(g, ev.en, () => { t.day = Math.floor((t.day - 1) / YEAR) * YEAR + ev.from; });
+  // the shared island calendar runs on real time: move the clock forward to test seasons and festivals
+  b(g, 'Clock +1 real day', () => learnServerTime(new Date(islandNow() + 864e5).toUTCString()));
+  b(g, 'Clock +1 season', () => learnServerTime(new Date(islandNow() + SEASON_DAYS * 864e5).toUTCString()));
   b(g, 'Night Market Saturday', () => { let d = t.day; while (((d - 1) % YEAR + 1) % 7 !== 6) d++; t.day = d; });
 
   // customers & visitors

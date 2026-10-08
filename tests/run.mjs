@@ -425,7 +425,7 @@ if (run('features')) {
       prize: [W.prizeFor(1).trophy, W.prizeFor(3).trophy, W.prizeFor(10).trophy].join(), ends: new Date(W.weekEndsAt(Date.parse('2026-10-08T05:00:00Z'))).toISOString() };
   });
   if (board.same && board.n >= 3 && board.allDone === 3 && board.paid && board.fresh) pass('features', 'Island Board: 3 daily notes, counted and paid once, new ones the next day'); else fail('features', `Island Board wrong: ${JSON.stringify(board)}`);
-  if (board.prize === 'trophy_gold,trophy_silver,trophy_bronze' && board.ends === '2026-10-11T17:00:00.000Z') pass('features', 'weekly board: prizes by rank, closes Monday 00:00 Vietnam time'); else fail('features', `weekly board wrong: ${board.prize} ${board.ends}`);
+  if (board.prize === 'trophy_gold,trophy_silver,trophy_bronze' && board.ends === '2026-10-11T15:00:00.000Z') pass('features', 'weekly board: prizes by rank, closes Monday 00:00 Japan time'); else fail('features', `weekly board wrong: ${board.prize} ${board.ends}`);
   if (errors.length) fail('features', 'errors: ' + errors.slice(0, 3).join(' | ')); else pass('features', 'no errors');
   await ctx.close();
 }

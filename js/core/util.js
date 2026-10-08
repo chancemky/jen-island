@@ -54,13 +54,31 @@ export function mix(h1, h2, t) {
 }
 
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
-// The island's clock for daily and weekly things (morning mail, streaks, weekly goals):
-// the servers' time, not the device's (changing the phone's clock doesn't repeat gifts),
-// and days turn over at midnight in Việt Nam for everyone.
+// The island's shared clock: seasons, weather, festivals, weekly events, morning mail and streaks
+// are the same for every player at the same moment. Real days turn over at midnight in Japan
+// (UTC+9). It's the servers' time, not the device's (changing the phone's clock doesn't repeat
+// gifts or skip ahead). The island year is 60 real days: four seasons of 15 days each, starting
+// with spring on the Grand Opening (31 Oct 2026). The in-game clock (G.state.time / day) only
+// runs the shop day.
 let serverOffset = 0;
 export function learnServerTime(dateHeader) { const t = Date.parse(dateHeader || ''); if (t) serverOffset = t - Date.now(); }
+export const JST = 9 * 3600e3;
 export const islandNow = () => Date.now() + serverOffset;
-export const islandDay = (t = islandNow()) => new Date(t + 7 * 3600e3).toISOString().slice(0, 10);   // "2026-10-31", Việt Nam time
+export const islandDay = (t = islandNow()) => new Date(t + JST).toISOString().slice(0, 10);   // "2026-10-31", Japan time
+// the date in Japan as a Date whose getUTC* fields read Japanese local time
+export const jst = (t = islandNow()) => new Date(t + JST);
+export const jstMonth = (t = islandNow()) => jst(t).getUTCMonth() + 1;                        // 1–12
+export const jstDow = (t = islandNow()) => jst(t).getUTCDay();                                // 0 Sunday … 6 Saturday
+export const jstDayNum = (t = islandNow()) => Math.floor((t + JST) / 864e5);                  // a day number, same for everyone
+// a JST calendar date ("2026-12-16") as a timestamp: midnight in Japan
+export const jstDate = ymd => Date.parse(ymd + 'T00:00:00+09:00');
+// the island calendar (shared): day 1–60 of the island year, the season, and the year number
+export const YEAR_DAYS = 60, SEASON_DAYS = 15, SEASONS = ['spring', 'summer', 'autumn', 'winter'];
+const YEAR_START = Math.floor((Date.parse('2026-10-31T00:00:00+09:00') + JST) / 864e5);
+export const yearDay = (t = islandNow()) => ((((jstDayNum(t) - YEAR_START) % YEAR_DAYS) + YEAR_DAYS) % YEAR_DAYS) + 1;
+export const islandYear = (t = islandNow()) => Math.max(1, Math.floor((jstDayNum(t) - YEAR_START) / YEAR_DAYS) + 1);   // (year 1 begins on launch day: spring, so the first Christmas lands in winter)
+export const islandSeason = (t = islandNow()) => SEASONS[Math.floor((yearDay(t) - 1) / SEASON_DAYS)];
+export const seasonDay = (t = islandNow()) => ((yearDay(t) - 1) % SEASON_DAYS) + 1;              // 1–15
 // the App Store / Google Play build (Capacitor) — it is served from "localhost" too
 export const nativeApp = () => !!globalThis.Capacitor?.isNativePlatform?.();
 // a developer's local copy (tests, dev tools), never the store app

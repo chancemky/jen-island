@@ -13,6 +13,7 @@ import { INK } from '../gfx/draw.js';
 import { ingName, matName, INGREDIENTS } from '../data/game.js';
 import { addXP } from './progress.js';
 import { questOption, questTalk } from './sidequests.js';
+import { islandDay } from '../core/util.js';
 
 // ---------------------------------------------------------------- jokes
 export const JOKES = [
@@ -184,14 +185,14 @@ export async function residentMenu(a, rid, chat) {
 
 // ---------------------------------------------------------------- gifts for neighbours
 async function giveResidentGift(a, rid) {
-  const s = G.state, likes = BIRTHDAYS[rid].likes, bday = isBirthday(rid);
+  const s = G.state, likes = BIRTHDAYS[rid].likes, bkey = 'bday:' + rid + ':' + islandDay(), bday = isBirthday(rid) && !s.story.flags[bkey];   // (the birthday bonus once per real birthday)
   const have = Object.keys(s.pantry).filter(k => s.pantry[k] > 0 && INGREDIENTS[k]);
   const fav = likes.filter(k => have.includes(k)), other = have.filter(k => !likes.includes(k)).slice(0, 3);
   const choices = [...fav, ...other];
   if (!choices.length) { await say(a, T('That\'s sweet — but your bag is empty! Bring something from the market another time.', 'Dễ thương ghê — mà túi {you} trống trơn! Lần sau mang gì đó từ chợ nha.'), { emo: 'happy' }); return; }
   const pick = await ask(null, T('What will you give?', 'Tặng gì đây?'), [...choices.map(k => ingName(k) + (likes.includes(k) ? ' ♥' : '')), T('Never mind', 'Thôi')]);
   const k = choices[pick]; if (!k) return;
-  addPantry(k, -1); s.story.flags['gift:' + rid + ':' + s.day] = 1; markDirty(true);
+  addPantry(k, -1); s.story.flags['gift:' + rid + ':' + s.day] = 1; if (bday) s.story.flags[bkey] = 1; markDirty(true);
   const loved = likes.includes(k), pts = (loved ? 4 : 1) * (bday ? 2 : 1) + (bday ? 1 : 0);
   s.friends[rid] = (s.friends[rid] || 0) + pts;
   a.setEmo('love', 2.5); a.showEmote('heart', 1.8); a.doHop?.(60); sfx(loved ? 'success' : 'pop');

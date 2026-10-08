@@ -75,6 +75,7 @@ import { applyMeoStyle } from './systems/meostyle.js';
 import { initParties, partyAction } from './systems/parties.js';
 import { nightlifeAction } from './systems/nightlife.js';
 import { tripAction, tripOpen } from './systems/trip.js';
+import { updateNature, natureDrawables, drawRainbow, natureAction, initNature } from './systems/nature.js';
 import { openBoard } from './ui/board.js';
 import { CLOTHES } from './data/wardrobe.js';
 import { initAds } from './systems/ads.js';
@@ -161,7 +162,7 @@ async function boot() {
   initBadges();
   initSocial();
   initBoard();
-  initNotify(); initReview(); initRare(); initTips(); initSmoothieIntro(); initStorefront(); initParties();
+  initNotify(); initReview(); initRare(); initTips(); initSmoothieIntro(); initStorefront(); initParties(); initNature();
   setTimeout(initWeekBoard, 4000);          // after the morning mail settles
   showMorningMail();
   festivalGift();
@@ -388,7 +389,7 @@ function loop(now) {
   if (G.runtime.cinematic) return; // the opening cinematic owns the canvas
   if (!G.scene) return;
   if (G.runtime.paused) { // frozen world: just keep drawing it under the pause card
-    G.renderer.render(G.scene, t, { player: G.player, light: lightingFor(G.state.time, G.scene.kind !== 'island'), worldExtra: G.scene === scenes.island ? npcDrawables() : null, overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); } });
+    G.renderer.render(G.scene, t, { player: G.player, light: lightingFor(G.state.time, G.scene.kind !== 'island'), worldExtra: G.scene === scenes.island ? [...npcDrawables(), ...natureDrawables()] : null, overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); drawRainbow(c, tt); } });
     return;
   }
   const gm = updateClock(dt);
@@ -408,7 +409,7 @@ function loop(now) {
   updateWorldEvents(dt);
   updateSeasonal(dt);
   updateAmbience();
-  updateWeather(dt);
+  updateWeather(dt); updateNature(dt);
   if (G.scene === scenes.island) updateVendors(dt);
   // shops stand still while a menu or the prep table has the clock paused (no new
   // customers, no lost patience), so checking your bag never costs you a sale
@@ -429,7 +430,7 @@ function loop(now) {
   if (!(isServiceOpen() || isPrepOpen())) G.renderer.render(sc, t, {
     player: pl, light,
     worldExtra: sc === scenes.island ? npcDrawables() : null,
-    overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); G.runtime.decoOverlay?.(c, tt); },
+    overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); drawRainbow(c, tt); G.runtime.decoOverlay?.(c, tt); },
   });
   updateHud(dt);
   tickCelebrations(() => !cs.active && !isUiOpen() && !isPresenting() && !isServiceOpen() && !isPrepOpen() && !dialogue.active && !isDecorating() && !G.runtime.paused);
@@ -549,7 +550,7 @@ function updateInteraction(dt) {
     setAction(T('Statue', 'Tượng đài'), () => statueSheet(), 'star'); return;
   }
   // fishing off the end of the pier (once Chú Hải has shown you how)
-  const fish = fishingAction(pl) || tripAction(pl); if (fish) { setAction(fish.label, fish.run, fish.icon); return; }
+  const fish = fishingAction(pl) || tripAction(pl) || natureAction(pl); if (fish) { setAction(fish.label, fish.run, fish.icon); return; }
   // a shop's special easel: tap to pick today's special (cycles through what it sells)
   if (sc === scenes.island) { const e = specialEasels().find(e => Math.hypot(pl.x - e.x, pl.y - e.y - 6) < 24); if (e) { setAction(T('Today\'s special', 'Món đặc biệt'), () => cycleSpecial(e.id), 'star'); return; } }
   // a rare visitor (the golden cat)

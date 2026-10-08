@@ -16,11 +16,15 @@ export const FISH = {
   squid: { en: 'Squid', vi: 'Mực', w: 8, ing: 'squid', night: 2 }, scallop: { en: 'Scallop', vi: 'Sò điệp', w: 5, ing: 'scallop' },
   pufferfish: { en: 'Pufferfish (let go!)', vi: 'Cá nóc (thả lại!)', w: 4 }, boot: { en: 'An old boot', vi: 'Chiếc ủng cũ', w: 6, junk: true },
   moonfish: { en: 'Moonfish', vi: 'Cá mặt trăng', w: 1, rare: true, night: 3 },
+  // night fishing (19:00–5:00) — a lantern lure brings them up
+  firefly_squid: { en: 'Firefly squid', vi: 'Mực đom đóm', w: 6, nightOnly: true, ing: 'squid' }, ribbonfish: { en: 'Ribbonfish', vi: 'Cá hố', w: 9, nightOnly: true },
+  lanternfish: { en: 'Lanternfish', vi: 'Cá đèn lồng', w: 3, nightOnly: true, rare: true }, moon_jelly: { en: 'Moon jellyfish (let go!)', vi: 'Sứa mặt trăng (thả lại!)', w: 4, nightOnly: true },
 };
 // tackle from Chú Hải: better rods give more casts a day and a kinder bite window; bait
 // (one per cast, used automatically) makes the rare fish more likely
 export const RODS = [{ en: 'Bamboo rod', vi: 'Cần tre', casts: 5, window: 850 }, { en: 'Fibreglass rod', vi: 'Cần sợi thủy tinh', casts: 7, window: 1050, cost: 1200 }, { en: 'Golden rod', vi: 'Cần vàng', casts: 9, window: 1250, cost: 4500, rare: 1.6 }];
 export const BAIT = { cost: 15, n: 5 };
+export const LURE = { cost: 40, n: 3 };          // lantern lures: night fish come up to the light
 const rod = () => RODS[Math.min(RODS.length - 1, G.state.fishing?.rod || 0)];
 export const fishingOpen = () => !!G.state.story.flags.fishing;
 export function fishingAction(pl) {
@@ -36,8 +40,9 @@ function pick() {
   const h = G.state.time / 60, night = h >= 19 || h < 5, dawn = h >= 5 && h < 8;
   const fs = G.state.fishing || {}, bait = (fs.bait || 0) > 0;
   if (bait) fs.bait--;
+  const lure = night && (fs.lure || 0) > 0; if (lure) fs.lure--;
   const rareMul = (rod().rare || 1) * (bait ? 2.2 : 1);
-  const pool = Object.entries(FISH).map(([id, f]) => [id, f.w * (night && f.night ? f.night : 1) * (dawn && !f.junk ? 1.3 : 1) * (f.rare || f.w <= 5 ? rareMul : 1) * (bait && f.junk ? 0.3 : 1)]);
+  const pool = Object.entries(FISH).map(([id, f]) => [id, f.nightOnly && !night ? 0 : f.w * (night && f.night ? f.night : 1) * (f.nightOnly && lure ? 2.5 : 1) * (dawn && !f.junk ? 1.3 : 1) * (f.rare || f.w <= 5 ? rareMul : 1) * (bait && f.junk ? 0.3 : 1)]);
   let r = Math.random() * pool.reduce((a, p) => a + p[1], 0);
   for (const [id, w] of pool) { r -= w; if (r <= 0) return id; }
   return 'sardine';
@@ -65,10 +70,10 @@ function cast() {
     const bag = (s.fishBag ||= {}); bag[id] = (bag[id] || 0) + 1; (s.fishSeen ||= {})[id] = true; s.stats.fishCaught = (s.stats.fishCaught || 0) + 1;   // (fishSeen: every kind ever caught, for the collection)
     if (F.ing) addPantry(F.ing, 1);
     // its size, for the fish journal's records
-    const base = { sardine: 18, mackerel: 30, snapper: 45, squid: 28, scallop: 10, pufferfish: 22, boot: 27, moonfish: 80 }[id] || 20, size = Math.round(base * (0.7 + Math.random() * 0.7));
+    const base = { sardine: 18, mackerel: 30, snapper: 45, squid: 28, scallop: 10, pufferfish: 22, boot: 27, moonfish: 80, firefly_squid: 8, ribbonfish: 70, lanternfish: 12, moon_jelly: 24 }[id] || 20, size = Math.round(base * (0.7 + Math.random() * 0.7));
     const rec = ((s.fishing ||= {}).records ||= {}); const best = size > (rec[id] || 0); if (best) rec[id] = size;
-    bus.emit('fish', id);
-    if (!F.junk && !F.ing && id !== 'pufferfish') s.fishForMeo = (s.fishForMeo || 0) + 1;
+    bus.emit('fish', id, size, !!F.junk || id === 'pufferfish' || id === 'moon_jelly');
+    if (!F.junk && !F.ing && id !== 'pufferfish' && id !== 'moon_jelly') s.fishForMeo = (s.fishForMeo || 0) + 1;
     markDirty(true); sfx(F.rare ? 'fanfare' : F.junk ? 'sad' : 'success');
     fx.burst('splash', pl.x, pl.y + 26, 8, { up: 30, col: '#e6f7ff' });
     pl.setAct('hold', F.ing || 'fish'); setTimeout(() => pl.act === 'hold' && pl.setAct(null), 1300);
@@ -90,7 +95,9 @@ export async function openTackle() {
     list.appendChild(h('div', 'section-title', T(`Bait · ${fs.bait || 0} left`, `Mồi câu · còn ${fs.bait || 0}`)));
     const b = h('div', 'row', `<div class="ico">🪱</div><div class="info"><b>${T(`${BAIT.n} bait`, `${BAIT.n} mồi`)}</b><small>${T('Used one per cast: rare fish bite far more often, boots far less.', 'Mỗi lần câu dùng một mồi: cá hiếm cắn nhiều hơn, ủng cũ ít hơn.')}</small></div>`);
     b.appendChild(btn(`${BAIT.cost}k`, () => { if (!canAfford(BAIT.cost)) return moneyShortfall(BAIT.cost); addMoney(-BAIT.cost, 'equipment'); fs.bait = (fs.bait || 0) + BAIT.n; markDirty(true); sfx('buy'); api.rebuild(); }, 'buy')); list.appendChild(b);
+    const lu = h('div', 'row', `<div class="ico">🏮</div><div class="info"><b>${T(`${LURE.n} lantern lures`, `${LURE.n} mồi đèn`)}</b><small>${T(`For night fishing (19:00–5:00): squid, ribbonfish and lanternfish come up to the light. You have ${fs.lure || 0}.`, `Câu đêm (19:00–5:00): mực, cá hố và cá đèn lồng bơi lên theo ánh sáng. Bạn có ${fs.lure || 0}.`)}</small></div>`);
+    lu.appendChild(btn(`${LURE.cost}k`, () => { if (!canAfford(LURE.cost)) return moneyShortfall(LURE.cost); addMoney(-LURE.cost, 'equipment'); fs.lure = (fs.lure || 0) + LURE.n; markDirty(true); sfx('buy'); api.rebuild(); }, 'buy')); list.appendChild(lu);
     list.appendChild(h('div', 'section-title', T('Fish journal', 'Sổ tay cá')));
-    for (const [id, f] of Object.entries(FISH)) { const seen = s.fishSeen?.[id]; list.appendChild(h('div', 'row' + (seen ? '' : ' dim'), `<div class="ico">${seen ? (f.junk ? '🥾' : f.rare ? '🌙' : '🐟') : '❔'}</div><div class="info"><b>${seen ? T(f.en, f.vi) : '???'}</b><small>${seen ? T(`Caught ${s.fishBag?.[id] || 0} · biggest ${fs.records?.[id] || '?'} cm`, `Đã câu ${s.fishBag?.[id] || 0} · lớn nhất ${fs.records?.[id] || '?'} cm`) : (f.night ? T('Bites after dark…', 'Cắn câu khi trời tối…') : T('Not caught yet', 'Chưa câu được'))}</small></div>`)); }
+    for (const [id, f] of Object.entries(FISH)) { const seen = s.fishSeen?.[id]; list.appendChild(h('div', 'row' + (seen ? '' : ' dim'), `<div class="ico">${seen ? (f.junk ? '🥾' : f.nightOnly ? '🏮' : f.rare ? '🌙' : '🐟') : '❔'}</div><div class="info"><b>${seen ? T(f.en, f.vi) : '???'}</b><small>${seen ? T(`Caught ${s.fishBag?.[id] || 0} · biggest ${fs.records?.[id] || '?'} cm`, `Đã câu ${s.fishBag?.[id] || 0} · lớn nhất ${fs.records?.[id] || '?'} cm`) : (f.night ? T('Bites after dark…', 'Cắn câu khi trời tối…') : T('Not caught yet', 'Chưa câu được'))}</small></div>`)); }
   } });
 }

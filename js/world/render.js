@@ -19,7 +19,7 @@ const liveSprites = new Set();
 function drawSprite(c, t, scene, p, k) {
   const b = p.cull, sc = k.s;
   let S = p._spr;
-  const key = sc + '|' + k.tq + '|' + k.n;
+  const key = sc + '|' + k.tq + '|' + k.n + '|' + (G.runtime.season || '');      // (the season repaints trees)
   if (!S || S.key !== key) {
     if (!S) { S = p._spr = { cv: document.createElement('canvas'), key: '', glows: [], used: 0 }; liveSprites.add(p); }
     const w = Math.max(1, Math.ceil(b.w * sc)), h = Math.max(1, Math.ceil(b.h * sc));

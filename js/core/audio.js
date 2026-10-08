@@ -131,6 +131,7 @@ export function sfx(name, opt = {}) {
     case 'slurp': tone(500, 0.18, { type: 'sine', vol: 0.06, slide: 300, vibrato: 30 }); break;
     case 'munch': for (let i = 0; i < 2; i++) tone(180 + Math.random() * 60, 0.05, { type: 'square', vol: 0.05, slide: -60, when: i * 0.09 }); break;
     case 'moo': voice([[0, 140, 400, 900], [0.3, 160, 600, 1000], [0.9, 120, 350, 800]], { vol: 0.2, q: 5, vib: 3 }); break;
+    case 'frog': tone(180, 0.09, { type: 'square', vol: 0.025, slide: 60 }); tone(170, 0.11, { type: 'square', vol: 0.025, slide: 70, when: 0.13 }); break;   // ribbit-ribbit
     case 'fishsplash': noise(0.25, { vol: 0.12, freq: 1400, q: 0.8 }); tone(700, 0.08, { type: 'sine', vol: 0.05, slide: -400, when: 0.02 }); break;
     case 'click': for (let i = 0; i < 4; i++) tone(1800, 0.02, { type: 'square', vol: 0.05, when: i * 0.06 }); break;
     case 'mew': voice([[0, 700, 450, 2200], [0.1, 950, 700, 1900], [0.28, 800, 750, 1300], [0.4, 620, 550, 1000]], { vol: 0.13, q: 7, vib: 8, vibRate: 6 }); break;

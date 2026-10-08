@@ -22,6 +22,7 @@ import { setProgress, comfortBonus } from '../data/sets.js';
 import { upgradeCost, shopNeed } from '../systems/economy.js';
 import { toast, moneyShortfall } from './hud.js';
 import { STEPS, STEP_TEACHES } from '../systems/story.js';
+import { openTideBook, CREATURE_COUNT, CONSTELLATIONS } from '../systems/nature.js';
 
 const bagBtn = () => document.getElementById('bagBtn');
 const merchantSay = () => { const a = G.scene?.merchant; if (a) { a.showEmote('happy', 1.2); a.setEmo('happy', 1.5); a.doHop(60); } };
@@ -563,6 +564,12 @@ export function openJournal() {
     const found = G.state.discovered || {}, all = Object.entries(DISCOVERIES);
     list.appendChild(h('div', 'section-title', T(`Discoveries (${Object.keys(found).length}/${all.length})`, `Khám phá (${Object.keys(found).length}/${all.length})`)));
     list.appendChild(h('div', 'empty-note', all.map(([k, v]) => found[k] ? `✓ ${escapeHtml(T(v[0], v[1]))}` : '· ???').join('<br>')));
+    // nature collections: tide pool creatures and constellations
+    { const tp = G.state.tidepool || {}, st = G.state.constellations || {};
+      list.appendChild(h('div', 'section-title', T('Nature', 'Thiên nhiên')));
+      const r1 = rowEl({ icon: 'fish', title: T(`Tide pool friends · ${Object.keys(tp).length}/${CREATURE_COUNT}`, `Bạn bè hồ triều · ${Object.keys(tp).length}/${CREATURE_COUNT}`), sub: T('West end of Sunny Beach, at low tide (6–9, 17–20)', 'Cuối bãi biển phía tây, khi triều xuống (6–9, 17–20 giờ)') });
+      r1.style.cursor = 'pointer'; r1.onclick = () => openTideBook(); list.appendChild(r1);
+      list.appendChild(rowEl({ icon: 'star', title: T(`Constellations · ${Object.keys(st).length}/${CONSTELLATIONS.length}`, `Chòm sao · ${Object.keys(st).length}/${CONSTELLATIONS.length}`), sub: Object.keys(st).length ? CONSTELLATIONS.filter(c => st[c.id]).map(c => escapeHtml(T(c.en, c.vi))).join(' · ') : T('Lighthouse Point, on clear nights after 21:00', 'Mũi Hải Đăng, những đêm quang mây sau 21 giờ') })); }
     // the scrapbook: every neighbour you helped, and what they gave you to remember it by
     const doneQs = SIDE_QUESTS.filter(q => G.state.sideQuests?.[q.id] === 'done');
     list.appendChild(h('div', 'section-title', T(`Scrapbook (${doneQs.length}/${SIDE_QUESTS.length})`, `Sổ kỷ niệm (${doneQs.length}/${SIDE_QUESTS.length})`)));

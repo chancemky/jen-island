@@ -1,21 +1,22 @@
-// Weather and seasons. The island year (60 days) has a dry season (days 1–30) and a rainy
-// season (31–60). Each day's weather is decided from the day number, so it's the same for
-// everyone who reaches that day: in the rainy season about two days in five have a shower
-// (usually in the afternoon), in the dry season hardly any. Rain darkens the sky, sends
-// people under umbrellas, fills cafés and empties the beach.
+// Weather and seasons, shared by every player: the island year is 60 real days, four seasons of
+// 15 days (spring, summer, autumn, winter — see yearDay in util.js). Each real day's weather comes
+// from the date, so everyone gets the same showers: summer is the rainy season, autumn has heavy
+// tropical downpours, winter brings the cool fine drizzle (mưa phùn). Showers happen in the
+// afternoon of the in-game day. Rain darkens the sky, sends people under umbrellas, fills cafés
+// and empties the beach.
 import { G, T } from './state.js';
-import { rng, bus } from '../core/util.js';
+import { rng, bus, jstDayNum, islandSeason } from '../core/util.js';
 import { cam } from '../world/render.js';
 import { sfx } from '../core/audio.js';
 
-const YEAR = 60;
-export const seasonOf = (day = G.state.day) => (((day - 1) % YEAR) + 1) <= 30 ? 'dry' : 'rainy';
-export const SEASON_NAME = { dry: ['Dry season', 'Mùa khô'], rainy: ['Rainy season', 'Mùa mưa'] };
-export function weatherOn(day = G.state.day) {
-  const r = rng(day * 7349 + 11), season = seasonOf(day), p = season === 'rainy' ? 0.42 : 0.08;
-  if (r() >= p) return { season, rain: false };
-  const start = season === 'rainy' ? 12 + r() * 4 : 14 + r() * 3, len = 1.5 + r() * 3;
-  return { season, rain: true, start, end: start + len, heavy: r() < 0.35 };
+export const seasonOf = () => islandSeason();
+export const SEASON_NAME = { spring: ['Spring', 'Mùa xuân'], summer: ['Summer', 'Mùa hè'], autumn: ['Autumn', 'Mùa thu'], winter: ['Winter', 'Mùa đông'] };
+const RAIN_P = { spring: 0.22, summer: 0.45, autumn: 0.3, winter: 0.2 };
+export function weatherOn(dayNum = jstDayNum()) {
+  const r = rng(dayNum * 7349 + 11), season = islandSeason(dayNum * 864e5 - 9 * 3600e3 + 43200e3);
+  if (r() >= RAIN_P[season]) return { season, rain: false };
+  const drizzle = season === 'winter', start = season === 'summer' ? 10 + r() * 6 : 12 + r() * 4, len = 1.5 + r() * (drizzle ? 5 : 3);
+  return { season, rain: true, drizzle, start, end: start + len, heavy: !drizzle && r() < (season === 'autumn' ? 0.55 : 0.35) };
 }
 // how much busier each kind of shop is in the rain
 const RAIN_BOOST = { cafe: 1.3, restaurant: 1.25, banhmi: 1.05, drinks: 0.85, truck: 0.8, smoothie: 0.65, grill: 0.85, night: 0.75 };
@@ -26,9 +27,10 @@ const UMB = ['#f28f7c', '#6fbfb0', '#f7de8c', '#8fb7e0', '#c9b6e8', '#e8584e', '
 let soundT = 0;
 export function updateWeather(dt) {
   const s = G.state; if (!s) return;
-  const w = weatherOn(), h = s.time / 60, want = w.rain && h >= w.start && h < w.end && G.scene === G.scenes.island ? (w.heavy ? 1 : 0.7) : 0;
+  G.runtime.season = seasonOf();
+  const w = weatherOn(), h = s.time / 60, want = w.rain && h >= w.start && h < w.end && G.scene === G.scenes.island ? (w.heavy ? 1 : w.drizzle ? 0.5 : 0.7) : 0;
   const a = (G.runtime.rainA || 0) + (want - (G.runtime.rainA || 0)) * Math.min(1, dt * 0.6);
-  if (want > 0 && !G.runtime.rainA) bus.emit('toast', { cat: 'weather', text: T('It\'s starting to rain', 'Trời bắt đầu mưa'), sub: T('Cafés fill up, the beach empties.', 'Quán cà phê đông khách, bãi biển vắng người.'), icon: 'ice', ms: 2600 });
+  if (want > 0 && !G.runtime.rainA) bus.emit('toast', w.drizzle ? { cat: 'weather', text: T('A fine winter drizzle', 'Mưa phùn mùa đông'), sub: T('Warm drinks weather.', 'Thời tiết hợp đồ uống nóng.'), icon: 'ice', ms: 2600 } : { cat: 'weather', text: T('It\'s starting to rain', 'Trời bắt đầu mưa'), sub: T('Cafés fill up, the beach empties.', 'Quán cà phê đông khách, bãi biển vắng người.'), icon: 'ice', ms: 2600 });
   G.runtime.rainA = a < 0.01 ? 0 : a;
   // umbrellas up (and down again) for everyone walking around outside
   const isl = G.scenes.island, up = a > 0.3;
@@ -40,8 +42,8 @@ export function updateWeather(dt) {
 export function drawRain(c, t) {
   if (G.scene !== G.scenes.island) return;
   const a = G.runtime.rainA || 0, v = cam.view;
-  // the season colours the whole island a little: warm gold in the dry months, cool and lush in the rains
-  c.fillStyle = seasonOf() === 'rainy' ? 'rgba(60,140,130,.05)' : 'rgba(255,200,110,.04)'; c.fillRect(v.x, v.y, v.w, v.h);
+  // the season tints the whole island a little: pink spring, warm summer, amber autumn, cool winter
+  c.fillStyle = { spring: 'rgba(255,190,215,.04)', summer: 'rgba(255,210,120,.035)', autumn: 'rgba(255,150,70,.05)', winter: 'rgba(150,180,235,.06)' }[seasonOf()]; c.fillRect(v.x, v.y, v.w, v.h);
   if (a < 0.02) return;
   c.save(); c.fillStyle = `rgba(70,90,120,${0.2 * a})`; c.fillRect(v.x, v.y, v.w, v.h);
   c.strokeStyle = `rgba(230,240,255,${0.45 * a})`; c.lineWidth = 0.8; c.beginPath();

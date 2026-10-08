@@ -10,7 +10,7 @@
 // set STORE.payments and fill in STORE.checkout with each product's checkout link.
 
 import { G, T, markDirty } from './state.js';
-import { bus, devHost, nativeApp, islandNow } from '../core/util.js';
+import { bus, devHost, nativeApp, islandNow, jstDate } from '../core/util.js';
 import { CLOTHES } from '../data/wardrobe.js';
 import * as cloud from './cloud.js';
 import { grantServerBadge } from './badges.js';
@@ -79,13 +79,13 @@ const SEASON_2 = {
 export const SEASONS = [SEASON_1, SEASON_2];
 // the season on now (or the next one coming), read live: SEASON.id, SEASON.tiers…
 export let SEASON = SEASON_1;
-export function pickSeason(now = islandNow()) { SEASON = SEASONS.find(x => now < Date.parse(x.end) + 864e5) || SEASONS[SEASONS.length - 1]; return SEASON; }
+export function pickSeason(now = islandNow()) { SEASON = SEASONS.find(x => now < jstDate(x.end) + 864e5) || SEASONS[SEASONS.length - 1]; return SEASON; }
 pickSeason();
 
 const S = () => { const s = G.state; s.store ||= { season: {} }; s.store.season ||= {}; return s.store; };
 const verified = new Set();               // products the server says this player bought
 export const ownsProduct = id => verified.has(id);
-const seasonOn = (now = islandNow()) => now >= Date.parse(SEASON.start) && now < Date.parse(SEASON.end) + 864e5;
+const seasonOn = (now = islandNow()) => now >= jstDate(SEASON.start) && now < jstDate(SEASON.end) + 864e5;   // (dates in Japan time)
 export const seasonPoints = () => S().season[SEASON.id]?.pts || 0;
 
 function give(ids) {

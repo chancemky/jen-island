@@ -12,7 +12,7 @@ import { toast } from '../ui/hud.js';
 import { openSheet, h } from '../ui/sheets.js';
 import { sfx, setRoomMusic, roomMusic, playNote } from '../core/audio.js';
 import { fx } from '../world/render.js';
-import { choice, dist, rand, clock, bus, islandDay } from '../core/util.js';
+import { choice, dist, rand, clock, bus, islandDay, islandNow, jstDow, yearDay, seasonDay, islandYear, islandSeason } from '../core/util.js';
 import { weatherBoost, weatherOn, seasonOf, SEASON_NAME } from './weather.js';
 import { PLAZA, PIER, PIER_END, isOcean } from '../world/island.js';
 import { COUNTS } from '../core/counts.js';
@@ -31,7 +31,8 @@ export const DISCOVERIES = {
   arcade: ['Played the arcade', 'Chơi máy game'], bird: ['Whistled to a canary', 'Huýt sáo với chim'], tea: ['Poured tea from the Bát Tràng set', 'Rót trà bộ Bát Tràng'],
   games: ['Played a game at home', 'Chơi một ván ở nhà'], karaoke_home: ['Sang karaoke at home', 'Hát karaoke ở nhà'], laundry: ['Did the laundry', 'Giặt đồ'],
   workout: ['Worked out', 'Tập thể dục'], chess: ['Played cờ tướng', 'Đánh cờ tướng'], incense: ['Lit incense for the ancestors', 'Thắp hương ông bà'],
-  sewing: ['Sewed something', 'May vá'], movie: ['Watched a film at home', 'Xem phim ở nhà'], craft: ['Fixed something at the workbench', 'Sửa đồ ở bàn thợ'],
+  sewing: ['Sewed something', 'May vá'], puddle: ['Splashed in a puddle', 'Lội vũng nước'], frog: ['Startled a frog', 'Làm ếch giật mình'],
+  tidepool: ['Looked in the tide pool', 'Ngắm hồ triều'], fireflies: ['Caught fireflies in a jar', 'Bắt đom đóm vào lọ'], stars: ['Joined up a constellation', 'Nối một chòm sao'], rainbow: ['Photographed a rainbow', 'Chụp ảnh cầu vồng'], movie: ['Watched a film at home', 'Xem phim ở nhà'], craft: ['Fixed something at the workbench', 'Sửa đồ ở bàn thợ'],
 };
 COUNTS.discoveries = Object.keys(DISCOVERIES).length;
 export function discover(key) {
@@ -183,8 +184,9 @@ async function stargaze() {
 async function clockLook() { discover('clock'); await say(null, T(`It's ${clock(G.state.time)}. ${G.state.time >= 22 * 60 ? 'Nearly bedtime.' : G.state.time < 8 * 60 ? 'Early — the island is just waking up.' : 'Plenty of day left.'}`, `Bây giờ là ${clock(G.state.time)}. ${G.state.time >= 22 * 60 ? 'Sắp tới giờ ngủ rồi.' : G.state.time < 8 * 60 ? 'Còn sớm — hòn đảo mới thức dậy.' : 'Ngày còn dài.'}`)); }
 async function calendarLook() {
   discover('calendar');
-  const ev = nextEvent(G.state.day);
-  const ss = seasonOf(); await say(null, T(`Day ${G.state.day} on the island · ${SEASON_NAME[ss][0]}. ${ev ? `Circled on the calendar: ${ev.en} (day ${ev.day}).` : ''}`, `Ngày ${G.state.day} trên đảo · ${SEASON_NAME[ss][1]}. ${ev ? `Khoanh tròn trên lịch: ${ev.vi} (ngày ${ev.day}).` : ''}`));
+  const ev = nextEvent(), ss = seasonOf(), sd = seasonDay(), y = islandYear();
+  const when = ev ? (ev.inDays === 0 ? T('today!', 'hôm nay!') : ev.inDays === 1 ? T('tomorrow', 'ngày mai') : T(`in ${ev.inDays} days`, `${ev.inDays} ngày nữa`)) : '';
+  await say(null, T(`${SEASON_NAME[ss][0]}, day ${sd} of 15 · Year ${y} on the island. ${ev ? `Circled on the calendar: ${ev.en}, ${when}` : ''}`, `${SEASON_NAME[ss][1]}, ngày ${sd}/15 · Năm thứ ${y} trên đảo. ${ev ? `Khoanh tròn trên lịch: ${ev.vi}, ${when}` : ''}`));
 }
 async function mirror() {
   discover('mirror'); const pl = G.player;
@@ -309,16 +311,15 @@ async function skipStone() {
 }
 
 // ---------------------------------------------------------------- the island calendar (seasonal events)
-// A year on the island is 60 days. Tết opens it; summer beach days, Mid-Autumn and
-// special Night Market Saturdays follow. (The Lantern Festival stays its own story night.)
-export const YEAR = 60;
+// Shared by every player: Vietnamese festivals on their real dates (Tết and Mid-Autumn on the
+// lunar calendar), Summer Beach Days on the first three days of the island's summer (the island
+// year is 60 real days) and Night Market Saturdays. (The Lantern Festival stays its own story night.)
 export const EVENTS = [
-  { id: 'tet', from: 1, to: 3, en: 'Tết — the New Year', vi: 'Tết Nguyên Đán', boost: { all: 1.25 }, tip: 1.2, line: ['Chúc mừng năm mới! Red envelopes, apricot blossoms and everybody in their best clothes.', 'Chúc mừng năm mới! Lì xì đỏ, hoa mai vàng và ai cũng diện đồ đẹp nhất.'] },
-  { id: 'summer', from: 20, to: 22, en: 'Summer Beach Days', vi: 'Những ngày hè trên biển', boost: { drinks: 1.4, truck: 1.3 }, line: ['The beach is full! Everyone wants something cold.', 'Bãi biển kín người! Ai cũng muốn thứ gì đó mát lạnh.'] },
-  { id: 'midautumn', from: 40, to: 41, en: 'Mid-Autumn Festival', vi: 'Tết Trung Thu', boost: { night: 1.35, cafe: 1.2 }, line: ['Children parade with star lanterns, and the moon is enormous tonight.', 'Trẻ con rước đèn ông sao, và trăng đêm nay to tròn.'] },
+  { id: 'tet', en: 'Tết — the New Year', vi: 'Tết Nguyên Đán', boost: { all: 1.25 }, tip: 1.2, line: ['Chúc mừng năm mới! Red envelopes, apricot blossoms and everybody in their best clothes.', 'Chúc mừng năm mới! Lì xì đỏ, hoa mai vàng và ai cũng diện đồ đẹp nhất.'] },
+  { id: 'summer', en: 'Summer Beach Days', vi: 'Những ngày hè trên biển', boost: { drinks: 1.4, truck: 1.3, smoothie: 1.4 }, line: ['The beach is full! Everyone wants something cold.', 'Bãi biển kín người! Ai cũng muốn thứ gì đó mát lạnh.'] },
+  { id: 'midautumn', en: 'Mid-Autumn Festival', vi: 'Tết Trung Thu', boost: { night: 1.35, cafe: 1.2 }, line: ['Children parade with star lanterns, and the moon is enormous tonight.', 'Trẻ con rước đèn ông sao, và trăng đêm nay to tròn.'] },
 ];
-// Real-world festivals: everyone celebrates together, on the real dates (Tết and
-// Mid-Autumn follow the lunar calendar). While one is on it takes over the island calendar.
+// Tết and Mid-Autumn follow the lunar calendar
 const LUNAR = { tet: ['2027-02-06', '2028-01-26', '2029-02-13', '2030-02-03', '2031-01-23'], midautumn: ['2026-09-25', '2027-09-15', '2028-10-03', '2029-09-22', '2030-09-12', '2031-10-01'] };
 const REAL = [
   // Bistro Island opens to everyone: the Grand Opening (takes over Pumpkin Nights for its three days)
@@ -333,24 +334,25 @@ const REAL = [
   { id: 'halloween', span: [-7, 0], days: y => [`${y}-10-31`], en: 'Pumpkin Nights', vi: 'Đêm Bí Ngô', boost: { night: 1.3, all: 1.1 }, line: ['Pumpkin lanterns all over the island, and the Night Market is spooky tonight!', 'Đèn bí ngô khắp đảo, và Chợ Đêm tối nay rùng rợn lắm!'], hat: 'black_cat_ears' },
   { id: 'christmas', span: [-6, 1], days: y => [`${y}-12-25`], en: 'Christmas Lights', vi: 'Đèn Giáng Sinh', boost: { cafe: 1.3, all: 1.15 }, tip: 1.15, line: ['Fairy lights over the plaza and hot drinks everywhere.', 'Đèn lấp lánh trên quảng trường và đồ uống nóng khắp nơi.'], hat: 'snow_beanie' },
 ];
-export function realEvent(now = new Date(islandDay() + 'T00:00:00Z')) {   // (the date in Việt Nam)
+export function realEvent(now = new Date(islandDay() + 'T00:00:00Z')) {   // (the date in Japan)
   const y = now.getUTCFullYear(), day = Date.UTC(y, now.getUTCMonth(), now.getUTCDate()) / 864e5;
-  for (const e of REAL) for (const ds of [...e.days(y), ...e.days(y + 1)]) {
+  for (const e of REAL) for (const ds of [...e.days(y - 1), ...e.days(y), ...e.days(y + 1)]) {
     const d = Date.parse(ds + 'T00:00:00Z') / 864e5;
     if (day >= d + e.span[0] && day <= d + e.span[1]) return { ...e, real: true };
   }
   return null;
 }
-export function eventOn(day = G.state.day) {
-  if (day === G.state.day) { const r = realEvent(); if (r) return r; }
-  const d = ((day - 1) % YEAR) + 1;
-  const ev = EVENTS.find(e => d >= e.from && d <= e.to);
-  if (ev) return ev;
-  if (d % 7 === 6 && G.state.nightMarket?.restored) return { id: 'nmnight', en: 'Night Market Saturday', vi: 'Tối thứ Bảy ở Chợ Đêm', boost: { night: 1.3 }, line: ['Night Market Saturday — music at the stalls and a longer line for skewers.', 'Tối thứ Bảy ở Chợ Đêm — nhạc ở các sạp và hàng xiên que dài hơn.'] };
+// today's event: a festival, Summer Beach Days, or a Night Market Saturday
+export function eventOn(now = islandNow()) {
+  const r = realEvent(new Date(islandDay(now) + 'T00:00:00Z')); if (r) return r;
+  if (islandSeason(now) === 'summer' && seasonDay(now) <= 3) return EVENTS[1];
+  if (jstDow(now) === 6 && G.state.nightMarket?.restored) return { id: 'nmnight', en: 'Night Market Saturday', vi: 'Tối thứ Bảy ở Chợ Đêm', boost: { night: 1.3 }, line: ['Night Market Saturday — music at the stalls and a longer line for everything.', 'Tối thứ Bảy ở Chợ Đêm — có nhạc ở các sạp và hàng nào cũng đông hơn.'] };
   return null;
 }
-export function nextEvent(day) {
-  for (let k = 0; k <= YEAR; k++) { const ev = eventOn(day + k); if (ev && ev.id !== 'nmnight') return { ...ev, day: day + k }; }
+// the next festival on the calendar (and its date)
+export function nextEvent() {
+  const now = islandNow();
+  for (let k = 0; k <= 400; k++) { const t = now + k * 864e5, ev = eventOn(t); if (ev && ev.id !== 'nmnight') return { ...ev, date: islandDay(t), inDays: k }; }
   return null;
 }
 // how much busier a business is today
@@ -363,13 +365,13 @@ export function morningEvent() {
 
 // ---------------------------------------------------------------- birthdays & gifts
 // Every resident has a birthday on the island calendar and a favourite thing.
-export const BIRTHDAYS = {
+export const BIRTHDAYS = {   // (days of the island year, 1–60: the same day for every player)
   ba_tu: { day: 8, likes: ['kumquat', 'tea'] }, chu_hai: { day: 14, likes: ['shrimp', 'squid'] }, linh: { day: 25, likes: ['milk', 'tapioca'] },
   minh: { day: 31, likes: ['coffee', 'condensed_milk'] }, co_lan: { day: 18, likes: ['herbs', 'peach'] }, be_na: { day: 5, likes: ['beans', 'coconut_milk'] },
   anh_tuan: { day: 44, likes: ['bread', 'pork'] }, chi_mai: { day: 37, likes: ['lime', 'orange'] }, vy: { day: 52, likes: ['avocado', 'peach'] },
   ong_loc: { day: 12, likes: ['tea', 'rice'] }, chi_ngoc: { day: 28, likes: ['coffee', 'egg_yolk'] }, co_dua: { day: 47, likes: ['coconut_milk', 'lime'] },
 };
-export function isBirthday(rid, day = G.state.day) { const b = BIRTHDAYS[rid]; return !!b && ((day - 1) % YEAR) + 1 === b.day; }
+export function isBirthday(rid, now = islandNow()) { const b = BIRTHDAYS[rid]; return !!b && yearDay(now) === b.day; }
 export function birthdaysToday() { return Object.keys(BIRTHDAYS).filter(r => isBirthday(r)); }
 
 // ---------------------------------------------------------------- little things that happen around the island

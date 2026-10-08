@@ -1,18 +1,18 @@
 // Night Market events (once it's restored):
-//  · Saturday karaoke (19:00–22:30): a little stage with a microphone. Sing — a rhythm game:
+//  · Saturday karaoke (real Saturdays in Japan, 19:00–22:30 on the island clock): a little stage with a microphone. Sing — a rhythm game:
 //    notes slide toward the line, tap as each one crosses it. The better you sing, the bigger
 //    the crowd's cheer, and the market's stalls do brisker trade for the rest of the night.
-//  · Bà Sáu's lantern class (Wednesdays, 18:00–21:00): fold a star lantern in your colour;
+//  · Bà Sáu's lantern class (real Wednesdays, 18:00–21:00): fold a star lantern in your colour;
 //    it goes home with you (once a week, 20k for the paper and paint).
 import { G, T, addMoney, canAfford, markDirty } from './state.js';
-import { bus, dist } from '../core/util.js';
+import { bus, dist, jstDow, jstDayNum } from '../core/util.js';
 import { present } from '../ui/sheets.js';
 import { addXP } from './progress.js';
 import { fx } from '../world/render.js';
 import { celebratePhoto } from './album.js';
 
 export const STAGE = { x: 430, y: 520 }, CLASS = { x: 300, y: 830 };
-const dow = () => ((G.state.day - 1) % 7) + 1;                     // 1..7 (6 = Saturday, 3 = Wednesday)
+const dow = () => jstDow();                                          // the real weekday in Japan (6 = Saturday, 3 = Wednesday)
 const h = () => G.state.time / 60;
 export const karaokeOn = () => !!G.state.nightMarket?.restored && dow() === 6 && h() >= 19 && h() < 22.5;
 export const classOn = () => !!G.state.nightMarket?.restored && dow() === 3 && h() >= 18 && h() < 21;
@@ -20,7 +20,7 @@ export const classOn = () => !!G.state.nightMarket?.restored && dow() === 3 && h
 export function nightlifeAction(pl) {
   if (G.scene !== G.scenes.island) return null;
   if (karaokeOn() && dist(pl.x, pl.y, STAGE.x, STAGE.y + 20) < 40) {
-    if (G.state.story.flags.karaokeDay === G.state.day) return { label: T('Encore? (next Saturday)', 'Hát lại? (thứ Bảy sau)'), icon: 'note', run: () => bus.emit('toast', { text: T('Your voice needs a rest — next Saturday!', 'Giọng cần nghỉ — thứ Bảy tuần sau nhé!'), icon: 'note' }) };
+    if (G.state.story.flags.karaokeDay === jstDayNum()) return { label: T('Encore? (next Saturday)', 'Hát lại? (thứ Bảy sau)'), icon: 'note', run: () => bus.emit('toast', { text: T('Your voice needs a rest — next Saturday!', 'Giọng cần nghỉ — thứ Bảy tuần sau nhé!'), icon: 'note' }) };
     return { label: T('Sing karaoke!', 'Hát karaoke!'), icon: 'note', run: sing };
   }
   if (classOn() && dist(pl.x, pl.y, CLASS.x, CLASS.y) < 40) return { label: T('Lantern class · 20k', 'Lớp làm lồng đèn · 20k'), icon: 'lantern', run: lanternClass };
@@ -29,7 +29,7 @@ export function nightlifeAction(pl) {
 // ---------------------------------------------------------------- karaoke (rhythm)
 const SONGS = [['Moonlight over the harbour', 'Trăng sáng bến cảng'], ['Kumquat love song', 'Tình ca trái tắc'], ['The ferry won\'t wait', 'Chuyến phà không chờ']];
 function sing() {
-  G.state.story.flags.karaokeDay = G.state.day; markDirty();
+  G.state.story.flags.karaokeDay = jstDayNum(); markDirty();
   const song = SONGS[G.state.day % SONGS.length];
   return present(() => new Promise(done => {
     const N = 16, beat = 0.62, notes = Array.from({ length: N }, (_, i) => ({ at: 1.6 + i * beat + (i % 4 === 3 ? beat * 0.5 : 0), lane: [0, 1, 2, 1, 0, 2, 1, 0, 2, 1, 0, 1, 2, 0, 1, 2][i], hit: null }));
@@ -66,7 +66,7 @@ function sing() {
 export const nightBuzz = () => { const b = G.runtime.nightBuzz; return b && b.day === G.state.day ? b.mul : 1; };
 // ---------------------------------------------------------------- the lantern class
 function lanternClass() {
-  const s = G.state, wk = Math.floor((s.day - 1) / 7);
+  const s = G.state, wk = Math.floor((jstDayNum() + 3) / 7);
   if (s.story.flags.lanternClass === wk) return bus.emit('toast', { text: T('You\'ve made this week\'s lantern — next Wednesday!', 'Tuần này bạn làm rồi — thứ Tư tuần sau nhé!'), icon: 'lantern' });
   if (!canAfford(20)) return bus.emit('toast', { text: T('The class costs 20k', 'Lớp học giá 20k'), icon: 'lantern', bad: true });
   return present(() => new Promise(done => {

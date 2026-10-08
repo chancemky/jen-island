@@ -219,7 +219,7 @@ function renderLeaderboard(pane) {
     mode.replaceChildren(...MODES.map(([k, label]) => { const b = h('button', k === m ? 'on' : '', label); b.type = 'button'; b.onclick = () => { if (m === k) return; sfx('ui'); m = k; cur = SORTS[k][0][0]; drawSegs(); load(); }; return b; }));
     seg.replaceChildren(...SORTS[m].map(([k, label]) => { const b = h('button', k === cur ? 'on' : '', label); b.type = 'button'; b.onclick = () => { if (cur === k) return; sfx('ui'); cur = k; drawSegs(); load(); }; return b; }));
     head.innerHTML = m === 'week'
-      ? `<b>🏆 ${T('Weekly board', 'Bảng tuần')}</b> <span class="pill">${timeLeftText()}</span><small>${T('Top 10 on each board win a trophy for their home, coins and a badge. Resets Monday 00:00 (Vietnam time).', 'Top 10 mỗi bảng nhận cúp trang trí, tiền và huy hiệu. Làm mới lúc 00:00 thứ Hai (giờ Việt Nam).')}</small>`
+      ? `<b>🏆 ${T('Weekly board', 'Bảng tuần')}</b> <span class="pill">${timeLeftText()}</span><small>${T('Top 10 on each board win a trophy for their home, coins and a badge. Resets Monday 00:00 (Japan time).', 'Top 10 mỗi bảng nhận cúp trang trí, tiền và huy hiệu. Làm mới lúc 00:00 thứ Hai (giờ Nhật Bản).')}</small>`
       : m === 'friends' ? `<b>🫶 ${T('You and your friends, this week', 'Bạn và bạn bè, tuần này')}</b> <span class="pill">${timeLeftText()}</span>`
       : `<b>⭐ ${T('All-time board', 'Bảng mọi thời')}</b><small>${T('Never resets.', 'Không bao giờ làm mới.')}</small>`;
   };
