@@ -599,6 +599,12 @@ export function drawKiosk(c, t, b) {
     glow(b, 0, hy + 12, 40, 'rgba(255,210,130,.45)');
   } else { for (let y = hy + 3; y < hy + hh; y += 4) line(c, hx - hw / 2 + 2, y, hx + hw / 2 - 2, y, 'rgba(255,255,255,.18)', 1); }
   box(c, hx - hw / 2 - 4, hy + hh - 1, hw + 8, 5, 2, shade(wall, -40));
+  // the side door the shopkeeper uses (a slatted beach-hut door on the smoothie bar)
+  { const dx = w / 2 - 13, dcol = smoothie ? '#7fc8bd' : cafe ? '#8a5a3a' : '#a8703f';
+    box(c, dx - 1, -h + 10, 12, h - 10, 2, shade(dcol, -25), INK, 0.9); box(c, dx + 0.5, -h + 11.5, 9, h - 13, 1.5, dcol, null);
+    if (smoothie) for (let y = -h + 15; y < -3; y += 4) line(c, dx + 1, y, dx + 9, y, 'rgba(255,255,255,.35)', 0.8);
+    else box(c, dx + 2.5, -h + 14, 5, 8, 1, 'rgba(255,240,200,.5)', null);
+    circ(c, dx + 7.6, -h * 0.45, 0.9, '#f2c14e', INK, 0.4); }
   // roof: a café awning or a thatched palm roof
   if (smoothie) {   // a thatched beach-hut roof, then the striped awning under its edge
     c.beginPath(); c.moveTo(-w / 2 - 12, -h + 2); c.lineTo(-w / 2 + 6, -h - 26); c.lineTo(w / 2 - 6, -h - 26); c.lineTo(w / 2 + 12, -h + 2); c.closePath();

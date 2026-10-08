@@ -2,7 +2,7 @@
 // loss per business, spending by category, net worth, lifetime profit), rent or buy
 // each property, hire a shopkeeper, and pay for a supply runner.
 
-import { G, T, canAfford, bizOf, addMoney, addPantry } from '../systems/state.js';
+import { G, T, canAfford, bizOf, addMoney, addPantry, markDirty } from '../systems/state.js';
 import { INGREDIENTS } from '../data/game.js';
 import { iconURL } from '../gfx/food.js';
 import { bus } from '../core/util.js';
@@ -15,7 +15,7 @@ import { toast, moneyShortfall, setWaypoint } from './hud.js';
 import { openShopFront, canDecorateFront } from './storefront.js';
 import { scoreFront, frontAttract } from '../systems/storefront.js';
 import { fx } from '../world/render.js';
-import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName, rentToday, keeperOf, keeperWage, candidate, hireKeeper, fireKeeper, keeperTrait, canHaveKeeper, keeperUnlocked, hasSupply, buySupply, toggleSupply, SUPPLY, supplyUnlocked, staffedCount, keeperSkill, SKILL_NAMES, wageFor, hireFee, recentShopNet, canTrain, trainCost, trainKeeper, promoteCost, promoteKeeper } from '../systems/economy.js';
+import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName, rentToday, keeperOf, keeperWage, candidate, hireKeeper, fireKeeper, giveDayOff, keeperTrait, canHaveKeeper, keeperUnlocked, hasSupply, buySupply, toggleSupply, SUPPLY, supplyUnlocked, staffedCount, keeperSkill, SKILL_NAMES, wageFor, hireFee, recentShopNet, canTrain, trainCost, trainKeeper, promoteCost, promoteKeeper } from '../systems/economy.js';
 import { daySheet, netWorth, lifetimeTotals, catName } from '../systems/ledger.js';
 import { dailyWages } from '../systems/restaurant.js';
 import { openStaffBoard } from './staff.js';
@@ -110,7 +110,15 @@ export function renderOffice(pane, api) {
         card.appendChild(h('div', 'oc-line', `👤 <b>${escapeHtml(k.name)}</b> · ${escapeHtml(T(...sk))} · ${escapeHtml(T(tr.en, tr.vi))} · ${T(`${money(keeperWage(id))}/day · served ${k.today || 0} today, ${k.served || 0} in all`, `${money(keeperWage(id))}/ngày · hôm nay bán ${k.today || 0}, tổng ${k.served || 0}`)}`));
         if (canTrain(id)) row.appendChild(btn(T(`Train · ${money(trainCost(id))}`, `Đào tạo · ${money(trainCost(id))}`), () => { if (!trainKeeper(id)) return moneyShortfall(trainCost(id)); sfx('success'); toast({ text: T(`${k.name} is now ${SKILL_NAMES[keeperSkill(k)][0].toLowerCase()}!`, `${k.name} giờ đã ${SKILL_NAMES[keeperSkill(k)][1].toLowerCase()}!`), icon: 'star' }); api.rebuild(); }, 'buy'));
         else if (keeperSkill(k) >= 3 && !k.head) row.appendChild(btn(T(`Promote · ${money(promoteCost(id))}`, `Thăng chức · ${money(promoteCost(id))}`), () => { if (!promoteKeeper(id)) return moneyShortfall(promoteCost(id)); sfx('fanfare'); toast({ text: T(`${k.name} is your head keeper now!`, `${k.name} giờ là trưởng quán!`), icon: 'star' }); api.rebuild(); }, 'buy'));
-        row.appendChild(btn(T('Let go', 'Cho nghỉ'), () => { fireKeeper(id); sfx('back'); api.rebuild(); }, 'buy alt'));
+        // a day off (today or tomorrow) — and, tucked away, letting them go for good (tap twice)
+        const off = k.offDay === G.state.day ? 'today' : k.offDay === G.state.day + 1 ? 'tomorrow' : null;
+        if (off) card.appendChild(h('div', 'oc-line', off === 'today' ? T(`🌴 ${k.name} has today off`, `🌴 Hôm nay ${k.name} được nghỉ`) : T(`🌴 ${k.name} has tomorrow off`, `🌴 Ngày mai ${k.name} được nghỉ`)));
+        if (off !== 'today') row.appendChild(btn(T('Day off today', 'Cho nghỉ hôm nay'), () => { giveDayOff(id, 'today'); sfx('ui'); toast({ text: T(`${k.name} is off for the rest of today`, `${k.name} được nghỉ hết hôm nay`), sub: T('No wage for today. Back tomorrow.', 'Không tính lương hôm nay. Mai đi làm lại.'), icon: 'person', now: true }); api.rebuild(); }, 'buy alt'));
+        if (off !== 'tomorrow') row.appendChild(btn(T('Day off tomorrow', 'Cho nghỉ ngày mai'), () => { giveDayOff(id, 'tomorrow'); sfx('ui'); toast({ text: T(`${k.name} will take tomorrow off`, `${k.name} sẽ nghỉ ngày mai`), sub: T('Unpaid, and back the day after.', 'Không tính lương, ngày kia đi làm lại.'), icon: 'person', now: true }); api.rebuild(); }, 'buy alt'));
+        if (off) row.appendChild(btn(T('Cancel day off', 'Hủy ngày nghỉ'), () => { k.offDay = null; markDirty(true); sfx('ui'); api.rebuild(); }, 'buy alt'));
+        const lg = h('button', 'link-btn', T('Let go…', 'Cho thôi việc…')); lg.type = 'button';
+        lg.onclick = () => { if (lg.dataset.sure) { fireKeeper(id); sfx('back'); api.rebuild(); return; } lg.dataset.sure = 1; lg.textContent = T(`Tap again to let ${k.name} go`, `Chạm lần nữa để cho ${k.name} thôi việc`); };
+        card.appendChild(lg);
       } else if (keeperUnlocked()) {
         const c = candidate(id), tr = keeperTrait(c);
         const w = wageFor(id, keeperSkill(c)), fee = hireFee(id, c);

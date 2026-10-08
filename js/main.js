@@ -498,6 +498,8 @@ function updateInteraction(dt) {
   // walking into a doorway enters; walking out the door leaves
   if (trHere?.kind === 'door' && enterable(trHere.building) && my < -0.45 && mm > 0.3 && doorDwell >= WALK_IN_AFTER && inTrigger(trHere, pl.x, pl.y, 8)) { enterBuilding(trHere); return; }
   if (trHere?.kind === 'exit' && my > 0.45 && mm > 0.3) { exitBuilding(); return; }
+  // (an open door has no button: you walk in. So someone standing by a door can always be talked to.)
+  const trAct = tr?.kind === 'door' && enterable(tr.building) ? null : tr;
   // pick the best context action
   // 1) restaurant guest who wants to order
   if (sc.id === 'restaurant') {
@@ -508,13 +510,14 @@ function updateInteraction(dt) {
   // 2) nearby talkable actors — over a trigger only when they're genuinely closer
   //    (or standing still by a door); a pet never takes over the bed, a door or a counter
   const talk = nearestTalkable(sc, pl), td = talk ? dist(talk.x, talk.y, pl.x, pl.y) : 1e9;
-  const talkWins = talk && (!tr || (talk.kind !== 'pet' && (tr !== trHere || td < 30 || (tr.kind === 'door' && td < 42 && !talk.path))));   // (a trigger you've stepped off only holds against nobody)
+  const talkWins = talk && (!trAct || (talk.kind !== 'pet' && (trAct !== trHere || td < 30 || (trAct.kind === 'door' && td < 42 && !talk.path))));   // (a trigger you've stepped off only holds against nobody)
   heldTalk = talkWins ? talk : null;
   if (talkWins) {
     const verb = T('Talk', 'Nói chuyện'), label = talk.name ? `${verb} · ${talk.name}` : verb;
     setAction(label, () => talkTo(talk), 'talk'); return;
   }
-  if (tr) {
+  if (trAct) {
+    const tr = trAct;
     if (tr.kind === 'door') return doorAction(tr);
     if (tr.kind === 'exit') { setAction(T('Leave', 'Ra ngoài'), () => exitBuilding(), 'door'); return; }
     if (tr.kind === 'front') return frontAction(tr);
@@ -649,7 +652,7 @@ function doorAction(tr) {
       return setAction(T('Repair', 'Sửa'), () => openRequirement({ title: T(`Repair ${bizName(b.biz)}`, `Sửa ${bizName(b.biz)}`), mats: def.repair, action: () => repairScene(b.biz), actionLabel: T('Repair it!', 'Sửa ngay!'), note: b.biz === 'shed1' ? T('Wood for the walls, metal for the roof, paint to make it pretty.', 'Gỗ cho tường, tôn cho mái, sơn cho đẹp.') : '' }), 'hammer');
     }
   }
-  setAction(T('Enter', 'Vào'), () => enterBuilding(tr), 'door');
+  setAction('', null);               // (open doors: just walk in)
 }
 function frontAction(tr) {
   const bizId = tr.biz, z = bizOf(bizId);

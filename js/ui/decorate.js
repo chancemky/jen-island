@@ -148,31 +148,29 @@ function fits(sel, x, y, rot = 0, self = null, pad = 0) {
   return true;
 }
 
-// after stairs are built: anything standing where a flight now is moves to a free spot (or,
-// if the room is full, back into your storage). Built-ins always find a spot.
+// after the house changes (bigger room, new stairs) or a save from an older layout loads:
+// anything that no longer fits — off the floor, on the stairs, overlapping — moves to the nearest
+// free spot (or, if the room is full, back into your storage). Built-ins always find a spot.
 export function clearStairs() {
   for (const id of FLOORS) {
     const sc = G.scenes[id]; if (!sc) continue;
-    const st = sc.solids.filter(q => q.stairs); if (!st.length) continue;
-    const hit = (x, y, w, h) => st.some(q => x - w / 2 < q.x + q.w + 6 && x + w / 2 > q.x - 6 && y - h < q.y + q.h + 24 && y > q.y);
-    const keep = D; D = { sc };
+    const keep = D; D = { sc }; let moved = 0;
     try {
       rebuildHouseFurniture(null, sc);
+      if (hasBuiltins(sc)) for (const [k, b] of Object.entries(BUILTINS)) {
+        const p = builtinState()[k]; if (fits('builtin:' + k, p.x, p.y, p.rot || 0, { key: k })) continue;
+        const was = { ...p }; p.x = -999; rebuildHouseFurniture(null, sc);
+        const spot = freeSpot('builtin:' + k); Object.assign(p, spot ? { x: spot.x, y: spot.y, rot: 0 } : was); rebuildHouseFurniture(null, sc); moved++; void b;
+      }
       const list = furnList(sc);
       for (const f of [...list]) {
-        const def = FURNITURE[f.id]; if (!def || def.wall) continue; const fp = footprint(def.w, def.h, f.rot || 0, f.id);
-        if (!hit(f.x, f.y, fp.w, fp.h)) continue;
+        if (!FURNITURE[f.id] || fits(f.id, f.x, f.y, f.rot || 0, { f })) continue;
         list.splice(list.indexOf(f), 1); rebuildHouseFurniture(null, sc);
-        const spot = freeSpot(f.id); if (spot) { f.x = spot.x; f.y = spot.y; list.push(f); } else G.state.home.owned.push(f.id);
-        rebuildHouseFurniture(null, sc);
-      }
-      if (hasBuiltins(sc)) for (const [k, b] of Object.entries(BUILTINS)) {
-        const p = builtinState()[k], fp = footprint(b.w, b.h, p.rot || 0, b.kind); if (b.floor || !hit(p.x, p.y, fp.w, fp.h)) continue;
-        const was = { ...p }; p.x = -999; rebuildHouseFurniture(null, sc);
-        const spot = freeSpot('builtin:' + k); Object.assign(p, spot ? { x: spot.x, y: spot.y, rot: 0 } : was); rebuildHouseFurniture(null, sc);
+        const spot = freeSpot(f.id); if (spot) { f.x = spot.x; f.y = spot.y; f.rot = 0; list.push(f); } else G.state.home.owned.push(f.id);
+        rebuildHouseFurniture(null, sc); moved++;
       }
     } finally { D = keep; }
-    markDirty(true);
+    if (moved) markDirty(true);
   }
 }
 

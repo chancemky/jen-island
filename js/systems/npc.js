@@ -435,6 +435,21 @@ function updateScooter(sc, dt) {
       break;
     }
   }
+  // pets and villagers on the road: brake and wait (a pet trots aside; people step out of the way)
+  if (target > 0 && G.scene === G.scenes.island) {
+    const vx = sc.vx || (sc.flip ? -1 : 1), vy = sc.vy || 0, l = Math.hypot(vx, vy) || 1;
+    for (const a of G.scenes.island.actors) {
+      if (a === G.player || a.visible === false || a.clip || a.lie || !(a.kind === 'pet' || a.kind === 'dog' || a.kind === 'cat' || a.kind === 'human')) continue;
+      const along = ((a.x - sc.x) * vx + (a.y - sc.y) * vy) / l, sideS = ((a.x - sc.x) * vy - (a.y - sc.y) * vx) / l;
+      if (along < -4 || along > 46 || Math.abs(sideS) > 15) continue;
+      target = 0;
+      if (sc.speed < 6 && !a.path && !a.data?.inTalk && (a.kind !== 'human' || (sc.wait || 0) > 1)) {
+        const sgn = sideS === 0 ? 1 : Math.sign(sideS), tx = a.x + vy / l * sgn * 26, ty = a.y - vx / l * sgn * 26;
+        if (G.scenes.island.canStand(tx, ty, 5)) a.walkTo?.([[tx, ty]], { speed: 60 })?.catch?.(() => {});
+      }
+      break;
+    }
+  }
   // after a short wait, swerve around whoever is in the way
   sc.swerve = (sc.swerve || 0) + (((sc.wait || 0) > 1.6 ? 1 : 0) - (sc.swerve || 0)) * Math.min(1, dt * 3);
   sc.beep -= dt;

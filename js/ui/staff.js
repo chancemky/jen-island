@@ -1,7 +1,7 @@
 // Restaurant staff board: current team (role, stats, trait, wage) and today's
 // three applicants. Employees exist only in the restaurant.
 
-import { T, canAfford, bizOf } from '../systems/state.js';
+import { G, T, canAfford, bizOf, markDirty } from '../systems/state.js';
 import { ROLES, TRAITS } from '../data/game.js';
 import { candidates, hire, fire, setRole, restaurantAutomated, dailyWages, staffByRole, STAFF_ROLES, roleAvailable, wageOf, feeOf } from '../systems/restaurant.js';
 import { employeeLook } from '../data/looks.js';
@@ -42,7 +42,16 @@ export function openStaffBoard() {
           sel.style.cssText = 'font:inherit;font-weight:900;font-size:13px;padding:8px;border-radius:12px;border:2.5px solid #e1ccad;background:#fff';
           roleOptions(sel, e, e.role);
           sel.onchange = () => { setRole(e.id, sel.value); sfx('ui'); api.rebuild(); };
-          right.append(sel, btn(T('Let go', 'Cho nghỉ'), () => { fire(e.id); sfx('back'); toast({ text: T(`${e.name} has left the team`, `${e.name} đã nghỉ việc`) }); api.rebuild(); }, 'buy alt'));
+          // a day off today or tomorrow; letting them go is tucked away (tap twice)
+          const off = e.offDay === G.state.day ? 'today' : e.offDay === G.state.day + 1 ? 'tomorrow' : null;
+          if (off) right.appendChild(h('small', 'dim', off === 'today' ? T('🌴 Off today', '🌴 Nghỉ hôm nay') : T('🌴 Off tomorrow', '🌴 Nghỉ ngày mai')));
+          right.append(sel);
+          if (off !== 'today') right.appendChild(btn(T('Day off today', 'Nghỉ hôm nay'), () => { e.offDay = G.state.day; markDirty(true); sfx('ui'); toast({ text: T(`${e.name} has the rest of today off`, `${e.name} được nghỉ hết hôm nay`), sub: T('Unpaid today. Back tomorrow.', 'Không tính lương hôm nay. Mai đi làm.'), now: true }); api.rebuild(); }, 'buy alt'));
+          if (off !== 'tomorrow') right.appendChild(btn(T('Day off tomorrow', 'Nghỉ ngày mai'), () => { e.offDay = G.state.day + 1; markDirty(true); sfx('ui'); toast({ text: T(`${e.name} will take tomorrow off`, `${e.name} sẽ nghỉ ngày mai`), now: true }); api.rebuild(); }, 'buy alt'));
+          if (off) right.appendChild(btn(T('Cancel day off', 'Hủy ngày nghỉ'), () => { e.offDay = null; markDirty(true); sfx('ui'); api.rebuild(); }, 'buy alt'));
+          const lg = h('button', 'link-btn', T('Let go…', 'Cho thôi việc…')); lg.type = 'button';
+          lg.onclick = () => { if (lg.dataset.sure) { fire(e.id); sfx('back'); toast({ text: T(`${e.name} has left the team`, `${e.name} đã nghỉ việc`) }); api.rebuild(); return; } lg.dataset.sure = 1; lg.textContent = T('Tap again to confirm', 'Chạm lần nữa để xác nhận'); };
+          right.appendChild(lg);
           list.appendChild(empCard(e, right));
         }
       } else if (i === 1) {

@@ -43,6 +43,17 @@ export function drawHeld(c, what, x, y, t, view, P) {
       line(c, 0.4, -5, 1.8, -9, '#6fbf73', 0.9);
       break;
     }
+    case 'corn': {   // a grilled corn cob on a stick; the kernels go as you eat
+      const b = P?.bites || 0; c.rotate(-0.5); line(c, 0, 4, 0, 8, '#c9955e', 1);
+      box(c, -1.8, -5 + b * 1.6, 3.6, 9 - b * 1.6, 1.6, '#e8b23a', INK, 0.6); for (let k = 0; k < 3 - b; k++) line(c, -1, -3 + b * 1.6 + k * 2.2, 1, -3 + b * 1.6 + k * 2.2, 'rgba(140,90,30,.6)', 0.4);
+      if (b >= 3) box(c, -1, -2, 2, 6, 1, '#e8d9a8', INK, 0.5);
+      break;
+    }
+    case 'xoi': {   // sticky rice in a folded banana leaf
+      const b = P?.bites || 0; poly(c, [-4, -1, 4, -1, 3, 4, -3, 4], '#6fae4c', INK, 0.6);
+      if (b < 3) { ell(c, 0, -1.6 + b * 0.8, 3.4 - b * 0.8, 2 - b * 0.4, '#f2c94e', INK, 0.5); circ(c, -1, -2 + b, 0.5, '#fff', null); }
+      break;
+    }
     case 'banhtrang': {   // a little bag of rice paper salad; it empties as you eat
       const b = P?.bites || 0; poly(c, [-3.4, -3, 3.4, -3, 2.8, 4, -2.8, 4], 'rgba(255,255,255,.85)', INK, 0.6);
       c.save(); c.beginPath(); c.rect(-3.4, -3 + b * 1.6, 7, 8); c.clip(); for (let i = 0; i < 6; i++) line(c, -2.4 + (i * 1.1), -2 + (i % 3), -1 + (i * 1.1), 3, ['#f0d9a8', '#ffb347', '#6fae4f'][i % 3], 0.9); c.restore();
@@ -198,6 +209,8 @@ Object.assign(ICONS, {
   skewers: c => { skewer(c, -5, 0, -0.25, '#d88a6a'); skewer(c, 5, 0, 0.25, '#e59a78'); },
 });
 export const DISHES = {
+  // bánh tráng trộn: shredded rice paper tossed with peanuts, herbs, quail egg and chilli
+  banh_trang_tron: c => { ell(c, 0, 3, 15, 7.5, '#fffdf5', INK, 1); c.strokeStyle = '#e8b27a'; c.lineWidth = 1.4; for (let i = 0; i < 9; i++) { c.beginPath(); c.moveTo(-9 + i * 2, -1 + (i % 3)); c.quadraticCurveTo(-6 + i * 2, -5, -3 + i * 2, 1); c.stroke(); } c.strokeStyle = '#f6e3c4'; c.lineWidth = 1; for (let i = 0; i < 7; i++) { c.beginPath(); c.moveTo(-8 + i * 2.4, 2); c.quadraticCurveTo(-6 + i * 2.4, -3, -3 + i * 2.4, 3); c.stroke(); } for (const [x, y] of [[-6, -1], [-1, -3], [4, 0], [7, -2]]) circ(c, x, y, 1, '#d9a25a', null); for (const [x, y] of [[-3, 1], [5, -3]]) ell(c, x, y, 2.2, 1.2, '#7fbf5a', null); ell(c, 2, 2, 2.4, 2, '#fff8ea', INK, 0.5); circ(c, 2, 2, 1, '#f2c14e', null); for (const x of [-8, 9]) circ(c, x, 2, 0.8, '#e8584e', null); },
   oc_luoc: c => { ell(c, 0, 3, 15, 7.5, '#fffdf5', INK, 1); snailShell(c, -6, 1, 0.9); snailShell(c, 1, 3, 0.85, '#9a7a5c'); snailShell(c, -2, -3, 0.8, '#c29a6a'); c.save(); c.translate(9, 1); c.beginPath(); c.arc(0, 0, 4, Math.PI, 0); c.closePath(); c.fillStyle = '#b8e06a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); c.restore(); leafy(c, 7, -5, 2.4, '#6fbf4a', 0.9); },
   xien_nuong: c => { ell(c, 0, 5, 15, 6, '#fffdf5', INK, 1); skewer(c, -4, 0, -1.2, '#a8522f'); skewer(c, 4, 2, -1.35, '#b9643c'); for (let i = 0; i < 4; i++) circ(c, -8 + i * 5, -3 + (i % 2) * 2, 0.9, '#6fbf4a', null); },
   banh_mi_thit: c => { c.save(); c.rotate(-0.25); ell(c, 0, 1.6, 15, 6.4, '#e0a052'); ell(c, 0, -1.4, 13.5, 3, '#fff1d0', INK, 0.7); for (let i = -3; i <= 3; i++) { circ(c, i * 3.6, -2.8, 1.6, i % 2 ? '#d7784f' : '#f39a48', INK, 0.4); } for (let i = -2; i <= 2; i++) leafy(c, i * 5 + 1, -4.4, 2, '#6fbf4a', 0.5 + i); ell(c, 0, 4.6, 12, 1.4, 'rgba(0,0,0,.08)', null); c.restore(); },

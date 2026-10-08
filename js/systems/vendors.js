@@ -22,17 +22,17 @@ export const VENDORS = {
     menu: [{ id: 'icecream', en: 'Strawberry & vanilla', vi: 'Kem dâu vani', price: 5 }, { id: 'icecream_b', en: 'Pandan & coconut', vi: 'Kem lá dứa dừa', price: 5 }, { id: 'icecream_c', en: 'Chocolate & durian', vi: 'Kem sô-cô-la sầu riêng', price: 6 }],
     act: 'eat', done: [['Mmm! Brain freeze… worth it!', 'Ưm! Tê cả óc… mà đáng lắm!'], ['So cold, so good!', 'Lạnh buốt mà ngon ghê!']],
   },
-  sugarcane: {
+  corn: {
     name: 'Bà Hai', x: 992, y: 2096, look: GRANNY('#b9d7a0', '#f7de8c', '#c9c2c6', 'nonla'),
-    hi: [['Nước mía! Pressed fresh while you wait.', 'Nước mía đây! Ép tươi liền tay nè.'], ['A cup of sugarcane juice keeps the heat away, con.', 'Một ly nước mía là hết nóng liền con ơi.']],
-    menu: [{ id: 'sugarcane', en: 'Sugarcane juice', vi: 'Nước mía', price: 4 }, { id: 'sugarcane', en: 'With kumquat', vi: 'Nước mía tắc', price: 5 }],
-    act: 'drink', done: [['Ahh, so refreshing!', 'Aaa, mát cả người!'], ['Sweet and zesty!', 'Ngọt thanh luôn!']],
+    hi: [['Bắp nướng! Grilled corn with scallion oil, hot off the coals.', 'Bắp nướng mỡ hành đây! Nóng hổi vừa thổi vừa ăn.'], ['Smell that? That\'s the best corn on the island, con.', 'Thơm chưa? Bắp ngon nhất đảo đó con.']],
+    menu: [{ id: 'corn', en: 'Grilled corn', vi: 'Bắp nướng', price: 4 }, { id: 'corn', en: 'With scallion oil', vi: 'Bắp nướng mỡ hành', price: 5 }],
+    act: 'eat', done: [['Smoky and sweet!', 'Thơm khói mà ngọt ghê!'], ['Butter… scallions… perfect.', 'Mỡ hành… ngon hết sảy.']],
   },
-  banhtrang: {
+  xoi: {
     name: 'Bà Út', x: 868, y: 1928, look: GRANNY('#f7de8c', '#e9c9a2', '#b9b3ba'),
-    hi: [['Bánh tráng trộn! Rice paper salad with mango, quail egg and a little chili.', 'Bánh tráng trộn đây! Có xoài, trứng cút với chút ớt nè.'], ['The schoolkids line up for this every afternoon. Try it, cháu!', 'Chiều nào học trò cũng xếp hàng mua. Ăn thử đi cháu!']],
-    menu: [{ id: 'banhtrang', en: 'Rice paper salad', vi: 'Bánh tráng trộn', price: 5 }, { id: 'banhtrang', en: 'Extra spicy', vi: 'Cay thật cay', price: 6 }],
-    act: 'eat', done: [['Sweet, sour, crunchy… so good!', 'Chua chua, ngọt ngọt, giòn giòn… ngon quá!'], ['Whoa, spicy! In a good way!', 'Oa, cay! Mà cay ngon!']],
+    hi: [['Xôi đây! Sticky rice — gấc, mung bean or pandan, wrapped in a banana leaf.', 'Xôi đây! Xôi gấc, xôi đậu xanh, xôi lá dứa, gói lá chuối nè.'], ['A handful of xôi keeps you going till lunch, cháu.', 'Một gói xôi là no tới trưa đó cháu.']],
+    menu: [{ id: 'xoi', en: 'Mung bean sticky rice', vi: 'Xôi đậu xanh', price: 5 }, { id: 'xoi', en: 'Red gấc sticky rice', vi: 'Xôi gấc', price: 6 }],
+    act: 'eat', done: [['Soft, warm and filling!', 'Dẻo, ấm, no bụng!'], ['Just like grandma makes.', 'Y như bà nấu.']],
   },
 };
 const tt = p => T(p[0], p[1]);
@@ -82,7 +82,7 @@ export function updateVendors(dt) {
     a.data.t = 3 + Math.random() * 5;
     const pl = G.player, near = pl && Math.hypot(pl.x - a.x, pl.y - a.y) < 70;
     if (near && Math.random() < 0.5) { a.face('down'); a.setAct('wave'); a.showEmote('happy', 1.2); setTimeout(() => a.setAct(null), 1100); }
-    else if (Math.random() < 0.35) { a.setAct(v === VENDORS.sugarcane ? 'stir' : 'clean'); setTimeout(() => a.setAct(null), 1600); }
+    else if (Math.random() < 0.35) { a.setAct(v === VENDORS.corn ? 'stir' : 'clean'); setTimeout(() => a.setAct(null), 1600); }
     else a.face(choice(['down', 'down', 'left', 'right']));
   }
 }

@@ -3,7 +3,7 @@
 // The restaurant has its own simulation in restaurant.js.
 
 import { G, T, addMoney, addRep, markDirty, pantry, addPantry, unlockAchievement, bizOf } from './state.js';
-import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, PRICE_RANGE, bizName, recipeCost } from '../data/game.js';
+import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, PRICE_RANGE, bizName, recipeCost, ingName, recipeName } from '../data/game.js';
 import { RESIDENTS, visitorLook } from '../data/looks.js';
 import { addXP } from './progress.js';
 import { Actor } from '../world/actor.js';
@@ -67,6 +67,22 @@ export function bizRecipes(bizId) {
   return G.state.recipes.filter(r => RECIPES[r].biz === kind && !RECIPES[r].stallOnly);
 }
 export function makeableRecipes(bizId) { return bizRecipes(bizId).filter(r => canMake(bizId, r)); }
+// what's missing to make anything here: the recipe that's closest to ready, and what it lacks
+// (a prepped item you're out of says so, and what raw ingredient it's prepped from)
+export function missingFor(bizId) {
+  let best = null;
+  for (const id of bizRecipes(bizId)) {
+    const need = {}; for (const u of recipeUses(id)) need[u] = (need[u] || 0) + 1;
+    const miss = Object.entries(need).filter(([k, n]) => stockOf(bizId, k) < n).map(([k]) => k);
+    if (!best || miss.length < best.miss.length) best = { id, miss };
+  }
+  return best;
+}
+export function missingText(bizId) {
+  const m = missingFor(bizId); if (!m || !m.miss.length) return '';
+  const parts = m.miss.map(k => { const raw = PREPPED[k]?.from; return raw ? T(`${ingName(k)} (prep ${ingName(raw)}${pantry(raw) ? '' : ' — buy some first'})`, `${ingName(k)} (sơ chế ${ingName(raw)}${pantry(raw) ? '' : ' — mua trước nhé'})`) : ingName(k); });
+  return T(`${recipeName(m.id)} needs: ${parts.join(', ')}`, `${recipeName(m.id)} cần: ${parts.join(', ')}`);
+}
 // What a customer pays. opts may be an order's options, or just a size letter.
 // The bonuses the game gives (better recipe, shop level, daily special, cash register)
 // stack, but never past +28% — only your own price setting (PRICE_RANGE) goes beyond that.
@@ -133,7 +149,7 @@ export function openBiz(bizId) {
     return { ok: false, why };
   }
   if (!bizRecipes(bizId).length) return { ok: false, why: T('You don\'t know a recipe for this shop yet.', 'Bạn chưa biết món nào cho quán này.') };
-  if (!makeableRecipes(bizId).length) return { ok: false, why: T('Not enough ingredients!\nBuy supplies and prep them first.', 'Hết nguyên liệu!\nMua và sơ chế nguyên liệu trước nhé.') };
+  if (!makeableRecipes(bizId).length) return { ok: false, why: T('Not enough ingredients!', 'Không đủ nguyên liệu!') + '\n' + (missingText(bizId) || T('Buy supplies and prep them first.', 'Mua và sơ chế nguyên liệu trước nhé.')), missing: missingFor(bizId)?.miss || [] };
   b.open = true;
   (G.state.today.opened ||= {})[bizId] = true;      // (restaurant staff are paid in full only on days it opens)
   const r = rt(bizId);
@@ -259,7 +275,7 @@ export function customerLeave(c, why) {
   if (i >= 0) r.queue.splice(i, 1);
   c.state = 'leaving';
   const a = c.actor;
-  if (why === 'angry') { a.setEmo('angry', 3); a.showEmote('angry', 1.8); sfx('sad'); }
+  if (why === 'angry') { a.setEmo('angry', 3); a.showEmote('angry', 1.8); }   // (no sound: it beeped from shops all over the island)
   else if (why === 'happy') {
     a.setEmo('happy', 3);
     // they walk off with what they ordered, and take a sip or a bite on the way

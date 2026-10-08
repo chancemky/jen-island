@@ -237,7 +237,7 @@ function pumpToasts() {
   showToast(tq.shift());
   tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 650);
 }
-function showToast({ text, sub = '', icon = null, cls = '', bad = false, ms = 2800, onClick = null, quiet = false }) {
+function showToast({ text, sub = '', icon = null, cls = '', bad = false, ms = 2800, onClick = null, quiet = false, now = false }) {
   lastShown = { text, at: Date.now() };
   const box = $('toasts');
   const el = document.createElement('div');
@@ -249,7 +249,7 @@ function showToast({ text, sub = '', icon = null, cls = '', bad = false, ms = 28
   if (qr?.height) box.style.setProperty('--toast-top', `${qr.bottom - $('app').getBoundingClientRect().top + 8}px`); else box.style.removeProperty('--toast-top');
   box.appendChild(el);
   while (box.children.length > 2) box.firstElementChild.remove();
-  if (!quiet) sfx(cls === 'ach' ? 'fanfare' : bad ? 'error' : 'pop');
+  if (!quiet) sfx(cls === 'ach' ? 'fanfare' : bad && now ? 'error' : 'pop');      // (the error buzz only answers something you just tapped)
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, ms);
 }
 

@@ -177,7 +177,7 @@ export const RECIPES = {
                     blurb: 'Tea with peach syrup and soft peach slices. Tourists love it.' },
   tra_sua:        { vi: 'Trà sữa', en: 'Milk Tea', blurbVi: 'Trà sữa béo ngậy với topping tùy khách chọn.', biz: 'drinks', price: 24, vessel: 'cup', steps: ['tea', 'milk'], options: ['size', 'sugar', 'ice', 'topping'], icon: 'drink:tra_sua', chapter: 7,
                     blurb: 'Creamy milk tea with a topping of your customer\'s choice.' },
-  sinh_to_bo:     { vi: 'Sinh tố bơ', en: 'Avocado Smoothie', blurbVi: 'Bơ xay với sữa đặc và đá. Món tráng miệng giả làm đồ uống.', biz: 'drinks', price: 35, vessel: 'cup', steps: ['avocado_cut', 'condensed_milk', 'blend'], options: ['size', 'ice'], icon: 'drink:sinh_to_bo', chapter: 7, needRep: 70,
+  sinh_to_bo:     { vi: 'Sinh tố bơ', en: 'Avocado Smoothie', blurbVi: 'Bơ xay với sữa đặc và đá. Món tráng miệng giả làm đồ uống.', biz: 'smoothie', price: 35, vessel: 'cup', steps: ['avocado_cut', 'condensed_milk', 'blend'], options: ['size', 'ice'], icon: 'drink:sinh_to_bo', chapter: 7, needRep: 70,
                     blurb: 'Avocado blended with condensed milk and ice. Dessert pretending to be a drink.' },
   banh_mi_thit:   { vi: 'Bánh mì thịt', en: 'Grilled Pork Bánh Mì', blurbVi: 'Bánh mì giòn rụm, pa tê, thịt nướng, đồ chua, dưa leo và ngò.', biz: 'banhmi', price: 38, vessel: 'bread', steps: ['bread_split', 'pate', 'pork_grilled', 'pickles', 'cucumber_cut', 'cilantro'], options: ['chili'], icon: 'banh_mi_thit', chapter: 3,
                     blurb: 'Crackly baguette, pâté, grilled pork, pickles, cucumber and cilantro.' },
@@ -189,8 +189,8 @@ export const RECIPES = {
                     blurb: 'Named for the sizzle ("xèo!") the batter makes when it hits the pan.' },
   banh_trang_nuong:{ vi: 'Bánh tráng nướng', en: 'Grilled Rice Paper', blurbVi: '“Pizza Việt Nam” — bánh tráng nướng than với trứng và mỡ hành.', biz: 'night', price: 22, vessel: 'grill', steps: ['rice_paper', 'egg_fried', 'scallion_oil', 'grill'], options: ['chili'], icon: 'banh_trang_nuong', chapter: 8,
                     blurb: '"Vietnamese pizza" — rice paper grilled over charcoal with egg and scallion oil.' },
-  che_ba_mau:     { vi: 'Chè ba màu', en: 'Three-Colour Sweet Soup', blurbVi: 'Từng lớp đậu, thạch và nước cốt dừa trên đá bào.', biz: 'night', price: 20, vessel: 'glass', steps: ['beans', 'jelly', 'coconut_milk'], options: ['ice'], icon: 'che', chapter: 8,
-                    blurb: 'Layers of beans, jelly and coconut cream over crushed ice.' },
+  che_ba_mau:     { vi: 'Chè thập cẩm', en: 'Mixed Sweet Soup', blurbVi: 'Đậu đỏ, đậu xanh, thạch lá dứa, nước cốt dừa và đậu phộng rang trên đá bào — đủ thứ trong một ly.', biz: 'night', price: 24, vessel: 'glass', steps: ['beans', 'jelly', 'coconut_milk', 'peanuts'], options: ['ice'], icon: 'che', chapter: 8,
+                    blurb: 'Red and mung beans, pandan jelly, coconut cream and roasted peanuts over crushed ice — a bit of everything in one glass.' },
   pho_bo:         { vi: 'Phở bò', en: 'Beef Phở', blurbVi: 'Bánh phở mềm, thịt bò thái mỏng và nước dùng ninh cả đêm.', biz: 'restaurant', price: 60, vessel: 'bowl', steps: ['noodles', 'beef_sliced', 'broth', 'herbs', 'lime_wedge'], options: [], icon: 'pho_bo', chapter: 10,
                     blurb: 'Silky noodles, thin beef and a broth that simmered all night.' },
   bun_bo_hue:     { vi: 'Bún bò Huế', en: 'Spicy Huế Noodle Soup', blurbVi: 'Sả, ớt và nước dùng đỏ tự hào từ cố đô.', biz: 'restaurant', price: 65, vessel: 'bowl', steps: ['noodles', 'beef_sliced', 'broth_spicy', 'herbs', 'lime_wedge'], options: [], icon: 'bun_bo_hue', chapter: 10, needRep: 200,
@@ -227,7 +227,8 @@ Object.assign(RECIPES, {
 });
 // The Night Market stalls each have their own speciality (handed over by the owner when you buy the stall)
 Object.assign(RECIPES, {
-  oc_luoc:    { vi: 'Ốc luộc sả', en: 'Lemongrass Snails', blurbVi: 'Ốc luộc sả, chấm muối tiêu chanh. Ăn chậm, nói chuyện nhiều.', blurb: 'Snails boiled with lemongrass, dipped in salt, pepper and lime. You eat slowly and talk a lot.', biz: 'night', price: 38, vessel: 'plate', steps: ['snails_cooked', 'herbs', 'lime_wedge'], options: ['chili'], icon: 'oc_luoc', chapter: 9, stallOnly: true },
+  banh_trang_tron: { vi: 'Bánh tráng trộn', en: 'Rice Paper Salad', blurbVi: 'Bánh tráng cắt sợi trộn đậu phộng, rau răm, tắc và sa tế — món ăn vặt của học trò.', blurb: 'Shredded rice paper tossed with peanuts, herbs, lime and chilli — the island\'s favourite after-school snack.', biz: 'night', price: 24, vessel: 'plate', steps: ['rice_paper', 'peanuts', 'herbs', 'lime_wedge'], options: ['chili'], icon: 'banh_trang_tron', chapter: 18, stallOnly: true },
+  oc_luoc:    { vi: 'Ốc luộc sả', en: 'Lemongrass Snails', blurbVi: 'Ốc luộc sả, chấm nước mắm gừng và vắt chanh. Ăn chậm, nói chuyện nhiều.', blurb: 'Snails boiled with lemongrass, dipped in ginger fish sauce with a squeeze of lime. You eat slowly and talk a lot.', biz: 'night', price: 38, vessel: 'plate', steps: ['snails_cooked', 'fish_sauce', 'lime_wedge'], options: ['chili'], icon: 'oc_luoc', chapter: 9, stallOnly: true },
   nuoc_mia:   { vi: 'Nước mía', en: 'Sugarcane Juice', blurbVi: 'Mía ép tươi với chút tắc. Rẻ, nhanh, mát lạnh.', blurb: 'Fresh-pressed sugarcane with a squeeze of lime. Cheap, quick and ice cold.', biz: 'night', price: 12, vessel: 'cup', steps: ['cane_juice', 'lime_wedge'], options: ['size', 'ice'], icon: 'drink:nuoc_mia', chapter: 18, stallOnly: true },
   xien_nuong: { vi: 'Xiên nướng', en: 'Grilled Skewers', blurbVi: 'Xiên que nướng than, quét mỡ hành. Càng khuya càng đông.', blurb: 'Charcoal-grilled skewers brushed with scallion oil. The later it gets, the longer the line.', biz: 'night', price: 22, vessel: 'grill', steps: ['skewers', 'scallion_oil', 'grill'], options: ['chili'], icon: 'xien_nuong', chapter: 18, stallOnly: true },
 });
@@ -272,20 +273,20 @@ export const BUSINESSES = {
            upgrades: [null, null, { cost: 220, mats: { wood: 8, paint: 2 }, label: 'Striped awning & lanterns', labelVi: 'Mái hiên sọc & lồng đèn', queue: 4, attract: 1.25 }, { cost: 480, mats: { tile: 10, wood: 6 }, label: 'Tiled roof & string lights', labelVi: 'Mái ngói & dây đèn', queue: 5, attract: 1.5, price: 1.1 }] },
   truck: { kind: 'truck', biz: 'truck', name: 'Xe Cuốn', en: 'Roll Truck', interior: 'truck', chapter: 7, buy: 3000, queueMax: 4, tolerance: 1.05,
            upgrades: [null, null, { cost: 350, mats: { paint: 4, metal: 4 }, label: 'Fresh paint & awning', labelVi: 'Sơn mới & mái hiên', queue: 5, attract: 1.3 }, { cost: 700, mats: { cable: 1, metal: 6 }, label: 'Night lights & speakers', labelVi: 'Đèn đêm & loa nhạc', queue: 6, attract: 1.6, price: 1.1 }] },
-  night: { kind: 'stall', biz: 'night', name: 'Sạp Đêm', en: 'Night Stall', interior: 'night', chapter: 8, buy: 2000, queueMax: 5, hours: [17 * 60, 23 * 60], menu: ['banh_trang_nuong', 'che_ba_mau'], tolerance: 1.05 },
+  night: { kind: 'stall', biz: 'night', name: 'Sạp Đêm', en: 'Night Stall', interior: 'night', chapter: 8, buy: 2000, queueMax: 5, hours: [17 * 60, 23 * 60], menu: ['banh_trang_nuong'], tolerance: 1.05 },
   // outdoor kiosks: bought (no repair), run from the counter
   cafe: { kind: 'stall', biz: 'cafe', name: 'Cà Phê Bến Cảng', en: 'Harbour Café', chapter: 13, buy: 5000, queueMax: 5, hours: [6 * 60, 22 * 60], tolerance: 1.12 },
   grill: { kind: 'stall', biz: 'grill', name: 'Quán Nướng Vịnh Dừa', en: 'Coconut Cove Grill', chapter: 17, buy: 9000, queueMax: 5, hours: [10 * 60, 23 * 60], tolerance: 1.12 },
-  smoothie: { kind: 'stall', biz: 'smoothie', name: 'Sinh Tố Bãi Biển', en: 'Beach Smoothie Bar', chapter: 15, buy: 7000, queueMax: 5, hours: [8 * 60, 21 * 60], tolerance: 1.1, pace: 1.1, menu: ['sinh_to_xoai', 'nuoc_dua', 'chanh_day'] },
+  smoothie: { kind: 'stall', biz: 'smoothie', name: 'Sinh Tố Bãi Biển', en: 'Beach Smoothie Bar', chapter: 15, buy: 7000, queueMax: 5, hours: [8 * 60, 21 * 60], tolerance: 1.1, pace: 1.1, menu: ['sinh_to_xoai', 'sinh_to_bo', 'nuoc_dua', 'chanh_day'] },
   // the other Night Market stalls, bought one by one from their owners
   // Each has its own menu and personality (pace: customers per hour; serve: time per order; tolerance: how
   // much a pricier menu is forgiven). Chè is quick and cheap; sugarcane is quicker and cheaper still; snails are
-  // slow but pricey; skewers fill up late in the evening; Bà Sáu's stall is famous for her bánh tráng.
+  // slow but pricey; skewers fill up late in the evening; Bà Sáu's family stall is famous for its bánh tráng trộn.
   nm2: { kind: 'stall', biz: 'night', name: 'Sạp Chè', en: 'Sweet Soup Stall', chapter: 9, buy: 2600, queueMax: 4, hours: [17 * 60, 23 * 60], stall: true, menu: ['che_ba_mau'], pace: 1.25, serve: 0.75 },
   nm3: { kind: 'stall', biz: 'night', name: 'Sạp Ốc', en: 'Snail Stall', chapter: 9, buy: 3200, queueMax: 4, hours: [17 * 60, 23 * 60], stall: true, menu: ['oc_luoc'], pace: 0.8, serve: 1.4, tolerance: 1.1 },
   nm5: { kind: 'stall', biz: 'night', name: 'Sạp Nước Mía', en: 'Sugarcane Stall', chapter: 18, buy: 4200, queueMax: 5, hours: [17 * 60, 23 * 60], stall: true, menu: ['nuoc_mia'], pace: 1.6, serve: 0.55 },
   nm6: { kind: 'stall', biz: 'night', name: 'Sạp Xiên Que', en: 'Skewer Stall', chapter: 18, buy: 5200, queueMax: 4, hours: [17 * 60, 23 * 60], stall: true, menu: ['xien_nuong'], serve: 0.9, late: true },
-  nm1: { kind: 'stall', biz: 'night', name: 'Sạp Bà Sáu', en: 'Grandma Sáu\'s Stall', chapter: 18, buy: 6500, queueMax: 4, hours: [17 * 60, 23 * 60], stall: true, menu: ['banh_trang_nuong', 'xien_nuong'], pace: 1.15, tolerance: 1.15 },
+  nm1: { kind: 'stall', biz: 'night', name: 'Sạp Bánh Tráng Trộn', en: 'Rice Paper Salad Stall', chapter: 18, buy: 6500, queueMax: 4, hours: [17 * 60, 23 * 60], stall: true, menu: ['banh_trang_tron'], pace: 1.15, tolerance: 1.15 },
   restaurant: { kind: 'restaurant', biz: 'restaurant', name: 'Nhà Hàng', en: 'Restaurant', interior: 'restaurant', chapter: 10, buy: 10000,
            repair: { wood: 30, metal: 12, paint: 8, tile: 20 }, tables: 4,
            upgrades: [null, null, { cost: 900, mats: { wood: 12, paint: 4 }, label: 'Balcony flowers & two more tables', labelVi: 'Hoa ban công & thêm hai bàn', tables: 6, attract: 1.3 }, { cost: 1800, mats: { cable: 2, lantern: 6 }, label: 'Lantern terrace & string lights', labelVi: 'Sân lồng đèn & dây đèn', tables: 8, attract: 1.6, price: 1.1 }] },

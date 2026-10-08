@@ -43,6 +43,13 @@ function build() {
     else { delete scenes[id]; delete G.scenes[id]; }
   }
 }
+// visiting a friend: the ground floor rebuilt at their house's size; going home puts yours back
+export function visitHouse(size) {
+  const was = G.scene === scenes.house;
+  scenes.house = G.scenes.house = buildHouse(size);
+  if (was) G.scene = scenes.house;
+}
+export function restoreHome() { build(); clearStairs(); rebuildHouseFurniture(); }
 function apply() {
   const where = G.scene?.id, pl = G.player;
   build();

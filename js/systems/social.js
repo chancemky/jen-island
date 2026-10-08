@@ -13,6 +13,7 @@ import { FURNITURE, RECIPES, BUSINESSES } from '../data/game.js';
 import { lendAHand, buySpeciality, checkInbox } from './together.js';
 import { track } from './telemetry.js';
 import { present } from '../ui/sheets.js';
+import { visitHouse, restoreHome } from './home.js';
 
 export const GIFTS = {
   basket: { icon: 'bag', label: ['Basket', 'Giỏ quà'], en: 'a gift basket', vi: 'một giỏ quà', give: () => { addPantry('tea', 6); addPantry('kumquat', 6); addPantry('sugar', 6); addPantry('ice', 6); return T('tea, kumquats, sugar and ice', 'trà, tắc, đường và đá'); } },
@@ -27,7 +28,7 @@ export async function publishShowcase() {
   if (!online() || !G.state.player.name) return;
   const s = G.state;
   try {
-    G.runtime.friendCode = await cloud.publishShowcase({ player_name: s.player.name, island_name: s.island.name, level: s.level || 1, day: s.day, chapter: s.story.chapter, badge: showcaseBadge(), look: currentLook(), home: { furniture: s.home.furniture, builtins: s.home.builtins, island: { shops: Object.entries(s.biz).filter(([, b]) => b.owned).map(([id, b]) => [id, b.level || 1]), badges: earnedBadges(), served: s.stats.served, regulars: Object.values(s.regulars || {}).filter(r => r.visits >= 3).length, streak: s.streak?.best || 0 } } });
+    G.runtime.friendCode = await cloud.publishShowcase({ player_name: s.player.name, island_name: s.island.name, level: s.level || 1, day: s.day, chapter: s.story.chapter, badge: showcaseBadge(), look: currentLook(), home: { size: s.home.size || 0, furniture: s.home.furniture, builtins: s.home.builtins, island: { shops: Object.entries(s.biz).filter(([, b]) => b.owned).map(([id, b]) => [id, b.level || 1]), badges: earnedBadges(), served: s.stats.served, regulars: Object.values(s.regulars || {}).filter(r => r.visits >= 3).length, streak: s.streak?.best || 0 } } });
   } catch (e) { console.warn('showcase', e.message); }
 }
 // gifts friends sent: open them all at once
@@ -70,6 +71,7 @@ let host = null;
 export async function visitFriend(id) {
   const f = await cloud.friendHome(id); if (!f) return false;
   G.runtime.visit = { id, name: f.player_name, island: f.island_name, shops: (f.home?.island?.shops || []).map(x => x[0]) };
+  visitHouse(f.home?.size || 0);                    // their house, at its own size (no stairs: you visit the ground floor)
   rebuildHouseFurniture(f.home || { furniture: [] });
   const sc = scenes.house;
   host = new Actor({ kind: 'human', look: f.look || {}, name: f.player_name, x: sc.bedPos?.x ?? 150, y: 200, data: { host: true } });
@@ -87,7 +89,7 @@ function endVisit() {
   if (host) { scenes.house.remove(host); host = null; }
   G.runtime.visit = null;
   bar?.remove(); bar = null; G.runtime.visitHelped = G.runtime.visitBought = false;
-  rebuildHouseFurniture();
+  restoreHome();
 }
 
 // ---- emotes while visiting: you do it, your friend answers, and they'll see the last one you left

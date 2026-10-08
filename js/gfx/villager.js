@@ -1018,9 +1018,12 @@ function drawBasket(c, x, y, n, t, swing) {
   c.save(); c.translate(x, y); c.rotate(swing * 0.12);
   c.strokeStyle = INK; c.lineWidth = 2.4; c.beginPath(); c.arc(0, 4, 5, Math.PI * 1.05, Math.PI * 1.95); c.stroke();
   c.strokeStyle = '#c98f5a'; c.lineWidth = 1.2; c.stroke();
-  const fruit = ['#ffa53a', '#79b85c', '#e8584e', '#f7de8c', '#9fd67a', '#f4a9b8'];
-  for (let i = 0; i < Math.min(6, n); i++) circ(c, -3.4 + (i % 3) * 3.4, 3.6 - Math.floor(i / 3) * 2.2, 1.8, fruit[i], INK, 0.5);
+  // the groceries pile up out of the top: a leek and a baguette stand up behind, fruit in front
+  if (n >= 2) { c.save(); c.rotate(-0.35); box2(c, -4.6, -6, 1.8, 9, '#f2f0e0'); for (const dx of [-0.6, 0.6]) { c.beginPath(); c.moveTo(-3.7 + dx, -6); c.lineTo(-4.6 + dx * 3, -10); c.strokeStyle = '#6fae4c'; c.lineWidth = 1.2; c.stroke(); } c.restore(); }
+  if (n >= 4) { c.save(); c.rotate(0.4); box2(c, 2.6, -7, 2.6, 10, '#e7b160'); c.restore(); }
   poly(c, [-6.2, 3.6, 6.2, 3.6, 4.8, 10.2, -4.8, 10.2], '#d9a066', INK, 0.9);
+  const fruit = ['#ffa53a', '#79b85c', '#e8584e', '#f7de8c', '#9fd67a', '#f4a9b8', '#ffa53a', '#e8584e'];
+  for (let i = 0; i < Math.min(8, n); i++) { const row = Math.floor(i / 4), x = -4.2 + (i % 4) * 2.8 + row * 1.4, y = 2.4 - row * 2.2; circ(c, x, y, 1.9, fruit[i], INK, 0.5); circ(c, x - 0.6, y - 0.6, 0.5, 'rgba(255,255,255,.6)', null); }
   c.strokeStyle = '#b77a4f'; c.lineWidth = 0.6;
   for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(-5.8 + k * 0.4, 5.6 + k * 1.6); c.lineTo(5.8 - k * 0.4, 5.6 + k * 1.6); c.stroke(); }
   for (let k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(k * 2.3, 3.8); c.lineTo(k * 1.8, 10); c.stroke(); }

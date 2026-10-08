@@ -248,7 +248,7 @@ const ANTICS = [
 export function meoAntic(m) {
   const a = choice(ANTICS);
   m.setAct(a.act); m.actT = 0;
-  if (a.act === 'sneeze') sfx('pop'); else if (a.act === 'faint') sfx('sad'); else sfx('meow');
+  if (a.act === 'sneeze') sfx('pop'); else if (a.act !== 'faint') sfx('meow');
   bark(m, tr(a.say), a.dur + 1);
   setTimeout(() => { if (m.act === a.act) m.setAct(null); }, a.dur * 1000);
 }

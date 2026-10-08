@@ -18,7 +18,7 @@ import { toast } from './hud.js';
 import { releaseJoystick } from '../core/input.js';
 import { signal } from './comfort.js';
 
-const EXTRA_LAYERS = { beans: { color: '#a8423a', h: 0.3 }, coconut_milk: { color: '#fffaf0', h: 0.22 } };
+const EXTRA_LAYERS = { beans: { color: '#a8423a', h: 0.34 }, jelly: { color: '#8fd08a', h: 0.24 }, coconut_milk: { color: '#fffaf0', h: 0.22 }, peanuts: { color: '#d9a25a', h: 0.08 } };   // (chè thập cẩm fills the glass)
 const ICE_LEVEL = { 'không đá': 0, 'ít đá': 1, 'đá bình thường': 2 };
 
 let S = null; // active session
@@ -470,7 +470,7 @@ function drawBoard(dt, t) {
   if (R.vessel === 'cup' || R.vessel === 'glass') {
     const comp = { size: R.options.includes('size') ? (asm.size || 'M') : null, layers: [], bits: [], ice: 0, sugar: 0 };
     asm.steps.forEach((k, i) => {
-      const st = STATION[k], L = st.layer || EXTRA_LAYERS[k];
+      const st = STATION[k], L = (R.vessel === 'glass' && EXTRA_LAYERS[k]) || st.layer || EXTRA_LAYERS[k];
       if (L) comp.layers.push({ ...L, anim: asm.anim[i] });
       if (st.bits) for (let n = 0; n < 3; n++) comp.bits.push({ kind: st.bits, float: st.bits !== 'jelly' });
     });

@@ -6,7 +6,7 @@
 
 import { G, T, addMoney, canAfford, markDirty, bizOf, pantry, addPantry } from './state.js';
 import { BUSINESSES, INGREDIENTS, PREPPED, RECIPES, STATION, bizName, recipeName } from '../data/game.js';
-import { rt, openBiz, makeableRecipes, canMake, completeOrder, customerLeave, isOpenHours, ingredientsForBiz, recipeUses, bizRecipes, LOCAL_NAMES } from './business.js';
+import { rt, openBiz, closeBiz, makeableRecipes, canMake, completeOrder, customerLeave, isOpenHours, ingredientsForBiz, recipeUses, bizRecipes, LOCAL_NAMES } from './business.js';
 import { Actor } from '../world/actor.js';
 import { visitorLook } from '../data/looks.js';
 import { bus, rand, chance, money } from '../core/util.js';
@@ -62,6 +62,9 @@ export const SKILL_NAMES = [null, ['Learning', 'Đang học'], ['Capable', 'Th�
 export const KEEPER_SKILL_AT = [0, 0, 150, 400];                 // guests served to reach each skill level
 export const keeperSkill = k => Math.max(1, Math.min(3, k?.skill || 1));
 export const wageFor = (id, skill) => Math.round((KEEPER_WAGE[BUSINESSES[id].kind] || 50) * (0.8 + 0.2 * skill));
+// a day off (today or tomorrow, on the shop calendar): they stay home and aren't paid that day
+export const keeperOff = (id, k = keeperOf(id)) => !!k && k.offDay === G.state.day;
+export function giveDayOff(id, which = 'today') { const k = keeperOf(id); if (!k) return false; k.offDay = G.state.day + (which === 'tomorrow' ? 1 : 0); markDirty(true); bus.emit('keeper', id); return true; }
 export const keeperWage = (id, k = keeperOf(id)) => Math.round(wageFor(id, keeperSkill(k)) * (k?.head ? 1.2 : 1));
 export const HIRE_DAYS = 2;
 export const keeperOf = id => G.state.keepers?.[id] || null;
@@ -181,15 +184,18 @@ function insideKeeper(id, show) {
 function animateKeeper(id, a, dt, serving) {
   const d = a.data, w = workOf(id);
   d.workT -= dt;
-  if (serving) { if (a.act !== 'work' && d.workT < 0) { a.face(d.slot ? 'left' : 'right'); a.setAct(w.acts[0]); d.workT = 9; } return; }
+  // serving: face the counter (and the customer), working with both hands — pour, chop, stir in turn
+  if (serving) { if (d.workT < 0) { a.face('down'); d.si = ((d.si || 0) + 1) % w.acts.length; a.setAct(w.acts[d.si]); a.held = a.act === 'stir' || a.act === 'chop' ? null : w.held || null; d.workT = rand(1.8, 3); } return; }
   if (d.workT > 0) return;
   // between customers: tidy up, prep at the side, now and then wave at someone passing
   const r = Math.random();
   if (r < 0.18 && G.player && Math.abs(G.player.x - a.x) < 90 && Math.abs(G.player.y - a.y) < 70) { a.face('down'); a.setAct('wave'); d.workT = 1.6; return; }
   if (r < 0.5) { d.slot = 1 - (d.slot || 0); a.data.slot = d.slot; if (a.clip) placeKeeper(id, a); }
-  a.face(Math.random() < 0.5 ? 'down' : d.slot ? 'left' : 'right');
+  // mostly at the counter facing out; now and then a short turn to the side shelf
+  const side = Math.random() < 0.22;
+  a.face(side ? (d.slot ? 'left' : 'right') : 'down');
   a.setAct(w.acts[Math.floor(Math.random() * w.acts.length)]); a.held = a.act === 'stir' || a.act === 'chop' ? null : w.held || null;
-  d.workT = rand(2.5, 5);
+  d.workT = side ? rand(1.2, 2) : rand(2.5, 5);
 }
 export const keeperActor = id => actors[id] || null;
 export function spawnKeepers() { for (const id of Object.keys(G.state.keepers || {})) spawnKeeperActor(id); }
@@ -212,6 +218,11 @@ export function updateKeepers(dt) {
   for (const [id, k] of Object.entries(s.keepers || {})) {
     if (!BUSINESSES[id] || !s.biz[id]?.owned) continue;
     const b = s.biz[id], r = rt(id), a = actors[id];
+    if (k.offDay === s.day) {                             // their day off: the shop stays with you (it closes if nobody's serving)
+      if (a) a.visible = false; insideKeeper(id, false);
+      if (b.open && G.runtime.serviceOpen !== id && r.kOpened) { closeBiz(id); r.kOpened = false; }
+      continue;
+    }
     const working = b.open && G.runtime.serviceOpen !== id;
     if (a) { a.visible = working; if (a.clip && working) { const bl = buildingOf(id); if (bl && (a.clip.x !== bl.x + opening(bl).x || Math.abs(a.y - (bl.y + opening(bl).feet)) > 1)) placeKeeper(id, a); } }
     insideKeeper(id, working && G.scene?.id === id);
@@ -220,7 +231,7 @@ export function updateKeepers(dt) {
     // open up during opening hours (unless you're serving there yourself)
     if (!b.open && isOpenHours(id) && G.runtime.serviceOpen !== id) {
       r.kT = (r.kT ?? 2) - dt;
-      if (r.kT <= 0) { r.kT = 20; autoPrep(id); if (makeableRecipes(id).length) openBiz(id); }
+      if (r.kT <= 0) { r.kT = 20; autoPrep(id); if (makeableRecipes(id).length && openBiz(id).ok) r.kOpened = true; }
       continue;
     }
     if (!b.open || G.runtime.serviceOpen === id) continue;
@@ -330,7 +341,7 @@ export function dailyCosts() {
   const s = G.state;
   const rent = rentToday();
   let wages = 0; const staff = [];
-  for (const [id, k] of Object.entries(s.keepers || {})) if (s.biz[id]?.owned) { const w = keeperWage(id); wages += w; recordCost(id, 'wages', w); staff.push({ name: k.name, biz: id, served: k.today || 0, wage: w }); k.today = 0; }
+  for (const [id, k] of Object.entries(s.keepers || {})) if (s.biz[id]?.owned) { const w = k.offDay === s.day ? 0 : keeperWage(id); wages += w; recordCost(id, 'wages', w); staff.push({ name: k.name, biz: id, served: k.today || 0, wage: w }); k.today = 0; }
   for (const [id, r] of rentLines()) recordCost(id, 'rent', r);
   if (rent) addMoney(-rent, 'rent');
   if (wages) addMoney(-wages, 'wages');

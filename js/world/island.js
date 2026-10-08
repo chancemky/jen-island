@@ -269,8 +269,9 @@ const roofH = b => (b.type === 'house' && { player: 109, florist: 97, tin: 83 }[
 // ---------------------------------------------------------------- terrain tests
 const inRect = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 export function onBridge(x, y) { return BRIDGES.some(b => inRect(b, x, y)); }
-// dry footing round each river bridge: a little past the rails, and the bank shoulders at both ends so a side approach isn't water (mid-river stays wet)
-const BRIDGE_RAIL_PAD = 8, BRIDGE_BANK_PAD = 20, BRIDGE_BANK_DRY = 10;
+// dry footing on each river bridge: the deck between the rails (never on or past them), and the
+// bank shoulders at both ends — only where it's really bank, not river
+const BRIDGE_RAIL_PAD = -6, BRIDGE_BANK_PAD = 20, BRIDGE_BANK_DRY = 0;
 // the river's bounding box (plus its width): points outside it can't be in the river,
 // which skips the distance-to-polyline sum for almost every check on the island
 let riverBox = null;
@@ -528,6 +529,17 @@ export class Island extends Scene {
     this.cache = new GroundCache();
     this.buildings = {};
     this.build();
+    this.tidyUnderTrees();
+  }
+  // little upright plants (tall grass, bushes, mushrooms…) standing just in front of a big tree's
+  // trunk get drawn over its low canopy and look like they float on the leaves: clear them away
+  tidyUnderTrees() {
+    const BIG = { tree: 30, flameTree: 34, banyan: 70, palm: 16, frangipani: 22 }, SMALL = new Set(['tallGrass', 'bush', 'mushrooms', 'reeds', 'flowerPatch', 'grassTuft', 'pot', 'stump']);
+    const trees = this.props.filter(p => BIG[p.kind]);
+    this.props = this.props.filter(p => {
+      if (!SMALL.has(p.kind) || p.flat) return true;
+      return !trees.some(tr => { const r = BIG[tr.kind] * (tr.s || 1); return Math.abs(p.x - tr.x) < r && p.y > tr.y - 6 && p.y < tr.y + 18; });
+    });
   }
 
   terrain(x, y) { return !isWater(x, y) && !isPaddy(x, y) && x > 0 && y > 0 && x < W && y < H; }
@@ -546,7 +558,7 @@ export class Island extends Scene {
     if (OFFROAD.has(kind) && !o.onRoad) { const q = offRoad(x, y, o.solidR || 8); if (!q) return null; if (Math.hypot(q[0] - x, q[1] - y) > 40) return null; [x, y] = q; }
     const fn = P[kind];
     const p = { kind, x, y, ...o, draw: (c, t) => fn(c, t, p) };
-    if ((kind === 'signpost' || kind === 'foodCart' || kind === 'sugarcaneCart' || kind === 'fruitStand') && this.keepOut) this.keepOut.push({ x, y, w: kind === 'signpost' ? 64 : 70 });   // keep these readable
+    if ((kind === 'signpost' || kind === 'foodCart' || kind === 'sugarcaneCart' || kind === 'cornCart' || kind === 'fruitStand') && this.keepOut) this.keepOut.push({ x, y, w: kind === 'signpost' ? 64 : 70 });   // keep these readable
     if ((kind === 'scooter' || kind === 'bicycle') && !o.solidR) { this.circles.push({ x, y: y - 2, r: 16, soft: true }); this.circle(x, y - 2, 7); }   // keep trees off parked bikes; walkers bump only the bike itself
     const r = o.cullR || 70;
     p.cull = o.cull || { x: x - r, y: y - (o.cullH || 140), w: r * 2, h: (o.cullH || 140) + 20 };
@@ -588,8 +600,8 @@ export class Island extends Scene {
     for (let i = 0; i < 4; i++) this.add2('lanternString', 560 + i * 200, 1214, { sortY: 99990, x2: 560 + i * 200 + 150, h: 50, cullR: 160, cullH: 80, cull: { x: 560 + i * 200 - 10, y: 1150, w: 180, h: 80 } });
     // grandma carts line the road from the Wind Plaza down to the dock
     this.add2('foodCart', 962, 1812, { type: 'icecream', label: ['ICE CREAM', 'KEM'], solidRect: [-20, -8, 40, 8], cullR: 48, cullH: 80 }); this.circle(962, 1806, 20);
-    this.add2('foodCart', 838, 1930, { type: 'banhtrang', label: ['RICE PAPER SALAD', 'BÁNH TRÁNG TRỘN'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 60 }); this.circle(838, 1924, 20);
-    this.add2('sugarcaneCart', 964, 2098, { label: ['SUGARCANE', 'NƯỚC MÍA'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 70 }); this.circle(964, 2092, 20);
+    this.add2('foodCart', 838, 1930, { type: 'xoi', label: ['STICKY RICE', 'XÔI'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 60 }); this.circle(838, 1924, 20);
+    this.add2('cornCart', 964, 2098, { label: ['GRILLED CORN', 'BẮP NƯỚNG'], solidRect: [-20, -8, 40, 8], cullR: 40, cullH: 70 }); this.circle(964, 2092, 20);
     // stools sit on the far side of each cart from its grandma, so talking to her isn't mistaken for sitting down
     for (const [x, y, col] of [[926, 1830, '#e8584e'], [942, 1842, '#6f9fc8'], [796, 1946, '#e8584e'], [818, 1956, '#6fbf73'], [932, 2116, '#f2c14e']]) this.add2('stool', x, y, { col });
     this.add2('lowTable', 800, 1962, {});

@@ -224,9 +224,19 @@ function drawPlate(c, R, asm, t, done) {
       case 'pickles': shreds(c, 12, -5, 10, 5, ['#f2a14e', '#fff1dc', '#f7c27a']); break;
       case 'fish_sauce': dipBowl(c, 24, 10); break;
       case 'herbs': leaves(c, 5, 16, -6, 8, 3, 2); break;
+      case 'rice_paper': c.strokeStyle = '#ead2a6'; c.lineWidth = 1.6; for (let i = 0; i < 16; i++) { const x = -18 + i * 2.4; c.beginPath(); c.moveTo(x, 4 - (i % 3)); c.quadraticCurveTo(x + 3, -6 + (i % 4), x + 6, 3); c.stroke(); } break;
+      case 'peanuts': for (let i = 0; i < 12; i++) { const a = i * 2.4, r = 4 + (i * 7) % 11; ell(c, Math.cos(a) * r, Math.sin(a) * r * 0.45 - 1, 1.5, 1.1, '#d9a25a', 'rgba(91,63,54,.5)', 0.4); } break;
+      case 'snails_cooked': {                                   // a heap of lemongrass snails, steam rising
+        for (const [x, y, s, col] of [[-12, 0, 1, '#b98a5a'], [-4, -3, 0.95, '#9a7a5c'], [5, -1, 1, '#c29a6a'], [-8, 4, 0.9, '#a8805a'], [2, 4, 0.95, '#b98a5a'], [11, 3, 0.85, '#9a7a5c'], [-1, 0, 0.9, '#c29a6a']]) shell(c, x, y, s, col);
+        for (const [x, r] of [[-14, -0.5], [13, 0.4]]) { c.save(); c.translate(x, -2); c.rotate(r); box(c, -1, -8, 2, 12, 1, '#c9d88a', INK, 0.4); c.restore(); }
+        for (let i = 0; i < 3; i++) { const k = (t * 0.6 + i / 3) % 1; c.globalAlpha = 0.45 * (1 - k); circ(c, -6 + i * 6, -8 - k * 12, 1.6 + k * 2, '#ffffff', null); } c.globalAlpha = 1;
+        break;
+      }
+      case 'lime_wedge': c.save(); c.translate(17, -6); c.rotate(0.4); c.beginPath(); c.moveTo(-5, 0); c.arc(0, 0, 5, Math.PI, 0); c.closePath(); c.fillStyle = '#c9e86a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke(); c.beginPath(); c.arc(0, 0, 3.6, Math.PI, 0); c.strokeStyle = '#fff8c8'; c.stroke(); c.restore(); break;
     }
   }));
 }
+function shell(c, x, y, s, col) { c.save(); c.translate(x, y); c.scale(s, s); ell(c, 0, 0, 4.6, 3.8, col, INK, 0.7); c.beginPath(); c.arc(0.4, -0.2, 2.4, 0, Math.PI * 1.6); c.strokeStyle = 'rgba(70,45,30,.6)'; c.lineWidth = 0.6; c.stroke(); ell(c, -3.4, 1.4, 1.4, 1, '#3d2a22', null); c.restore(); }
 
 function drawPan(c, R, asm, t, done) {
   const steps = asm.steps, A = asm.anim;

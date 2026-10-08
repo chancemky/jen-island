@@ -480,6 +480,18 @@ export function foodCart(c, t, p) {
       c.save(); c.translate(12, -48); poly(c, [-3.2, 0, 3.2, 0, 0, 10], '#e3a85a', INK, 0.8); line(c, -1.6, 2, 1.6, 5, '#b9803e', 0.5); line(c, 1.6, 2, -1.6, 5, '#b9803e', 0.5); circ(c, 0, -2, 3.6, '#f7b6c8', INK, 0.8); circ(c, 0.4, -5.6, 2.8, '#fff4d8', INK, 0.8); circ(c, 0.4, -8.6, 1, '#e8584e', null); c.restore();
     }
     { const lab = tr(p.label) || T('ICE CREAM', 'KEM'); stext(c, lab, 0, -16, fitSize(lab, 5.4, 34), '#e56b8b', 900); }
+  } else if (p.type === 'xoi') {
+    // xôi: a big aluminium steamer, trays of red gấc, yellow mung bean and green pandan rice, banana leaves
+    cartBase(c, '#fff5df', '#7fae4d');
+    box(c, -18, -44, 36, 14, 2, 'rgba(210,240,250,.4)');
+    if (closed) cartCover(c, 36, -44, 14);
+    else {
+      box(c, 4, -50, 14, 20, 3, '#c9d0d6', INK, 0.8); ell(c, 11, -50, 7, 2, '#dfe5ea', INK, 0.6); box(c, 9, -54, 4, 3, 1, '#8f96a0', INK, 0.5);   // the steamer
+      for (let i = 0; i < 3; i++) { const k = (t * 0.5 + i / 3) % 1; c.globalAlpha = 0.5 * (1 - k); circ(c, 9 + i * 2 + Math.sin(k * 6) * 2, -56 - k * 12, 1.6 + k * 2, '#ffffff', null); } c.globalAlpha = 1;
+      for (const [x, col] of [[-14, '#e04a3a'], [-7, '#f2c94e'], [0, '#7fc06a']]) { ell(c, x, -32, 3.4, 1.6, '#5f9a3e', INK, 0.4); ell(c, x, -33.4, 2.8, 1.6, col, INK, 0.5); for (let k = 0; k < 3; k++) circ(c, x - 1.4 + k * 1.4, -34, 0.4, 'rgba(255,255,255,.6)', null); }
+      box(c, -16, -38, 12, 2, 1, '#6fae4c', INK, 0.4);              // banana leaves, ready to wrap
+    }
+    { const lab = tr(p.label) || T('STICKY RICE', 'XÔI'); stext(c, lab, 0, -16, fitSize(lab, 5.4, 34), '#5f9a3e', 900); }
   } else if (p.type === 'banhtrang') {
     // bánh tráng trộn: rice paper stacks, a jar of mango, quail eggs, chili, and ready bags on hooks
     cartBase(c, '#fff5df', '#f2a14e');
@@ -627,6 +639,20 @@ export function fruitStand(c, t, p) {
   c.save(); c.translate(0, -44);
   for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(0, -8); const a1 = -Math.PI + i * Math.PI / 6, a2 = a1 + Math.PI / 6; c.lineTo(Math.cos(a1) * 34, Math.sin(a1) * 8 + 4); c.lineTo(Math.cos(a2) * 34, Math.sin(a2) * 8 + 4); c.closePath(); c.fillStyle = i % 2 ? '#6fbfb0' : '#fff5df'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke(); }
   c.restore();
+}
+// bắp nướng: a charcoal brazier on wheels, corn cobs turning over glowing coals
+export function cornCart(c, t, p) {
+  const closed = CART_CLOSED.corn;
+  shadow(c, 0, 1, 22, 5, 0.18);
+  for (const x of [-14, 12]) { circ(c, x, -5, 5, '#3d3a42'); circ(c, x, -5, 1.8, '#b9c3cb', null); }
+  box(c, -20, -24, 40, 18, 3, '#c9674a'); box(c, -20, -27, 40, 4, 2, '#8a4a32');
+  box(c, -16, -33, 32, 7, 2, '#3d3a42', INK, 0.8);                                   // the brazier
+  if (!closed) {
+    for (let i = 0; i < 6; i++) circ(c, -13 + i * 5.2, -29, 1.6, `rgba(255,${120 + (i * 37 % 60)},60,${0.6 + 0.4 * Math.sin(t * 5 + i)})`, null);
+    for (let i = 0; i < 4; i++) { c.save(); c.translate(-10 + i * 7, -34); c.rotate(Math.sin(t * 1.4 + i) * 0.15); box(c, -1.6, -2, 3.2, 8, 1.5, i % 2 ? '#f2c94e' : '#e8b23a', INK, 0.5); for (let k = 0; k < 3; k++) line(c, -1, -1 + k * 2.4, 1, -1 + k * 2.4, 'rgba(140,90,30,.6)', 0.4); c.restore(); }
+    for (let i = 0; i < 3; i++) { const k = (t * 0.4 + i / 3) % 1; c.globalAlpha = 0.35 * (1 - k); circ(c, -6 + i * 6 + Math.sin(k * 5) * 3, -42 - k * 16, 2 + k * 3, '#e6e6e6', null); } c.globalAlpha = 1;
+  } else box(c, -16, -36, 32, 4, 2, '#c9b8a8', INK, 0.7);
+  { const lab = tr(p.label) || T('GRILLED CORN', 'BẮP NƯỚNG'); stext(c, lab, 0, -14, fitSize(lab, 5, 33), '#fff', 900, 'center', INK, 1.6); }
 }
 export function sugarcaneCart(c, t, p) {
   shadow(c, 0, 1, 22, 5, 0.18);

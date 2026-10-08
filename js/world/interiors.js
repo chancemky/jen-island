@@ -137,10 +137,11 @@ export class Interior extends Scene {
 // ---------------------------------------------------------------- definitions
 // Your house: 270 wide to start; each home upgrade adds 90 (a second window, more wall
 // decor, more floor to decorate). The door stays in the middle.
-export const HOUSE_SIZES = [270, 360, 450];
+// each upgrade grows the room both ways (wider and deeper), so it stays a comfortable rectangle
+export const HOUSE_SIZES = [{ w: 270, h: 300 }, { w: 330, h: 350 }, { w: 390, h: 400 }];
 export function buildHouse(level = 0) {
-  const w = HOUSE_SIZES[Math.min(level, HOUSE_SIZES.length - 1)], mid = w / 2;
-  const r = new Interior({ id: 'house', name: 'Nhà của bạn', w, h: 300, WH: 64, wall: level >= 2 ? '#f6e6d6' : '#f7e2c4', wall2: level >= 2 ? '#efd9c3' : '#f2d7b3', floor: level >= 1 ? '#d29d64' : '#d9a870', door: { x: mid, w: 30 }, building: 'house' });
+  const { w, h } = HOUSE_SIZES[Math.min(level, HOUSE_SIZES.length - 1)], mid = w / 2;
+  const r = new Interior({ id: 'house', name: 'Nhà của bạn', w, h, WH: 64, wall: level >= 2 ? '#f6e6d6' : '#f7e2c4', wall2: level >= 2 ? '#efd9c3' : '#f2d7b3', floor: level >= 1 ? '#d29d64' : '#d9a870', door: { x: mid, w: 30 }, building: 'house' });
   r.wallItem('window', mid + 25, { w: 46, h: 28, hgt: 54, curtain: '#f4a9b8' });
   r.wallItem('calendar', mid + 65, { day: () => G.state.day });
   r.wallItem('clock', 28, {});
@@ -149,12 +150,12 @@ export function buildHouse(level = 0) {
   if (level >= 1) r.wallItem('window', mid - 70, { w: 46, h: 28, hgt: 54, curtain: '#9fd8c8' });
   if (level >= 2) { r.wallItem('window', w - 90, { w: 46, h: 28, hgt: 54, curtain: '#f7de8c' }); r.wallItem('familyPhoto', mid - 120); }
   r.bedPos = { x: 46, y: 88 };
-  r.decorArea = { x: 16, y: 104, w: w - 32, h: 178 };
+  r.decorArea = { x: 16, y: 104, w: w - 32, h: h - 122 };
   return r;
 }
 // ---- the upstairs and the basement (systems/home.js): rooms with no front door, joined to
 // the ground floor by stairs. `stairs` says where each flight stands in that room.
-export const FLOOR_SIZES = [0, 360, 450];
+export const FLOOR_SIZES = [null, { w: 330, h: 340 }, { w: 390, h: 400 }];
 export const STAIRS = { house: { up: { x: -40 }, down: { x: 172 } }, house_up: { down: { x: -40 } }, house_down: { up: { x: 172 } } };
 export const stairsX = (sc, which) => { const x = STAIRS[sc.id]?.[which]?.x; return x == null ? null : x < 0 ? sc.w + x : x; };
 export function drawStairs(c, t, p) {
@@ -183,10 +184,10 @@ export function addStairs(r, which, to, label) {
   r.trigger({ id: 'stairs_' + which, kind: 'act', x: x - 26, y, w: 52, h: 22, label: label[1], en: label[0], icon: which === 'up' ? 'arrow_up' : 'arrow_down', action: 'floor:' + to, stairs: which });
 }
 export function buildFloor(which, level) {
-  const w = FLOOR_SIZES[Math.min(level, 2)] || FLOOR_SIZES[1], up = which === 'up', id = up ? 'house_up' : 'house_down';
+  const { w, h } = FLOOR_SIZES[Math.min(level, 2)] || FLOOR_SIZES[1], up = which === 'up', id = up ? 'house_up' : 'house_down';
   const r = new Interior(up
-    ? { id, name: 'Tầng trên', w, h: 300, WH: 64, wall: '#e6eef7', wall2: '#dbe5f1', wallStyle: 'dots', floor: '#c98f5a', door: { x: w / 2, w: 30 }, noDoor: true, building: 'house' }
-    : { id, name: 'Tầng hầm', w, h: 300, WH: 64, wall: level >= 2 ? '#e9dccb' : '#ddd0c0', wall2: '#d3c4b2', wallStyle: 'brick', floor: level >= 2 ? '#b08158' : '#bdb2a3', floorStyle: level >= 2 ? 'wood' : 'concrete', door: { x: w / 2, w: 30 }, noDoor: true, building: 'house' });
+    ? { id, name: 'Tầng trên', w, h, WH: 64, wall: '#e6eef7', wall2: '#dbe5f1', wallStyle: 'dots', floor: '#c98f5a', door: { x: w / 2, w: 30 }, noDoor: true, building: 'house' }
+    : { id, name: 'Tầng hầm', w, h, WH: 64, wall: level >= 2 ? '#e9dccb' : '#ddd0c0', wall2: '#d3c4b2', wallStyle: 'brick', floor: level >= 2 ? '#b08158' : '#bdb2a3', floorStyle: level >= 2 ? 'wood' : 'concrete', door: { x: w / 2, w: 30 }, noDoor: true, building: 'house' });
   if (up) {
     r.wallItem('window', w / 2 - 40, { w: 46, h: 28, hgt: 54, curtain: '#c9b6e8' });
     if (level >= 2) { r.wallItem('window', w / 2 + 60, { w: 70, h: 34, hgt: 56, curtain: '#f4a9b8' }); r.wallItem('familyPhoto', 60); }
@@ -197,7 +198,7 @@ export function buildFloor(which, level) {
     addStairs(r, 'up', 'house', ['Go upstairs', 'Lên lầu']);
   }
   r.entry = { x: stairsX(r, up ? 'down' : 'up'), y: r.WH + 70 };
-  r.decorArea = { x: 16, y: 104, w: w - 32, h: 178 };
+  r.decorArea = { x: 16, y: 104, w: w - 32, h: h - 122 };
   r.homeFloor = which;
   return r;
 }

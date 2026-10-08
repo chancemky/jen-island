@@ -100,10 +100,13 @@ export function openIngredientShop() {
       });
       right.append(q.el, b);
       // The supermarket sells raw ingredients; prepped portions stay listed separately in the bag.
-      list.appendChild(rowEl({ icon: id, title: escapeHtml(ingName(id)), sub: T(`${g.pack} portions per pack`, `${g.pack} phần / gói`), have: T(`Have: ${pantry(id)}`, `Có: ${pantry(id)}`), right }));
+      list.appendChild(rowEl({ icon: id, title: escapeHtml(ingName(id)), sub: T(`${g.pack} portions per pack`, `${g.pack} phần / gói`), have: haveText(id), right }));
     }
   } });
 }
+// portions of an ingredient already prepped in your shops (sliced mango, pressed cane juice…)
+export function preppedOf(k) { const to = INGREDIENTS[k]?.prep?.to; if (!to) return 0; let n = 0; for (const b of Object.values(G.state.biz)) n += b.prepped?.[to] || 0; return n; }
+const haveText = id => { const p = preppedOf(id); return p ? T(`Have: ${pantry(id)} + ${p} prepped`, `Có: ${pantry(id)} + ${p} đã sơ chế`) : T(`Have: ${pantry(id)}`, `Có: ${pantry(id)}`); };
 // Missing packs to make ~8 of each known recipe.
 export function shoppingNeeds() {
   const want = {};
@@ -117,7 +120,7 @@ export function shoppingNeeds() {
   }
   const out = [];
   for (const [k, n] of Object.entries(want)) {
-    const have = pantry(k);
+    const have = pantry(k) + preppedOf(k);           // (already-prepped portions count too)
     if (have < n) out.push([k, Math.ceil((n - have) / INGREDIENTS[k].pack)]);
   }
   return out;

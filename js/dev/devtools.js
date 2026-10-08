@@ -14,7 +14,7 @@ import { CLOTHES } from '../data/wardrobe.js';
 import { PETS } from '../systems/pets.js';
 import { PLACES } from '../systems/economy.js';
 import { endDay } from '../systems/time.js';
-import { islandNow, learnServerTime, SEASON_DAYS } from '../core/util.js';
+import { islandNow, learnServerTime, SEASON_DAYS, jstDow } from '../core/util.js';
 import { SIDE_QUESTS } from '../systems/sidequests.js';
 import { setScene } from '../systems/scenes.js';
 import { saveLocal, saveCloudNow } from '../systems/save.js';
@@ -136,7 +136,7 @@ export function renderDevPane(pane, api) {
   // the shared island calendar runs on real time: move the clock forward to test seasons and festivals
   b(g, 'Clock +1 real day', () => learnServerTime(new Date(islandNow() + 864e5).toUTCString()));
   b(g, 'Clock +1 season', () => learnServerTime(new Date(islandNow() + SEASON_DAYS * 864e5).toUTCString()));
-  b(g, 'Night Market Saturday', () => { let d = t.day; while (((d - 1) % YEAR + 1) % 7 !== 6) d++; t.day = d; });
+  b(g, 'Clock to Saturday', () => { let n = islandNow(); while (jstDow(n) !== 6) n += 864e5; learnServerTime(new Date(n).toUTCString()); });
 
   // customers & visitors
   g = sec('Customers & visitors');

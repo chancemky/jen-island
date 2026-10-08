@@ -121,7 +121,7 @@ function workDone(a, name) {
 // what each employee did today, for the evening summary ("Hạnh served 34 guests today")
 export function staffReport() {
   const out = [];
-  for (const e of bizOf('restaurant').employees) { out.push({ name: e.name, role: e.role, did: { ...(e.today || {}) }, wage: Math.round(wageOf(e) * payToday()) }); e.today = {}; }
+  for (const e of bizOf('restaurant').employees) { out.push({ name: e.name, role: e.role, did: { ...(e.today || {}) }, wage: empOff(e) ? 0 : Math.round(wageOf(e) * payToday()) }); e.today = {}; }
   return out;
 }
 export function candidates() {
@@ -173,7 +173,9 @@ export function initRestaurantRuntime() {
   const r = restRT(), b = bizOf('restaurant');
   for (const e of b.employees) if (!r.staff.has(e.id)) spawnStaff(e);
 }
-export const staffByRole = role => [...restRT().staff.values()].filter(a => a.data.emp.role === role);
+// a day off: that employee stays home (not on the floor, not paid) for that shop day
+export const empOff = e => !!e && e.offDay === G.state.day;
+export const staffByRole = role => [...restRT().staff.values()].filter(a => a.data.emp.role === role && !empOff(a.data.emp));
 
 // ---------------------------------------------------------------- guests
 class Guest {
@@ -439,7 +441,7 @@ export function updateRestaurant(dt, gameMin) {
   r.guests = r.guests.filter(g => g.state !== 'gone');
   // staff decisions ~4 times a second
   staffTick += dt;
-  if (staffTick > 0.25) { staffTick = 0; for (const a of r.staff.values()) assign(a); }
+  if (staffTick > 0.25) { staffTick = 0; for (const a of r.staff.values()) { const off = empOff(a.data.emp); a.visible = !off; if (!off) assign(a); } }
   // cashier deposits the register to your wallet
   r.depositT -= dt;
   if (r.depositT <= 0) {
@@ -460,7 +462,7 @@ export function restaurantAutomated() { return ['cook', 'server'].every(r => sta
 // On a day the restaurant stays closed the team is kept on a retainer, not a full day's pay.
 export const RETAINER = 0.3;
 const payToday = () => G.state.today.opened?.restaurant ? 1 : RETAINER;
-export function dailyWages() { const z = bizOf('restaurant'); return z.repair < 1 ? 0 : Math.round(z.employees.reduce((s, e) => s + wageOf(e), 0) * payToday()); }
+export function dailyWages() { const z = bizOf('restaurant'); return z.repair < 1 ? 0 : Math.round(z.employees.reduce((s, e) => s + (empOff(e) ? 0 : wageOf(e)), 0) * payToday()); }
 export function resetRestaurantDay() {
   const r = restRT(), sc = scene();
   for (const g of r.guests) sc?.remove(g.actor);
