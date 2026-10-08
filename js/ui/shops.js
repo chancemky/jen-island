@@ -390,7 +390,7 @@ function brandPane(pane, bizId, api) {
     list.appendChild(r);
   }
 }
-const bizSignDefault = id => ({ shed1: T('TEA & COFFEE', 'TRÀ & CÀ PHÊ'), shed2: 'BÁNH MÌ', truck: T('ROLL TRUCK', 'XE CUỐN'), restaurant: T('RESTAURANT', 'NHÀ HÀNG'), cafe: T('HARBOUR CAFÉ', 'CÀ PHÊ BẾN CẢNG'), grill: T('COVE GRILL', 'QUÁN NƯỚNG VỊNH DỪA') })[id] || (BUSINESSES[id]?.stall || id === 'night' ? T('YOUR STALL', 'SẠP CỦA BẠN') : '');
+const bizSignDefault = id => ({ shed1: T('TEA & COFFEE', 'TRÀ & CÀ PHÊ'), shed2: 'BÁNH MÌ', truck: T('ROLL TRUCK', 'XE CUỐN'), restaurant: T('RESTAURANT', 'NHÀ HÀNG'), cafe: T('HARBOUR CAFÉ', 'CÀ PHÊ BẾN CẢNG'), grill: T('COVE GRILL', 'QUÁN NƯỚNG VỊNH DỪA'), smoothie: T('SMOOTHIE BAR', 'SINH TỐ BÃI BIỂN') })[id] || (BUSINESSES[id]?.stall || id === 'night' ? T('YOUR STALL', 'SẠP CỦA BẠN') : '');
 function equipPane(pane, bizId, api) {
   const list = h('div', 'list'); pane.appendChild(list);
   const b = G.state.biz[bizId]; b.equip ||= {};

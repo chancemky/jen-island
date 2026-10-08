@@ -71,8 +71,10 @@ import { updateAmbience } from './systems/ambience.js';
 import { updateWeather, drawRain } from './systems/weather.js';
 import { initHome } from './systems/home.js';
 import { initStorefront } from './systems/storefront.js';
+import { applyMeoStyle } from './systems/meostyle.js';
 import { initParties, partyAction } from './systems/parties.js';
 import { nightlifeAction } from './systems/nightlife.js';
+import { tripAction, tripOpen } from './systems/trip.js';
 import { openBoard } from './ui/board.js';
 import { CLOTHES } from './data/wardrobe.js';
 import { initAds } from './systems/ads.js';
@@ -232,6 +234,7 @@ function startGame() {
   G.player = new Player(look);
   G.player.name = s.player.name;
   G.meo = new Actor({ id: 'meo', kind: 'cat', look: { cat: true }, name: 'Mèo Mây', speed: 66, data: { meo: true } });
+  applyMeoStyle();
   G.meo.talkable = true;
   scenes.island.add(G.meo); G.meo.x = 970; G.meo.y = 1650;
   safe('npcs', () => initNPCs(scenes.island));
@@ -545,7 +548,7 @@ function updateInteraction(dt) {
     setAction(T('Statue', 'Tượng đài'), () => statueSheet(), 'star'); return;
   }
   // fishing off the end of the pier (once Chú Hải has shown you how)
-  const fish = fishingAction(pl); if (fish) { setAction(fish.label, fish.run, fish.icon); return; }
+  const fish = fishingAction(pl) || tripAction(pl); if (fish) { setAction(fish.label, fish.run, fish.icon); return; }
   // a shop's special easel: tap to pick today's special (cycles through what it sells)
   if (sc === scenes.island) { const e = specialEasels().find(e => Math.hypot(pl.x - e.x, pl.y - e.y - 6) < 24); if (e) { setAction(T('Today\'s special', 'Món đặc biệt'), () => cycleSpecial(e.id), 'star'); return; } }
   // a rare visitor (the golden cat)

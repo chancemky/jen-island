@@ -39,11 +39,21 @@ export const PRODUCTS = {
     blurb: ['Unlocks the supporter track of this season\'s pass. The free track stays free for everyone.', 'Mở nhánh ủng hộ của vé mùa này. Nhánh miễn phí luôn miễn phí cho mọi người.'],
     clothes: [],   // rewards come from the pass tiers below
   },
+  pass_s2: {
+    en: 'Tết Season Pass', vi: 'Vé Mùa Tết', price: '$2.99',
+    blurb: ['Unlocks the supporter track of the Tết season. The free track stays free for everyone.', 'Mở nhánh ủng hộ của mùa Tết. Nhánh miễn phí luôn miễn phí cho mọi người.'],
+    clothes: [],
+  },
+  lounge: {
+    en: 'Lantern Lounge Bundle', vi: 'Gói Phòng Lồng Đèn', price: '$6.99',
+    blurb: ['A velvet sofa with lantern cushions, a glowing lantern tree, a koi lamp and a matching robe. Purely for looks.', 'Sofa nhung gối lồng đèn, cây lồng đèn phát sáng, đèn cá koi và áo choàng đồng bộ. Chỉ để trang trí.'],
+    clothes: ['lounge_robe'], furniture: ['lounge_sofa', 'lantern_tree', 'koi_lamp'],
+  },
 };
 
 // The season pass: season points come from customers served during the season.
 // Free rewards are for everyone; supporter rewards need pass_s1.
-export const SEASON = {
+const SEASON_1 = {
   id: 's1', en: 'Lantern Season', vi: 'Mùa Lồng Đèn', product: 'pass_s1',
   start: '2026-10-15', end: '2026-12-15',
   tiers: [
@@ -54,6 +64,23 @@ export const SEASON = {
     { at: 400, free: null, paid: 'nonla_gold' },
   ],
 };
+const SEASON_2 = {
+  id: 's2', en: 'Tết Season', vi: 'Mùa Tết', product: 'pass_s2',
+  start: '2026-12-16', end: '2027-03-01',
+  tiers: [
+    { at: 40, free: 'mai_hairpin', paid: null },
+    { at: 100, free: null, paid: 'gold_slippers' },
+    { at: 180, free: 'lucky_tee', paid: null },
+    { at: 280, free: null, paid: 'firework_hoodie' },
+    { at: 360, free: 'nonla_blossom', paid: null },
+    { at: 450, free: null, paid: 'aodai_tet' },
+  ],
+};
+export const SEASONS = [SEASON_1, SEASON_2];
+// the season on now (or the next one coming), read live: SEASON.id, SEASON.tiers…
+export let SEASON = SEASON_1;
+export function pickSeason(now = islandNow()) { SEASON = SEASONS.find(x => now < Date.parse(x.end) + 864e5) || SEASONS[SEASONS.length - 1]; return SEASON; }
+pickSeason();
 
 const S = () => { const s = G.state; s.store ||= { season: {} }; s.store.season ||= {}; return s.store; };
 const verified = new Set();               // products the server says this player bought
@@ -66,8 +93,15 @@ function give(ids) {
   for (const id of ids) if (CLOTHES[id]?.store && !w.owned.includes(id)) { w.owned.push(id); got.push(id); }
   return got;
 }
+// bundle furniture: delivered home once (remembered in the save)
+function giveFurniture(pid) {
+  const s = G.state, f = PRODUCTS[pid]?.furniture; if (!f) return;
+  const done = (s.store.furnished ||= []); if (done.includes(pid)) return;
+  done.push(pid); for (const id of f) (s.home.owned ||= []).push(id);
+}
 // the server is the only record of purchases: copy what it says into the save
 export async function syncPurchases() {
+  pickSeason();
   if (!cloud.hasSession()) return [];
   let rows;
   try { rows = await cloud.loadPurchases(); } catch { return []; }
@@ -75,7 +109,7 @@ export async function syncPurchases() {
   for (const { product_id: id } of rows || []) {
     if (!PRODUCTS[id] || verified.has(id)) continue;
     verified.add(id); fresh.push(id);
-    give(PRODUCTS[id].clothes);
+    give(PRODUCTS[id].clothes); giveFurniture(id);
   }
   if (verified.size) grantServerBadge('supporter');
   if (fresh.length) { claimSeason(); markDirty(true); }

@@ -1411,6 +1411,7 @@ function hintFor(step) {
     landlord: T('In Menu → Business you can buy the places you rent. Owned places pay no rent and bring a few more customers.', 'Trong Menu → Kinh doanh bạn có thể mua đứt nơi đang thuê. Nơi đã mua không phải trả tiền thuê và có thêm khách.'),
     festival: T('Reach the level, buy silk lanterns from Chú Bảy, and serve a big crowd in a single day.', 'Đạt đủ cấp, mua lồng đèn lụa ở Chú Bảy, và phục vụ thật đông khách trong một ngày.'),
     cove: T('The Cove Bridge goes past the east beach. It needs roof tiles as well as wood, metal and paint.', 'Cầu Vịnh Dừa ở sau bãi đông. Cần ngói, cùng với gỗ, tôn và sơn.'),
+    smoothie: T('The Beach Smoothie Bar is on Sunny Beach, by the dock. Walk up to it to buy it.', 'Quán Sinh Tố Bãi Biển ở Bãi Biển, cạnh bến tàu. Đi tới đó để mua.'),
     grill: T('The Coconut Cove Grill is across the Cove Bridge. Walk up to it to buy it.', 'Quán Nướng Vịnh Dừa ở bên kia Cầu Vịnh Dừa. Đi tới đó để mua.'),
     grillServe: T('Stock seafood for the grill, open it and grill from the counter.', 'Chuẩn bị hải sản cho quán nướng, mở cửa rồi nướng ở quầy.'),
     allStalls: T('Every empty stall at the Night Market is for sale. Walk up to each one to buy it.', 'Mọi sạp trống ở Chợ Đêm đều đang bán. Đi tới từng sạp để mua.'),

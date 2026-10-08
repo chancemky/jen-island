@@ -10,7 +10,7 @@ import { nativeApp } from '../core/util.js';
 
 export const IAP = {
   keys: { ios: '', android: '' },                                                 // RevenueCat → Project → API keys (public)
-  products: { supporter: 'bistro_supporter', pass_s1: 'bistro_pass_s1' },        // the store product ids (non-consumable)
+  products: { supporter: 'bistro_supporter', pass_s1: 'bistro_pass_s1', pass_s2: 'bistro_pass_s2', lounge: 'bistro_lounge' },        // the store product ids (non-consumable)
 };
 const plugin = () => nativeApp() ? window.Capacitor?.Plugins?.Purchases : null;
 const key = () => IAP.keys[window.Capacitor?.getPlatform?.()] || '';

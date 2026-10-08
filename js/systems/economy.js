@@ -194,18 +194,16 @@ function animateKeeper(id, a, dt, serving) {
 export const keeperActor = id => actors[id] || null;
 export function spawnKeepers() { for (const id of Object.keys(G.state.keepers || {})) spawnKeeperActor(id); }
 
-// What your shopkeepers sold, told in a short toast. Sales are gathered per shop and shown at
-// most one toast every few seconds, so a busy afternoon doesn't bury the screen.
-const keeperSold = {}; let keeperToastT = 0;
+const keeperSold = {}; let keeperToastT = 240;
 function noteKeeperSale(id, k, o) { const e = (keeperSold[id] ||= { n: 0, total: 0 }); e.name = k.name; e.recipe = o.recipe; e.n++; e.total += o.price || 0; }
+// staff sales stay quiet: one combined note now and then (every ~4 real minutes at most),
+// never one per order
 function flushKeeperSales(dt) {
   if ((keeperToastT -= dt) > 0 || G.runtime.inCutscene) return;
-  const id = Object.keys(keeperSold)[0]; if (!id) return;
-  const e = keeperSold[id]; delete keeperSold[id]; keeperToastT = 6;
-  toast({
-    text: e.n > 1 ? T(`${e.name} sold ${e.n} orders`, `${e.name} đã bán ${e.n} phần`) : T(`${e.name} sold ${recipeName(e.recipe)}`, `${e.name} đã bán ${recipeName(e.recipe)}`),
-    sub: `${bizName(id)} · +${money(e.total)}`, icon: RECIPES[e.recipe]?.icon, ms: 2200,
-  });
+  const ids = Object.keys(keeperSold); if (!ids.length) return;
+  const n = ids.reduce((a, id) => a + keeperSold[id].n, 0), total = ids.reduce((a, id) => a + keeperSold[id].total, 0);
+  for (const id of ids) delete keeperSold[id]; keeperToastT = 240;
+  toast({ text: T(`Your staff sold ${n} order${n > 1 ? 's' : ''}`, `Nhân viên đã bán ${n} phần`), sub: `+${money(total)}`, icon: 'coin', ms: 2000 });
 }
 // every frame: keepers open their shop, prep, and serve the customer at the counter
 export function updateKeepers(dt) {

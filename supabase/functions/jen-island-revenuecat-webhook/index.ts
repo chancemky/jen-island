@@ -6,7 +6,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-const PRODUCTS: Record<string, string> = { bistro_supporter: 'supporter', bistro_pass_s1: 'pass_s1' };
+const PRODUCTS: Record<string, string> = { bistro_supporter: 'supporter', bistro_pass_s1: 'pass_s1', bistro_pass_s2: 'pass_s2', bistro_lounge: 'lounge' };
 const BUY = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 let secret: string | null = null;

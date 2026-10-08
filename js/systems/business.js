@@ -235,7 +235,7 @@ export function spawnTeam(bizId) {
   const team = { col, names, size, done: 0, total: 0, members: [] };
   for (let i = 0; i < size; i++) { const c = spawnCustomer(bizId, { tourist: true, team: { ...team, i } }); if (!c) break; c.team = team; team.members.push(c); }
   team.size = team.members.length;
-  if (team.size >= 2) { team.members[0].actor.showEmote?.('happy', 1.6); bus.emit('toast', { text: T(`A team of ${team.size} is in line!`, `Một đội ${team.size} người đang xếp hàng!`), sub: T('Serve them all for a team bonus.', 'Phục vụ cả đội để nhận thưởng.'), icon: 'star', ms: 2600 }); }
+  if (team.size >= 2) { team.members[0].actor.showEmote?.('happy', 1.6); if (G.runtime.teamToastDay !== G.state.day) (G.runtime.teamToastDay = G.state.day, bus.emit('toast', { text: T(`A team of ${team.size} is in line!`, `Một đội ${team.size} người đang xếp hàng!`), sub: T('Serve them all for a team bonus.', 'Phục vụ cả đội để nhận thưởng.'), icon: 'star', ms: 2600 })); }
   return team.size >= 2;
 }
 export function bizMaxQueue(bizId) {
@@ -521,6 +521,7 @@ const DEMAND = {
   cafe:    [[6, 1.6], [10, 1.15], [12, 0.9], [14, 1.2], [17, 0.9], [20, 0.6]],                 // morning coffee
   grill:   [[10, 0.6], [12, 0.9], [15, 0.8], [17, 1.55], [21, 1.2], [22.5, 0.8]],              // sunset seafood
   night:   [[17, 0.9], [19, 1.5], [22, 1.0]],
+  smoothie:[[8, 0.8], [10, 1.2], [12, 1.5], [15, 1.4], [17, 1.0], [19, 0.6]],                 // hot beach middays
 };
 export function demandAt(id, h = G.state.time / 60) {
   const def = BUSINESSES[id], curve = DEMAND[def.biz] || [[0, 1]];

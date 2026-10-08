@@ -259,6 +259,8 @@ export function growthDrawables() {
     for (const d of z.decor || []) { const x = b.x + d.dx, y = b.y + d.dy; add(x, y, y, (c, t) => drawDecor(c, t, d.k, x, y)); }
     const rib = G.state.contest?.ribbons?.[id]; if (rib) { const x = b.x + (b.w || 100) / 2 - 8, y = b.y - 50; add(x, y, b.y + 1, (c, t) => ribbon(c, t, x, y, rib)); }
   }
+  // Chú Hải's boat, moored at the end of the pier once he takes you out to Turtle Cove
+  if (flag('fishing')) add(992, 2600, 2600, (c, t) => { const bob = Math.sin(t * 1.6) * 1.2; c.save(); c.translate(992, 2600 + bob); poly(c, [-22, -6, 22, -6, 16, 4, -16, 4], '#3f8f9a', INK, 1); box(c, -16, -9, 32, 4, 1, '#fffaf0', INK, 0.6); line(c, 2, -9, 2, -30, '#8a5f3e', 1.4); poly(c, [3, -29, 3, -12, 16, -12], '#fff5df', INK, 0.7); c.restore(); });
   partyDrawables(add, { box, line, circ, ell, INK });
   nightlifeDrawables(add, { box, line, circ, ell, poly, INK, glows });
   // today's special on a chalkboard easel by each of your shops (tap it to change)

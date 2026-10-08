@@ -11,7 +11,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-const PRODUCTS = new Set(['supporter', 'pass_s1']);
+const PRODUCTS = new Set(['supporter', 'pass_s1', 'pass_s2', 'lounge']);
 const enc = new TextEncoder();
 let secrets: string[] | null = null;
 

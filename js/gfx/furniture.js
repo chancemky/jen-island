@@ -1131,3 +1131,50 @@ for (const [id, col] of [['lantern_hand_pink', '#f36d86'], ['lantern_hand_teal',
   poly(c, pts, col, INK, 0.9); circ(c, 0, 17, 2.2, '#fff6c8', null); line(c, -1, 26, -2 + Math.sin(t * 2), 33, col, 0.8); line(c, 1, 26, 2 + Math.sin(t * 2 + 1), 33, col, 0.8);
   c.restore(); if (!p.preview) g(p, 0, -53, 26, 'rgba(255,200,140,.5)');
 });
+
+// Turtle Cove finds (systems/trip.js)
+FURN_DRAW.giant_shell = (c, t, p) => {
+  shadow(c, 0, 1, 14, 4, 0.18);
+  c.beginPath(); c.moveTo(-14, -2); c.quadraticCurveTo(-16, -20, 0, -24); c.quadraticCurveTo(14, -22, 15, -6); c.quadraticCurveTo(8, 0, -14, -2); c.closePath();
+  c.fillStyle = '#f7d6c4'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+  for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(4 - i * 3, -12 + i, 9 - i * 2, Math.PI * 0.9, Math.PI * 1.9); c.strokeStyle = 'rgba(200,120,110,.55)'; c.lineWidth = 0.8; c.stroke(); }
+  c.beginPath(); c.ellipse(-6, -8, 5, 3.5, -0.4, 0, Math.PI * 2); c.fillStyle = '#f2a6a0'; c.fill();
+  const k = (Math.sin(t * 2) + 1) / 2; c.fillStyle = `rgba(255,255,255,${0.3 + k * 0.4})`; c.beginPath(); c.ellipse(4, -18, 4, 1.4, -0.4, 0, Math.PI * 2); c.fill();
+};
+FURN_DRAW.bottle_ship = (c, t, p) => {
+  shadow(c, 0, 1, 14, 3, 0.16); box(c, -12, -3, 24, 3, 1, '#8a5a3a', INK, 0.7);
+  c.beginPath(); c.ellipse(0, -10, 13, 7, 0, 0, Math.PI * 2); c.fillStyle = 'rgba(190,230,240,.55)'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+  box(c, 12, -12, 5, 4, 1, '#c9955e', INK, 0.6);
+  poly(c, [-7, -7, 6, -7, 4, -4, -5, -4], '#a8563f', INK, 0.5); line(c, 0, -7, 0, -15, '#5b3f36', 0.7); poly(c, [0.5, -15, 0.5, -8, 5, -8], '#fffaf0', INK, 0.4); poly(c, [-0.5, -14, -0.5, -8, -4, -8], '#fffaf0', INK, 0.4);
+  c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1; c.beginPath(); c.ellipse(-4, -13, 5, 1.5, -0.2, Math.PI, Math.PI * 1.7); c.stroke();
+};
+
+// the Lantern Lounge bundle (systems/store.js)
+FURN_DRAW.lounge_sofa = (c, t, p) => {
+  shadow(c, 0, 1, 24, 4, 0.2);
+  box(c, -23, -26, 46, 16, 7, '#7a2f4f', INK, 1);                          // velvet back
+  for (let i = -2; i <= 2; i++) { c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(i * 9 - 0.4, -24, 0.8, 12); }
+  box(c, -24, -14, 48, 11, 4, '#93395e', INK, 1); c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(-21, -13, 42, 1.4);
+  for (const s of [-1, 1]) box(c, s * 22 - 4, -20, 8, 15, 4, '#7a2f4f', INK, 0.9);
+  for (const x of [-20, 20]) box(c, x - 1, -3, 2, 3, 0.5, '#c99a52', null);
+  // lantern cushions
+  for (const [x, col] of [[-10, '#f2c14e'], [10, '#f36d86']]) { ell(c, x, -18, 6, 5, col, INK, 0.8); line(c, x - 5, -18, x + 5, -18, 'rgba(0,0,0,.25)', 0.6); box(c, x - 2, -24, 4, 1.6, 0.5, '#c99a52', null); }
+};
+FURN_DRAW.lantern_tree = (c, t, p) => {
+  shadow(c, 0, 1, 10, 3, 0.18); box(c, -7, -8, 14, 8, 2, '#b8643f', INK, 0.9);
+  limb(c, [0, -8, -1, -26, 1, -40], 2, '#6b4a36'); limb(c, [0, -24, -10, -32], 1.2, '#6b4a36'); limb(c, [0, -30, 10, -38], 1.2, '#6b4a36'); limb(c, [0, -36, -7, -44], 1, '#6b4a36');
+  const L = [[-10, -32, '#f36d86'], [10, -38, '#f2c14e'], [-7, -44, '#ff8f5a'], [2, -46, '#f36d86'], [-3, -22, '#f2c14e']];
+  L.forEach(([x, y, col], i) => { const sw = Math.sin(t * 1.5 + i) * 0.8; line(c, x, y, x + sw, y + 3, INK, 0.4); ell(c, x + sw, y + 6, 2.6, 3.2, col, INK, 0.5); circ(c, x + sw, y + 6, 1, '#fff6c8', null); });
+  if (!p.preview) g(p, 0, -36, 34, 'rgba(255,190,120,.45)');
+};
+FURN_DRAW.koi_lamp = (c, t, p) => {
+  shadow(c, 0, 1, 7, 2, 0.16); box(c, -6, -4, 12, 4, 1.5, '#3a3a3a', INK, 0.8);
+  const k = Math.sin(t * 1.2) * 0.12; c.save(); c.translate(0, -14); c.rotate(k);
+  c.beginPath(); c.moveTo(-9, 0); c.quadraticCurveTo(-2, -8, 7, -2); c.quadraticCurveTo(9, 0, 7, 2); c.quadraticCurveTo(-2, 8, -9, 0); c.closePath();
+  c.fillStyle = '#fff1e0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+  poly(c, [-9, 0, -14, -5, -13, 0, -14, 5], '#f36d4f', INK, 0.6);
+  for (const [x, y, r] of [[-3, -2, 2.4], [2, 2, 1.8], [4, -2, 1.4]]) circ(c, x, y, r, '#f36d4f', null);
+  circ(c, 5, -0.5, 0.8, INK, null); c.restore();
+  line(c, 0, -4, 0, -9, '#3a3a3a', 1);
+  if (!p.preview) g(p, 0, -14, 22, 'rgba(255,170,120,.45)');
+};

@@ -20,8 +20,8 @@ const REGIONS = {
 const regionOpen = r => !!G.state.story.flags[REGIONS[r].flag];
 const landRegion = l => l.id || (l.cx > 2000 ? 'islet' : null);
 
-const ICON = { shed1: 'tea', shed2: 'banh_mi_thit', truck: 'goi_cuon', restaurant: 'pho_bo', house: 'heart', meo: 'notebook', supermarket: 'bag', materials: 'wood', furniture: 'sofa', boutique: 'shirt', salon: 'scissors', dinh: 'lantern', petshop: 'paw', cafe: 'coffee', grill: 'squid' };
-const LABEL = { shed1: ['Your Drink Stand', 'Quán Nước'], shed2: ['Bánh Mì', 'Bánh Mì'], truck: ['Truck', 'Xe Cuốn'], restaurant: ['Restaurant', 'Nhà Hàng'], house: ['Home', 'Nhà bạn'], meo: ['Mèo Mây', 'Mèo Mây'], supermarket: ['Market', 'Siêu thị'], materials: ['Materials', 'Vật liệu'], furniture: ['Furniture', 'Nội thất'], boutique: ['Boutique', 'Tiệm áo'], salon: ['Salon', 'Tiệm tóc'], dinh: ['Village Hall', 'Đình làng'], petshop: ['Pet Shop', 'Thú cưng'], cafe: ['Café', 'Cà phê'], grill: ['Grill', 'Quán nướng'], h_mai: ['Clinic', 'Phòng khám'] };
+const ICON = { shed1: 'tea', shed2: 'banh_mi_thit', truck: 'goi_cuon', restaurant: 'pho_bo', house: 'heart', meo: 'notebook', supermarket: 'bag', materials: 'wood', furniture: 'sofa', boutique: 'shirt', salon: 'scissors', dinh: 'lantern', petshop: 'paw', cafe: 'coffee', grill: 'squid', smoothie: 'drink:sinh_to_xoai' };
+const LABEL = { shed1: ['Your Drink Stand', 'Quán Nước'], shed2: ['Bánh Mì', 'Bánh Mì'], truck: ['Truck', 'Xe Cuốn'], restaurant: ['Restaurant', 'Nhà Hàng'], house: ['Home', 'Nhà bạn'], meo: ['Mèo Mây', 'Mèo Mây'], supermarket: ['Market', 'Siêu thị'], materials: ['Materials', 'Vật liệu'], furniture: ['Furniture', 'Nội thất'], boutique: ['Boutique', 'Tiệm áo'], salon: ['Salon', 'Tiệm tóc'], dinh: ['Village Hall', 'Đình làng'], petshop: ['Pet Shop', 'Thú cưng'], cafe: ['Café', 'Cà phê'], grill: ['Grill', 'Quán nướng'], smoothie: ['Smoothie Bar', 'Sinh tố'], h_mai: ['Clinic', 'Phòng khám'] };
 const MAP_ICONS = {};
 function icon(k) { if (!MAP_ICONS[k]) { const img = new Image(); img.src = iconURL(k, 64); MAP_ICONS[k] = img; } return MAP_ICONS[k]; }
 

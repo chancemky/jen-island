@@ -3,9 +3,20 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.16.0';
+export const APP_VERSION = '5.17.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.17.0', date: '2026-10-08T11:50:20Z',
+    title: ['Quieter shops, a real Smoothie Bar', 'Bớt thông báo, Quán Sinh Tố hoàn chỉnh'],
+    items: [
+      ['Far fewer pop-ups: staff sales no longer pop up for every order — just one short note now and then, and repeated news shows at most once a minute', 'Ít thông báo hơn hẳn: không còn báo mỗi phần nhân viên bán — chỉ thỉnh thoảng một dòng ngắn, tin lặp lại tối đa mỗi phút một lần'],
+      ['The Beach Smoothie Bar now has a thatched roof, shows on the map, has its own sign name and a beach-midday rush', 'Quán Sinh Tố Bãi Biển có mái lá, hiện trên bản đồ, có tên biển hiệu riêng và giờ cao điểm trưa bãi biển'],
+      ['8 new quests, outfits for Mèo Mây and boat trips to Turtle Cove from the end of the pier', '8 nhiệm vụ mới, trang phục cho Mèo Mây và chuyến thuyền tới Vịnh Rùa từ cuối cầu tàu'],
+      ['New badges, Season 2 (Tết) clothes and a Lantern Lounge bundle — looks only, never a bonus', 'Huy hiệu mới, trang phục Mùa 2 (Tết) và gói Phòng Lồng Đèn — chỉ để trang trí, không có lợi thế'],
+      ['The seasons now tint the island: warm gold in the dry months, cool green in the rains', 'Mùa thay đổi màu đảo: vàng ấm mùa khô, xanh mát mùa mưa'],
+    ],
+  },
   {
     v: '5.16.0', date: '2026-10-08T11:07:27Z',
     title: ['Friends & Festivities', 'Bạn Bè & Lễ Hội'],

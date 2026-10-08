@@ -9,7 +9,8 @@ import { TAU } from '../core/util.js';
 import { INK, ell, circ, shadow, limb } from './draw.js';
 import { viewOf } from './character.js';
 
-const FUR = '#fffaf1', FUR_S = '#efe1cf', PATCH = '#a9bcdc', PATCH_S = '#8ea3c8', PINK = '#f7a6b4', SCARF = '#f08a78', SCARF2 = '#ffd27a';
+const FUR = '#fffaf1', FUR_S = '#efe1cf', PATCH = '#a9bcdc', PATCH_S = '#8ea3c8', PINK = '#f7a6b4';
+let SCARF = '#f08a78', SCARF2 = '#ffd27a';     // (Mèo Mây's outfit can change these: data/meo.js)
 const HY = -21.5, HR = 12.6, HRY = 10.4;
 
 function cloud(c, x, y, s, col) {
@@ -149,6 +150,7 @@ function drawCatSleeping(c, a, t) {
 }
 
 export function drawCat(c, a, t) {
+  SCARF = a.look?.scarf || '#f08a78'; SCARF2 = a.look?.scarf2 || '#ffd27a';
   if (a.act === 'sleep') return drawCatSleeping(c, a, t);
   const view = viewOf(a.dir || 'down');
   const flip = a.dir === 'left' ? -1 : 1;
@@ -236,6 +238,7 @@ export function drawCat(c, a, t) {
     c.beginPath(); c.moveTo(0, -3.4); c.quadraticCurveTo(3.6, -6.2, 5.4, -3.8); c.quadraticCurveTo(2.6, -1.8, 0, -3.4); c.fillStyle = '#8fd070'; c.fill(); c.stroke();
     c.restore();
   }
+  if (a.look?.hat) catHat(c, a.look, view, t);
   c.restore();
   if (view === 'back') tail(c, a, t, view);        // nearest the camera when facing away
   paw(pR, false);
@@ -254,4 +257,17 @@ function anticTransform(c, a) {
     case 'stretch': { const k = Math.sin(Math.min(1, at / 2) * Math.PI); c.scale(1 + k * 0.18, 1 - k * 0.12); break; }
     case 'loaf': c.scale(1.12, 0.84); c.translate(0, 2); break;
   }
+}
+
+// Mèo Mây's hats (data/meo.js), sitting between the ears
+function catHat(c, L, view, t) {
+  const y = HY - HRY + 1, col = L.hatColor || '#f36d86';
+  c.save(); c.lineJoin = 'round';
+  if (L.hat === 'bow') { for (const s of [-1, 1]) { c.beginPath(); c.moveTo(0, y); c.quadraticCurveTo(s * 5, y - 4, s * 5.5, y + 0.6); c.quadraticCurveTo(s * 3.6, y + 3, 0, y); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); } c.beginPath(); c.arc(0, y, 1.5, 0, TAU); c.fillStyle = col; c.fill(); c.stroke(); }
+  if (L.hat === 'crown') { c.beginPath(); c.moveTo(-5, y); c.lineTo(-5.5, y - 5); c.lineTo(-2.5, y - 2.4); c.lineTo(0, y - 6); c.lineTo(2.5, y - 2.4); c.lineTo(5.5, y - 5); c.lineTo(5, y); c.closePath(); c.fillStyle = '#ffd35a'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); c.fillStyle = '#f36d86'; c.beginPath(); c.arc(0, y - 1.6, 0.9, 0, TAU); c.fill(); }
+  if (L.hat === 'sailor') { c.beginPath(); c.ellipse(0, y, 6.4, 1.8, 0, 0, TAU); c.fillStyle = '#fffdf8'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); c.beginPath(); c.moveTo(-4.4, y); c.quadraticCurveTo(-4.4, y - 5, 0, y - 5.2); c.quadraticCurveTo(4.4, y - 5, 4.4, y); c.closePath(); c.fillStyle = '#fffdf8'; c.fill(); c.stroke(); c.fillStyle = '#3f6fb5'; c.fillRect(-4.3, y - 1.6, 8.6, 1.3); }
+  if (L.hat === 'party') { c.beginPath(); c.moveTo(-3.6, y); c.lineTo(0.8, y - 9); c.lineTo(3.6, y); c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); c.fillStyle = '#ffd35a'; c.beginPath(); c.arc(0.8, y - 9.4, 1.4, 0, TAU); c.fill(); }
+  if (L.hat === 'flowers') for (let i = 0; i < 5; i++) { const x = -5 + i * 2.5, yy = y + Math.abs(i - 2) * 0.6; c.fillStyle = ['#ff8fb0', '#fff', '#ffd35a', '#c9a8ff', '#ff8fb0'][i]; c.beginPath(); c.arc(x, yy, 1.4, 0, TAU); c.fill(); c.strokeStyle = INK; c.lineWidth = 0.4; c.stroke(); }
+  if (L.hat === 'glasses' && view !== 'back') { const yy = HY + 1; c.strokeStyle = INK; c.lineWidth = 0.8; c.fillStyle = 'rgba(40,40,60,.75)'; for (const s of [-1, 1]) { c.beginPath(); c.arc(s * 4, yy, 2.6, 0, TAU); c.fill(); c.stroke(); } c.beginPath(); c.moveTo(-1.4, yy); c.lineTo(1.4, yy); c.stroke(); }
+  c.restore();
 }

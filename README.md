@@ -76,7 +76,7 @@ Live products and Payment Links exist (`STORE.checkout` in `js/systems/store.js`
 
 **In the store apps** purchases go through Apple / Google via RevenueCat (`js/systems/iap.js`); the Stripe store is never shown there. To switch it on:
 
-1. App Store Connect and Google Play Console: create two non-consumable products, `bistro_supporter` ($4.99) and `bistro_pass_s1` ($2.99).
+1. App Store Connect and Google Play Console: create four non-consumable products: `bistro_supporter` ($4.99), `bistro_pass_s1` ($2.99), `bistro_pass_s2` ($2.99) and `bistro_lounge` ($6.99).
 2. RevenueCat: add both apps and products; copy the public SDK keys into `IAP.keys` in `js/systems/iap.js`.
 3. RevenueCat → Integrations → Webhooks: URL `https://cgbaigeergwvbmghrakb.supabase.co/functions/v1/jen-island-revenuecat-webhook`, Authorization header = a long random string of your choice. In the Supabase SQL editor: `select vault.create_secret('<that string>', 'jen_island_revenuecat_webhook');`
 4. `npm run app`, then build.

@@ -26,7 +26,7 @@ export const fishingOpen = () => !!G.state.story.flags.fishing;
 export function fishingAction(pl) {
   if (G.scene !== G.scenes.island || !fishingOpen()) return null;
   const E = PIER_END;
-  if (pl.x < E.x - 10 || pl.x > E.x + E.w + 10 || pl.y < E.y - 30 || pl.y > E.y + E.h + 6) return null;
+  if (pl.x < E.x - 10 || pl.x > E.x + E.w - 36 || pl.y < E.y - 30 || pl.y > E.y + E.h + 6) return null;   // (the far right end is Chú Hải's boat: trip.js)
   const s = G.state, used = s.story.flags.fishDay === s.day ? s.story.flags.fishN || 0 : 0;
   if (used >= rod().casts) return { label: T('Fish are resting', 'Cá đang nghỉ'), icon: 'fish', run: () => toast({ text: T('The fish have gone quiet for today', 'Hôm nay cá im re rồi'), sub: T('Come back tomorrow — dawn is best.', 'Mai quay lại nha — sáng sớm là tốt nhất.'), icon: 'fish' }) };
   return { label: T(`Fish (${rod().casts - used} casts left)`, `Câu cá (còn ${rod().casts - used} lần)`), icon: 'fish', run: () => cast() };

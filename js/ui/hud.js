@@ -215,10 +215,14 @@ bizBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagat
 // two are on screen (a short gap between them so each can be read).
 const tq = []; let tTimer = null, lastShown = { text: '', at: 0 };
 const blocking = () => !!document.querySelector('.reward:not(.out), .levelup:not(.out), .summary, .modal, .wn-wrap:not(.out)');
+const seen = new Map();
 export function toast(o) {
+  const urgent = o.cls === 'ach' || o.bad || o.now;            // (now: the answer to something you just tapped)
   if (lastShown.text === o.text && Date.now() - lastShown.at < 2500) return;
   if (tq.some(q => q.text === o.text && q.sub === o.sub)) return;
-  const urgent = o.cls === 'ach' || o.bad || o.now;            // (now: the answer to something you just tapped)
+  // ambient news is rationed: the same line at most once a minute, and no backlog of it
+  if (!urgent) { const now = Date.now(); if (now - (seen.get(o.text) || 0) < 60000) return; seen.set(o.text, now); if (seen.size > 80) seen.clear();
+    if (tq.filter(q => !(q.cls === 'ach' || q.bad || q.now)).length >= 3) return; }
   if (urgent) tq.unshift(o); else tq.push(o);
   while (tq.length > 8) { const i = tq.findIndex(q => q.cls !== 'ach' && !q.bad); tq.splice(i < 0 ? 0 : i, 1); }
   if (urgent && !blocking()) { clearTimeout(tTimer); tTimer = null; }       // urgent ones don't wait for the gap

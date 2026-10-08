@@ -1,7 +1,10 @@
 // Cô Bông's pet shop: adopt a pet (it follows you, or lives at home with its own
 // bed), buy pet food, and choose which pet comes on walks.
 
-import { G, T, canAfford } from '../systems/state.js';
+import { G, T, canAfford, addMoney, markDirty } from '../systems/state.js';
+import { MEO_STYLES } from '../data/meo.js';
+import { drawCat } from '../gfx/cat.js';
+import { applyMeoStyle } from '../systems/meostyle.js';
 import { MERCHANTS } from '../data/looks.js';
 import { openSheet, tabs, h, btn, showReward } from './sheets.js';
 import { askText } from './naming.js';
@@ -15,8 +18,25 @@ import { ANIMAL_DRAW } from '../systems/animals.js';
 export function openPetShop() {
   const who = MERCHANTS.co_bong;
   openSheet({ title: T('Cô Bông\'s Pet Shop', 'Tiệm Thú Cưng Bé Bông'), sub: T('Adopt a friend for life', 'Nhận nuôi một người bạn trọn đời'), who, full: true, build: (body, api) => {
-    tabs(body, [T('Adopt', 'Nhận nuôi'), T('My pets', 'Thú cưng của tôi'), T('Food', 'Thức ăn')], (i, pane) => {
+    tabs(body, [T('Adopt', 'Nhận nuôi'), T('My pets', 'Thú cưng của tôi'), T('Food', 'Thức ăn'), T('Mèo Mây', 'Mèo Mây')], (i, pane) => {
       const list = h('div', 'list'); pane.appendChild(list);
+      if (i === 3) {                                       // Mèo Mây's wardrobe
+        const s = G.state, owned = (s.meoStyles ||= ['classic']);
+        list.appendChild(h('div', 'empty-note', T('Cô Bông sews outfits for the island\'s most famous cat.', 'Cô Bông may đồ cho chú mèo nổi tiếng nhất đảo.')));
+        for (const [id, st] of Object.entries(MEO_STYLES)) {
+          const r = h('div', 'row cl-row'), cv = document.createElement('canvas'); cv.width = cv.height = 96;
+          const ico = h('div', 'ico cl-ico'); ico.appendChild(cv); r.appendChild(ico);
+          const c = cv.getContext('2d'); c.lineJoin = c.lineCap = 'round'; c.translate(48, 90); c.scale(2.3, 2.3); drawCat(c, { dir: 'down', look: { cat: true, ...st.look }, emo: 'happy' }, 1);
+          r.appendChild(h('div', 'info', `<b>${escapeHtml(T(st.en, st.vi))}</b>${s.meoStyle === id || (!s.meoStyle && id === 'classic') ? `<span class="have">${T('Wearing', 'Đang mặc')}</span>` : ''}`));
+          const has = owned.includes(id);
+          r.appendChild(btn(has ? T('Wear', 'Mặc') : money(st.price), () => {
+            if (!has) { if (!canAfford(st.price)) return toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); addMoney(-st.price, 'petfood'); owned.push(id); }
+            s.meoStyle = id; applyMeoStyle(); markDirty(true); sfx('mew'); api.rebuild();
+          }, has ? 'buy alt' : 'buy'));
+          list.appendChild(r);
+        }
+        return;
+      }
       if (i === 0) {
         for (const [id, def] of Object.entries(PETS)) {
           const r = h('div', 'row cl-row');

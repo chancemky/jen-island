@@ -921,3 +921,19 @@ body.hc :is(.chip, .tag, .pill, .opt-tag) { border-width: 3px; }
 .kk-pads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .kk-pads button { height: 56px; border-radius: 16px; border: 3px solid var(--ink); font-size: 24px; font-weight: 900; color: #fff; }
 .kk-pads button[data-l="0"] { background: #f36d86; } .kk-pads button[data-l="1"] { background: #6fbfb0; } .kk-pads button[data-l="2"] { background: #f2c14e; }
 .kk-pads button:active { transform: scale(.94); } .kk-score { margin-top: 8px; font-weight: 800; opacity: .75; }
+/* Turtle Cove */
+.trip { position: absolute; inset: 0; z-index: 85; overflow: hidden; }
+.tr-sky { position: absolute; inset: 0 0 60% 0; background: linear-gradient(#9fe0f2, #d9f4f7); }
+.tr-sea { position: absolute; left: 0; right: 0; top: 40%; height: 14%; background: linear-gradient(#4fb8cf, #7fd6e8); }
+.tr-wave { position: absolute; left: -10%; right: -10%; top: 50%; height: 7%; background: rgba(255,255,255,.7); border-radius: 50%; animation: trWave 3s ease-in-out infinite; }
+.tr-sand { position: absolute; left: 0; right: 0; top: 53%; bottom: 0; background: radial-gradient(circle at 30% 40%, rgba(255,255,255,.25) 1px, transparent 2px) 0 0/14px 14px, #f2dca8; }
+@keyframes trWave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(14px); } }
+.tr-hud { position: absolute; top: calc(14px + env(safe-area-inset-top)); left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 900; color: #3a2f2a; }
+.tr-hud b { background: #fffaf0; border: 3px solid var(--ink); border-radius: 999px; padding: 4px 12px; } .tr-time { background: #ffd35a; border: 3px solid var(--ink); border-radius: 999px; padding: 2px 12px; font-size: 18px; }
+.tr-it { position: absolute; font-size: 34px; background: none; border: 0; transform: translate(-50%, -50%); animation: trIn .35s cubic-bezier(.3,1.6,.5,1); filter: drop-shadow(0 3px 0 rgba(91,63,54,.25)); }
+.tr-it.got { animation: trGot .35s ease-out forwards; } .tr-it.wash { animation: trWash .5s ease-in forwards; }
+@keyframes trIn { from { transform: translate(-50%, -20%) scale(.3); opacity: 0; } }
+@keyframes trGot { to { transform: translate(-50%, -160%) scale(1.4); opacity: 0; } }
+@keyframes trWash { to { transform: translate(-50%, -120%); opacity: 0; } }
+.tr-bag { position: absolute; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); background: rgba(255,250,240,.92); border: 3px solid var(--ink); border-radius: 18px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 10px; font-size: 20px; font-weight: 900; min-height: 30px; }
+.tr-bag small { font-size: 13px; opacity: .7; }

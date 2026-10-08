@@ -7,6 +7,7 @@ import { sfx } from '../core/audio.js';
 import { escapeHtml } from '../core/util.js';
 import { toast } from './hud.js';
 import { itemRow } from './clothes.js';
+import { FURNITURE } from '../data/game.js';
 import { STORE, PRODUCTS, SEASON, buy, ownsProduct, seasonState, storeVisible } from '../systems/store.js';
 import { iapPrice, iapRestore } from '../systems/iap.js';
 import { syncPurchases } from '../systems/store.js';
@@ -33,6 +34,14 @@ export function renderStore(pane) {
   const list = h('div', 'list'); pane.appendChild(list);
   for (const id of P.clothes) list.appendChild(itemRow(id, null));
   const b = buyButton('supporter'); b.style.marginTop = '8px'; pane.appendChild(b);
+  // the Lantern Lounge: furniture and a robe, looks only
+  const L = PRODUCTS.lounge;
+  pane.appendChild(h('div', 'section-title', escapeHtml(T(L.en, L.vi))));
+  pane.appendChild(note(...L.blurb));
+  const ll = h('div', 'list'); pane.appendChild(ll);
+  for (const id of L.clothes) ll.appendChild(itemRow(id, null));
+  for (const id of L.furniture) { const f = FURNITURE[id]; if (f) ll.appendChild(h('div', 'pill', '🛋️ ' + escapeHtml(T(f.en, f.vi)))); }
+  const lb = buyButton('lounge'); lb.style.marginTop = '8px'; pane.appendChild(lb);
   renderSeason(pane);
 }
 

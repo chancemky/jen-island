@@ -38,8 +38,11 @@ export function updateWeather(dt) {
 }
 // streaks of rain and splashes, over the island
 export function drawRain(c, t) {
-  const a = G.runtime.rainA || 0; if (a < 0.02 || G.scene !== G.scenes.island) return;
-  const v = cam.view;
+  if (G.scene !== G.scenes.island) return;
+  const a = G.runtime.rainA || 0, v = cam.view;
+  // the season colours the whole island a little: warm gold in the dry months, cool and lush in the rains
+  c.fillStyle = seasonOf() === 'rainy' ? 'rgba(60,140,130,.05)' : 'rgba(255,200,110,.04)'; c.fillRect(v.x, v.y, v.w, v.h);
+  if (a < 0.02) return;
   c.save(); c.fillStyle = `rgba(70,90,120,${0.2 * a})`; c.fillRect(v.x, v.y, v.w, v.h);
   c.strokeStyle = `rgba(230,240,255,${0.45 * a})`; c.lineWidth = 0.8; c.beginPath();
   const n = Math.round(160 * a);
