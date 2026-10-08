@@ -26,15 +26,15 @@ const hasBuiltins = sc => sc.id === 'house';
 
 // Built-in pieces of your home. They can be moved and turned but never stored.
 export const BUILTINS = {
-  bed: { kind: 'bed', en: 'Bed', vi: 'Giường', x: 48, y: 118, w: 60, h: 50, opts: () => ({ col: '#f4a9b8', sleeper: () => G.runtime.sleeper, drawSleeper: (c, a, t) => drawHuman(c, a, t) }),
+  bed: { kind: 'bed', en: 'Bed', vi: 'Giường', x: 39, y: 112, w: 60, h: 50, opts: () => ({ col: '#f4a9b8', sleeper: () => G.runtime.sleeper, drawSleeper: (c, a, t) => drawHuman(c, a, t) }),
          trig: { id: 'bed', dx: -34, dy: -2, w: 72, h: 20, label: 'Ngủ', en: 'Sleep', icon: 'zzz', action: 'sleep' } },
-  wardrobe: { kind: 'wardrobeBig', en: 'Wardrobe', vi: 'Tủ quần áo', x: 104, y: 72, w: 48, h: 10, opts: () => ({ col: '#e3b77f' }),
+  wardrobe: { kind: 'wardrobeBig', en: 'Wardrobe', vi: 'Tủ quần áo', x: 127, y: 80, w: 48, h: 10, opts: () => ({ col: '#e3b77f' }),
          trig: { id: 'wardrobe', dx: -26, dy: 0, w: 52, h: 22, label: 'Thay đồ', en: 'Wardrobe', icon: 'shirt', action: 'wardrobe' } },
-  kitchen: { kind: 'kitchen', en: 'Kitchen', vi: 'Bếp', x: 226, y: 98, w: 70, h: 32, opts: () => ({}),
+  kitchen: { kind: 'kitchen', en: 'Kitchen', vi: 'Bếp', x: 231, y: 96, w: 70, h: 32, opts: () => ({}),
          trig: { id: 'kitchen', dx: -36, dy: 0, w: 70, h: 18, label: 'Bếp', en: 'Kitchen', icon: 'tea', action: 'homeSnack' } },
-  lamp: { kind: 'floorLamp', en: 'Floor lamp', vi: 'Đèn đứng', x: 22, y: 150, w: 10, h: 4, round: true, opts: () => ({}) },
-  plant: { kind: 'plant', en: 'Potted plant', vi: 'Chậu cây', x: 24, y: 284, w: 14, h: 8, round: true, opts: () => ({ s: 1 }) },
-  mat: { kind: 'rug', en: 'Mat', vi: 'Thảm', x: 150, y: 214, w: 96, h: 40, floor: true, opts: () => ({ w: 96, h: 40, col: '#f7d6a0' }) },   // last: it lies under everything
+  lamp: { kind: 'floorLamp', en: 'Floor lamp', vi: 'Đèn đứng', x: 15, y: 144, w: 10, h: 4, round: true, opts: () => ({}) },
+  plant: { kind: 'plant', en: 'Potted plant', vi: 'Chậu cây', x: 15, y: 288, w: 14, h: 8, round: true, opts: () => ({ s: 1 }) },
+  mat: { kind: 'rug', en: 'Mat', vi: 'Thảm', x: 135, y: 208, w: 96, h: 40, floor: true, opts: () => ({ w: 96, h: 40, col: '#f7d6a0' }) },   // last: it lies under everything
 };
 function builtinState() {
   const h = G.state.home;
@@ -54,7 +54,27 @@ export function drawTurned(c, t, key, rot, front) {
 }
 // pieces whose back is just their front (screens on a stand look odd as a plain box): mirror instead
 const NO_BACK = new Set([]);
-export function footprint(w, h, rot, key) { return rot % 2 && SIDE[key] ? { w: h, h: w } : { w, h }; }
+// The floor is a grid of square tiles (like a cosy-life game's): every piece covers whole tiles —
+// 1×1, 2×1, 3×2… — so pieces line up, sit flush side by side and never overlap. Turning a piece
+// that has a real side view swaps its width and depth.
+export const TILE = 16;
+export function footprint(w, h, rot, key) {
+  const tw = Math.max(1, Math.round(w / TILE)) * TILE, th = Math.max(1, Math.round(h / TILE)) * TILE;
+  return rot % 2 && SIDE[key] ? { w: th, h: tw } : { w: tw, h: th };
+}
+export function floorGrid(sc = house()) {
+  const cols = Math.floor((sc.w - 8) / TILE), ox = Math.round((sc.w - cols * TILE) / 2), oy = sc.WH, rows = Math.floor((sc.h - 6 - oy) / TILE);
+  return { cols, rows, ox, oy };
+}
+// the nearest grid position for a piece whose base (front, centre) is near x, y
+export function snapTo(sel, x, y, rot = 0) {
+  const def = defOf(sel), sc = house();
+  if (def.wall) return { x: Math.round(x / 8) * 8, y: sc.WH };
+  const g = floorGrid(sc), fp = footprint(def.w, def.h, rot, keyOf(sel));
+  const left = clamp(g.ox + Math.round((x - fp.w / 2 - g.ox) / TILE) * TILE, g.ox, g.ox + g.cols * TILE - fp.w);
+  const bottom = clamp(g.oy + Math.round((y - g.oy) / TILE) * TILE, g.oy + fp.h, g.oy + g.rows * TILE);
+  return { x: left + fp.w / 2, y: bottom };
+}
 const defOf = sel => sel?.startsWith('builtin:') ? BUILTINS[sel.slice(8)] : FURNITURE[sel];
 const keyOf = sel => sel.startsWith('builtin:') ? BUILTINS[sel.slice(8)].kind : sel;
 const drawSel = (c, t, sel, x, y, rot) => drawTurned(c, t, keyOf(sel), rot, () => {
@@ -134,16 +154,15 @@ function fits(sel, x, y, rot = 0, self = null, pad = 0) {
     }
     return true;
   }
-  const fp = footprint(def.w, def.h, rot, keyOf(sel));
-  // anywhere on the floor, right up against the walls
-  if (x - fp.w / 2 < 4 || x + fp.w / 2 > sc.w - 4 || y > sc.h - 6) return false;
-  if (y - fp.h < sc.WH - 4) return false;
+  const fp = footprint(def.w, def.h, rot, keyOf(sel)), g = floorGrid(sc), E = 0.5;
+  // anywhere on the floor grid, right up against the walls
+  if (x - fp.w / 2 < g.ox - E || x + fp.w / 2 > g.ox + g.cols * TILE + E || y > g.oy + g.rows * TILE + E || y - fp.h < g.oy - E) return false;
   if (def.floor) return true;                              // rugs and mats lie under anything
   // don't block the doorway
   if (!sc.noDoor && Math.abs(x - sc.door.x) < fp.w / 2 + 18 && y > sc.h - 30) return false;
   for (const s of sc.solids) {
     if (s.off || (self && (self.f ? s.homeFurn === self.f : s.builtin === self.key))) continue;
-    if (x - fp.w / 2 - pad < s.x + s.w && x + fp.w / 2 + pad > s.x && y - fp.h - pad * 2.4 < s.y + s.h && y + pad > s.y) return false;
+    if (x - fp.w / 2 - pad < s.x + s.w - E && x + fp.w / 2 + pad > s.x + E && y - fp.h - pad < s.y + s.h - E && y + pad > s.y + E) return false;   // (sharing an edge is fine)
   }
   return true;
 }
@@ -158,13 +177,18 @@ export function clearStairs() {
     try {
       rebuildHouseFurniture(null, sc);
       if (hasBuiltins(sc)) for (const [k, b] of Object.entries(BUILTINS)) {
-        const p = builtinState()[k]; if (fits('builtin:' + k, p.x, p.y, p.rot || 0, { key: k })) continue;
+        const p = builtinState()[k], sn = snapTo('builtin:' + k, p.x, p.y, p.rot || 0);
+        if (sn.x !== p.x || sn.y !== p.y) { const was = { x: p.x, y: p.y }; Object.assign(p, sn); rebuildHouseFurniture(null, sc); if (!fits('builtin:' + k, p.x, p.y, p.rot || 0, { key: k })) Object.assign(p, was); else moved++; rebuildHouseFurniture(null, sc); }
+        if (fits('builtin:' + k, p.x, p.y, p.rot || 0, { key: k })) continue;
         const was = { ...p }; p.x = -999; rebuildHouseFurniture(null, sc);
         const spot = freeSpot('builtin:' + k); Object.assign(p, spot ? { x: spot.x, y: spot.y, rot: 0 } : was); rebuildHouseFurniture(null, sc); moved++; void b;
       }
       const list = furnList(sc);
       for (const f of [...list]) {
-        if (!FURNITURE[f.id] || fits(f.id, f.x, f.y, f.rot || 0, { f })) continue;
+        if (!FURNITURE[f.id]) continue;
+        const sn = snapTo(f.id, f.x, f.y, f.rot || 0);          // (older layouts: onto the grid)
+        if (sn.x !== f.x || sn.y !== f.y) { const was = { x: f.x, y: f.y }; f.x = sn.x; f.y = sn.y; rebuildHouseFurniture(null, sc); if (!fits(f.id, f.x, f.y, f.rot || 0, { f })) { f.x = was.x; f.y = was.y; } else moved++; rebuildHouseFurniture(null, sc); }
+        if (fits(f.id, f.x, f.y, f.rot || 0, { f })) continue;
         list.splice(list.indexOf(f), 1); rebuildHouseFurniture(null, sc);
         const spot = freeSpot(f.id); if (spot) { f.x = spot.x; f.y = spot.y; f.rot = 0; list.push(f); } else G.state.home.owned.push(f.id);
         rebuildHouseFurniture(null, sc); moved++;
@@ -186,25 +210,33 @@ function pieces() {
 // what's under a tap: things standing on the floor first (front-most first), then wall
 // pieces, and rugs last (so you can always grab the table that stands on the rug)
 function pieceAt(wx, wy) {
-  const hits = [];
+  // What's under your finger. Each piece has two areas: its tiles on the floor, and the space its
+  // drawing takes up above them. A tap on a piece's own tiles wins outright; otherwise the piece
+  // whose drawing you touched, nearest first (wall pieces before floor pieces behind them, rugs last).
+  let best = null;
   for (const [order, pc] of pieces().entries()) {
     const def = defOf(selOf(pc)), st = posOf(pc), fp = footprint(def.w, def.h, st.rot || 0, keyOf(selOf(pc)));
-    const hw = Math.max(fp.w / 2, 13) + 5, top = def.wall ? st.y - 66 : def.floor ? st.y - fp.h - 4 : st.y - Math.max(fp.h, pc.key ? 44 : 30) - 16;
-    // (rugs: your own lie on top of the built-in mat, and newer ones on top of older ones)
-    if (wx > st.x - hw && wx < st.x + hw && wy > top && wy < st.y + 8) hits.push({ pc, rank: def.floor ? (pc.f ? 0.5 : 0) : def.wall ? 1 : 2, y: def.floor ? order : st.y });
+    const hw = Math.max(fp.w / 2, 12) + 3, top = def.wall ? st.y - 62 + (def.wall ? wallDrop(selOf(pc), house().WH) : 0) : def.floor ? st.y - fp.h - 2 : st.y - Math.max(fp.h, pc.key ? 44 : 30) - 12;
+    const bottom = def.wall ? top + 32 : st.y + 4;
+    if (wx < st.x - hw || wx > st.x + hw || wy < top || wy > bottom) continue;
+    const onTiles = !def.wall && wx >= st.x - fp.w / 2 && wx <= st.x + fp.w / 2 && wy >= st.y - fp.h && wy <= st.y;
+    const rank = def.floor ? (pc.f ? 1 : 0) + order * 0.001 : onTiles ? 4 : def.wall ? 3 : 2;
+    const d = Math.hypot(wx - st.x, (wy - (st.y - Math.min(fp.h, 20))) * 0.7);
+    if (!best || rank > best.rank || (rank === best.rank && d < best.d)) best = { pc, rank, d };
   }
-  hits.sort((a, b) => b.rank - a.rank || b.y - a.y);
-  return hits[0]?.pc || null;
+  return best?.pc || null;
 }
 // a free place for something new, as close to the middle of the floor as possible
-function freeSpot(sel, pad = 12) {   // (new pieces keep a little room around them, so they're easy to see and grab)
+function freeSpot(sel, pad = TILE) {   // (new pieces keep a tile of room around them where they can, so they're easy to see and grab)
   const sc = house(), def = defOf(sel);
-  if (def.wall) { for (let r = 0; r < sc.w / 2; r += 8) for (const sx of [1, -1]) { const x = sc.w / 2 + sx * r; if (fits(sel, x, sc.WH)) return { x: Math.round(x / 4) * 4, y: sc.WH }; } return null; }
-  const cx = sc.w / 2, cy = (sc.WH + sc.h) / 2 + def.h / 2;
-  for (let r = 0; r < 260; r += 8) for (let k = 0; k < Math.max(1, Math.floor(r / 4)); k++) {
-    const a = k / Math.max(1, Math.floor(r / 4)) * Math.PI * 2, x = Math.round((cx + Math.cos(a) * r) / 4) * 4, y = Math.round((cy + Math.sin(a) * r * 0.7) / 4) * 4;
-    if (fits(sel, x, y, 0, null, pad)) return { x, y };
+  if (def.wall) { for (let r = 0; r < sc.w / 2; r += 8) for (const sx of [1, -1]) { const x = Math.round((sc.w / 2 + sx * r) / 8) * 8; if (fits(sel, x, sc.WH)) return { x, y: sc.WH }; } return null; }
+  const g = floorGrid(sc), fp = footprint(def.w, def.h, 0, keyOf(sel)), spots = [];
+  for (let gx = 0; gx * TILE + fp.w <= g.cols * TILE; gx++) for (let gy = fp.h / TILE; gy <= g.rows; gy++) {
+    const x = g.ox + gx * TILE + fp.w / 2, y = g.oy + gy * TILE;
+    spots.push({ x, y, d: Math.hypot(x - sc.w / 2, (y - (g.oy + g.rows * TILE * 0.6)) * 1.3) });
   }
+  spots.sort((a, b) => a.d - b.d);
+  for (const s of spots) if (fits(sel, s.x, s.y, 0, null, pad)) return { x: s.x, y: s.y };
   return pad ? freeSpot(sel, 0) : null;
 }
 
@@ -232,7 +264,15 @@ export function startDecorate() {
     e.preventDefault(); e.stopImmediatePropagation();
     const [wx, wy] = toWorld(e);
     const pc = pieceAt(wx, wy);
-    if (!pc) { if (D.sel) { D.sel = null; sfx('back'); renderBar(); } return; }
+    if (!pc) {
+      // a piece is selected and you tap somewhere empty: move it there (if it fits), like picking it up and putting it down
+      if (D.sel) {
+        const sel = selOf(D.sel), st = posOf(D.sel), def = defOf(sel), to = snapTo(sel, wx, def.wall ? house().WH : wy + footprint(def.w, def.h, st.rot || 0, keyOf(sel)).h / 2, st.rot || 0);
+        if ((to.x !== st.x || to.y !== st.y) && fits(sel, to.x, to.y, st.rot || 0, D.sel)) { const before = snap(); st.x = to.x; st.y = to.y; rebuildHouseFurniture(); changed(before); sfx('success'); fx.burst('spark', st.x, st.y - 14, 6, { up: 24, col: '#ffd35a' }); renderBar(); return; }
+        D.sel = null; sfx('back'); renderBar();
+      }
+      return;
+    }
     const st = posOf(pc);
     D.sel = pc;
     D.drag = { pc, id: e.pointerId, sx: e.clientX, sy: e.clientY, gx: wx - st.x, gy: wy - st.y, moved: false, from: { x: st.x, y: st.y, rot: st.rot || 0 }, before: snap() };
@@ -242,8 +282,10 @@ export function startDecorate() {
     const d = D?.drag; if (!d || e.pointerId !== d.id) return;
     if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 6) return;
     if (!d.moved) { d.moved = true; D.lifted = d.pc; rebuildHouseFurniture(); }    // lift it out of the room while it's carried
-    const [wx, wy] = toWorld(e), sel = selOf(d.pc), def = defOf(sel);
-    const x = Math.round((wx - d.gx) / 4) * 4, y = def.wall ? house().WH : Math.round((wy - d.gy) / 4) * 4;
+    const [wx, wy] = toWorld(e), sel = selOf(d.pc);
+    const { x, y } = snapTo(sel, wx - d.gx, wy - d.gy, d.from.rot);     // tile by tile
+    if (D.ghost && D.ghost.x === x && D.ghost.y === y) return;
+    if (D.ghost) sfx('tap');
     D.ghost = { x, y }; D.valid = fits(sel, x, y, d.from.rot, d.pc);
     renderHint();
   };
@@ -252,6 +294,16 @@ export function startDecorate() {
     D.drag = null;
     if (d.moved) {
       const st = posOf(d.pc);
+      // dropped where it doesn't quite fit: settle into the nearest free spot (up to two tiles away)
+      if (!D.valid && D.ghost) {
+        const sel = selOf(d.pc), def = defOf(sel), step = def.wall ? 8 : TILE; let near = null;
+        for (let r = 1; r <= 2 && !near; r++) for (let dx = -r; dx <= r && !near; dx++) for (let dy = -r; dy <= r && !near; dy++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || (def.wall && dy)) continue;
+          const x = D.ghost.x + dx * step, y = D.ghost.y + dy * step;
+          if (fits(sel, x, y, d.from.rot, d.pc)) near = { x, y };
+        }
+        if (near) { D.ghost = near; D.valid = true; }
+      }
       if (D.valid) { st.x = D.ghost.x; st.y = D.ghost.y; sfx('success'); fx.burst('spark', st.x, st.y - 14, 6, { up: 24, col: '#ffd35a' }); }
       else { sfx('error'); toast({ text: T('It doesn\'t fit there', 'Không vừa chỗ đó'), sub: T('Put back where it was.', 'Đã để lại chỗ cũ.'), icon: 'sofa', ms: 1400 }); }
       D.lifted = null; D.ghost = null; rebuildHouseFurniture(); changed(d.before);
@@ -326,12 +378,23 @@ function renderTools() {
   if (!D.sel) { t.classList.add('hidden'); return; }
   const sel = selOf(D.sel), def = defOf(sel);
   const turn = d => {
-    const st = posOf(D.sel), rot = ((st.rot || 0) + d + 4) % 4;
-    if (!fits(sel, st.x, st.y, rot, D.sel)) { sfx('error'); toast({ text: T('No room to turn it here', 'Không đủ chỗ để xoay'), icon: 'sofa', ms: 1400 }); return; }
-    const before = snap(); st.rot = rot; rebuildHouseFurniture(); changed(before); sfx('whoosh'); renderBar();
+    const st = posOf(D.sel), rot = ((st.rot || 0) + d + 4) % 4, to = snapTo(sel, st.x, st.y, rot);
+    if (!fits(sel, to.x, to.y, rot, D.sel)) { sfx('error'); toast({ text: T('No room to turn it here', 'Không đủ chỗ để xoay'), icon: 'sofa', ms: 1400, now: true }); return; }
+    const before = snap(); st.rot = rot; st.x = to.x; st.y = to.y; rebuildHouseFurniture(); changed(before); sfx('whoosh'); renderBar();
+  };
+  // nudge one tile at a time (wall pieces slide along the wall)
+  const nudge = (dx, dy) => {
+    const st = posOf(D.sel), step = def.wall ? 8 : TILE, x = st.x + dx * step, y = def.wall ? st.y : st.y + dy * step;
+    if (!fits(sel, x, y, st.rot || 0, D.sel)) { sfx('error'); return; }
+    const before = snap(); st.x = x; st.y = y; rebuildHouseFurniture(); changed(before); sfx('tap');
   };
   if (!def.wall && SIDE[keyOf(sel)]) t.append(act('↺', 'ghost small icon', () => turn(-1)), act('↻', 'ghost small icon', () => turn(1)));
   else t.append(act('⇋', 'ghost small icon', () => turn(2)));                       // everything else can be mirrored
+  const pad = h('div', 'deco-nudge');
+  pad.append(act('◀', 'ghost small icon', () => nudge(-1, 0)));
+  if (!def.wall) pad.append(act('▲', 'ghost small icon', () => nudge(0, -1)), act('▼', 'ghost small icon', () => nudge(0, 1)));
+  pad.append(act('▶', 'ghost small icon', () => nudge(1, 0)));
+  t.append(pad);
   if (D.sel.f) t.append(act(T('Put away', 'Cất đi'), 'ghost small', () => {
     const before = snap(), list = furnList(), i = list.indexOf(D.sel.f);
     if (i >= 0) { list.splice(i, 1); G.state.home.owned.push(D.sel.f.id); }
@@ -350,6 +413,12 @@ function placeTools() {
 }
 function drawOverlay(c, t) {
   if (!D) return;
+  // the floor grid, faintly — brighter while you're carrying something
+  { const sc = house(), g = floorGrid(sc), x1 = g.ox + g.cols * TILE, y1 = g.oy + g.rows * TILE;
+    c.save(); c.strokeStyle = `rgba(255,255,255,${D.lifted ? 0.35 : 0.18})`; c.lineWidth = 0.6; c.beginPath();
+    for (let i = 0; i <= g.cols; i++) { const x = g.ox + i * TILE; c.moveTo(x, g.oy); c.lineTo(x, y1); }
+    for (let j = 0; j <= g.rows; j++) { const y = g.oy + j * TILE; c.moveTo(g.ox, y); c.lineTo(x1, y); }
+    c.stroke(); c.restore(); }
   // the piece being carried
   if (D.lifted && D.ghost) {
     const sel = selOf(D.lifted), def = defOf(sel), rot = posOf(D.lifted).rot || 0, fp = footprint(def.w, def.h, rot, keyOf(sel));

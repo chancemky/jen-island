@@ -956,3 +956,5 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
 /* pop-up cards never run off a small screen: they scroll instead */
 .modal .card { max-height: calc(100% - 8px); overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; }
 .modal .card canvas { touch-action: none; }
+
+.deco-nudge { display: flex; gap: 4px; padding-left: 6px; margin-left: 2px; border-left: 2px solid rgba(91,63,54,.15); }
