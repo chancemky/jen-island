@@ -881,7 +881,7 @@ export async function restoreNightMarket() {
     await say('meo', T('The Night Market is open! And one of these stalls is *yours*, partner.', 'Chợ Đêm mở cửa rồi! Và một trong những sạp này là *của bạn* đó, cộng sự.'), { emo: 'happy' });
     await discoverRecipe('banh_trang_nuong');
     await discoverRecipe('che_ba_mau');
-    await say('meo', T('Your stall opens from 17:00 to 23:00. Grilled rice paper and sweet chè — the two best smells in Việt Nam.', 'Sạp của bạn mở từ 17:00 tới 23:00. Bánh tráng nướng và chè — hai mùi thơm nhất Việt Nam.'));
+    await say('meo', T('Your stall opens from 17:00 to 23:00. Grilled rice paper, right next to the chè stall — the two best smells in Việt Nam.', 'Sạp của bạn mở từ 17:00 tới 23:00. Bánh tráng nướng, ngay cạnh sạp chè — hai mùi thơm nhất Việt Nam.'));
     unlockAchievement('night_market');
     releaseMeo('nightmarket');
     ba.walkTo([[340, 610]]).then(() => ba.face('down'));

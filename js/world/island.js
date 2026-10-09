@@ -241,7 +241,7 @@ export const STALLS = [
   { id: 'nm1', biz: 'nm1', x: 340, y: 580, label: ['RICE PAPER SALAD', 'BÁNH TRÁNG TRỘN'], goods: ['#f2c46b', '#e3703a'], cloth: ['#e8584e', '#fff5df'] },
   { id: 'nm2', biz: 'nm2', x: 530, y: 580, label: ['SWEET SOUP', 'CHÈ'], goods: ['#a8423a', '#9fd67a'], cloth: ['#6fbfb0', '#fff5df'] },
   { id: 'nm3', biz: 'nm3', x: 340, y: 670, label: ['SNAILS', 'ỐC'], goods: ['#e0a052', '#fff5df'], cloth: ['#f2c14e', '#fff5df'] },
-  { id: 'night', x: 530, y: 670, label: ['YOUR STALL', 'SẠP CỦA BẠN'], goods: ['#f2c46b', '#a8423a'], cloth: ['#f08ca0', '#fff5df'], biz: 'night' },
+  { id: 'night', x: 530, y: 670, label: ['GRILLED RICE PAPER', 'BÁNH TRÁNG NƯỚNG'], goods: ['#f2c46b', '#a8423a'], cloth: ['#f08ca0', '#fff5df'], biz: 'night' },
   { id: 'nm5', biz: 'nm5', x: 340, y: 760, label: ['SUGARCANE', 'NƯỚC MÍA'], goods: ['#b9e08a', '#f7de8c'], cloth: ['#8fb7e0', '#fff5df'] },
   { id: 'nm6', biz: 'nm6', x: 530, y: 760, label: ['SKEWERS', 'XIÊN QUE'], goods: ['#c96b45', '#e3703a'], cloth: ['#c9b6e8', '#fff5df'] },
 ];

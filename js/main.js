@@ -323,7 +323,7 @@ bus.on('leave', () => resetArea());
 bus.on('lang', () => { applyStaticText(); refreshQuest(); resetArea(); });
 bus.on('late', () => {
   for (const id of Object.keys(BUSINESSES)) if (bizOf(id).open && !(G.runtime.serviceOpen === id && bizRT(id).queue.length)) closeBiz(id, 'midnight');
-  toast({ text: T('It\'s past midnight!', 'Đã quá nửa đêm!'), sub: T('You\'re getting sleepy — sleep in your bed to start a new day.', 'Bạn buồn ngủ rồi — về giường ngủ để bắt đầu ngày mới nhé.'), icon: 'sleep_moon', ms: 5000 });
+  toast({ text: T('It\'s past midnight!', 'Đã quá nửa đêm!'), sub: T('You\'re getting sleepy — sleep in your bed, or at 6 am you\'ll doze off wherever you are.', 'Bạn buồn ngủ rồi — về giường ngủ nhé, không thì 6 giờ sáng bạn sẽ ngủ gục tại chỗ đó.'), icon: 'sleep_moon', ms: 5000 });
 });
 bus.on('regular', c => toast({ text: T(`${c.name} is now a regular!`, `${c.name} đã thành khách quen!`), sub: '♥', icon: 'heart' }));
 bus.on('ferry', n => { if (G.scene === scenes.island && flag('freeRoam') && !cs.active && G.state.story.chapter >= 2) toast({ text: T('The ferry has arrived', 'Tàu khách đã cập bến'), sub: T(`It brought ${n} visitor${n > 1 ? 's' : ''}!`, `Tàu chở ${n} du khách tới!`), icon: 'photo', ms: 2200 }); });
@@ -873,7 +873,7 @@ async function doSleep(dawn) {
         await fadeOut(1000, true);
         document.getElementById('caption').innerHTML = T('You fell asleep right there on the ground…', 'Bạn ngủ gục ngay trên mặt đất…');
         document.getElementById('caption').classList.add('on');
-        await wait(1.8); document.getElementById('caption').classList.remove('on');
+        await wait(1.8); document.getElementById('caption').classList.remove('on'); await wait(0.7);   // (let it fade before the summary)
       } else {
         const bed = scenes.house.bedPos;
         await pl.walkTo([[70, 130], [bed.x + 30, bed.y + 34]], { speed: 70 });
@@ -922,7 +922,7 @@ const CAT_RESCUE = [
 async function wakeInCatBed(here) {
   const pl = G.player, sc = scenes.meo, b = sc.catBed, m = G.meo;
   const where = here.id === 'island' ? areaAt(here.x, here.y).name : BUSINESSES[here.id] ? bizName(here.id) : T('the shop', 'trong quán');
-  setScene('meo', b.x, b.y + 4, 'down'); pl.nap = { k: 1, side: 1 }; pl.setEmo('sleepy', 4);
+  setScene('meo', b.x, b.y + 4, 'down'); pl.nap = { k: 1, side: 1 }; pl.setEmo('sleepy', 4);   // (side 1: lying across the big cat bed)
   const mx = m?.x, my = m?.y, msc = m && Object.values(scenes).find(q => q.actors?.includes(m));      // (wherever her day had her)
   if (m) { if (msc !== sc) { msc?.remove(m); sc.add(m); } m.x = b.x + 34; m.y = b.y + 6; m.face('left'); m.stop?.(); }
   cam.snap(b.x + 16, b.y - 18);
@@ -1007,14 +1007,13 @@ let msSeen = 0;
 const msAnnounced = {};
 function checkMilestonesReady() {
   if (!G.state?.player?.name || !G.state.story.flags.freeRoam || G.runtime.inCutscene || cs.active) return;
-  const ready = TRACKS.filter(t => trackState(t).ready);
-  for (const t of ready) {
-    const key = t.id + ':' + (G.state.milestones?.[t.id] || 0);
-    if (msAnnounced[key]) continue; msAnnounced[key] = true;
-    if (msSeen++ > 40) continue;
-    toast({ text: T(`Milestone ready: ${t.en}!`, `Cột mốc sẵn sàng: ${t.vi}!`), sub: T('Claim it in Menu → Milestones ★', 'Nhận thưởng ở Menu → Cột mốc ★'), icon: t.icon || 'trophy', ms: 3400 });
-    break;                                   // one at a time; the rest follow on the next check
-  }
+  const fresh = TRACKS.filter(t => trackState(t).ready).filter(t => !msAnnounced[t.id + ':' + (G.state.milestones?.[t.id] || 0)]);
+  if (!fresh.length) return;
+  for (const t of fresh) msAnnounced[t.id + ':' + (G.state.milestones?.[t.id] || 0)] = true;
+  if (msSeen++ > 40) return;
+  // several at once (after a jump, an update or a long session away): one card, not a stream of them
+  if (fresh.length > 1) toast({ text: T(`${fresh.length} milestones ready!`, `${fresh.length} cột mốc sẵn sàng!`), sub: T('Claim them in Menu → Milestones ★', 'Nhận thưởng ở Menu → Cột mốc ★'), icon: 'trophy', ms: 3400 });
+  else { const t = fresh[0]; toast({ text: T(`Milestone ready: ${t.en}!`, `Cột mốc sẵn sàng: ${t.vi}!`), sub: T('Claim it in Menu → Milestones ★', 'Nhận thưởng ở Menu → Cột mốc ★'), icon: t.icon || 'trophy', ms: 3400 }); }
 }
 setInterval(checkMilestonesReady, 4000);
 setInterval(() => G.renderer?.sweepSprites?.(), 2000);

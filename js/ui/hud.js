@@ -233,7 +233,9 @@ function pumpToasts() {
   if (tTimer) return;
   const box = $('toasts'); if (!box || !tq.length) return;
   const u = tq[0].now || tq[0].bad || tq[0].cls === 'ach';
-  if (blocking() || ([...box.children].filter(e => !e.classList.contains('out')).length >= 2 && !u)) { tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 450); return; }
+  // ambient news also waits while a menu is open (it would cover its buttons) and while the place name shows
+  const held = !u && (!!document.querySelector('.sheet-wrap:not(.out)') || $('areaToast')?.classList.contains('on'));
+  if (blocking() || held || ([...box.children].filter(e => !e.classList.contains('out')).length >= 2 && !u)) { tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 450); return; }
   showToast(tq.shift());
   tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 650);
 }
@@ -246,7 +248,8 @@ function showToast({ text, sub = '', icon = null, cls = '', bad = false, ms = 28
   if (onClick) { el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer'; el.addEventListener('click', onClick); }
   // just below the quest bar, however many lines it has
   const q = $('questPill'), qr = q?.offsetParent ? q.getBoundingClientRect() : null;
-  if (qr?.height) box.style.setProperty('--toast-top', `${qr.bottom - $('app').getBoundingClientRect().top + 8}px`); else box.style.removeProperty('--toast-top');
+  if (document.querySelector('.sheet-wrap:not(.out)')) box.style.setProperty('--toast-top', 'calc(6px + var(--sat))');   // over a menu: at the very top, clear of its buttons
+  else if (qr?.height) box.style.setProperty('--toast-top', `${qr.bottom - $('app').getBoundingClientRect().top + 8}px`); else box.style.removeProperty('--toast-top');
   box.appendChild(el);
   while (box.children.length > 2) box.firstElementChild.remove();
   if (!quiet) sfx(cls === 'ach' ? 'fanfare' : bad && now ? 'error' : 'pop');      // (the error buzz only answers something you just tapped)

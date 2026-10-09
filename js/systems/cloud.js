@@ -6,7 +6,7 @@ import { nativeApp, learnServerTime } from '../core/util.js';
 
 export const CLOUD = { url: 'https://cgbaigeergwvbmghrakb.supabase.co', key: 'sb_publishable_w1-MKpH0ysDz_nXEt25cXA_n_1H5DBo', site: 'https://jen-island.jen-simulator.workers.dev/' };
 const SESSION_KEY = 'jenisland.session';
-let session = null, refreshing = null;
+let session = null, refreshing = null, stalledAt = 0;   // (stalledAt: the last request that timed out)
 
 function readSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; } }
 function storeSession(d) {
@@ -17,7 +17,13 @@ function storeSession(d) {
 async function raw(path, opt = {}, token) {
   const headers = { apikey: CLOUD.key, 'Content-Type': 'application/json', ...(opt.headers || {}) };
   if (token) headers.Authorization = 'Bearer ' + token;
-  const res = await fetch(CLOUD.url + path, { ...opt, headers });
+  // never wait forever: on a stalled connection (an iPhone home-screen app waking up, a weak signal)
+  // the request gives up and the game carries on offline from the save on this device
+  const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, timer = ctl && setTimeout(() => ctl.abort(), opt.timeout || 12000);
+  let res;
+  try { res = await fetch(CLOUD.url + path, { ...opt, headers, ...(ctl ? { signal: ctl.signal } : {}) }); }
+  catch (e) { if (e?.name === 'AbortError') { stalledAt = Date.now(); const t = new Error('The connection timed out'); t.timeout = true; throw t; } throw e; }
+  finally { clearTimeout(timer); }
   learnServerTime(res.headers.get('date'));
   const txt = await res.text();
   let data = null; try { data = txt ? JSON.parse(txt) : null; } catch { data = txt; }
@@ -97,6 +103,7 @@ export async function signOut() {
 let lastAt = null;
 export const cloudSyncedAt = () => lastAt;
 export async function loadCloud() {
+  if (Date.now() - stalledAt < 30000) throw new Error('offline (the connection just timed out)');   // don't wait out a second timeout at start-up
   const uid = session.user.id;
   const rows = await api('/rest/v1/jen_island_saves?select=save_data,updated_at&user_id=eq.' + encodeURIComponent(uid));
   const row = rows[0];
@@ -109,7 +116,7 @@ export async function saveCloud(state, { keepalive = false, force = false } = {}
   const uid = session.user.id, q = 'user_id=eq.' + encodeURIComponent(uid);
   const body = JSON.stringify({ user_id: uid, save_version: state.v || 1, game_day: state.day, coins: Math.round(state.money), reputation: Math.round(state.reputation), save_data: state });
   if (!force && lastAt) {
-    const rows = await api(`/rest/v1/jen_island_saves?${q}&updated_at=eq.${encodeURIComponent(lastAt)}&select=updated_at`, { method: 'PATCH', keepalive, headers: { Prefer: 'return=representation' }, body });
+    const rows = await api(`/rest/v1/jen_island_saves?${q}&updated_at=eq.${encodeURIComponent(lastAt)}&select=updated_at`, { method: 'PATCH', keepalive, timeout: 30000, headers: { Prefer: 'return=representation' }, body });
     if (!rows?.length) throw conflict();
     lastAt = rows[0].updated_at; return lastAt;
   }
@@ -117,7 +124,7 @@ export async function saveCloud(state, { keepalive = false, force = false } = {}
     const rows = await api(`/rest/v1/jen_island_saves?select=updated_at&${q}`);
     if (rows?.length) throw conflict();
   }
-  const rows = await api('/rest/v1/jen_island_saves?on_conflict=user_id&select=updated_at', { method: 'POST', keepalive, headers: { Prefer: 'resolution=merge-duplicates,return=representation' }, body });
+  const rows = await api('/rest/v1/jen_island_saves?on_conflict=user_id&select=updated_at', { method: 'POST', keepalive, timeout: 30000, headers: { Prefer: 'resolution=merge-duplicates,return=representation' }, body });
   lastAt = rows?.[0]?.updated_at || lastAt; return lastAt;
 }
 // Daily snapshots (the last 7 are kept) so a damaged save can be recovered.
@@ -161,6 +168,8 @@ export async function fetchWeekly(board = 'served') {
 export async function myAwards() { return api(`/rest/v1/jen_island_week_awards?select=week,board,rank&user_id=eq.${session.user.id}&order=week.desc&limit=100`); }
 // Delete account: erases every row this game keeps for the player, and the login.
 export async function deleteAccount() {
+  // backed-up album photos live in storage, which the database delete doesn't reach: remove them first
+  try { const ts = await cloudPhotoList(); if (ts.length) await cloudPhotoDel(ts); } catch { /* none, or offline: the rest still goes */ }
   return api('/rest/v1/rpc/jen_island_delete_account', { method: 'POST', body: '{}' });
 }
 // ---- friends (systems/social.js): showcases, friend codes, visits and daily gifts

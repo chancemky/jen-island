@@ -268,13 +268,29 @@ export const F = {
 };
 
 // Small furniture preview for the decorate bar (draws into a canvas).
+// Shop and picker thumbnails: draw the piece big on a scratch canvas, find where it actually
+// landed (wall pieces hang high above their anchor, rugs lie flat below it) and fit that into the
+// icon, centred, so no piece is ever clipped or drawn as a sliver. Kept per piece and size.
+const PREVIEWS = new Map();
 export function drawFurniturePreview(cv, id, def) {
   const c = cv.getContext('2d'), w = cv.width, h = cv.height;
   c.clearRect(0, 0, w, h);
-  c.save(); c.translate(w / 2, h * 0.92); const s = Math.min(w / ((def.w || 30) + 16), h / 70) * 1; c.scale(s, s);
-  const fn = FURN_DRAW[id];
-  if (fn) fn(c, 0, { x: 0, y: 0, ...def, preview: true });
-  c.restore();
+  const fn = FURN_DRAW[id]; if (!fn) return;
+  const key = id + ':' + JSON.stringify(def.tint || def.col || '');
+  let pic = PREVIEWS.get(key);
+  if (!pic) {
+    const W = 320, H = 320, k = 2, off = document.createElement('canvas'); off.width = W; off.height = H;
+    const o = off.getContext('2d'); o.translate(W / 2, H * 0.62); o.scale(k, k);
+    try { fn(o, 0, { x: 0, y: 0, ...def, preview: true }); } catch { /* a piece that needs the room: leave the icon empty */ }
+    const px = o.getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = -1, y1 = -1;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (px[(y * W + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    pic = x1 < 0 ? null : { off, x0, y0, bw: x1 - x0 + 1, bh: y1 - y0 + 1 };
+    PREVIEWS.set(key, pic);
+  }
+  if (!pic) return;
+  const pad = 0.1, s = Math.min(w * (1 - 2 * pad) / pic.bw, h * (1 - 2 * pad) / pic.bh, 1.6 * w / 96);   // (small pieces don't blow up huge)
+  const dw = pic.bw * s, dh = pic.bh * s;
+  c.drawImage(pic.off, pic.x0, pic.y0, pic.bw, pic.bh, (w - dw) / 2, (h - dh) / 2, dw, dh);
 }
 export const FURN_DRAW = {
   rug_round: (c, t, p) => F.rug(c, t, { ...p, w: 44, h: 26, col: '#f4a9b8' }),
@@ -754,14 +770,14 @@ export const SIDE = {
   table_low: () => [...legs(20, 34, 11, shade(WOODC, -20)), B(-10, 10, 11, 17, 0, 34, WOODC, { grain: 1 })],
   chair_wood: () => [...legs(12, 14, 8, shade('#c88a52', -22), 1), B(-6, 6, 8, 11.5, 0, 14, '#c88a52'), B(-6, -3.6, 11.5, 26, 0, 14, shade('#c88a52', -10))],
   sofa: () => [B(-11, 11, 0, 9, 0, 54, '#c9955e', { weave: 1 }), B(-11, -5, 9, 25, 0, 54, '#c9955e', { weave: 1 }), B(-5, 11, 9, 13, 4, 50, '#f7d6c0', { cushion: 3 }), B(-11, 11, 9, 18, 0, 4, '#b98450'), B(-11, 11, 9, 18, 50, 54, '#b98450')],
-  armchair: () => [B(-7, 7, 0, 9, 0, 30, '#e8a88f'), B(-7, -3, 9, 23, 0, 30, '#d98f76'), B(-3, 7, 9, 12, 5, 25, '#f7d6c0', { cushion: 1 }), B(-7, 7, 9, 16, 0, 5, '#d98f76'), B(-7, 7, 9, 16, 25, 30, '#d98f76')],
+  armchair: () => [B(-7, 7, 0, 9, 0, 30, '#8fb7e0'), B(-7, -3, 9, 23, 0, 30, shade('#8fb7e0', -10)), B(-3, 7, 9, 12, 5, 25, '#fffaf0', { cushion: 1 }), B(-7, 7, 9, 16, 0, 5, shade('#8fb7e0', -18)), B(-7, 7, 9, 16, 25, 30, shade('#8fb7e0', -18)), B(-6, -4, -0.1, 0, 2, 4, '#8a5f3e'), B(-6, -4, -0.1, 0, 26, 28, '#8a5f3e')],   // (same blue as its front)
   rocking_chair: () => [B(-8, 8, 0, 2, 2, 4, '#8a5f3e', { rocker: 1 }), B(-8, 8, 0, 2, 22, 24, '#8a5f3e', { rocker: 1 }), B(-6, 6, 9, 12, 2, 24, '#c98f5a'), B(-6, -3.6, 12, 30, 2, 24, shade('#c98f5a', -8)), ...legs(12, 26, 9, '#a8763f', 2).map(b => ({ ...b, h0: 2 }))],
   bookshelf: () => [B(-7, 7, 0, 42, 0, 36, '#b77a4f', { grain: 1 }), B(-7, 7, 42, 44, -1, 37, '#a26a42')],
   dresser: () => [B(-7, 7, 0, 26, 0, 38, '#d9a066', { grain: 1 }), B(-7.5, 7.5, 26, 28, -1, 39, '#c98f5a'), B(-3, 3, 28, 36, 26, 32, '#9fd8c8')],
   fishtank: () => [B(-8, 8, 0, 12, 0, 34, '#8a5f3e'), B(-8, 8, 12, 30, 1, 33, 'rgba(160,220,240,.7)', { water: 1 })],
-  aquarium_big: () => [B(-13, 13, 0, 10, 0, 46, '#b9b2a6', { stone: 1 }), B(-10, 10, 10, 10.4, 3, 43, '#6fbfd0', { water: 1 })],
+  // (aquarium_big: looks the same turned, so no box model — it is drawn as itself)
   tv: () => [B(-8, 8, 0, 10, 0, 30, '#8a5f3e'), B(-8, 4, 10, 26, 5, 25, '#6b5a50'), B(4, 6, 12, 24, 7, 23, '#3d3a42')],
-  radio: () => [B(-6, 6, 0, 10, 0, 18, '#e8584e'), B(-1, 1, 10, 13, 2, 16, '#5a4a48')],
+  radio: () => [B(-6, 6, 0, 15, 0, 22, '#9b6a45', { grain: 1 }), B(5.5, 6.5, 3, 12, 2, 11, '#e9d8bf'), B(-1, 1, 15, 26, 18, 19.5, '#8a8f99')],   // (brown wood, like its front)
   record_player: () => [...legs(12, 24, 12, '#8a5f3e', 1), B(-6, 6, 12, 16, 0, 24, '#c98f5a'), B(-4, 4, 16, 17, 4, 16, '#2f2a30'), B(-1, 1, 17, 30, 14, 18, '#f2c14e')],
   lamp_table: () => [...legs(12, 20, 12, '#8a5f3e', 1), B(-6, 6, 12, 15, 0, 20, '#c98f5a'), B(-1, 1, 15, 24, 9, 11, '#5a4a48'), B(-5, 5, 24, 32, 6, 14, '#f7de8c', { glow: 1 })],
   piano: () => [B(-9, 9, 0, 28, 0, 46, '#3d3440'), B(9, 14, 14, 17, 2, 44, '#f5f0e6'), B(-9.5, 9.5, 28, 30, -1, 47, '#2f2a30')],
@@ -1478,7 +1494,7 @@ Object.assign(SIDE, {
   cat_tower: () => [B(-7, 7, 0, 4, 0, 32, '#c9b6a0'), B(-2, 2, 4, 40, 6, 10, '#d9b27a', { slats: 1 }), B(-2, 2, 4, 28, 22, 26, '#d9b27a', { slats: 1 }), B(-6, 6, 26, 30, 16, 32, '#c9b6a0'), B(-6, 6, 40, 44, 0, 16, '#c9b6a0')],
   surfboard_rack: () => [B(-5, 5, 0, 4, 0, 32, '#8a5a3a'), B(-1.5, 1.5, 4, 44, 4, 8, '#6fbfb0'), B(-1.5, 1.5, 4, 44, 14, 18, '#ff8fb0'), B(-1.5, 1.5, 4, 44, 24, 28, '#ffd35a')],
   ship_model: () => [B(-5, 5, 0, 4, 0, 36, '#8a5a3a'), B(-3, 3, 4, 12, 4, 32, '#a8563f'), B(-0.6, 0.6, 12, 34, 17, 19, '#5b3f36'), B(-0.4, 0.4, 16, 30, 8, 28, '#fffaf0')],
-  bottle_ship: () => [B(-5, 5, 0, 3, 0, 22, '#8a5a3a'), B(-6, 6, 3, 17, 1, 21, 'rgba(190,230,240,.6)', { water: 1 })],
+  // (bottle_ship: looks the same turned, so no box model — it is drawn as itself)
 });
 
 // nature finds (systems/nature.js): a jar of fireflies; the fishing tournament's mounted fish

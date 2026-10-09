@@ -28,7 +28,7 @@ import { BADGES, TIER_ORDER } from '../data/badges.js';
 import { hasBadge, showcaseBadge, setShowcase } from '../systems/badges.js';
 import { weeklyGoals, claimGoal, goalReward } from '../systems/weekly.js';
 import { myCode, visitFriend, sendGift, GIFTS, giftable, noteFriendCount, friendChallenge, claimFriendChallenge } from '../systems/social.js';
-import { timeLeftText } from '../systems/weekboard.js';
+import { timeLeftText, weekEndsAt } from '../systems/weekboard.js';
 import { POST_DESIGNS, STICKERS, MESSAGES, postcardHTML, postcardBox } from '../systems/together.js';
 import { slimLook } from '../data/looks.js';
 import { drawVillagerHead } from '../gfx/villager.js';
@@ -130,6 +130,8 @@ async function islandPostcard(f) {
   } });
 }
 // this week's three island goals (systems/weekly.js)
+// when the weekly board resets, in the phone's own time zone (the island clock runs on Japan time)
+const resetAt = () => { try { return new Date(weekEndsAt()).toLocaleString(T('en-GB', 'vi-VN'), { weekday: 'long', hour: '2-digit', minute: '2-digit' }); } catch { return T('Monday 00:00 (Japan time)', '00:00 thứ Hai (giờ Nhật Bản)'); } };
 function renderWeekly(pane, api) {
   const goals = weeklyGoals(), r = goalReward();
   pane.appendChild(h('div', 'section-title', T('This week\'s island goals', 'Mục tiêu tuần này')));
@@ -247,7 +249,7 @@ function renderLeaderboard(pane) {
     mode.replaceChildren(...MODES.map(([k, label]) => { const b = h('button', k === m ? 'on' : '', label); b.type = 'button'; b.onclick = () => { if (m === k) return; sfx('ui'); m = k; cur = SORTS[k][0][0]; drawSegs(); load(); }; return b; }));
     seg.replaceChildren(...SORTS[m].map(([k, label]) => { const b = h('button', k === cur ? 'on' : '', label); b.type = 'button'; b.onclick = () => { if (cur === k) return; sfx('ui'); cur = k; drawSegs(); load(); }; return b; }));
     head.innerHTML = m === 'week'
-      ? `<b>🏆 ${T('Weekly board', 'Bảng tuần')}</b> <span class="pill">${timeLeftText()}</span><small>${T('Top 10 on each board win a trophy for their home, coins and a badge. Resets Monday 00:00 (Japan time).', 'Top 10 mỗi bảng nhận cúp trang trí, tiền và huy hiệu. Làm mới lúc 00:00 thứ Hai (giờ Nhật Bản).')}</small>`
+      ? `<b>🏆 ${T('Weekly board', 'Bảng tuần')}</b> <span class="pill">${timeLeftText()}</span><small>${T(`Top 10 on each board win a trophy for their home, coins and a badge. Resets ${resetAt()} your time.`, `Top 10 mỗi bảng nhận cúp trang trí, tiền và huy hiệu. Làm mới lúc ${resetAt()} giờ của bạn.`)}</small>`
       : m === 'friends' ? `<b>🫶 ${T('You and your friends, this week', 'Bạn và bạn bè, tuần này')}</b> <span class="pill">${timeLeftText()}</span>`
       : `<b>⭐ ${T('All-time board', 'Bảng mọi thời')}</b><small>${T('Never resets.', 'Không bao giờ làm mới.')}</small>`;
   };

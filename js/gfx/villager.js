@@ -936,10 +936,11 @@ function spikes(c, S, yawFace, hc, L, near) {
 }
 // Buns and puffs: the ones on the far side of the head are drawn before it (peeking
 // out round the edge), the ones on your side after the hair, sitting on top of it.
+// (side-on, a bun would sit flat in the middle of the head: it is lifted so it pokes out above)
 function drawHairKnots(c, L, S, yaw, H, near) {
   const C = cols(L);
   const side = p => (p[2] > S.head[2] + 0.5) === near;
-  if (H.buns) for (const s of [-1, 1]) { const b = add(S.head, rotY([s * 6.4, HR * 0.78, -1.5], yaw)); if (!side(b)) continue; const bp = proj(b); circ(c, bp[0], bp[1], 4, L.hair); c.strokeStyle = C.hairH; c.lineWidth = 0.8; c.beginPath(); c.arc(bp[0] - 0.8, bp[1] - 0.8, 2.2, 3.4, 4.6); c.stroke(); }
+  if (H.buns) for (const s of [-1, 1]) { const b = add(S.head, rotY([s * 6.4, HR * 0.78, -1.5], yaw)); if (!side(b)) continue; const bp = proj(b), sy = Math.abs(Math.sin(yaw)); bp[1] -= 3.6 * sy; bp[0] += (b[0] - S.head[0] >= 0 ? -1 : 1) * 1.5 * sy; circ(c, bp[0], bp[1], 4, L.hair); c.strokeStyle = C.hairH; c.lineWidth = 0.8; c.beginPath(); c.arc(bp[0] - 0.8, bp[1] - 0.8, 2.2, 3.4, 4.6); c.stroke(); }
   if (H.topBun) {
     const o = H.topBun, b = add(S.head, rotY([0, HR * (o.back ? 0.72 : 0.95), o.back ? -HR * 0.62 : -2], yaw)), bp = proj(b), r = o.small ? 3.2 : 4.2;
     if (side(b)) {

@@ -93,10 +93,11 @@ export function migrate(raw) {
 // Shared mutable handle. G.state is the save; G.* holds runtime singletons.
 export const G = { state: defaultState(), user: null, dirty: false, scene: null, player: null, meo: null, t: 0 };
 
-// ---- language: English by default, Vietnamese as a setting (never mixed)
+// ---- language: the one the player picked; before that, the phone's own (Vietnamese phones start
+// in Vietnamese, everyone else in English). Never mixed.
 const LANG_KEY = 'jenisland.lang';
 let deviceLang = 'en';
-try { deviceLang = localStorage.getItem(LANG_KEY) === 'vi' ? 'vi' : 'en'; } catch {}
+try { const v = localStorage.getItem(LANG_KEY); deviceLang = v === 'vi' || v === 'en' ? v : [...(navigator.languages || []), navigator.language || ''].some(l => /^vi\b/i.test(l)) ? 'vi' : 'en'; } catch {}
 Object.defineProperty(G, 'lang', { get() { return G.state?.settings?.lang || deviceLang; } });
 useLanguage(() => G.lang);
 export function setLang(l) { deviceLang = l; if (G.state?.settings) G.state.settings.lang = l; try { localStorage.setItem(LANG_KEY, l); } catch {} bus.emit('lang', l); markDirty(true); }

@@ -6,6 +6,7 @@ import { sfx } from '../core/audio.js';
 import { drawHuman } from '../gfx/character.js';
 import { visitorLook } from '../data/looks.js';
 import { bus } from '../core/util.js';
+import { placeName } from '../systems/economy.js';
 
 const SHIRTS = ['#f28f7c', '#6fbfb0', '#8fb7e0', '#f2c14e', '#c9b6e8', '#fff6e6', '#3f4a5e', '#e8584e', '#7fae4d', '#f4a9b8'];
 const APRONS = ['#fff6e6', '#f7d6c0', '#3f4a5e', '#e8584e', '#6fbfb0', '#f2c14e', '#8a5a3a', '#c9b6e8'];
@@ -19,7 +20,7 @@ export function wearUniform(look, id) {
   if ('hat' in u) { look.hat = u.hat || null; if (u.hatColor) look.hatColor = u.hatColor; }
   return look;
 }
-export function openUniform(id, name) {
+export function openUniform(id, name = placeName(id)) {
   const u = ((G.state.uniforms ||= {})[id] ||= {});
   openSheet({ title: T(`Uniform · ${name}`, `Đồng phục · ${name}`), sub: T('What your staff wear at work', 'Nhân viên mặc gì khi làm việc'), pauseTime: false, build: (body, api) => {
     const cv = document.createElement('canvas'); cv.width = 240; cv.height = 240; cv.className = 'uni-preview'; body.appendChild(cv);

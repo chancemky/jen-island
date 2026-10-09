@@ -15,7 +15,9 @@ Based on what the game actually sends (see `js/systems/cloud.js`, `telemetry.js`
 | Crash logs / diagnostics (App info and performance) | Yes | No | Yes (same switch) | Analytics | error message + stack |
 | Device or other IDs | Yes | Yes (ads, app only) | Yes (ads are opt-in per view) | Advertising | AppLovin MAX advertising id — only once ads are switched on |
 | Game progress (App activity → other) | Yes | No | No | App functionality | cloud save |
+| Photos (Photos and videos) | Yes | No | Yes (accounts only) | App functionality | in-game album pictures of the player's own island, 24 newest, private storage folder; deleted with the account |
+| In-app messages (Messages → other) | Yes | No | Yes | App functionality | postcards to friends: design, sticker and a message picked from a fixed list (no free text) |
 
-Not collected: location, contacts, photos/files (photo mode saves on the device only), messages, health, calendar, audio.
+Not collected: location, contacts, files, free-text messages, health, calendar, audio. (Photos only as the optional album backup above.)
 
-**Apple privacy "nutrition" labels**: Data Linked to You — Contact Info (email), Identifiers (user id), Purchases, User Content (names). Data Not Linked — Usage Data, Diagnostics. Tracking: only if ads are enabled (AppLovin → "Identifiers: Device ID, used for Third-Party Advertising"); otherwise "Data Not Used to Track You".
+**Apple privacy "nutrition" labels**: Data Linked to You — Contact Info (email), Identifiers (user id), Purchases, User Content (names, album photos, postcards). Data Not Linked — Usage Data, Diagnostics. Tracking: only if ads are enabled (AppLovin → "Identifiers: Device ID, used for Third-Party Advertising"); otherwise "Data Not Used to Track You".

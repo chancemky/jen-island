@@ -611,8 +611,10 @@ if (run('world')) {
       if (!f) bad.push('tapping it in the tray did not put it in the room');
       else {
         const H = await p.evaluate(() => window.__jen.G.scenes.house.h);
-        await p.mouse.click(...(await scr(230, 250))); await p.waitForTimeout(150);            // tap empty floor (deselect)
-        const [ax, ay] = await scr(f.x, f.y - 6), [bx, by] = await scr(80, H - 20);
+        await p.mouse.click(...(await scr(230, 250))); await p.waitForTimeout(300);            // tap empty floor: the selected piece moves there
+        const t = await p.evaluate(() => window.__jen.G.state.home.furniture.find(f => f.id === 'table_low'));
+        if (Math.abs(t.x - 230) > 24 || Math.abs(t.y - 250) > 24) bad.push(`tap-to-move left it at ${t.x},${t.y} instead of near 230,250`);
+        const [ax, ay] = await scr(t.x, t.y - 6), [bx, by] = await scr(80, H - 20);
         await p.mouse.move(ax, ay); await p.mouse.down(); for (let i = 1; i <= 10; i++) { await p.mouse.move(ax + (bx - ax) * i / 10, ay + (by - ay) * i / 10); await p.waitForTimeout(25); } await p.mouse.up(); await p.waitForTimeout(300);
         const g = await p.evaluate(() => window.__jen.G.state.home.furniture.find(f => f.id === 'table_low'));
         if (g.y < H - 30) bad.push(`dragging to the bottom of the room left it at y ${g.y} (room is ${H} tall)`);

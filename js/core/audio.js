@@ -41,7 +41,7 @@ export function setAudio(opts) {
   if (musicGain) musicGain.gain.setTargetAtTime(musicLevel(), ctx.currentTime, 0.15);
   if (sfxGain) sfxGain.gain.setTargetAtTime(sfxLevel(), ctx.currentTime, 0.05);
 }
-export function suspendAudio(on) { if (!ctx) return; if (on) ctx.suspend?.(); else ctx.resume?.(); }
+export function suspendAudio(on) { if (!ctx) return; (on ? ctx.suspend?.() : ctx.resume?.())?.catch?.(() => {}); }   // (iOS can refuse: "Failed to start the audio device")
 export function setMood(m) { state.mood = m; }
 // which song should play right now (main.js decides from the place and the time)
 let chooseSong = () => state.mood === 'night' ? 'night' : 'day';

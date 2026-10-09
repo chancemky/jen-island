@@ -38,8 +38,8 @@ export class Interior extends Scene {
   furn(kind, x, y, o = {}, solid = null) {
     const p = { kind, x, y, ...o };
     if (kind === 'rug' || kind === 'mat' || kind === 'cat_bed') p.flat = true;   // floor coverings (and the cat bed) sit under everyone
-    p.draw = (c, t) => F[kind](c, t, p);
-    p.cull = { x: x - 80, y: y - 90, w: 160, h: 110 };
+    p.draw = o.scale ? (c, t) => { c.save(); c.scale(o.scale, o.scale); F[kind](c, t, p); c.restore(); } : (c, t) => F[kind](c, t, p);
+    p.cull = { x: x - 80 * (o.scale || 1), y: y - 90 * (o.scale || 1), w: 160 * (o.scale || 1), h: 110 * (o.scale || 1) };
     this.prop(p);
     if (solid) this.solid(x + solid[0], y + solid[1], solid[2], solid[3], { furn: kind });
     return p;
@@ -329,7 +329,7 @@ export function buildInteriors() {
     r.furn('bookshelf', 214, 92, {}, [-18, -10, 36, 10]);
     r.furn('table', 124, 146, { w: 40, col: '#b77a4f' }, [-20, -10, 40, 10]);
     r.furn('cushion', 96, 150, { col: '#f7a6b4' }); r.furn('cushion', 152, 150, { col: '#9fb4dc' });
-    r.furn('cat_bed', 56, 236, {});
+    r.furn('cat_bed', 190, 238, { scale: 2.3 });                 // big enough for a guest who slept on the ground
     r.furn('rug', 124, 214, { w: 70, h: 30, col: '#f7a6b4' });
     r.furn('altarShelf', 70, 62, {});
     r.furn('plant', 228, 266, {}, [-6, -6, 12, 6]);
@@ -337,7 +337,7 @@ export function buildInteriors() {
     r.trigger({ id: 'notebook', kind: 'act', x: 176, y: 146, w: 48, h: 20, label: 'Sổ tay', en: 'Recipes', icon: 'notebook', action: 'recipeBook' });
     r.trigger({ id: 'photos', kind: 'act', x: 170, y: 64, w: 56, h: 16, label: 'Kỷ niệm', en: 'Memories', icon: 'photo', action: 'journal' });
     r.meoSpot = { x: 124, y: 170 };
-    r.catBed = { x: 56, y: 233 };
+    r.catBed = { x: 178, y: 236 };   // (right side: Mèo Mây's dialogue portrait covers the bottom left)
     S.meo = r;
   }
   // Business interiors with a service window onto the outdoor queue

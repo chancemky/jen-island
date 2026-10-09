@@ -16,7 +16,10 @@
         body: JSON.stringify([{ device: device(), version: 'guard', message: '[boot] ' + message, stack: String(stack || '').slice(0, 3800), context: { ua: navigator.userAgent.slice(0, 160), standalone: !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)), started: !!window.__started } }]) }).catch(function () {});
     } catch (e) {}
   }
-  addEventListener('error', function (e) { report(e.message || (e.target && e.target.src ? 'failed to load ' + e.target.src : 'error'), e.error && e.error.stack); if (!window.__started) soon(); }, true);
+  addEventListener('error', function (e) {
+    var t = e.target;                                     // (a picture that fails to load is not a failed start)
+    if (t && t !== window && t.tagName && !/^(SCRIPT|LINK)$/.test(t.tagName)) return;
+    report(e.message || (e.target && e.target.src ? 'failed to load ' + e.target.src : 'error'), e.error && e.error.stack); if (!window.__started) soon(); }, true);
   addEventListener('unhandledrejection', function (e) { var r = e.reason || {}; report(r.message || r, r.stack); if (!window.__started) soon(); });
 
   function repair() {
@@ -38,7 +41,7 @@
   var lastError = '';
   function card(force) {
     if (shown || (window.__started && !force)) return; shown = true;
-    var vi = false; try { vi = (localStorage.getItem('jenisland.lang') || '') === 'vi'; } catch (e) {}
+    var vi = false; try { var l = localStorage.getItem('jenisland.lang') || ''; vi = l ? l === 'vi' : /^vi\b/i.test(navigator.language || ''); } catch (e) {}
     var el = document.createElement('div');
     el.setAttribute('style', 'position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:rgba(40,28,24,.55);font-family:Nunito,system-ui,sans-serif;padding:20px');
     el.innerHTML = '<div style="background:#fffaf0;border:3px solid #5b3f36;border-radius:24px;padding:22px;max-width:340px;text-align:center;color:#5b3f36">'
