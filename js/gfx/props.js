@@ -456,7 +456,7 @@ function cartBase(c, body, trim) {
   for (const x of [-14, 12]) { circ(c, x, -5, 5, '#3d3a42'); circ(c, x, -5, 1.8, '#b9c3cb', null); }
   box(c, -20, -26, 40, 20, 3, body);
   box(c, -20, -30, 40, 5, 2, trim);
-  limb(c, [20, -18, 30, -24], 2, '#8f96a0');
+  limb(c, [-20, -18, -30, -24], 2, '#8f96a0');            // (the push handle: at the far end from the grandma, never across her face)
 }
 function cartCover(c, w, y, h) {       // a cloth thrown over the display at closing time
   c.beginPath(); c.moveTo(-w / 2 - 2, y + h); c.quadraticCurveTo(-w / 2 - 1, y - 2, -w / 4, y - 3); c.quadraticCurveTo(0, y - 5, w / 4, y - 3); c.quadraticCurveTo(w / 2 + 1, y - 2, w / 2 + 2, y + h); c.closePath();

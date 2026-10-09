@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><pre id="o"></pre>
+<script type="module">
+// Rain loudness: the steady rain bed (light and heavy) against a few everyday sounds, by RMS
+import { unlockAudio, sfx, setRain, setAudio, __audioProbe } from '../js/core/audio.js';
+unlockAudio(); setAudio({ music: false, sfx: true, musicVol: 1, sfxVol: 0.8 });
+const { ctx, master } = __audioProbe(); await ctx.resume();
+const an = ctx.createAnalyser(); an.fftSize = 2048; master.connect(an);
+const buf = new Float32Array(an.fftSize), wait = ms => new Promise(r => setTimeout(r, ms));
+async function rms(ms) { let sum = 0, n = 0, peak = 0; const t0 = performance.now(); while (performance.now() - t0 < ms) { an.getFloatTimeDomainData(buf); for (const v of buf) { sum += v * v; n++; peak = Math.max(peak, Math.abs(v)); } await wait(30); } return { rms: +Math.sqrt(sum / n).toFixed(4), peak: +peak.toFixed(3) }; }
+const out = {};
+for (const lv of [0.5, 0.7, 1]) { for (let i = 0; i < 12; i++) { setRain(lv); await wait(500); } out['rain ' + lv] = await rms(2500); }
+setRain(0); for (let i = 0; i < 16; i++) { setRain(0); await wait(500); } out['rain off'] = await rms(800);
+for (const n of ['pop', 'amb_wave', 'amb_chatter', 'ui']) { const r = rms(900); sfx(n); out[n] = await r; await wait(300); }
+document.getElementById('o').textContent = JSON.stringify(out, null, 1); window.__ready = true;
+</script></body></html>

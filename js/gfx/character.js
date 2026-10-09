@@ -8,21 +8,8 @@ import { drawVillager } from './villager.js';
 export const EL = 2.4;                  // portrait framing offset (used to centre faces in UI canvases)
 export function viewOf(dir) { return dir === 'up' ? 'back' : dir === 'left' || dir === 'right' ? 'side' : 'front'; }
 export function drawHuman(c, a, t) {
-  if (!a.umbrella || a.sit || a.act === 'sleep') return drawVillager(c, a, t);
-  // a rainy day: the umbrella is held up in the right hand, the canopy drawn over the head
-  const sc = a.look?.scale || 1, side = a.dir === 'left' ? -1 : 1, sway = Math.sin(t * 2 + (a.seed || 0)) * 0.05;
-  drawVillager(c, a, t);
-  c.save(); c.scale(sc, sc); c.translate(side * 13, 0); c.rotate(sway - side * 0.12);
-  c.strokeStyle = '#5b3f36'; c.lineWidth = 1.1; c.beginPath(); c.moveTo(0, -26); c.lineTo(0, -66); c.stroke();
-  c.beginPath(); c.moveTo(0, -26); c.quadraticCurveTo(2.5, -23, 3, -25.5); c.stroke();
-  const col = a.umbrella, R = 21;
-  c.beginPath(); c.moveTo(-R, -58); c.quadraticCurveTo(-R, -76, 0, -78); c.quadraticCurveTo(R, -76, R, -58);
-  for (let i = 4; i >= 0; i--) { const x0 = -R + i * (2 * R / 5), x1 = x0 + 2 * R / 5; c.quadraticCurveTo((x0 + x1) / 2 + 0, -61, x0, -58); }
-  c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = '#5b3f36'; c.lineWidth = 1; c.stroke();
-  c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.moveTo(-R * 0.6, -61); c.quadraticCurveTo(-R * 0.5, -73, -2, -75); c.quadraticCurveTo(-R * 0.25, -70, -R * 0.2, -60); c.closePath(); c.fill();
-  c.strokeStyle = 'rgba(91,63,54,.35)'; c.lineWidth = 0.6; for (const x of [-R * 0.6, -R * 0.2, R * 0.2, R * 0.6]) { c.beginPath(); c.moveTo(0, -78); c.quadraticCurveTo(x * 0.6, -70, x, -59.5); c.stroke(); }
-  c.fillStyle = '#5b3f36'; c.beginPath(); c.arc(0, -79, 1.2, 0, TAU); c.fill();
-  c.restore();
+  // (a rainy day's umbrella is drawn by the villager model, held in the right hand)
+  return drawVillager(c, a.umbrella && (a.sit || a.act === 'sleep') ? { ...a, umbrella: null } : a, t);
 }
 
 // Emotes float above a character's head. `k` is 0..1 lifetime progress.

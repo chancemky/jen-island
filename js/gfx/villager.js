@@ -101,6 +101,7 @@ function pose(a, t, yaw) {
   if (a.squash) { P.squashY *= 1 - a.squash * 0.16; P.squashX *= 1 + a.squash * 0.12; }
 
   const aim = (i, x, y, z) => { P.hands[i] = { x, y, z, aim: true }; };
+  if (a.umbrella && !act && !a.portrait) aim(1, SHO_X + 3, SHO_Y + 2.4, -3.5);   // a rainy day: the right hand up by the shoulder, holding the umbrella
   switch (act) {
     case 'wave': aim(1, SHO_X + 3.2 + Math.sin(t * 12) * 1.8, SHO_Y + 6.4, 2); break;
     case 'cheer': { const k = Math.abs(Math.sin(t * 9)); aim(0, -SHO_X - 2.4, SHO_Y + 6.6 + k * 1.4, 1); aim(1, SHO_X + 2.4, SHO_Y + 6.6 + k * 1.4, 1); break; }
@@ -898,7 +899,27 @@ export function drawVillager(c, a, t) {
       drawHeld(c, P.held, hx, hy, t, facing > -0.2 ? 'front' : 'back', P);
     }
   }
+  if (a.umbrella && !a.act && !a.portrait && P.hR) drawUmbrella(c, a, P, proj(S.head), t);
   c.restore();
+}
+// The umbrella: the pole rises from the right hand past the head; the canopy sits over the head,
+// a little toward the hand, swaying gently.
+function drawUmbrella(c, a, P, hc, t) {
+  let [hx, hy] = P.hR; const R = HR * 1.75, sway = Math.sin(t * 2 + (a.seed || 0)) * 0.5;
+  // the pole stands upright just outside the head (never across the face): the hand moves out to it
+  const side = hx >= hc[0] ? 1 : -1;
+  if (Math.abs(hx - hc[0]) < HR + 1.5) hx = hc[0] + side * (HR + 1.5);
+  const px = hx + sway * 0.4, cx = hc[0] + side * HR * 0.55 + sway, top = hc[1] - HR * 2.7;
+  c.strokeStyle = '#5b3f36'; c.lineWidth = 0.9; c.beginPath(); c.moveTo(hx, hy + 2.2); c.lineTo(px, top + R * 0.62); c.quadraticCurveTo(px, top + 2, cx, top - 1); c.stroke();
+  c.beginPath(); c.moveTo(hx, hy + 2.2); c.quadraticCurveTo(hx + 1.6, hy + 4, hx + 2.2, hy + 2.4); c.stroke();      // the crook of the handle
+  circ(c, hx, hy, 1.85, a.look.skin, INK, 0.9);                                                                  // the hand round the pole
+  const rim = top + R * 0.62;
+  c.beginPath(); c.moveTo(cx - R, rim); c.quadraticCurveTo(cx - R, top + 1, cx, top); c.quadraticCurveTo(cx + R, top + 1, cx + R, rim);
+  for (let i = 4; i >= 0; i--) { const x0 = cx - R + i * (2 * R / 5), x1 = x0 + 2 * R / 5; c.quadraticCurveTo((x0 + x1) / 2, rim - 2.2, x0, rim); }
+  c.closePath(); c.fillStyle = a.umbrella; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+  c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.moveTo(cx - R * 0.6, rim - 2); c.quadraticCurveTo(cx - R * 0.5, top + 2.5, cx - 1.5, top + 1); c.quadraticCurveTo(cx - R * 0.25, top + 4, cx - R * 0.2, rim - 1.5); c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(91,63,54,.35)'; c.lineWidth = 0.5; for (const k of [-0.6, -0.2, 0.2, 0.6]) { c.beginPath(); c.moveTo(cx, top); c.quadraticCurveTo(cx + k * R * 0.6, top + R * 0.3, cx + k * R, rim - 0.6); c.stroke(); }
+  circ(c, cx, top - 1.2, 1, INK, null);
 }
 
 // Which way the face points. Cartoon three-quarter cheat: seen from the side the face

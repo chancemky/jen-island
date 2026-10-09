@@ -9,27 +9,33 @@ import { drawIcon } from '../gfx/food.js';
 
 // ---------------------------------------------------------------- camera
 // ---------------------------------------------------------------- prop sprites
-// Nature props (trees, palms, bushes, grass, flowers, rocks) are drawn into a small
-// offscreen canvas and blitted, re-drawn only when the zoom or the darkness changes or the
-// breeze moves on (ten times a second). Their glows (fireflies) are recorded and replayed.
+// Nature props (trees, palms, bushes, grass, flowers, rocks) are drawn once into a small offscreen
+// canvas and blitted; they're only redrawn when the zoom, the darkness or the season changes. The
+// breeze is a gentle sway applied as the picture is placed (a skew about its base), so the phone
+// doesn't repaint every tree ten times a second. Their glows (fireflies) are recorded and replayed.
 const SPRITE_KINDS = new Set(['tree', 'flameTree', 'palm', 'bush', 'frangipani', 'banana', 'bamboo', 'flowerPatch', 'flowerBed', 'grassTuft', 'tallGrass', 'rock', 'pebbles', 'stump', 'mushrooms', 'reeds']);
+const SWAY = { tree: 0.018, flameTree: 0.018, palm: 0.03, banana: 0.03, bamboo: 0.035, frangipani: 0.02, bush: 0.012, flowerPatch: 0.04, flowerBed: 0.03, grassTuft: 0.06, tallGrass: 0.06, reeds: 0.06 };
 let SPRITE_ON = true;
 export const setSprites = on => { SPRITE_ON = !!on; };
 const liveSprites = new Set();
 function drawSprite(c, t, scene, p, k) {
   const b = p.cull, sc = k.s;
   let S = p._spr;
-  const key = sc + '|' + k.tq + '|' + k.n + '|' + (G.runtime.season || '');      // (the season repaints trees)
+  const key = sc + '|' + k.n + '|' + (G.runtime.season || '');      // (the season repaints trees)
   if (!S || S.key !== key) {
     if (!S) { S = p._spr = { cv: document.createElement('canvas'), key: '', glows: [], used: 0 }; liveSprites.add(p); }
     const w = Math.max(1, Math.ceil(b.w * sc)), h = Math.max(1, Math.ceil(b.h * sc));
     if (S.cv.width !== w || S.cv.height !== h) { S.cv.width = w; S.cv.height = h; } else S.cv.getContext('2d').clearRect(0, 0, w, h);
     const cc = S.cv.getContext('2d'); cc.setTransform(sc, 0, 0, sc, -b.x * sc, -b.y * sc); cc.lineJoin = 'round'; cc.lineCap = 'round';
-    const g0 = glows.length; cc.translate(p.x, p.y); p.draw(cc, k.tq, scene); S.glows = glows.splice(g0);
+    const g0 = glows.length; cc.translate(p.x, p.y); p.draw(cc, 0, scene); S.glows = glows.splice(g0);
     S.key = key;
   }
   S.used = k.now;
-  c.drawImage(S.cv, b.x, b.y, S.cv.width / sc, S.cv.height / sc);
+  const sw = SWAY[p.kind];
+  if (sw && !G.state?.settings?.lowPower) {
+    const k2 = Math.sin(t * 1.4 + p.x * 0.031 + p.y * 0.017) * sw;
+    c.save(); c.transform(1, 0, k2, 1, -k2 * p.y, 0); c.drawImage(S.cv, b.x, b.y, S.cv.width / sc, S.cv.height / sc); c.restore();   // (skewed about the base line y = p.y)
+  } else c.drawImage(S.cv, b.x, b.y, S.cv.width / sc, S.cv.height / sc);
   for (const g of S.glows) glows.push(g);
 }
 export const cam = {
@@ -176,7 +182,9 @@ export class Renderer {
       list.push(p);
     }
     for (const a of scene.actors) if (a.visible && a.x > v.x - pad && a.x < v.x + v.w + pad && a.y > v.y - pad && a.y < v.y + v.h + 80) list.push(a);
-    if (extra.worldExtra) for (const e of extra.worldExtra) list.push(e);
+    // (extras — animals, butterflies, scooters, quest props… — are skipped off-screen like everything else;
+    // a generous margin covers tall ones like a big umbrella or the ferry)
+    if (extra.worldExtra) for (const e of extra.worldExtra) { if (e.x != null && e.y != null && (e.x < v.x - 160 || e.x > v.x + v.w + 160 || e.y < v.y - 80 || e.y > v.y + v.h + 220)) continue; list.push(e); }
     list.sort((a, b) => (a.sortY ?? a.y) - (b.sortY ?? b.y));
     for (const o of list) {
       if (o.viaSprite) { o.draw(c, t, scene); continue; }

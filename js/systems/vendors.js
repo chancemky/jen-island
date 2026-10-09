@@ -12,6 +12,7 @@ import { addXP } from './progress.js';
 import { fx } from '../world/render.js';
 import { CART_CLOSED } from '../gfx/props.js';
 import { BUILDINGS } from '../world/island.js';
+import { INK, circ, ell, shadow } from '../gfx/draw.js';
 
 const GRANNY = (top, apron, hair = '#d8d2d6', hat = null) => ({ skin: '#f1c6a4', eyeCol: '#8a5a40', hair, hairStyle: 'granny', top, topStyle: 'shirt', apron, bottom: '#3f4a5e', bottomLen: 5, shoe: '#7a5040', scale: 0.93, glasses: '#8a6a5a', hat, hatColor: '#efd69a' });
 
@@ -138,4 +139,36 @@ export async function talkToVendor(a) {
 export async function buyFromVendor(a) {
   const item = await talkToVendor(a);
   if (item) await consume(VENDORS[a.data.cart], item);
+}
+
+// In the rain each grandma opens a big market umbrella on a stand over herself and her cart
+// (the kind every Vietnamese street stall has), and folds it away when the rain stops.
+const MARKET_UMB = { icecream: ['#f4a9b8', '#fffaf0'], corn: ['#3f8f6a', '#e9f3dc'], bakery: ['#e8584e', '#fff5df'], xoi: ['#3d6fb0', '#e8f0fa'] };
+const umbOpen = {};
+export function vendorDrawables() {
+  const rain = G.runtime.rainA || 0, out = [];
+  for (const [id, v] of Object.entries(VENDORS)) {
+    const a = v.actor, here = a && a.visible && !a.data.away && !a.data.walking;
+    umbOpen[id] = Math.max(0, Math.min(1, (umbOpen[id] || 0) + (here && rain > 0.3 ? 0.02 : -0.02)));
+    const k = umbOpen[id]; if (!k) continue;
+    const [c1, c2] = MARKET_UMB[id] || ['#e8584e', '#fff5df'];
+    out.push({ x: v.x + 14, y: v.y + 4, sortY: v.y + 4, draw: c => bigUmbrella(c, k, c1, c2) });
+  }
+  return out;
+}
+// a stand (a weighted base) just beside her, a tall pole, and a wide striped canopy over her and the cart
+function bigUmbrella(c, k, c1, c2) {
+  shadow(c, 0, 1, 7, 2.2, 0.2); ell(c, 0, -1.5, 6, 2.6, '#8a8f99', INK, 0.8);
+  const cx = 0, top = -86, R = 38 * (0.25 + 0.75 * k), rim = top + 12 + (1 - k) * 18;      // (it opens out from a furled tube)
+  c.strokeStyle = '#5b3f36'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(0, -2); c.lineTo(0, top + 2); c.stroke();
+  const n = 8, pts = [];
+  for (let i = 0; i <= n; i++) pts.push(cx - R + i * (2 * R / n));
+  for (let i = 0; i < n; i++) {
+    const x0 = pts[i], x1 = pts[i + 1];
+    c.beginPath(); c.moveTo(cx, top); c.lineTo(x0, rim); c.quadraticCurveTo((x0 + x1) / 2, rim - 3.5, x1, rim); c.closePath();
+    c.fillStyle = i % 2 ? c2 : c1; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+  }
+  // the valance: little scallops hanging from the rim
+  for (let i = 0; i < n; i++) { const x0 = pts[i], x1 = pts[i + 1]; c.beginPath(); c.moveTo(x0, rim); c.quadraticCurveTo((x0 + x1) / 2, rim + 4.5, x1, rim); c.fillStyle = i % 2 ? c1 : c2; c.fill(); c.stroke(); }
+  circ(c, cx, top - 1.5, 1.8, '#f2c14e', INK, 0.7);
 }

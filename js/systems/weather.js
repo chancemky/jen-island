@@ -7,7 +7,7 @@
 import { G, T } from './state.js';
 import { rng, bus, jstDayNum, islandSeason } from '../core/util.js';
 import { cam } from '../world/render.js';
-import { sfx } from '../core/audio.js';
+import { sfx, setRain } from '../core/audio.js';
 
 export const seasonOf = () => islandSeason();
 export const SEASON_NAME = { spring: ['Spring', 'Mùa xuân'], summer: ['Summer', 'Mùa hè'], autumn: ['Autumn', 'Mùa thu'], winter: ['Winter', 'Mùa đông'] };
@@ -34,9 +34,16 @@ export function updateWeather(dt) {
   G.runtime.rainA = a < 0.01 ? 0 : a;
   // umbrellas up (and down again) for everyone walking around outside
   const isl = G.scenes.island, up = a > 0.3;
-  if (isl) for (const act of isl.actors) { if (act.kind !== 'human' || act.clip || act.lie) continue; if (up && !act.umbrella && !act.data?.keeper) act.umbrella = UMB[Math.abs(Math.round((act.seed || act.x) * 7)) % UMB.length]; else if (!up && act.umbrella) act.umbrella = null; }
+  if (isl) for (const act of isl.actors) {
+    if (act.kind !== 'human' || act.clip || act.lie) continue;
+    const atCart = act.data?.cart && !act.data.walking && !act.data.away;          // (a grandma at her cart has the big market umbrella instead)
+    if (up && !act.umbrella && !act.data?.keeper && !atCart) act.umbrella = UMB[Math.abs(Math.round((act.seed || act.x) * 7)) % UMB.length];
+    else if ((!up || atCart) && act.umbrella) act.umbrella = null;
+  }
   if (G.player) G.player.umbrella = up && G.scene === isl && !G.player.act ? '#ff8fb0' : null;
-  if (a > 0.2 && (soundT -= dt) <= 0) { soundT = 1.3; sfx(a > 0.8 ? 'amb_rain_heavy' : 'amb_rain'); }
+  // the rain's sound follows how hard it rains (and goes quiet indoors, where a = 0); a far-off
+  // rumble now and then in a heavy shower
+  if ((soundT -= dt) <= 0) { soundT = 0.5; setRain(a); if (a > 0.85 && Math.random() < 0.012) sfx('amb_thunder'); }
 }
 // streaks of rain and splashes, over the island
 export function drawRain(c, t) {

@@ -232,7 +232,7 @@ export function clearStairs() {
         if (sn.x !== p.x || sn.y !== p.y) { const was = { x: p.x, y: p.y }; Object.assign(p, sn); rebuildHouseFurniture(null, sc); if (!fits('builtin:' + k, p.x, p.y, p.rot || 0, { key: k })) Object.assign(p, was); else moved++; rebuildHouseFurniture(null, sc); }
         if (fits('builtin:' + k, p.x, p.y, p.rot || 0, { key: k })) continue;
         const was = { ...p }; p.x = -999; rebuildHouseFurniture(null, sc);
-        const spot = freeSpot('builtin:' + k); Object.assign(p, spot ? { x: spot.x, y: spot.y, rot: 0 } : was); rebuildHouseFurniture(null, sc); moved++; void b;
+        const spot = freeSpot('builtin:' + k, 0, was); Object.assign(p, spot ? { x: spot.x, y: spot.y, rot: 0 } : was); rebuildHouseFurniture(null, sc); moved++; void b;
       }
       const list = furnList(sc);
       for (const f of [...list]) {
@@ -241,7 +241,7 @@ export function clearStairs() {
         if (sn.x !== f.x || sn.y !== f.y) { const was = { x: f.x, y: f.y }; f.x = sn.x; f.y = sn.y; rebuildHouseFurniture(null, sc); if (!fits(f.id, f.x, f.y, f.rot || 0, { f })) { f.x = was.x; f.y = was.y; } else moved++; rebuildHouseFurniture(null, sc); }
         if (fits(f.id, f.x, f.y, f.rot || 0, { f })) continue;
         list.splice(list.indexOf(f), 1); rebuildHouseFurniture(null, sc);
-        const spot = freeSpot(f.id); if (spot) { f.x = spot.x; f.y = spot.y; f.rot = 0; list.push(f); } else G.state.home.owned.push(f.id);
+        const spot = freeSpot(f.id, 0, { x: f.x, y: f.y }); if (spot) { f.x = spot.x; f.y = spot.y; f.rot = 0; list.push(f); } else G.state.home.owned.push(f.id);
         rebuildHouseFurniture(null, sc); moved++;
       }
     } finally { D = keep; }
@@ -287,18 +287,21 @@ function wallSpot(sel, x0, y0, self = null, rot = 0, visible = false) {
   for (const s of spots) if (fits(sel, s.x, s.y, rot, self) && !hid.some(o => overlaps(wallRect(sel, s.x, s.y, sc.WH, rot), o, 0))) return { x: s.x, y: s.y };
   return visible === 2 ? wallSpot(sel, x0, y0, self, rot, 1) : null;
 }
-// a free place for something new, as close to the middle of the floor as possible
-function freeSpot(sel, pad = TILE) {   // (new pieces keep a tile of room around them where they can, so they're easy to see and grab)
+// a free place for something new, as close to the middle of the floor as possible — or, for a
+// piece that has to move (the stairs went in where it stood), as close as possible to where it was,
+// so a wardrobe on the back wall stays on the back wall
+function freeSpot(sel, pad = TILE, near = null) {   // (new pieces keep a tile of room around them where they can, so they're easy to see and grab)
   const sc = house(), def = defOf(sel);
-  if (def.wall) return wallSpot(sel, sc.w / 2, sc.WH * 0.5, null, 0, 2);      // (somewhere you can see it)
+  if (def.wall) return wallSpot(sel, near?.x ?? sc.w / 2, near?.y ?? sc.WH * 0.5, null, 0, 2);      // (somewhere you can see it)
   const g = floorGrid(sc), fp = footprint(def.w, def.h, 0, keyOf(sel)), spots = [];
+  const cx = near?.x ?? sc.w / 2, cy = near?.y ?? g.oy + g.rows * TILE * 0.6, wy = near ? 2.2 : 1.3;   // (moving: stay at the same depth before going sideways)
   for (let gx = 0; gx * TILE + fp.w <= g.cols * TILE; gx++) for (let gy = fp.h / TILE; gy <= g.rows; gy++) {
     const x = g.ox + gx * TILE + fp.w / 2, y = g.oy + gy * TILE;
-    spots.push({ x, y, d: Math.hypot(x - sc.w / 2, (y - (g.oy + g.rows * TILE * 0.6)) * 1.3) });
+    spots.push({ x, y, d: Math.hypot(x - cx, (y - cy) * wy) });
   }
   spots.sort((a, b) => a.d - b.d);
-  for (const s of spots) if (fits(sel, s.x, s.y, 0, null, pad)) return { x: s.x, y: s.y };
-  return pad ? freeSpot(sel, 0) : null;
+  for (const s of spots) if (fits(sel, s.x, s.y, 0, null, near ? 0 : pad)) return { x: s.x, y: s.y };
+  return pad && !near ? freeSpot(sel, 0) : null;
 }
 
 // ---------------------------------------------------------------- undo
@@ -415,7 +418,7 @@ function renderBar() {
   acts.children[1].title = D.folded ? T('Show your items', 'Hiện đồ') : T('Hide the tray', 'Thu gọn');
   const row = bar.querySelector('.row-scroll');
   const ids = Object.keys(counts);
-  if (!ids.length) row.appendChild(h('div', 'deco-empty', T('Everything you own is in the room. Anh Khoa sells more on Market Street.', 'Đồ của bạn đã bày hết trong phòng. Nhà đẹp Anh Khoa ở Phố Chợ có bán thêm.')));
+  if (!ids.length) row.appendChild(h('div', 'deco-empty', T('Everything you own is already placed in your home. Put a piece away on another floor to bring it here, or buy more from Anh Khoa on Market Street.', 'Đồ của bạn đã bày hết trong nhà. Cất bớt một món ở tầng khác để mang lên đây, hoặc mua thêm ở tiệm Anh Khoa trên Phố Chợ.')));
   for (const id of ids) {
     const it = h('button', 'deco-item'); it.type = 'button';
     const cv = document.createElement('canvas'); cv.width = 112; cv.height = 88;

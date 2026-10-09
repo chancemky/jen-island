@@ -83,7 +83,7 @@ import { initAds } from './systems/ads.js';
 import { showWhatsNew } from './ui/whatsnew.js';
 import { openBoutique, openWardrobe, currentLook } from './ui/clothes.js';
 import { openSalon } from './ui/salon.js';
-import { spawnVendors, updateVendors, buyFromVendor } from './systems/vendors.js';
+import { spawnVendors, updateVendors, buyFromVendor, vendorDrawables } from './systems/vendors.js';
 import { updateKeepers, spawnKeepers, keeperActor } from './systems/economy.js';
 import { rebuildPets, updatePets, petMenu, followerUid, setFollower } from './systems/pets.js';
 import { openPetShop } from './ui/petshop.js';
@@ -380,9 +380,12 @@ let last = performance.now(), storyT = 0, areaT = 0;
 let lastFrame = 0;
 function loop(now) {
   requestAnimationFrame(loop);
-  // battery saver: 30 fps (24 when you're standing still), unless Smooth 60 FPS is on
+  // frame rate: 30 fps (24 standing still); Smooth = 60 fps, never more (a 120 Hz iPhone screen would
+  // otherwise run the game at 120 and get hot); battery saver 24/15. Behind a full-screen menu or the
+  // day summary the island can't be seen, so it only ticks over at 10.
   const idle = G.player && G.player.moving < 0.05 && !cs.active && !G.player.path;
-  const lp = G.state?.settings?.lowPower, minMs = lp ? (idle ? 1000 / 15 : 1000 / 24) : G.state?.settings?.smooth ? 0 : idle ? 1000 / 24 : 1000 / 30;
+  const covered = !!document.querySelector('.sheet-wrap:not(.out) .sheet.full, .summary, .wn-wrap:not(.out)');
+  const lp = G.state?.settings?.lowPower, minMs = covered ? 1000 / 10 : lp ? (idle ? 1000 / 15 : 1000 / 24) : G.state?.settings?.smooth ? 1000 / 60 : idle ? 1000 / 24 : 1000 / 30;
   if (now - lastFrame < minMs - 1.5) return;
   lastFrame = now;
   let dt = (now - last) / 1000; last = now;
@@ -395,7 +398,7 @@ function loop(now) {
   if (G.runtime.cinematic) return; // the opening cinematic owns the canvas
   if (!G.scene) return;
   if (G.runtime.paused) { // frozen world: just keep drawing it under the pause card
-    G.renderer.render(G.scene, t, { player: G.player, light: lightingFor(G.state.time, G.scene.kind !== 'island'), worldExtra: G.scene === scenes.island ? [...npcDrawables(), ...natureDrawables(), ...plaqueDrawables(), ...museumDrawables()] : null, overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); drawRainbow(c, tt); } });
+    G.renderer.render(G.scene, t, { player: G.player, light: lightingFor(G.state.time, G.scene.kind !== 'island'), worldExtra: G.scene === scenes.island ? [...npcDrawables(), ...natureDrawables(), ...plaqueDrawables(), ...museumDrawables(), ...vendorDrawables()] : null, overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); drawRainbow(c, tt); } });
     return;
   }
   const gm = updateClock(dt);
@@ -435,7 +438,7 @@ function loop(now) {
   // the shop counter and prep table cover the whole screen: no need to draw the world behind them
   if (!(isServiceOpen() || isPrepOpen())) G.renderer.render(sc, t, {
     player: pl, light,
-    worldExtra: sc === scenes.island ? npcDrawables() : null,
+    worldExtra: sc === scenes.island ? [...npcDrawables(), ...vendorDrawables()] : null,
     overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); drawRainbow(c, tt); G.runtime.decoOverlay?.(c, tt); },
   });
   updateHud(dt);

@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#9fb4a8}canvas{display:block}</style></head><body><canvas id="c"></canvas>
+<script type="module">
+// Umbrellas in the rain: every facing, standing and walking, adult and child
+import { drawHuman } from '../js/gfx/character.js';
+import { playerLook, visitorLook } from '../js/data/looks.js';
+const dirs = ['down', 'right', 'left', 'up'], rows = [[playerLook({ hairStyle: 'bob' }), 0], [playerLook({ hairStyle: 'bob' }), 1], [visitorLook(77, 'regular'), 0], [{ ...visitorLook(31, 'regular'), scale: 0.78 }, 1]];
+const cv = document.getElementById('c'), S = 2, W = dirs.length * 90 + 40, H = rows.length * 170 + 20; cv.width = W * 2; cv.height = H * 2; cv.style.width = W + 'px';
+const c = cv.getContext('2d'); c.scale(2, 2); c.lineJoin = c.lineCap = 'round';
+rows.forEach(([look, mv], r) => dirs.forEach((dir, i) => { c.save(); c.translate(60 + i * 90, r * 170 + 160); c.scale(S, S);
+  drawHuman(c, { look, dir, moving: mv, walkPh: 0.7, seed: 1, blinkAmt: 0, emo: 'happy', umbrella: '#f28f7c' }, 1); c.restore(); }));
+window.__ready = true;
+</script></body></html>

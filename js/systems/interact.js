@@ -32,7 +32,7 @@ export const DISCOVERIES = {
   games: ['Played a game at home', 'Chơi một ván ở nhà'], karaoke_home: ['Sang karaoke at home', 'Hát karaoke ở nhà'], laundry: ['Did the laundry', 'Giặt đồ'],
   workout: ['Worked out', 'Tập thể dục'], chess: ['Played cờ tướng', 'Đánh cờ tướng'], incense: ['Lit incense for the ancestors', 'Thắp hương ông bà'],
   sewing: ['Sewed something', 'May vá'], puddle: ['Splashed in a puddle', 'Lội vũng nước'], frog: ['Startled a frog', 'Làm ếch giật mình'],
-  tidepool: ['Looked in the tide pool', 'Ngắm hồ triều'], fireflies: ['Caught fireflies in a jar', 'Bắt đom đóm vào lọ'], stars: ['Joined up a constellation', 'Nối một chòm sao'], rainbow: ['Photographed a rainbow', 'Chụp ảnh cầu vồng'], movie: ['Watched a film at home', 'Xem phim ở nhà'], craft: ['Fixed something at the workbench', 'Sửa đồ ở bàn thợ'],
+  tidepool: ['Looked in the tide pool', 'Ngắm hồ triều'], fireflies: ['Caught fireflies in a jar', 'Bắt đom đóm vào lọ'], stars: ['Joined up a constellation', 'Nối một chòm sao'], movie: ['Watched a film at home', 'Xem phim ở nhà'], craft: ['Fixed something at the workbench', 'Sửa đồ ở bàn thợ'],
 };
 COUNTS.discoveries = Object.keys(DISCOVERIES).length;
 export function discover(key) {

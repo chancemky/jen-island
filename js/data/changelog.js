@@ -3,9 +3,30 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.18.0';
+export const APP_VERSION = '5.18.1';
 
 export const CHANGELOG = [
+  {
+    v: '5.18.1', date: '2026-10-09T13:15:00Z',
+    title: ['Launch Polish', 'Chuẩn Bị Ra Mắt'],
+    items: [
+      ['Cooler and smoother: Smooth mode is a real 60 FPS (it ran at 120 on some iPhones and made them hot), and the island does much less work for things off screen', 'Mát máy và mượt hơn: chế độ Mượt đúng 60 FPS (trước đây chạy 120 trên một số iPhone làm máy nóng), và đảo bớt hẳn việc cho những thứ ngoài màn hình'],
+      ['Rain sounds like rain: a soft, steady shower instead of repeated splashes, and quieter', 'Tiếng mưa giống mưa thật: rả rích đều đều thay vì tiếng rào rào lặp lại, và nhỏ hơn'],
+      ['Umbrellas are held in the hand, up beside the head', 'Ô được cầm trên tay, giơ cạnh đầu'],
+      ['In the rain the cart grandmas open big market umbrellas on stands over their carts', 'Trời mưa, các bà bán hàng rong dựng dù chợ thật to che xe hàng'],
+      ['The cart handles no longer cross the grandmas\' faces', 'Tay đẩy xe hàng không còn che mặt các bà'],
+      ['The rainbow is gone', 'Bỏ cầu vồng'],
+      ['The game starts reliably: no more false \'didn\'t open\' card, and a weak connection can\'t stall it — you play offline and it syncs later', 'Game mở ổn định: không còn báo lỗi nhầm khi mở, mạng yếu cũng không làm treo — bạn chơi ngoại tuyến rồi đồng bộ sau'],
+      ['After an all-nighter you now wake up clearly curled in Mèo Mây\'s big cat bed', 'Sau một đêm thức trắng, bạn tỉnh dậy cuộn tròn trong chiếc ổ mèo to của Mèo Mây'],
+      ['Upgrading your house keeps the wardrobe and other pieces near where they were', 'Nâng cấp nhà giữ tủ quần áo và các món khác gần chỗ cũ'],
+      ['Every furniture picture in the shop now shows the whole piece; the armchair, radio, koi basin and ship in a bottle look right from every side', 'Mọi hình nội thất trong tiệm hiện trọn món đồ; ghế bành, radio, hồ cá koi và thuyền trong chai nhìn đúng từ mọi phía'],
+      ['Space buns look like buns from the side', 'Tóc búi hai bên nhìn từ bên cạnh giờ ra dáng búi tóc'],
+      ['Pop-ups wait while a menu is open, and many milestones at once make one card', 'Thông báo nhỏ chờ khi đang mở menu, và nhiều cột mốc cùng lúc gộp thành một thẻ'],
+      ['Bigger sliders and buttons, hat choices no longer look crossed out, and the night stall sign says Grilled Rice Paper', 'Thanh trượt và nút to hơn, các kiểu mũ không còn bị gạch ngang, và biển sạp đêm ghi Bánh Tráng Nướng'],
+      ['The game starts in your phone\'s language, and the weekly board shows its reset in your own time', 'Game mở theo ngôn ngữ của điện thoại, và bảng tuần hiện giờ làm mới theo giờ của bạn'],
+      ['Privacy: deleting your account also removes your backed-up photos; the privacy policy covers photos, postcards and gifts', 'Quyền riêng tư: xóa tài khoản cũng xóa ảnh đã sao lưu; chính sách bảo mật ghi rõ ảnh, bưu thiếp và quà tặng'],
+    ],
+  },
   {
     v: '5.18.0', date: '2026-10-09T11:27:28Z',
     title: ['Upstairs & Island Life', 'Lên Lầu & Đời Sống Trên Đảo'],

@@ -5,7 +5,6 @@
 //    find a tiny creature for your collection — one a tide
 //  · fireflies on Firefly Islet (spring and summer): at night, catch some in a jar for your
 //    home (one a night)
-//  · a rainbow after a daytime shower (take a photo while it lasts)
 //  · stargazing at Lighthouse Point on clear nights: join the stars into tonight's constellation
 //  · Chú Hải's fishing tournament on the first day of every season, in the morning until noon:
 //    biggest catch wins (one prize per real day)
@@ -74,12 +73,9 @@ export function updateNature(dt) {
     if (f.hop > 0) { f.hop -= dt; const t = 1 - Math.max(0, f.hop) / 0.45; f.x = f.fx + (f.tx - f.fx) * t; f.y = f.fy + (f.ty - f.fy) * t; f.z = Math.sin(t * Math.PI) * 10; }
     else { f.z = 0; f.x += (f.hx - f.x) * dt * 0.15; f.y += (f.hy - f.y) * dt * 0.15; }
   }
-  // the rainbow: a daytime shower that's just ended
-  const r = G.runtime.rainA || 0, h = hr();
-  if (G.runtime.wasRaining && r < 0.1 && h >= 7 && h < 17.5) { G.runtime.rainbow = { day: G.state.day, until: G.state.time + 100 }; bus.emit('toast', { cat: 'weather', text: T('A rainbow over the island!', 'Cầu vồng trên đảo!'), sub: T('Quick — take a photo while it lasts.', 'Nhanh — chụp ảnh khi nó còn đó.'), icon: 'photo', ms: 3600 }); }
-  G.runtime.wasRaining = r > 0.4 ? true : r < 0.1 ? false : G.runtime.wasRaining;
+  const r = G.runtime.rainA || 0; G.runtime.wasRaining = r > 0.4 ? true : r < 0.1 ? false : G.runtime.wasRaining;
 }
-export const rainbowOn = () => { const rb = G.runtime.rainbow; return !!rb && rb.day === G.state.day && G.state.time < rb.until && onIsland(); };
+export const rainbowOn = () => false;   // (the rainbow was taken out in 5.18.1)
 export function natureDrawables() {
   const out = [], v = cam.view; if (!v) return out;
   const k = wet();
@@ -107,15 +103,7 @@ export function natureDrawables() {
   out.push(...tideDrawables());
   return out;
 }
-// the rainbow: a big soft arc across the top of the view (drawn after the lighting)
-export function drawRainbow(c, t) {
-  if (!rainbowOn()) return;
-  const v = cam.view, rb = G.runtime.rainbow, left = (rb.until - G.state.time) / 100, a = Math.min(1, left * 3, (100 - (rb.until - G.state.time)) / 10) * 0.4;
-  const cx = v.x + v.w * 0.62, cy = v.y + v.h * 0.55, R = v.w * 0.62;
-  c.save(); c.globalAlpha = Math.max(0, a); c.lineWidth = R * 0.028;
-  ['#ff6b6b', '#ffa94d', '#ffe066', '#8ce99a', '#74c0fc', '#9775fa'].forEach((col, i) => { c.strokeStyle = col; c.beginPath(); c.arc(cx, cy, R - i * c.lineWidth, Math.PI * 1.08, Math.PI * 1.92); c.stroke(); });
-  c.restore();
-}
+export function drawRainbow() {}
 
 // ---------------------------------------------------------------- the tide pool
 export const TIDE = { x: 380, y: 2290 };
