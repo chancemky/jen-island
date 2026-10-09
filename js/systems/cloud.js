@@ -198,3 +198,14 @@ export async function giftsWaiting() {
 }
 export async function claimGift(id) { const rows = await api(`/rest/v1/jen_island_gifts?id=eq.${id}&claimed=eq.false&select=id`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ claimed: true }) }); return !!rows?.length; }
 export const hasSession = () => !!session;
+
+// Album backup (migration 019): a private bucket, one small JSON file per photo in a folder
+// named after the user id. The bucket's policies cap it at 24 files per player.
+const PHOTOS = '/storage/v1/object/jen-island-photos';
+export async function cloudPhotoList() {
+  const rows = await api('/storage/v1/object/list/jen-island-photos', { method: 'POST', body: JSON.stringify({ prefix: session.user.id, limit: 100, offset: 0 }) });
+  return (rows || []).map(r => +String(r.name).replace(/\.json$/, '')).filter(Boolean);
+}
+export async function cloudPhotoPut(photo) { await api(`${PHOTOS}/${session.user.id}/${photo.t}.json`, { method: 'POST', body: JSON.stringify(photo) }); }
+export async function cloudPhotoGet(t) { return api(`/storage/v1/object/authenticated/jen-island-photos/${session.user.id}/${+t}.json`); }
+export async function cloudPhotoDel(ts) { if (ts.length) await api(PHOTOS, { method: 'DELETE', body: JSON.stringify({ prefixes: ts.map(t => `${session.user.id}/${+t}.json`) }) }); }

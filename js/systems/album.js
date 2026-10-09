@@ -1,18 +1,21 @@
 // The photo album: the game quietly takes a snapshot of the island at the big
 // moments — the first repair, the first customer, every chapter, the festival,
 // Minh's photo trips — and keeps them with a caption and the day. Pictures live
-// on this device only (they're too big for the cloud save).
+// on this device (they're too big for the cloud save); signed-in players also get
+// the newest 24 backed up to a private storage folder and restored on a new device.
 
 import { G, T } from './state.js';
 import { bus, sleep } from '../core/util.js';
 import { RESIDENTS } from '../data/looks.js';
 import { cam, fx } from '../world/render.js';
+import { hasSession, cloudPhotoList, cloudPhotoPut, cloudPhotoGet, cloudPhotoDel } from './cloud.js';
 
 const MAX = 36;
 const key = () => G.user ? `jenisland.album.${G.user.id}` : null;
 export function albumPhotos() { try { return JSON.parse(localStorage.getItem(key()) || '[]'); } catch { return []; } }
 function save(list) {
-  for (let n = list.length; n > 0; n--) { try { localStorage.setItem(key(), JSON.stringify(list.slice(-n))); return; } catch { /* full: keep fewer */ } }
+  for (let n = list.length; n > 0; n--) { try { localStorage.setItem(key(), JSON.stringify(list.slice(-n))); break; } catch { /* full: keep fewer */ } }
+  soonSync();
 }
 // take the picture a moment after the event, so the scene has settled
 export function snapshot(title, delay = 1200) {
@@ -90,7 +93,76 @@ function grab(title) {
     return cv.toDataURL('image/jpeg', 0.8);
   } catch { return null; }
 }
-export function deletePhoto(t) { save(albumPhotos().filter(p => p.t !== t)); }
+export function deletePhoto(t) {
+  goneList(l => l.push(t));
+  save(albumPhotos().filter(p => p.t !== t));
+}
+// ---------------------------------------------------------------- cloud backup
+// Keeps the newest CLOUD_MAX photos in the player's private folder (≤ 60 KB each, so a player
+// uses ~1.5 MB at most). Photos deleted here are remembered until the cloud copy is gone too,
+// so a sync never brings them back.
+const CLOUD_MAX = 24, LIMIT = 60000;
+const goneKey = () => G.user ? `jenisland.albumgone.${G.user.id}` : null;
+function goneList(edit) {
+  let l = []; try { l = JSON.parse(localStorage.getItem(goneKey()) || '[]'); } catch {}
+  if (edit) { edit(l); try { localStorage.setItem(goneKey(), JSON.stringify(l.slice(-100))); } catch {} }
+  return l;
+}
+const canSync = () => !!G.user && !G.user.guest && hasSession();
+let timer = null, syncing = null, again = false, lastSync = 0;
+function soonSync() { if (!canSync()) return; clearTimeout(timer); timer = setTimeout(() => syncAlbum(), 5000); }
+// a smaller copy when a photo is too big for the bucket's 64 KB limit
+async function fit(ph) {
+  const size = o => JSON.stringify(o).length;
+  if (size(ph) <= LIMIT) return ph;
+  const im = new Image(); im.src = ph.img; await im.decode();
+  for (const [scale, q] of [[1, 0.6], [0.8, 0.55], [0.65, 0.5], [0.5, 0.45]]) {
+    const cv = document.createElement('canvas'); cv.width = Math.round(im.width * scale); cv.height = Math.round(im.height * scale);
+    cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+    const out = { ...ph, img: cv.toDataURL('image/jpeg', q) };
+    if (size(out) <= LIMIT) return out;
+  }
+  return null;
+}
+// Returns how many photos came back from the cloud.
+export function syncAlbum() {
+  if (!canSync()) return Promise.resolve(0);
+  if (syncing) { again = true; return syncing; }
+  const uid = G.user.id;
+  syncing = (async () => {
+    let restored = 0;
+    try {
+      let up = await cloudPhotoList();
+      const gone = goneList();
+      const dead = up.filter(t => gone.includes(t));
+      if (dead.length) { await cloudPhotoDel(dead); up = up.filter(t => !dead.includes(t)); }
+      if (gone.length) goneList(l => l.splice(0, l.length));
+      // bring back what this device doesn't have (a new phone, a cleared browser)
+      const local = albumPhotos(), have = new Set(local.map(p => p.t));
+      for (const t of up.filter(t => !have.has(t))) {
+        const ph = await cloudPhotoGet(t).catch(() => null);
+        if (G.user?.id !== uid) return restored;
+        if (ph?.img && Array.isArray(ph.title)) { local.push({ day: +ph.day || 0, t, title: ph.title.slice(0, 2).map(String), img: String(ph.img), ...(ph.mine ? { mine: true } : {}), ...(ph.celebration ? { celebration: true } : {}) }); restored++; }
+      }
+      if (restored) {
+        local.sort((a, b) => a.t - b.t); while (local.length > MAX) local.shift();
+        for (let n = local.length; n > 0; n--) { try { localStorage.setItem(key(), JSON.stringify(local.slice(-n))); break; } catch {} }
+      }
+      // back up the newest ones, making room by dropping the oldest backups
+      const keep = albumPhotos().slice(-CLOUD_MAX), want = new Set(keep.map(p => p.t));
+      const extra = up.filter(t => !want.has(t)).sort((a, b) => a - b);
+      const todo = keep.filter(p => !up.includes(p.t));
+      const drop = extra.slice(0, Math.max(0, up.length + todo.length - CLOUD_MAX));
+      if (drop.length) await cloudPhotoDel(drop);
+      for (const p of todo) { const small = await fit(p).catch(() => null); if (small) await cloudPhotoPut(small); if (G.user?.id !== uid) break; }
+      lastSync = Date.now();
+    } catch (e) { console.warn('album backup', e); }
+    return restored;
+  })().finally(() => { syncing = null; if (again) { again = false; soonSync(); } });
+  return syncing;
+}
+// the journal asks at most once a minute
+export function syncAlbumIfStale() { return Date.now() - lastSync > 60000 ? syncAlbum() : Promise.resolve(0); }
 const MOMENTS = {
   first_repair: ['The first shed, fixed', 'Căn chòi đầu tiên, đã sửa xong'], first_sale: ['My very first customer', 'Vị khách đầu tiên'],
   first_keeper: ['My first helper', 'Người phụ giúp đầu tiên'], truck: ['The truck is ours', 'Chiếc xe là của mình'],
@@ -99,6 +171,7 @@ const MOMENTS = {
   keeper_island: ['Keeper of the Island', 'Người Giữ Đảo'], sunrise: ['Sunrise from the lighthouse', 'Bình minh từ hải đăng'],
 };
 export function initAlbum() {
+  setTimeout(() => syncAlbum(), 20000);              // once things have settled after sign-in
   bus.on('achievement', id => { if (MOMENTS[id]) celebratePhoto(MOMENTS[id]); });
   bus.on('chapterCard', (n, title) => celebratePhoto(title));
   bus.on('levelup', lv => { if (lv % 10 === 0) celebratePhoto([`Level ${lv}!`, `Cấp ${lv}!`]); });

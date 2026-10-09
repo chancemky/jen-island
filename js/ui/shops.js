@@ -15,7 +15,7 @@ import { level } from '../systems/progress.js';
 import { activeQuests, SIDE_QUESTS, deliverTarget } from '../systems/sidequests.js';
 import { MEO_MEMORIES } from '../data/lore.js';
 import { DISCOVERIES } from '../systems/interact.js';
-import { albumPhotos } from '../systems/album.js';
+import { albumPhotos, syncAlbumIfStale } from '../systems/album.js';
 import { openPhotoViewer } from './album.js';
 import { nextHome, homeLoan, upgradeHome, nextFloor, upgradeFloor, placedFurniture } from '../systems/home.js';
 import { setProgress, comfortBonus } from '../data/sets.js';
@@ -541,6 +541,9 @@ export function openJournal() {
     // the photo album: snapshots of the big moments
     const photos = albumPhotos();
     list.appendChild(h('div', 'section-title', T(`Photo album (${photos.length})`, `Album ảnh (${photos.length})`)));
+    syncAlbumIfStale().then(n => { if (n && list.isConnected) api.rebuild(); });
+    if (G.user && !G.user.guest) list.appendChild(h('div', 'empty-note', T('☁ Your newest 24 photos are backed up to your account, so they come back on a new device.', '☁ 24 ảnh mới nhất được sao lưu vào tài khoản, đổi máy vẫn còn.')));
+    else if (photos.length) list.appendChild(h('div', 'empty-note', T('Photos are kept on this device. Create an account to back them up.', 'Ảnh chỉ lưu trên máy này. Tạo tài khoản để sao lưu.')));
     if (!photos.length) list.appendChild(h('div', 'empty-note', T('The big moments are photographed for you — the first repair, the first customer, every new chapter…', 'Những khoảnh khắc lớn sẽ được chụp lại — lần sửa quán đầu tiên, vị khách đầu tiên, mỗi chương mới…')));
     else {
       const grid = h('div', 'album'); list.appendChild(grid);

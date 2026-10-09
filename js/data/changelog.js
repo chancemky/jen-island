@@ -3,9 +3,32 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.17.0';
+export const APP_VERSION = '5.18.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.18.0', date: '2026-10-09T11:27:28Z',
+    title: ['Upstairs & Island Life', 'Lên Lầu & Đời Sống Trên Đảo'],
+    items: [
+      ['Home upgrades now add an upstairs floor and a basement, with 31 new furniture pieces that look right from every side', 'Nâng cấp nhà giờ có thêm tầng lầu và tầng hầm, cùng 31 món nội thất mới nhìn đẹp từ mọi phía'],
+      ['Easier decorating: furniture snaps to a tile grid, tap to move, nudge arrows, and wall pictures hang anywhere on the wall', 'Trang trí dễ hơn: nội thất bám theo ô lưới, chạm để di chuyển, nút nhích từng chút, tranh treo được ở bất kỳ chỗ nào trên tường'],
+      ['Paint your walls and floors, recolour furniture, plant a front garden, and try for Home of the Week', 'Sơn tường và sàn, đổi màu nội thất, làm vườn trước nhà, và tranh giải Nhà Đẹp Trong Tuần'],
+      ['Staff uniforms and shop interior colours from the Business tab; give staff today or tomorrow off', 'Đồng phục nhân viên và màu nội thất quán trong mục Kinh doanh; cho nhân viên nghỉ hôm nay hoặc ngày mai'],
+      ['Island nature: frogs and puddles in the rains, night fishing, a tide pool, fireflies, rainbows, stars to collect and Chú Hải\'\\\'\'s seasonal fishing tournament', 'Thiên nhiên trên đảo: ếch và vũng nước mùa mưa, câu cá đêm, hồ thủy triều, đom đóm, cầu vồng, sưu tầm sao và giải câu cá theo mùa của Chú Hải'],
+      ['A morning bakery cart with bánh bao and bánh bò, a vegetable garden for fresh herbs, and new street carts (xôi, grilled corn, bánh tráng trộn)', 'Xe bánh buổi sáng có bánh bao và bánh bò, vườn rau cho rau thơm tươi, và các xe mới (xôi, bắp nướng, bánh tráng trộn)'],
+      ['The Night Market comes alive: vendors work their stalls, families eat together at the tables, and everyone packs up at 23:00', 'Chợ Đêm nhộn nhịp: người bán đứng quầy, các gia đình ngồi ăn cùng nhau, và mọi người dọn hàng lúc 23:00'],
+      ['Two newcomers move in, Minh and Linh get married on Wind Plaza, Tín writes letters from Đà Lạt, and a cờ tướng puzzle corner opens', 'Hai cư dân mới chuyển đến, Minh và Linh làm đám cưới ở Quảng trường gió, Tín gửi thư từ Đà Lạt, và góc giải cờ tướng được mở'],
+      ['The Village Hall museum, heritage plaques, season stamp cards and an island year in review', 'Bảo tàng ở Nhà Văn Hóa, bảng di tích, thẻ tem theo mùa và tổng kết một năm trên đảo'],
+      ['Send friends furniture gifts, keep a postcard box, and join a weekly friend challenge', 'Tặng bạn bè nội thất, giữ hộp bưu thiếp, và tham gia thử thách bạn bè hằng tuần'],
+      ['Your newest 24 album photos are backed up to your account and come back on a new device', '24 ảnh mới nhất trong album được sao lưu vào tài khoản, đổi máy vẫn còn'],
+      ['Settings: pop-up categories, battery saver, a colour-blind palette, an optional day summary, and one-tap restock for all shops', 'Cài đặt: chọn loại thông báo, tiết kiệm pin, bảng màu cho người mù màu, tóm tắt cuối ngày tùy chọn, và nhập hàng mọi quán chỉ một chạm'],
+      ['If you stay up past 5 am you doze off on the spot, and Mèo Mây brings you home to her cat bed', 'Thức quá 5 giờ sáng là bạn ngủ gục tại chỗ, và Mèo Mây đưa bạn về ổ mèo của nó'],
+      ['Fixed: villagers vanishing, the beeping sound, the Enter button blocking Talk, walking on bridge rails and in the river, mopeds hitting pets, floating plaza flags, the empty shopping basket, screens that would not scroll, and drinks going through heads', 'Đã sửa: người dân biến mất, tiếng bíp, nút Vào che nút Nói chuyện, đi trên lan can cầu và dưới sông, xe máy tông thú cưng, cờ quảng trường lơ lửng, giỏ đi chợ trống, màn hình không cuộn được, và ly nước xuyên qua đầu'],
+      ['Fixed: a shop that cannot open now says exactly what it is missing, and prepped portions count as stock at the supermarket', 'Đã sửa: quán chưa mở được giờ báo rõ còn thiếu gì, và phần đã sơ chế được tính vào hàng tồn ở siêu thị'],
+      ['Fixed: the Smoothie Bar has a door and its own menu, stall menus no longer repeat, snails come with fish sauce and lime, and chè thập cẩm has its full set of toppings', 'Đã sửa: Quán Sinh Tố có cửa và thực đơn riêng, các sạp không còn bán trùng món, ốc ăn kèm nước mắm và chanh, và chè thập cẩm đủ các loại topping'],
+      ['Map names now sit on their places, and a friend\'\\\'\'s upgraded house looks the right size when you visit', 'Tên trên bản đồ nằm đúng chỗ, và nhà đã nâng cấp của bạn bè hiện đúng kích thước khi ghé thăm'],
+    ],
+  },
   {
     v: '5.17.0', date: '2026-10-08T11:50:20Z',
     title: ['Quieter shops, a real Smoothie Bar', 'Bớt thông báo, Quán Sinh Tố hoàn chỉnh'],
