@@ -27,8 +27,8 @@ function gather() {
   gathered = { couple, guests, looks: couple.map(a => a.look) };
   for (const a of [...couple, ...guests]) { releaseStand(a); a.data.wedding = true; }
   blockZone('wedding', SPOT.x, SPOT.y + 14, 64);
-  couple.forEach((a, i) => { a.look = { ...a.look, ...outfit[a.data.rid] }; a.stop?.(); a.data.state = 'busy'; a.walkTo?.([[SPOT.x - 10 + i * 20, SPOT.y - 6]]).then(() => a.face?.('down')); });
-  guests.forEach((a, i) => { const ang = Math.PI * (0.2 + i * 0.15), x = SPOT.x + Math.cos(ang) * 46 - 0, y = SPOT.y + 26 + Math.sin(ang) * 12; a.stop?.(); a.data.state = 'busy'; a.walkTo?.([[x, y]]).then(() => { a.face?.('up'); a.showEmote?.('heart', 2); }); });
+  couple.forEach((a, i) => { a.look = { ...a.look, ...outfit[a.data.rid] }; a.stop?.(); a.data.state = 'busy'; a.walkTo?.(G.scenes.island.nav.path(a.x, a.y, SPOT.x - 10 + i * 20, SPOT.y - 6)).then(() => a.face?.('down')); });
+  guests.forEach((a, i) => { const ang = Math.PI * (0.2 + i * 0.15), x = SPOT.x + Math.cos(ang) * 46 - 0, y = SPOT.y + 26 + Math.sin(ang) * 12; a.stop?.(); a.data.state = 'busy'; a.walkTo?.(G.scenes.island.nav.path(a.x, a.y, x, y)).then(() => { a.face?.('up'); a.showEmote?.('heart', 2); }); });   // (along the paths: guests used to walk straight across the sea)
 }
 function disperse() {
   if (!gathered) return;

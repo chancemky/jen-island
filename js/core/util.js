@@ -91,7 +91,8 @@ export const useLanguage = fn => { langOf = fn; };
 const fmts = {};   // (number formatters are slow to make, and money is drawn every frame)
 const num = (v, digits = 0) => { const k = langOf() + digits; return (fmts[k] ||= new Intl.NumberFormat(langOf() === 'vi' ? 'vi-VN' : 'en-US', { maximumFractionDigits: digits })).format(v); };
 // Money is stored in thousands of đồng ("k"), the way Vietnamese menus show it.
-const unitFor = magnitude => magnitude >= 1000000 ? v => num(Math.round(v / 100000) / 10, 1) + 'B' : magnitude >= 10000 ? v => num(Math.round(v / 100) / 10, 1) + 'M' : v => num(v) + 'k';
+// From 1M up it's M (1.5M, 9M, 16.8M): "9,000k" next to "16.8M" read as two different scales.
+const unitFor = magnitude => magnitude >= 1000000 ? v => num(Math.round(v / 100000) / 10, 1) + 'B' : magnitude >= 10000 ? v => num(Math.round(v / 100) / 10, 1) + 'M' : magnitude >= 1000 ? v => num(Math.round(v / 10) / 100, 2) + 'M' : v => num(v) + 'k';
 export function money(k) {
   const v = Math.round(k);
   return unitFor(Math.abs(v))(v);

@@ -5,13 +5,13 @@ import { INGREDIENTS, AISLES, MATERIALS, FURNITURE, RECIPES, STATION, BUSINESSES
 import { MERCHANTS, RESIDENTS } from '../data/looks.js';
 import { openSheet, tabs, rowEl, btn, h, flyIcon } from './sheets.js';
 import { sfx } from '../core/audio.js';
-import { money, escapeHtml, bus, clock } from '../core/util.js';
+import { money, escapeHtml, bus, clock, jstDayNum, islandNow } from '../core/util.js';
 import { iconURL, hasIcon } from '../gfx/food.js';
 import { CLOTHES, FREE_CLOTHES } from '../data/wardrobe.js';
 import { FISH } from '../systems/fishing.js';
 import { drawFurniturePreview } from '../gfx/furniture.js';
 import { bizRecipes, ingredientsForBiz, canMake, recipePrice, priceMul, priceAppeal, stockOf } from '../systems/business.js';
-import { level } from '../systems/progress.js';
+import { level, PRICE_LEVEL } from '../systems/progress.js';
 import { activeQuests, SIDE_QUESTS, deliverTarget } from '../systems/sidequests.js';
 import { MEO_MEMORIES } from '../data/lore.js';
 import { DISCOVERIES } from '../systems/interact.js';
@@ -19,7 +19,7 @@ import { albumPhotos, syncAlbumIfStale } from '../systems/album.js';
 import { openPhotoViewer } from './album.js';
 import { setGoal, isGoal, goalBought } from '../systems/goal.js';
 import { nextHome, homeLoan, upgradeHome, nextFloor, upgradeFloor, placedFurniture, loanDeposit } from '../systems/home.js';
-import { setProgress, comfortBonus } from '../data/sets.js';
+import { setProgress, comfortBonus, SETS } from '../data/sets.js';
 import { upgradeCost, shopNeed } from '../systems/economy.js';
 import { toast, moneyShortfall } from './hud.js';
 import { STEPS, STEP_TEACHES } from '../systems/story.js';
@@ -166,10 +166,36 @@ export function openMaterialShop() {
 }
 
 // ---------------------------------------------------------------- furniture
+// today's pick at Anh Khoa's: chosen by the shared island day, from what you could buy anyway
+function todaysPick() {
+  const s = G.state, ok = Object.keys(FURNITURE).filter(id => { const f = FURNITURE[id]; return !f.reward && !f.collector && f.price >= 1000 && !(f.unlock && s.story.chapter < f.unlock) && !(f.need && !s.story.flags[f.need]); });
+  if (!ok.length) return null;
+  let x = (jstDayNum(islandNow()) * 2654435761) >>> 0; x ^= x >>> 13; x = Math.imul(x, 1274126177) >>> 0;
+  return ok[x % ok.length];
+}
+const pickPrice = id => Math.round(FURNITURE[id].price * 0.8 / 50) * 50;
+// one note for a shopping spree (sixteen pieces used to queue sixteen "delivered" toasts)
+let delivered = [], deliverT = null;
+function noteDelivery(id) {
+  delivered.push(id); clearTimeout(deliverT);
+  deliverT = setTimeout(() => {
+    const n = delivered.length, one = furnName(delivered[0]); delivered = [];
+    toast({ text: n > 1 ? T(`${n} pieces delivered to your home`, `${n} món đã được gửi về nhà`) : T(`${one} delivered to your home`, `${one} đã được gửi về nhà`), sub: T('Tap Decorate inside your house.', 'Bấm Trang trí trong nhà nhé.'), icon: 'sofa' });
+  }, 1200);
+}
 export function openFurnitureShop() {
   openSheet({ title: T('Anh Khoa\'s Furniture', 'Nhà đẹp Anh Khoa'), sub: T('Make your house a home', 'Đồ đạc cho ngôi nhà'), who: MERCHANTS.anh_khoa, build: (body, api) => {
     const list = h('div', 'list scroll'); list.style.flex = '1'; body.appendChild(list);
     const s = G.state;
+    // today's pick: one piece 20% off, a new one every (Japan-time) day — a reason to drop by each morning
+    { const pick = todaysPick(), f = pick && FURNITURE[pick];
+      if (f) { const price = pickPrice(pick), r = highlightRow(), cv = document.createElement('canvas'); cv.width = cv.height = 96; cv.style.width = cv.style.height = '48px';
+        const ico = h('div', 'ico'); ico.appendChild(cv); drawFurniturePreview(cv, pick, f);
+        r.append(ico, h('div', 'info', `<b>${T('Today\'s pick', 'Món hôm nay')} · ${escapeHtml(furnName(pick))}</b><small>${T(`20% off, today only (was ${money(f.price)})`, `Giảm 20%, chỉ hôm nay (giá gốc ${money(f.price)})`)}</small>`), btn(money(price), () => {
+          if (!canAfford(price)) return moneyShortfall(price);
+          addMoney(-price, 'furniture'); sfx('buy'); merchantSay(); s.home.owned.push(pick); markDirty(true); noteDelivery(pick); bus.emit('bought', 'furniture', pick); api.rebuild();
+        }, 'buy'));
+        list.appendChild(r); } }
     // home upgrades (pay now, or move in now and pay back a little each good night)
     const up = nextHome();
     if (up || homeLoan()) {
@@ -188,25 +214,32 @@ export function openFurnitureShop() {
     { const sets = setProgress(s.home), done = sets.filter(x => x.done).length;
       list.appendChild(h('div', 'section-title', T(`Furniture sets · ${done} complete · tips +${Math.round(comfortBonus(s.home) * 100)}%`, `Bộ nội thất · hoàn thành ${done} · boa +${Math.round(comfortBonus(s.home) * 100)}%`)));
       const wrap = h('div', 'set-list'); list.appendChild(wrap);
-      for (const st of sets) wrap.appendChild(h('div', 'set-chip' + (st.done ? ' done' : ''), `<b>${st.done ? '✓ ' : ''}${escapeHtml(T(st.en, st.vi))}</b><small>${st.have}/${st.pieces.length} · ${st.pieces.map(p => escapeHtml(furnName(p))).join(', ')}</small>`)); }
-    const ids = Object.keys(FURNITURE).sort((a, b) => !!FURNITURE[a].collector - !!FURNITURE[b].collector);
-    let collectorHead = false;
+      // placed pieces count toward a set; owned ones still in storage are shown too (a set you'd bought used to read 0/4)
+      const stored = new Set(s.home.owned);
+      for (const st of sets) { const inBox = st.pieces.filter(p => stored.has(p)).length;
+        wrap.appendChild(h('div', 'set-chip' + (st.done ? ' done' : ''), `<b>${st.done ? '✓ ' : ''}${escapeHtml(T(st.en, st.vi))}</b><small>${T(`${st.have}/${st.pieces.length} placed`, `đã đặt ${st.have}/${st.pieces.length}`)}${inBox && !st.done ? T(` · ${inBox} waiting in storage`, ` · ${inBox} món còn trong kho`) : ''} · ${st.pieces.map(p => escapeHtml(furnName(p))).join(', ')}</small>`)); } }
+    // grouped (floor · walls · lights · collector's corner) and cheapest first within each group
+    const group = f => f.collector ? 3 : f.light ? 2 : f.wall ? 1 : 0;
+    const ids = Object.keys(FURNITURE).sort((a, b) => group(FURNITURE[a]) - group(FURNITURE[b]) || FURNITURE[a].price - FURNITURE[b].price);
+    const HEADS = [T('For the floor', 'Đồ đặt sàn'), T('For the walls', 'Đồ treo tường'), T('Lights', 'Đèn'), T('✦ Collector\'s corner', '✦ Góc sưu tầm')];
+    const setOf = id => Object.values(SETS).find(st => st.pieces.includes(id));
+    let lastHead = -1;
     for (const id of ids) {
       const f = FURNITURE[id];
       if (f.reward || (f.unlock && s.story.chapter < f.unlock)) continue;
       if (f.need && !s.story.flags[f.need] && !(s.sideQuests?.[f.need] === 'done')) continue;
-      if (f.collector && !collectorHead) { collectorHead = true; list.appendChild(h('div', 'section-title', T('✦ Collector\'s corner', '✦ Góc sưu tầm'))); }
+      if (group(f) !== lastHead) { lastHead = group(f); list.appendChild(h('div', 'section-title', HEADS[lastHead])); }
       const owned = s.home.owned.filter(x => x === id).length + placedFurniture().filter(x => x.id === id).length;
       const r = h('div', 'row');
       const cv = document.createElement('canvas'); cv.width = 96; cv.height = 96; cv.style.width = cv.style.height = '48px';
       const ico = h('div', 'ico'); ico.appendChild(cv); drawFurniturePreview(cv, id, f);
-      const kind = f.light ? T('Glows warmly at night', 'Tỏa sáng ấm áp') : f.wall ? T('Hangs on the wall', 'Treo tường') : T('Place it in your home', 'Đặt trong nhà');
+      const inSet = setOf(id), kind = inSet ? T(`Part of the ${inSet.en} set`, `Thuộc bộ ${inSet.vi}`) : f.light ? T('Glows warmly at night', 'Tỏa sáng ấm áp') : f.wall ? T('Hangs on the wall', 'Treo tường') : T('Place it in your home', 'Đặt trong nhà');
       const info = h('div', 'info', `<b>${escapeHtml(furnName(id))}</b><small>${kind}</small>${owned ? `<span class="have">${T('Owned', 'Đã có')}: ${owned}</span>` : ''}`);
       r.append(ico, info, btn(money(f.price), () => {
         if (!canAfford(f.price)) return moneyShortfall(f.price);
         addMoney(-f.price, 'furniture'); sfx('buy'); merchantSay();
         s.home.owned.push(id); markDirty(true);
-        toast({ text: T(`${furnName(id)} delivered to your home`, `${furnName(id)} đã được gửi về nhà`), sub: T('Tap Decorate inside your house.', 'Bấm Trang trí trong nhà nhé.') });
+        noteDelivery(id);
         bus.emit('bought', 'furniture', id); api.rebuild();
       }));
       list.appendChild(r);
@@ -363,8 +396,8 @@ export function openBizMenu(bizId, { onUpgrade } = {}) {
 // ---------------------------------------------------------------- prices + equipment
 function pricesPane(pane, bizId, api) {
   const list = h('div', 'list'); pane.appendChild(list);
-  if (level() < 2) { list.appendChild(h('div', 'empty-note', T('Reach level 2 to set your own prices.', 'Đạt cấp 2 để tự đặt giá.'))); return; }
-  list.appendChild(h('div', 'empty-note', T('Higher prices earn more per order, but fewer people buy and tips shrink; cheaper food brings a crowd and happy regulars. Tourists and harbour or cove customers mind prices less; picky ones mind more — unless your food is excellent. Upgraded recipes and nicer shops can charge more before anyone notices.', 'Giá cao lời hơn mỗi món, nhưng ít người mua và tiền boa giảm; giá rẻ thì đông khách và nhiều khách quen. Du khách và khách ở bến cảng, vịnh dừa ít để ý giá; khách khó tính thì để ý hơn — trừ khi món của bạn thật ngon. Công thức đã nâng cấp và quán đẹp hơn có thể bán giá cao hơn mà không ai phàn nàn.')));
+  if (level() < PRICE_LEVEL) { list.appendChild(h('div', 'empty-note', T(`Reach level ${PRICE_LEVEL} to set your own prices.`, `Đạt cấp ${PRICE_LEVEL} để tự đặt giá.`))); return; }
+  list.appendChild(h('div', 'empty-note', T('Higher price: more per order, but fewer buyers and smaller tips. Lower price: bigger crowds and more regulars. Tourists mind prices least, picky customers most — and better food lets you charge more.', 'Giá cao: lời hơn mỗi món, nhưng ít người mua và ít tiền boa. Giá thấp: đông khách và nhiều khách quen. Du khách ít để ý giá nhất, khách khó tính để ý nhất — món càng ngon thì càng bán được giá cao.')));
   for (const r of bizRecipes(bizId)) {
     const m = priceMul(r), appeal = priceAppeal(r, bizId);
     const mood = appeal > 1.25 ? T('A bargain! Crowds love it', 'Rẻ quá! Khách mê') : appeal > 0.9 ? T('Fair price', 'Giá hợp lý') : appeal > 0.68 ? T('A bit pricey — tourists won\'t mind', 'Hơi đắt — du khách thì không ngại') : T('Too expensive — many walk on by', 'Đắt quá — nhiều người bỏ đi');

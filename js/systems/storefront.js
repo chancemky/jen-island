@@ -34,6 +34,8 @@ export const DECOR = {
   veggies:   { fn: 'veggiePatch', o: {}, en: 'Vegetable patch (fresh herbs every morning)', vi: 'Luống rau (rau tươi mỗi sáng)', price: 80, w: 34, tags: ['green'] },
   sunflowers:{ fn: 'sunflowerRow', o: {}, en: 'Sunflowers', vi: 'Hoa hướng dương', price: 60, w: 26, tags: ['floral', 'green'] },
 };
+// shop fronts and gardens are a real investment (30k pots were pocket change by the time you own a shop)
+for (const d of Object.values(DECOR)) if (d.price) d.price = Math.round(d.price * 5 / 10) * 10;
 export const THEMES = [
   { id: 'floral', en: 'In bloom', vi: 'Hoa nở' }, { id: 'cosy', en: 'Cosy corner', vi: 'Góc ấm cúng' }, { id: 'beach', en: 'Beach vibes', vi: 'Không khí biển' },
   { id: 'festive', en: 'Festival time', vi: 'Mùa lễ hội' }, { id: 'night', en: 'Glow after dark', vi: 'Lung linh về đêm' }, { id: 'green', en: 'Green garden', vi: 'Vườn xanh' },

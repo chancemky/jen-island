@@ -15,6 +15,8 @@ import { fx } from '../world/render.js';
 import { PETS, PET_FOOD, myPets, followerUid, buyPet, setFollower, buyFood, drawPetPreview } from '../systems/pets.js';
 import { ANIMAL_DRAW } from '../systems/animals.js';
 
+// Mèo Mây's outfits are hand-sewn by Cô Bông: a real treat, not pocket change
+const meoPrice = st => st.price ? Math.max(1500, st.price * 8) : 0;
 export function openPetShop() {
   const who = MERCHANTS.co_bong;
   openSheet({ title: T('Cô Bông\'s Pet Shop', 'Tiệm Thú Cưng Bé Bông'), sub: T('Adopt a friend for life', 'Nhận nuôi một người bạn trọn đời'), who, full: true, build: (body, api) => {
@@ -28,9 +30,10 @@ export function openPetShop() {
           const ico = h('div', 'ico cl-ico'); ico.appendChild(cv); r.appendChild(ico);
           const c = cv.getContext('2d'); c.lineJoin = c.lineCap = 'round'; c.translate(48, 90); c.scale(2.3, 2.3); drawCat(c, { dir: 'down', look: { cat: true, ...st.look }, emo: 'happy' }, 1);
           r.appendChild(h('div', 'info', `<b>${escapeHtml(T(st.en, st.vi))}</b>${s.meoStyle === id || (!s.meoStyle && id === 'classic') ? `<span class="have">${T('Wearing', 'Đang mặc')}</span>` : ''}`));
-          const has = owned.includes(id);
-          r.appendChild(btn(has ? T('Wear', 'Mặc') : money(st.price), () => {
-            if (!has) { if (!canAfford(st.price)) return toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); addMoney(-st.price, 'petfood'); owned.push(id); }
+          const has = owned.includes(id), wearing = s.meoStyle === id || (!s.meoStyle && id === 'classic'), price = meoPrice(st);
+          if (wearing) { r.appendChild(btn(T('Wearing', 'Đang mặc'), () => {}, 'buy pink', true)); list.appendChild(r); continue; }   // (her current outfit had an active "Wear" button)
+          r.appendChild(btn(has ? T('Wear', 'Mặc') : money(price), () => {
+            if (!has) { if (!canAfford(price)) return toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); addMoney(-price, 'pet'); owned.push(id); }
             s.meoStyle = id; applyMeoStyle(); markDirty(true); sfx('mew'); api.rebuild();
           }, has ? 'buy alt' : 'buy'));
           list.appendChild(r);
@@ -49,7 +52,8 @@ export function openPetShop() {
             const p = await buyPet(id, name);
             if (!p) return;
             sfx('fanfare'); if (G.player) fx.burst('heart', G.player.x, G.player.y - 30, 10, { up: 50, col: '#f28fa3', size: 4 });
-            await showReward({ icon: 'paw', kicker: T('New pet!', 'Thú cưng mới!'), title: p.name, text: followerUid() === p.uid ? T(`${p.name} will follow you everywhere. Other pets you adopt live at home with their own bed.`, `${p.name} sẽ theo bạn khắp nơi. Thú cưng khác sẽ ở nhà với giường riêng.`) : T(`${p.name} is waiting at home, on a brand new bed.`, `${p.name} đang chờ ở nhà, trên một chiếc giường mới tinh.`) });
+            const art = document.createElement('canvas'); art.width = art.height = 220; drawPreview(art, id);   // your new pet itself, not a paw print
+            await showReward({ art, kicker: T('New pet!', 'Thú cưng mới!'), title: p.name, text: followerUid() === p.uid ? T(`${p.name} will follow you everywhere. Other pets you adopt live at home with their own bed.`, `${p.name} sẽ theo bạn khắp nơi. Thú cưng khác sẽ ở nhà với giường riêng.`) : T(`${p.name} is waiting at home, on a brand new bed.`, `${p.name} đang chờ ở nhà, trên một chiếc giường mới tinh.`) });
             api.rebuild();
           }, 'buy'));
           list.appendChild(r);

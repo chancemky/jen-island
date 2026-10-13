@@ -33,7 +33,8 @@ export function applyShopStyles() { for (const [id, st] of Object.entries(shopSt
 export function openRoomStyle(sc, shop = false) {
   const st = ((shop ? shopStyles() : styles())[sc.id] ||= {});
   const set = (k, v) => { st[k] = v; applyRoomStyle(sc, st); markDirty(true); sfx('tap'); };
-  openSheet({ title: T('Walls & floor', 'Tường & sàn'), sub: T('Paint this room any colour you like', 'Sơn phòng này màu bạn thích'), pauseTime: false, build: (body, api) => {
+  // a short, see-through sheet so the room stays in view while you paint it (you used to pick colours blind)
+  openSheet({ clear: true, cls: 'short', title: T('Walls & floor', 'Tường & sàn'), sub: T('Paint this room any colour you like', 'Sơn phòng này màu bạn thích'), pauseTime: false, build: (body, api) => {
     const sw = (label, list, key, current) => {
       body.appendChild(h('div', 'section-title', label));
       const row = h('div', 'swatches');

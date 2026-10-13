@@ -79,8 +79,15 @@ function unlocksAt(lv) {
   for (const u of LEVEL_UNLOCKS) if (u.lv === lv) out.push(T(u.en, u.vi));
   return out;
 }
+// your own prices come once the basics are second nature (at level 2 it arrived before your first customer)
+export const PRICE_LEVEL = 5;
+// what the next level that unlocks something brings (shown on every level-up card: always a reason for one more)
+export function nextUnlock(lv) {
+  for (let n = lv + 1; n <= lv + 30; n++) { const u = unlocksAt(n); if (u.length) return `${T('Lv', 'Cấp')} ${n} — ${u[0]}`; }
+  return '';
+}
 export const LEVEL_UNLOCKS = [
-  { lv: 2, en: 'Price setting on your menu board', vi: 'Tự đặt giá trên bảng thực đơn' },
+  { lv: 5, en: 'Price setting on your menu board', vi: 'Tự đặt giá trên bảng thực đơn' },
   { lv: 3, en: 'Shop upgrades up to level 3', vi: 'Nâng cấp quán tới cấp 3' },
   { lv: 5, en: 'The clothing shop has new outfits', vi: 'Tiệm quần áo có đồ mới' },
   { lv: 6, en: 'Equipment upgrades for your shops', vi: 'Nâng cấp dụng cụ cho quán' },
@@ -189,6 +196,7 @@ function celebrate({ lv, reward, gift, unlocks }) {
       <div class="lu-reward"><span class="coin"></span>+${money(reward)}</div>
       ${gift && FURNITURE[gift] ? `<div class="lu-reward">🎁 ${T(`A gift for your home: ${FURNITURE[gift].en}`, `Quà cho ngôi nhà: ${FURNITURE[gift].vi}`)}</div>` : ''}
       ${unlocks.length ? `<ul>${unlocks.map(u => `<li>★ ${u}</li>`).join('')}</ul>` : ''}
+      ${nextUnlock(lv) ? `<div class="lu-next">${T('Next', 'Tiếp theo')}: ${nextUnlock(lv)}</div>` : ''}
       <button class="btn big pink" type="button">${T('Yay!', 'Tuyệt!')}</button></div>`;
     document.getElementById('app').appendChild(el);
     let closed = false;

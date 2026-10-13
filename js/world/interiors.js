@@ -90,6 +90,7 @@ export class Interior extends Scene {
   }
   // ---- 1: an unmistakable way out: glowing doorway, frame and a bouncing EXIT arrow
   drawOver(c, v, t) {
+    this.drawWindowLine(c, t);
     if (this.noDoor) return;
     const { door, h } = this, pl = G.player;
     const near = pl && Math.hypot(pl.x - door.x, pl.y - h) < 70;
@@ -105,6 +106,15 @@ export class Interior extends Scene {
     text(c, G.lang === 'vi' ? 'LỐI RA' : 'EXIT', door.x, y - 8.2, 7.5, '#3f8f5f', 900);
     c.restore();
   }
+  // the customers lining up at your window, seen from behind the counter (the first three in line;
+  // they used to be invisible from inside, so a waiting queue looked like an empty street)
+  drawWindowLine(c, t) {
+    const q = this.windowSlots && G.runtime.biz?.[this.id]?.queue; if (!q?.length) return;
+    for (const cu of q) {
+      const a = cu.actor, slot = this.windowSlots[cu.slot]; if (!a || !slot || cu.state === 'leaving' || (cu.state === 'walking' && a.path)) continue;
+      c.save(); c.translate(slot[0], slot[1]); drawHuman(c, { ...a, x: slot[0], y: slot[1], dir: 'up', moving: 0, clip: null, alpha: undefined }, t); c.restore();
+    }
+  }
   drawOutside(c, t) {
     const { w, h } = this;
     box(c, -40, h, w + 80, this.outside + 60, 0, '#f5e2b3', null);
@@ -112,6 +122,14 @@ export class Interior extends Scene {
     box(c, -40, h + this.outside * 0.45, w + 80, 22, 0, '#efd8a6', null);
     // sunlight falling in
     const g = c.createLinearGradient(0, h, 0, h + this.outside); g.addColorStop(0, 'rgba(255,245,210,.5)'); g.addColorStop(1, 'rgba(255,245,210,0)'); c.fillStyle = g; c.fillRect(-40, h, w + 80, this.outside);
+    // the street in front of the window: a grassy verge, a potted plant by the counter and flowers
+    // by the door (it used to be a bare block of sand; the middle stays clear for the customers)
+    const o = this.outside, y0 = h + o - 8;
+    box(c, -40, y0, w + 80, 70, 0, '#a9d36f', null); line(c, -40, y0, w + 80, y0, '#8fbd57', 2);
+    for (let x = -6; x < w + 10; x += 17) { c.save(); c.translate(x + (x * 7 % 5), y0 + 4); PR.grassTuft(c, t, { x: x + this.w, y: h }); c.restore(); }
+    c.save(); c.translate(10, h + 30); PR.pot(c, t, { x: 10, y: h, s: 0.9, col: '#d9784f' }); c.restore();
+    c.save(); c.translate(184, h + o - 22); PR.flowerPatch(c, t, { x: 184, y: h + 60, n: 6 }); c.restore();
+    c.save(); c.translate(222, h + 34); PR.pot(c, t, { x: 222, y: h, s: 0.8, col: '#7fb3c9', flowers: '#f36d86' }); c.restore();
   }
   drawLedge(c, t) {
     const { w, h, door } = this;

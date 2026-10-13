@@ -20,10 +20,12 @@ let party = null;     // { rid, guests: [actor], joined }
 export const partyToday = () => party;
 function start(rid) {
   const guests = [], host = npcs.residents.find(a => a.data.rid === rid && a.visible);
-  const others = npcs.residents.filter(a => a !== host && a.visible && a.data.state !== 'busy' && !a.data.inTalk).slice(0, 3);
+  // (never the bride and groom on their wedding day — Linh used to be a birthday guest and the bride at once)
+  const wedDay = G.state.story.flags.wedding?.day === G.state.day, isl = G.scenes.island;
+  const others = npcs.residents.filter(a => a !== host && a.visible && a.data.state !== 'busy' && !a.data.inTalk && !(wedDay && ['minh', 'linh'].includes(a.data.rid))).slice(0, 3);
   [host, ...others].filter(Boolean).forEach((a, i) => {
     const ang = Math.PI * (0.05 + i * 0.3), x = SPOT.x + Math.cos(ang) * 42, y = SPOT.y + Math.sin(ang) * 26 + 6;   // (a semicircle in front of the table, everyone in their own space)
-    a.stop?.(); releaseStand(a); a.data.state = 'busy'; a.data.party = true; a.walkTo?.([[x, y]]).then(() => { a.face?.('up'); a.showEmote?.('note', 2); });
+    a.stop?.(); releaseStand(a); a.data.state = 'busy'; a.data.party = true; a.walkTo?.(isl.nav.path(a.x, a.y, x, y)).then(() => { a.face?.('up'); a.showEmote?.('note', 2); });
     guests.push(a);
   });
   party = { rid, guests, joined: false, day: G.state.day };

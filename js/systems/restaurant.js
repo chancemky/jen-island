@@ -427,7 +427,9 @@ export function updateRestaurant(dt, gameMin) {
       const h = G.state.time / 60;
       const tf = (h >= 11 && h < 13.5) || (h >= 17.5 && h < 20.5) ? 1.6 : 1;
       const att = BUSINESSES.restaurant.upgrades?.[b.level]?.attract || 1;
-      r.spawnT = clamp(rand(26, 44) / (rep * tf * att * 1.25 * eventBoost('restaurant')), 5, 50);
+      // like the small shops, the dining room's crowd thins out once most of the island has eaten there today
+      const fed = G.state.today.biz?.restaurant?.served || 0, crowd = 90 * att, tired = fed <= crowd ? 1 : Math.pow(crowd / fed, 3);
+      r.spawnT = Math.min(180, clamp(rand(26, 44) / (rep * tf * att * 1.25 * eventBoost('restaurant')), 5, 50) / tired);
       spawnGuest();
     }
   }

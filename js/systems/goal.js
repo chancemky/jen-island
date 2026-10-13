@@ -5,6 +5,8 @@ import { bus, money } from '../core/util.js';
 
 export const savingFor = () => G.state.goal || null;          // { kind, id, en, vi, cost }
 export function setGoal(g) {
+  // already enough? say so once (it used to pin it and cheer "you can afford it!" in the same breath)
+  if (g && G.state.money >= g.cost) { bus.emit('toast', { text: T(`You can already afford ${g.en}!`, `Bạn đã đủ tiền mua ${g.vi} rồi!`), sub: T('No need to save — go and get it.', 'Không cần để dành — mua luôn thôi.'), icon: 'coin', now: true }); return; }
   G.state.goal = g ? { kind: g.kind, id: g.id, en: g.en, vi: g.vi, cost: Math.round(g.cost), told: false } : null; markDirty(true);
   if (g) bus.emit('toast', { text: T(`📌 Saving up for ${g.en}`, `📌 Đang để dành mua ${g.vi}`), sub: T(`${money(g.cost)} — watch the bar under your money fill up.`, `${money(g.cost)} — xem thanh dưới số tiền đầy dần.`), icon: 'coin', now: true });
 }

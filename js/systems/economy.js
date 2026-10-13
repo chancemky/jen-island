@@ -142,7 +142,7 @@ function opening(b) {
   if (b.type === 'shed') return { x: -39, y: -35, w: 50, h: 20, at: [-26, -2], feet: 4 };
   if (b.type === 'truck') return { x: -40, y: -54, w: 60, h: 24, at: [-26, 6], feet: -13 };
   if (b.type === 'kiosk') { const w = (b.w || 112) - 30; return { x: -w / 2, y: -38, w, h: 24, at: [-w / 2 + 12, w / 2 - 14], feet: 3 }; }
-  if (b.type === 'stall') { const w = b.w || 66, h = 30; return { x: -w / 2 + 3, y: -h - 23, w: w - 6, h: 17, at: [-w / 2 + 14, w / 2 - 14], feet: -22 }; }
+  if (b.type === 'stall') { const w = b.w || 66, h = 30; return { x: -w / 2 + 3, y: -h - 27, w: w - 6, h: 21, at: [-w / 2 + 14, w / 2 - 14], feet: -21 }; }   // (from under the valance to the counter top: the whole head shows)
   return null;
 }
 // what each kind of shop is busy with, and the uniform cap in the shop's colours

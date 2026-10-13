@@ -19,7 +19,8 @@ import { COUNTS } from '../core/counts.js';
 export const PETS = {
   shiba:   { kind: 'dog', col: '#e3a86a', price: 900,  en: 'Shiba puppy', vi: 'Chó Shiba con', sfx: 'woof' },
   lab:     { kind: 'dog', col: '#3d3550', price: 900,  en: 'Black lab puppy', vi: 'Chó Lab đen', sfx: 'woof' },
-  mutt:    { kind: 'dog', col: '#c9955e', price: 600,  en: 'Island pup', vi: 'Chó ta', sfx: 'woof' },
+  mutt:    { kind: 'dog', col: '#8c6a4f',   // (darker than the shiba: the two tan pups looked the same)
+              price: 600,  en: 'Island pup', vi: 'Chó ta', sfx: 'woof' },
   ginger:  { kind: 'cat', col: '#f2a14e', price: 700,  en: 'Ginger kitten', vi: 'Mèo vàng con', sfx: 'mew' },
   snow:    { kind: 'cat', col: '#fff4e0', price: 750,  en: 'Snowy kitten', vi: 'Mèo trắng con', sfx: 'mew' },
   tabby:   { kind: 'cat', col: '#9a8a7e', price: 650,  en: 'Tabby kitten', vi: 'Mèo mướp con', sfx: 'mew' },

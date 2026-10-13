@@ -258,8 +258,8 @@ export function recipeCost(id, opts = {}) {
 export const RECIPE_UPGRADES = [
   null,
   { cost: 0 },
-  { mul: 30, price: 1.15, patience: 1.1, tip: 1.1, label: 'Better ingredients', labelVi: 'Nguyên liệu tốt hơn' },
-  { mul: 90, price: 1.3, patience: 1.2, tip: 1.25, label: 'Signature presentation', labelVi: 'Trình bày đặc sắc' },
+  { mul: 45, price: 1.15, patience: 1.1, tip: 1.1, label: 'Better ingredients', labelVi: 'Nguyên liệu tốt hơn' },
+  { mul: 135, price: 1.3, patience: 1.2, tip: 1.25, label: 'Signature presentation', labelVi: 'Trình bày đặc sắc' },
 ];
 // a recipe upgrade costs more the more valuable the dish is
 export const recipeUpgradeCost = (id, lv) => Math.round(RECIPES[id].price * (RECIPE_UPGRADES[lv]?.mul || 0) / 10) * 10;
@@ -448,11 +448,11 @@ export const FURNITURE = {
   dartboard:   { vi: 'Bảng phi tiêu', en: 'Dartboard', price: 70, w: 24, h: 8, wall: true },
   tool_wall:   { vi: 'Bảng treo dụng cụ', en: 'Tool wall', price: 120, w: 44, h: 8, wall: true },
   projector_screen:{ vi: 'Màn chiếu phim', en: 'Projector screen', price: 560, w: 64, h: 8, wall: true, light: true, unlock: 8 },
-  // collector's corner: expensive treats to save up for (prices here are final)
-  meo_plush:   { vi: 'Thú bông Mèo Mây', en: 'Mèo Mây plush',  price: 900,  w: 18, h: 12, collector: true, unlock: 4, fixed: true },
-  lantern_wall:{ vi: 'Bộ sưu tập lồng đèn', en: 'Night Market lantern collection', price: 1800, w: 50, h: 8, wall: true, collector: true, unlock: 9, fixed: true },
-  ship_model:  { vi: 'Mô hình thuyền', en: 'Model ferry',        price: 2500, w: 36, h: 12, collector: true, unlock: 12, fixed: true },
-  art_commission:{ vi: 'Tranh đặt vẽ của Vy', en: 'A painting commissioned from Vy', price: 3500, w: 50, h: 8, wall: true, collector: true, unlock: 14, need: 'vy_brushes', fixed: true },
+  // collector's corner: the top shelf, 30M–150M — above everything else in the shop (prices here are final)
+  meo_plush:   { vi: 'Thú bông Mèo Mây', en: 'Mèo Mây plush',  price: 30000,  w: 18, h: 12, collector: true, unlock: 4, fixed: true },
+  lantern_wall:{ vi: 'Bộ sưu tập lồng đèn', en: 'Night Market lantern collection', price: 45000, w: 50, h: 8, wall: true, collector: true, unlock: 9, fixed: true },
+  ship_model:  { vi: 'Mô hình thuyền', en: 'Model ferry',        price: 60000, w: 36, h: 12, collector: true, unlock: 12, fixed: true },
+  art_commission:{ vi: 'Tranh đặt vẽ của Vy', en: 'A painting commissioned from Vy', price: 90000, w: 50, h: 8, wall: true, collector: true, unlock: 14, need: 'vy_brushes', fixed: true },
   // prizes for the weekly board's top 10 (systems/weekboard.js); never sold
   // the Lantern Lounge bundle (store.js) — looks only, no bonuses
   lounge_sofa:  { vi: 'Sofa nhung lồng đèn', en: 'Lantern lounge sofa', price: 0, w: 46, h: 14, reward: true, fixed: true },
@@ -475,7 +475,7 @@ export const FURNITURE = {
   trophy_gold:   { vi: 'Cúp vàng của tuần', en: 'Weekly gold cup', price: 0, w: 18, h: 12, reward: true, fixed: true, light: true },
   trophy_silver: { vi: 'Cúp bạc của tuần', en: 'Weekly silver cup', price: 0, w: 18, h: 12, reward: true, fixed: true },
   trophy_bronze: { vi: 'Cúp đồng của tuần', en: 'Weekly bronze cup', price: 0, w: 18, h: 12, reward: true, fixed: true },
-  meo_statue:  { vi: 'Tượng Mèo Mây mạ vàng', en: 'Golden Mèo Mây statue', price: 6000, w: 34, h: 16, collector: true, unlock: 16, fixed: true },
+  meo_statue:  { vi: 'Tượng Mèo Mây mạ vàng', en: 'Golden Mèo Mây statue', price: 150000, w: 34, h: 16, collector: true, unlock: 16, fixed: true },
 };
 
 // ---------------------------------------------------------------- customers
@@ -511,7 +511,7 @@ export const CHAPTERS = [
   { n: 15, title: 'Landlord', vi: 'Chủ Đất' },
   { n: 16, title: 'The Lantern Festival', vi: 'Lễ Hội Đèn Lồng' },
   { n: 17, title: 'Coconut Cove', vi: 'Vịnh Dừa' },
-  { n: 18, title: 'Queen of the Night Market', vi: 'Nữ Hoàng Chợ Đêm' },
+  { n: 18, title: 'Star of the Night Market', vi: 'Ngôi Sao Chợ Đêm' },   // (was "Queen": you can be anyone)
   { n: 19, title: 'The Island Runs Itself', vi: 'Hòn Đảo Tự Vận Hành' },
   { n: 20, title: 'Keeper of the Island', vi: 'Người Giữ Đảo' },
 ];
@@ -573,13 +573,16 @@ export const STATUE_COST = { cost: 3500, mats: { paint: 10, tile: 10 } };
 export const ECON = {
   furniture: 5,          // furniture × list price
   furnitureCurve: [[2500, 6], [1000, 3], [400, 1.6]],   // …then the luxury curve: a 6,000k centrepiece becomes 36M
-  upgrades: 3.5,         // shop upgrades × list price
-  businesses: 1.5,       // buying a business (and its key from Mèo Mây) ×
-  build: 1.75,           // the bridges, the statue and the Night Market restoration ×
+  upgrades: 5,           // shop upgrades × list price
+  businesses: 2.5,       // buying one of the first shops (and its key from Mèo Mây) × (a grinder's first week used to buy every shop the day it unlocked)
+  businessesLate: 1.5,   // …and the shops from Chapter 9 on (already priced for a bigger income)
+  build: 2,              // the bridges, the statue and the Night Market restoration ×
+  equipment: 3,          // shop equipment (tip jar, fan, register…) ×
   ingredients: 1.25,     // what ingredients cost × — thinner margins on every sale
 };
 for (const v of Object.values(FURNITURE)) if (!v.fixed) v.price = luxuryPrice(Math.round(v.price * ECON.furniture / 5) * 5, ECON.furnitureCurve);
 for (const b of Object.values(BUSINESSES)) for (const u of b.upgrades || []) if (u?.cost) u.cost = Math.round(u.cost * ECON.upgrades / 10) * 10;
-for (const b of Object.values(BUSINESSES)) if (b.buy) b.buy = Math.round(b.buy * ECON.businesses / 50) * 50;
+for (const b of Object.values(BUSINESSES)) if (b.buy) b.buy = Math.round(b.buy * (b.chapter <= 8 ? ECON.businesses : ECON.businessesLate) / 50) * 50;
+for (const e of EQUIPMENT) e.cost = Math.round(e.cost * ECON.equipment / 10) * 10;
 for (const r of [BRIDGE_REPAIR, HARBOUR_BRIDGE, COVE_BRIDGE, STATUE_COST, NIGHT_MARKET_RESTORE]) r.cost = Math.round(r.cost * ECON.build / 50) * 50;
 for (const g of Object.values(INGREDIENTS)) { g.cost = Math.round(g.cost * ECON.ingredients * 100) / 100; g.price = Math.max(1, Math.round(g.cost * g.pack)); }

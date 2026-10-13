@@ -90,12 +90,12 @@ async function reachFreeRoam(p, pump = makePump(p)) {
 if (run('content')) {
   console.log('content');
   const pair = moneyPair(500, 15000), debt = moneyShort(-23200, 7500), partial = moneyShort(2000, 7500);
-  if (pair === '0.5M / 15M' && debt === 'Need 30.7M more' && partial === 'Need 5,500k more') pass('content', 'money goals keep one unit and show the full shortfall');
+  if (pair === '0.5M / 15M' && debt === 'Need 30.7M more' && partial === 'Need 5.5M more') pass('content', 'money goals keep one unit and show the full shortfall');
   else fail('content', `money goal formatting is wrong: ${pair} | ${debt} | ${partial}`);
   useLanguage(() => 'vi');
   const vi = moneyShort(-23200, 7500, 'vi'), viK = moneyShort(2000, 7500, 'vi');
   useLanguage(() => 'en');
-  if (vi === 'Còn thiếu 30,7M' && viK === 'Còn thiếu 5.500k') pass('content', 'money shortfalls are localized in Vietnamese (1.500k, 30,7M)'); else fail('content', `Vietnamese money shortfall is wrong: ${vi} | ${viK}`);
+  if (vi === 'Còn thiếu 30,7M' && viK === 'Còn thiếu 5,5M') pass('content', 'money shortfalls are localized in Vietnamese (5,5M, 30,7M)'); else fail('content', `Vietnamese money shortfall is wrong: ${vi} | ${viK}`);
   const { p, errors, ctx } = await openGame('content');
   await p.waitForFunction(() => window.__jen?.validate, null, { timeout: 20000 });
   const issues = await p.evaluate(() => window.__jen.validate());
@@ -613,7 +613,9 @@ if (run('world')) {
         const H = await p.evaluate(() => window.__jen.G.scenes.house.h);
         await p.mouse.click(...(await scr(230, 250))); await p.waitForTimeout(300);            // tap empty floor: the selected piece moves there
         const t = await p.evaluate(() => window.__jen.G.state.home.furniture.find(f => f.id === 'table_low'));
-        if (Math.abs(t.x - 230) > 24 || Math.abs(t.y - 250) > 24) bad.push(`tap-to-move left it at ${t.x},${t.y} instead of near 230,250`);
+        if (!t) bad.push('tapping the floor took the piece out of the room (something covered the floor)');
+        else if (Math.abs(t.x - 230) > 24 || Math.abs(t.y - 250) > 24) bad.push(`tap-to-move left it at ${t.x},${t.y} instead of near 230,250`);
+        if (t) {
         const [ax, ay] = await scr(t.x, t.y - 6), [bx, by] = await scr(80, H - 20);
         await p.mouse.move(ax, ay); await p.mouse.down(); for (let i = 1; i <= 10; i++) { await p.mouse.move(ax + (bx - ax) * i / 10, ay + (by - ay) * i / 10); await p.waitForTimeout(25); } await p.mouse.up(); await p.waitForTimeout(300);
         const g = await p.evaluate(() => window.__jen.G.state.home.furniture.find(f => f.id === 'table_low'));
@@ -625,6 +627,7 @@ if (run('world')) {
         await (await p.evaluateHandle(() => [...document.querySelectorAll('.deco-actions .btn')].find(b => /Done|Xong/.test(b.textContent)))).asElement().click(); await p.waitForTimeout(300);
         const h = await p.evaluate(() => ({ f: window.__jen.G.state.home.furniture.find(f => f.id === 'table_low'), open: !!document.querySelector('.deco-bar') }));
         if (h.open) bad.push('Done did not close decorating'); if (!h.f || h.f.y !== g.y) bad.push('Done moved the furniture');
+        }
       }
     }
     if (bad.length) bad.forEach(b => fail('world', 'decorate: ' + b)); else pass('world', 'decorating: add from the tray, drag anywhere (even the bottom of the room), turn, undo; Done keeps everything');

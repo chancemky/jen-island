@@ -21,7 +21,10 @@ export function isPrepOpen() { return !!P; }
 export function openPrep(bizId, { onClose } = {}) {
   if (P) return;
   releaseJoystick();
-  const raws = ingredientsForBiz(bizId).filter(k => INGREDIENTS[k].prep);
+  // prep is shared by every shop, so any prep table can do it all: this shop's ingredients first,
+  // then anything else in the pantry that needs prepping (mango for the smoothie bar, pork for the bánh mì…)
+  const own = ingredientsForBiz(bizId).filter(k => INGREDIENTS[k].prep);
+  const raws = [...own, ...Object.keys(INGREDIENTS).filter(k => INGREDIENTS[k].prep && !own.includes(k) && pantry(k) > 0)];
   const el = h('div', 'prep');
   el.innerHTML = `<div class="prep-head"><h2>${T('Prep table', 'Bàn sơ chế')}<small>${escapeHtml(bizName(bizId))}</small></h2><div class="svc-clock"><span class="sun"></span><b class="clk"></b></div><button class="btn gold all hidden" type="button">${T('Prep all', 'Sơ chế hết')}</button><button class="svc-close" type="button">✕</button></div>
     <div class="prep-guide"><p>${T('Prepping turns raw ingredients from the supermarket into what your recipes use. Each round preps a batch.', 'Sơ chế biến nguyên liệu thô mua ở siêu thị thành thứ công thức cần dùng. Mỗi lượt sơ chế một mẻ.')}</p>
@@ -40,7 +43,7 @@ export function openPrep(bizId, { onClose } = {}) {
   if (flag('prepAllUnlocked')) el.querySelector('.all').classList.remove('hidden');
   build();
   sfx('page');
-  if (!raws.length) el.querySelector('.tip').textContent = 'Nothing here needs prepping yet.';
+  if (!raws.length) el.querySelector('.tip').textContent = T('Nothing here needs prepping yet.', 'Ở đây chưa có gì cần sơ chế.');
 }
 export function closePrep() {
   if (!P) return;
@@ -117,7 +120,9 @@ function tapBowl(to, bowlEl) {
   flyIcon(to, P.el.querySelector('.prep-station'), bowlEl, { size: 56, dur: 330 }).then(() => { if (!P) return; bowlEl.classList.remove('pop'); void bowlEl.offsetWidth; bowlEl.classList.add('pop'); });
   sfx('pop'); setTimeout(() => sfx('coin'), 300);
   bus.emit('prepped', P.bizId, to, n);
-  if (!flag('prepAllUnlocked')) { setFlag('prepAllUnlocked'); setTimeout(() => { if (!P) return; P.el.querySelector('.all').classList.remove('hidden'); toast({ text: T('Unlocked: Prep all', 'Mở khóa: Sơ chế hết'), sub: T('“Prep all” does every batch in one tap.', '“Sơ chế hết” làm hết mọi mẻ chỉ với một chạm.') }); }, 600); }
+  if (!flag('prepAllUnlocked')) { setFlag('prepAllUnlocked'); setTimeout(() => { if (!P) return; const all = P.el.querySelector('.all'); all.classList.remove('hidden'); all.classList.add('fresh'); sfx('sparkle');
+    // (said on the table itself: a toast at the top of the screen sat right on top of the new button)
+    const tip = P.el.querySelector('.tip'); tip.textContent = T('New: “Prep all” (top right) does every batch in one tap!', 'Mới: “Sơ chế hết” (góc trên) làm hết mọi mẻ chỉ với một chạm!'); tip.classList.add('news'); setTimeout(() => tip.classList.remove('news'), 3500); }, 600); }
   P.stage = 'empty'; P.item = null;
   build();
 }

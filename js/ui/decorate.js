@@ -9,7 +9,9 @@ import { G, T, markDirty, unlockAchievement } from '../systems/state.js';
 import { FURNITURE, furnName } from '../data/game.js';
 import { FURN_DRAW, F, drawFurniturePreview, SIDE, drawSide, drawBack } from '../gfx/furniture.js';
 import { drawHuman } from '../gfx/character.js';
-import { h } from './sheets.js';
+import { h, showReward } from './sheets.js';
+import { setProgress, comfortBonus } from '../data/sets.js';
+const doneSets = () => setProgress(G.state.home).filter(st => st.done).map(st => st.id);
 import { sfx } from '../core/audio.js';
 import { clamp, devHost } from '../core/util.js';
 import { toast } from './hud.js';
@@ -297,6 +299,9 @@ function freeSpot(sel, pad = TILE, near = null) {   // (new pieces keep a tile o
   const cx = near?.x ?? sc.w / 2, cy = near?.y ?? g.oy + g.rows * TILE * 0.6, wy = near ? 2.2 : 1.3;   // (moving: stay at the same depth before going sideways)
   for (let gx = 0; gx * TILE + fp.w <= g.cols * TILE; gx++) for (let gy = fp.h / TILE; gy <= g.rows; gy++) {
     const x = g.ox + gx * TILE + fp.w / 2, y = g.oy + gy * TILE;
+    // keep the way to the door clear: nothing new lands in the lane in front of the exit (a table and a
+    // fish tank used to drop right onto the EXIT path)
+    if (!near && sc.door && !sc.noDoor && Math.abs(x - sc.door.x) < sc.door.w / 2 + fp.w / 2 + 10 && y > sc.h - TILE * 3) continue;
     spots.push({ x, y, d: Math.hypot(x - cx, (y - cy) * wy) });
   }
   spots.sort((a, b) => a.d - b.d);
@@ -319,7 +324,7 @@ export function startDecorate() {
   document.body.classList.add('hide-controls', 'decorating');
   const bar = h('div', 'deco-bar'), tools = h('div', 'deco-tools hidden');
   document.getElementById('app').append(bar, tools);
-  D = { sc: house(), bar, tools, sel: null, lifted: null, drag: null, ghost: null, valid: false, hist: [], folded: false };
+  D = { sc: house(), bar, tools, sel: null, lifted: null, drag: null, ghost: null, valid: false, hist: [], folded: false, setsDone: doneSets() };
   D.padWas = D.sc.bottomPad || 0;
   renderBar();
   const touch = document.getElementById('touch');
@@ -523,6 +528,9 @@ export function stopDecorate() {
   window.removeEventListener('pointercancel', D.onUp, true);
   cancelAnimationFrame(D.raf);
   if (D.lifted) { D.lifted = null; rebuildHouseFurniture(); }
+  // a set you've just completed gets its moment (it used to complete in silence)
+  const fresh = setProgress(G.state.home).filter(st => st.done && !D.setsDone.includes(st.id));
+  if (fresh.length) { sfx('fanfare'); for (const st of fresh) showReward({ icon: 'sofa', kicker: T('Set complete!', 'Hoàn thành bộ!'), title: T(st.en, st.vi), text: T(`A cosy home puts you in a good mood: customers tip more (+${Math.round(comfortBonus(G.state.home) * 100)}% in all).`, `Nhà ấm cúng làm bạn vui: khách boa nhiều hơn (tổng +${Math.round(comfortBonus(G.state.home) * 100)}%).`) }); }
   D.bar.remove(); D.tools.remove();
   house().bottomPad = D.padWas;
   D = null;

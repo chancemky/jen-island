@@ -223,9 +223,11 @@ try {
     cur = 'play';
     // run the drink stand: open it, a customer, the service screen
     await setTime(10 * 60); await go('island', 600, 2260); await wait(600);
-    await ev(async () => { window.__jen?.toggleBiz?.('shed1', true); window.__jen?.openBiz?.('shed1'); }); await wait(1200); await shot('shop-open');
-    await ev(async () => { for (let i = 0; i < 3; i++) window.__jen?.spawnCustomer?.('shed1'); }); await wait(5000); await shot('customers');
-    await ev(async () => { const m = await import('/js/ui/service.js'); Object.values(m).find(f => typeof f === 'function' && /open|start/i.test(f.name))?.('shed1'); }); await wait(1200); await shot('service');
+    // the drink stand: stocked, opened, three customers in line, then the counter (it used to shoot wherever the last step left you)
+    await ev(async () => { const J = window.__jen, D = await import('/js/data/game.js'), sc = await import('/js/systems/scenes.js'); for (const k of Object.keys(D.INGREDIENTS)) J.G.state.pantry[k] = 40; J.G.state.prepped.kumquat_cut = 20; delete J.G.state.keepers?.shed1; J.G.state.time = 10 * 60; sc.setScene('island', 600, 2262, 'up'); J.openBiz('shed1'); }); await wait(1500); await shot('shop-open');
+    await ev(async () => { const B = await import('/js/systems/business.js'); for (let i = 0; i < 3; i++) B.spawnCustomer('shed1'); }); await wait(7000); await shot('customers');
+    await ev(async () => { const m = await import('/js/ui/service.js'); m.openService('shed1'); }); await wait(1500); await shot('service');
+    await ev(async () => { (await import('/js/ui/service.js')).closeService(); });
     await closeSheets(); await clear(4);
     // the photo mode and album viewer
     await ev(async () => { const m = await import('/js/ui/photo.js'); Object.values(m).find(f => typeof f === 'function' && /open|start|enter/i.test(f.name))?.(); }); await wait(1000); await shot('photo-mode');

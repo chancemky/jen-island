@@ -39,7 +39,7 @@ export function openPhotoMode() {
   cam.override = mine = { x: st.x, y: st.y, zoom: 1, rate: 12 };
   pl?.face('down');
   ui = document.createElement('div'); ui.className = 'photo-ui';
-  ui.innerHTML = `<div class="ph-drag" aria-hidden="true"></div>
+  ui.innerHTML = `<div class="ph-drag" aria-hidden="true"></div><div class="ph-frame" aria-hidden="true"></div>
     <div class="ph-top"><button class="ph-x" type="button" aria-label="${T('Close', 'Đóng')}">✕</button><span>${T('Drag to frame your shot', 'Kéo để chọn khung hình')}</span></div>
     <div class="ph-panel">
       <div class="ph-row"><b>${T('Zoom', 'Phóng')}</b><input class="ph-zoom" type="range" min="60" max="220" value="100" aria-label="Zoom"></div>
@@ -63,7 +63,7 @@ export function openPhotoMode() {
   drag.addEventListener('pointerup', () => { last = null; });
   ui.querySelector('.ph-zoom').oninput = e => { st.zoom = +e.target.value / 100; camOv(st).zoom = st.zoom; };
   ui.querySelector('.ph-filters').onclick = e => { const k = e.target.closest('[data-f]')?.dataset.f; if (k) { sfx('ui'); setFilter(k); } };
-  ui.querySelector('.ph-frames').onclick = e => { const k = e.target.closest('[data-fr]')?.dataset.fr; if (k) { sfx('ui'); st.frame = k; ui.querySelectorAll('[data-fr]').forEach(b => b.classList.toggle('on', b.dataset.fr === k)); } };
+  ui.querySelector('.ph-frames').onclick = e => { const k = e.target.closest('[data-fr]')?.dataset.fr; if (k) { sfx('ui'); st.frame = k; ui.querySelector('.ph-frame').className = 'ph-frame ' + k; ui.querySelectorAll('[data-fr]').forEach(b => b.classList.toggle('on', b.dataset.fr === k)); } };   // (the frame shows live: it used to appear only on the saved photo)
   ui.querySelector('.ph-poses').onclick = e => {
     const k = e.target.closest('[data-p]')?.dataset.p; if (!k || !pl) return;
     sfx('pop'); const pose = POSES.find(p => p[0] === k); st.pose = k;
@@ -100,7 +100,9 @@ async function shoot(st) {
   s.stats.photos = (s.stats.photos || 0) + 1; markDirty(true); bus.emit('photo'); track('photo', { filter: st.filter, frame: st.frame, pose: st.pose });
   const blob = await new Promise(r => out.toBlob(r, 'image/jpeg', 0.92));
   const file = blob && new File([blob], `bistro-island-day-${s.day}.jpg`, { type: 'image/jpeg' });
-  toast({ text: T('📷 Saved to your album', '📷 Đã lưu vào album'), sub: T('Menu → Goals → Album to see it.', 'Menu → Mục tiêu → Album để xem.'), icon: 'photo', ms: 2400 });
+  // said right in the photo screen too (toasts are hidden in photo mode, so you never saw it)
+  const tip = ui?.querySelector('.ph-top span'); if (tip) { const was = tip.textContent; tip.textContent = T('✓ Saved to your album', '✓ Đã lưu vào album'); tip.classList.add('saved'); setTimeout(() => { if (tip.isConnected) { tip.textContent = was; tip.classList.remove('saved'); } }, 2200); }
+  toast({ text: T('📷 Saved to your album', '📷 Đã lưu vào album'), sub: T('See it in Menu → Map → Chapters & story.', 'Xem ở Menu → Bản đồ → Các chương & câu chuyện.'), icon: 'photo', ms: 2400 });
   if (file && navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Bistro Island' }); return; } catch { /* closed the share sheet */ return; } }
   if (blob) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
 }

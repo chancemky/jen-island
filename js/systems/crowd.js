@@ -20,7 +20,9 @@ export function buildStands(island) {
   const nav = island.nav;
   // places kept clear for lining up: the ferry line down the pier, and every shop's queue
   const lines = Object.values(QUEUES).flat();
-  const inLine = (x, y) => (x > 858 && x < 942 && y > 2250 && y < 2615) || lines.some(q => dist(q[0], q[1], x, y) < GAP + 6);
+  // …and every doorway: nobody loiters where you need to walk in
+  const doors = island.triggers.filter(t => t.kind === 'door' && t.doorX != null).map(t => [t.doorX, t.doorY]);
+  const inLine = (x, y) => (x > 858 && x < 942 && y > 2250 && y < 2615) || lines.some(q => dist(q[0], q[1], x, y) < GAP + 6) || doors.some(d => dist(d[0], d[1], x, y) < 40);
   const add = (x, y, tags, node = null) => {
     if (!island.canStand(x, y, 6) || inLine(x, y)) return null;
     if (stands.some(s => dist(s.x, s.y, x, y) < GAP)) return null;

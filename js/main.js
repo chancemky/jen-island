@@ -403,8 +403,12 @@ function loop(now) {
     G.renderer.render(G.scene, t, { player: G.player, light: lightingFor(G.state.time, G.scene.kind !== 'island'), worldExtra: G.scene === scenes.island ? [...npcDrawables(), ...natureDrawables(), ...plaqueDrawables(), ...museumDrawables(), ...vendorDrawables()] : null, overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); drawRainbow(c, tt); } });
     return;
   }
+  // play-tests only (G.runtime.turbo, never set in the game): run the world several extra steps
+  // per frame, so a bot can play whole days quickly without changing how anything works
+  for (let i = 1; i < (G.runtime.turbo || 1) && !G.runtime.paused && !cs.active; i++) simTick(dt);
   const gm = updateClock(dt);
   const pl = G.player, sc = G.scene;
+  G.runtime.simHook?.(dt);
   const busyUi = isUiOpen() || isServiceOpen() || isPrepOpen() || dialogue.active || isDecorating();
   if (!busyUi && !isTransitioning()) pl.drive(dt, sc, sfx); else if (!pl.path) pl.moving = Math.max(0, pl.moving - dt * 6);
   if (!busyUi && !cs.active) updateSeat(moveVector()[2]);
@@ -455,6 +459,18 @@ function loop(now) {
   storyT -= dt;
   if (storyT <= 0) { storyT = 1; checkStory(); refreshQuest(); }
   tickSave();
+}
+
+function simTick(dt) {
+  G.t += dt;
+  const gm = updateClock(dt), sc = G.scene;
+  if (G.state.time >= DAWN) return;
+  sc.update(dt, G.t); if (sc !== scenes.island) scenes.island.update(dt, G.t);
+  updateNPCs(dt); updateWorldEvents(dt); updateSeasonal(dt); updateWeather(dt); updateNature(dt); updateProjects(dt);
+  const shopDt = G.runtime.pause > 0 ? 0 : dt;
+  updateBusinesses(shopDt, gm); updateKeepers(shopDt); updatePets(dt); updateRestaurant(shopDt, gm); updateMeo(dt);
+  fx.update(dt);
+  G.runtime.simHook?.(dt);
 }
 
 // ---------------------------------------------------------------- interactions

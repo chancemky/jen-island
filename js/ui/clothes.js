@@ -4,7 +4,7 @@
 import { G, T, markDirty, addMoney, canAfford } from '../systems/state.js';
 import { CLOTHES, SLOTS, FREE_CLOTHES, applyOutfit, designerRack } from '../data/wardrobe.js';
 import { playerLook } from '../data/looks.js';
-import { openSheet, tabs, h, btn } from './sheets.js';
+import { openSheet, tabs, h, btn, showReward } from './sheets.js';
 import { drawHuman } from '../gfx/character.js';
 import { sfx } from '../core/audio.js';
 import { money, escapeHtml, jstDayNum, islandNow, JST } from '../core/util.js';
@@ -30,7 +30,7 @@ function preview(cv, look, focus, id) {
   const c = cv.getContext('2d');
   c.clearRect(0, 0, cv.width, cv.height);
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
-  if (focus === 'shoes') { const s = cv.height / 16; c.translate(cv.width / 2, cv.height - 2.2 * s); c.scale(s, s); } // zoom in on the feet
+  if (focus === 'shoes') { const s = cv.height / 30; c.translate(cv.width / 2, cv.height - 2 * s); c.scale(s, s); } // waist down, so the shoes read as worn (a tight crop on chibi legs was a puzzle of blocks)
   else { const s = cv.height / 58; c.translate(cv.width / 2, cv.height - 4 * s); c.scale(s, s); }
   // accessories worn on the back are shown from a three-quarter back view
   const back = look.backpack || look.guitar || look.surf;
@@ -46,6 +46,13 @@ export function itemRow(id, right, { dim = false, note = '' } = {}) {
   r.appendChild(h('div', 'info', `<b>${escapeHtml(T(it.en, it.vi))}</b><small>${note}</small>`));
   if (right) r.appendChild(right);
   preview(cv, applyOutfit(baseLook(), { ...w, [it.slot]: id }), it.slot, id);
+  // tap the picture: a big try-on mirror (the details of a 95M designer piece were invisible at thumbnail size)
+  ico.style.cursor = 'zoom-in';
+  ico.onclick = () => {
+    const big = document.createElement('canvas'); big.width = 340; big.height = 400; big.style.width = '170px'; big.style.height = '200px';
+    preview(big, applyOutfit(baseLook(), { ...w, [it.slot]: id }), it.slot === 'shoes' ? null : it.slot, id);
+    sfx('page'); showReward({ art: big, kicker: T('Try it on', 'Thử đồ'), title: T(it.en, it.vi), sub: it.price ? money(it.price) : '', button: T('Close', 'Đóng') });
+  };
   return r;
 }
 

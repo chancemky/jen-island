@@ -22,6 +22,7 @@ import { meoJoke, randomJoke, meoAntic, playRPS } from './fun.js';
 import { Actor } from '../world/actor.js';
 import { sfx, setMood } from '../core/audio.js';
 import { bus, rand, choice, dist, sleep, money, moneyShort } from '../core/util.js';
+import { PROJECTS, projectDone } from './projects.js';
 import { rt as bizRT, openBiz as openShop } from './business.js';
 import { availableRecipes } from '../ui/shops.js';
 import { questOption, questTalk } from './sidequests.js';
@@ -199,6 +200,11 @@ function freeText() {
     const open = Object.keys(G.state.sideQuests || {}).filter(k => ['active', 'found'].includes(G.state.sideQuests[k])).length;
     if (open) return T(`${open} neighbour${open > 1 ? 's are' : ' is'} waiting on you (★ on the map)`, `${open} người hàng xóm đang chờ bạn (★ trên bản đồ)`);
   }
+  // the next big dream: what you're saving for, or the next island project on the board
+  const g = G.state.goal;
+  if (g) return T(`Saving for ${g.en}: ${money(Math.min(G.state.money, g.cost))} / ${money(g.cost)}`, `Đang để dành mua ${g.vi}: ${money(Math.min(G.state.money, g.cost))} / ${money(g.cost)}`);
+  const P = PROJECTS.find(p => !projectDone(p.id));
+  if (P) return T(`Next dream: ${P.en} (${money(P.cost)}) — Island Board, Wind Plaza`, `Ước mơ tiếp: ${P.vi} (${money(P.cost)}) — Bảng tin, Quảng trường gió`);
   return T(`Day ${G.state.day}: ${G.state.island.name} is buzzing!`, `Ngày ${G.state.day}: đảo ${G.state.island.name} đang rộn ràng!`);
 }
 function hasStockFor(k) {

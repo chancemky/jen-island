@@ -10,6 +10,7 @@ import { showReward } from '../ui/sheets.js';
 import { sfx } from '../core/audio.js';
 import { choice, rand, dist } from '../core/util.js';
 import { INK } from '../gfx/draw.js';
+import { cam } from '../world/render.js';
 import { ingName, matName, INGREDIENTS } from '../data/game.js';
 import { addXP } from './progress.js';
 import { questOption, questTalk } from './sidequests.js';
@@ -225,10 +226,12 @@ export function drawBarks(c, t) {
     const a = b.actor, k = b.t / b.dur, pop = Math.min(1, b.t * 6), fade = k > 0.85 ? (1 - k) / 0.15 : 1;
     const top = a.kind === 'cat' ? 40 : 50;
     const w = Math.min(120, c.measureText(b.text).width + 12);
-    c.save(); c.globalAlpha = fade; c.translate(a.x, a.y - top - 6 - b.t * 2); c.scale(pop, pop);
+    // keep the bubble on screen (someone at the edge of the view used to talk half off it); the tail still points at them
+    const v = cam.view, dx = v?.w > w + 8 ? Math.max(v.x + 4 + w / 2, Math.min(v.x + v.w - 4 - w / 2, a.x)) - a.x : 0, tx = Math.max(-w / 2 + 7, Math.min(w / 2 - 7, -dx));
+    c.save(); c.globalAlpha = fade; c.translate(a.x + dx, a.y - top - 6 - b.t * 2); c.scale(pop, pop);
     c.beginPath(); c.roundRect ? c.roundRect(-w / 2, -8, w, 15, 7) : c.rect(-w / 2, -8, w, 15);
     c.fillStyle = '#fffaf0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
-    c.beginPath(); c.moveTo(-3, 7); c.lineTo(0, 11); c.lineTo(3, 7); c.fillStyle = '#fffaf0'; c.fill();
+    c.beginPath(); c.moveTo(tx - 3, 7); c.lineTo(tx, 11); c.lineTo(tx + 3, 7); c.fillStyle = '#fffaf0'; c.fill();
     c.fillStyle = INK; c.fillText(b.text, 0, 0, w - 8);
     c.restore();
   }

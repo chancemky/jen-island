@@ -166,7 +166,7 @@ export function applyOutfit(base, wardrobe) {
 
 // everyday clothes are affordable; the rare, premium pieces (list price ≥ 250) are the
 // luxury goal, so a full wardrobe is a long-term one
-for (const v of Object.values(CLOTHES)) if (v.price && !v.designer) { v.luxury = v.price >= 250; v.price = luxuryPrice(Math.round(v.price * (v.luxury ? 8 : 3.5) / 10) * 10, [[2000, 4], [500, 2]]); }   // (then the luxury curve: designer outfits cost tens of millions)
+for (const v of Object.values(CLOTHES)) if (v.price && !v.designer) { v.luxury = v.price >= 250; v.price = luxuryPrice(Math.round(v.price * (v.luxury ? 8 : 5) / 10) * 10, [[2000, 4], [500, 2.5], [0, 1.5]]); }   // (then the luxury curve: designer outfits cost tens of millions)
 
 // today's designer rack: three pieces, picked by the shared island day (everyone sees the same rack)
 export const DESIGNER = Object.keys(CLOTHES).filter(k => CLOTHES[k].designer);

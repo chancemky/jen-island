@@ -16,19 +16,21 @@ import { fx } from '../world/render.js';
 import { camTo, camFollow } from '../systems/cutscene.js';
 import { baseLook, refreshPlayerLook } from './clothes.js';
 
-const DYE_PRICE = 450;
+const DYE_PRICE = 1200;   // (a colour is a treat: 450k had become small change)
 const COLOR_NAMES = [['Dark brown', 'Nâu đậm'], ['Soft black', 'Đen tuyền'], ['Chestnut', 'Hạt dẻ'], ['Caramel', 'Nâu caramel'], ['Honey', 'Mật ong'], ['Blonde', 'Vàng hoe'], ['Ash grey', 'Xám tro'], ['Sakura pink', 'Hồng anh đào'], ['Ocean blue', 'Xanh biển'], ['Mint', 'Xanh bạc hà'], ['Plum', 'Tím mận'], ['Silver', 'Bạch kim']];
 
 function head(cv, look) {
   const c = cv.getContext('2d');
   c.clearRect(0, 0, cv.width, cv.height); c.lineJoin = 'round'; c.lineCap = 'round';
-  // show the whole haircut: a little lower and smaller than a portrait
-  drawVillagerHead(c, cv.width / 2, cv.height * 0.46, cv.width * 0.95, { look: { ...look, hat: null, _v: undefined }, dir: 'down' }, 1);
+  // the whole haircut, front and back: from the front alone a ponytail, long hair and waves all looked like the bob
+  const lk = { ...look, hat: null, _v: undefined };
+  drawVillagerHead(c, cv.width * 0.28, cv.height * 0.47, cv.width * 0.5, { look: lk, dir: 'down' }, 1);
+  drawVillagerHead(c, cv.width * 0.74, cv.height * 0.47, cv.width * 0.5, { look: lk, dir: 'up' }, 1);
 }
 function row(look, title, note, right) {
   const r = h('div', 'row cl-row');
-  const cv = document.createElement('canvas'); cv.width = 96; cv.height = 112;
-  const ico = h('div', 'ico cl-ico'); ico.appendChild(cv); r.appendChild(ico);
+  const cv = document.createElement('canvas'); cv.width = 176; cv.height = 116;
+  const ico = h('div', 'ico cl-ico hair'); ico.appendChild(cv); r.appendChild(ico);
   r.appendChild(h('div', 'info', `<b>${escapeHtml(title)}</b><small>${note}</small>`));
   if (right) r.appendChild(right);
   head(cv, look);
@@ -89,7 +91,7 @@ export function openSalon() {
         const g = i === 0 ? 'f' : 'm';
         const ids = Object.keys(HAIRCUTS).filter(k => HAIRCUTS[k].g === g).sort((a, b) => HAIRCUTS[a].price - HAIRCUTS[b].price);
         for (const id of ids) {
-          const it = HAIRCUTS[id], cur = me.hairStyle === id, price = Math.max(300, it.price * 3);   // (a new look at Chị Tiên's is a treat, not small change)
+          const it = HAIRCUTS[id], cur = me.hairStyle === id, price = Math.max(800, it.price * 6);   // (a new look at Chị Tiên's is a treat, not small change)
           const b = cur ? btn(T('Current', 'Đang để'), () => {}, 'buy pink', true) : btn(money(price), () => {
             if (!canAfford(price)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
             addMoney(-price, 'salon'); addXP(8, 'salon');

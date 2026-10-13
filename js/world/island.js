@@ -1059,7 +1059,8 @@ export function bizSign(id) {
 // Named areas for the HUD location toast.
 export const AREAS = [
   { name: 'Cầu Gỗ Dài', en: 'The Long Bridge', test: (x, y) => x > 1700 && x < 1950 && Math.abs(y - 1519) < 60 },
-  { name: 'Phố Cảng', en: 'Harbour Town', test: (x, y) => x > 2350 && y < 1150 },
+  { name: 'Cầu Bến Cảng', en: 'Harbour Bridge', test: (x, y) => x > 1590 && x < 2050 && y > 640 && y < 760 },   // (it said "Restaurant Hill")
+  { name: 'Phố Cảng', en: 'Harbour Town', test: (x, y) => x > 2050 && y < 1150 },   // (from the bridge's end: the guesthouse said "Firefly Islet")
   { name: 'Vịnh Dừa', en: 'Coconut Cove', test: (x, y) => x > 1950 && y > 2000 },
   { name: 'Cù Lao Đom Đóm', en: 'Firefly Islet', test: (x, y) => x > 1930 },
   { name: 'Bến Tàu', en: 'Ferry Dock', test: (x, y) => y > 2380 },

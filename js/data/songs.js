@@ -57,7 +57,7 @@ export const SONGS = {
 
   // ---- Market Street at midday: a busy plucked tune, the sáo answers (G pentatonic)
   day: {
-    en: 'Market Street', vi: 'Phố Chợ',
+    en: 'Busy Day', vi: 'Ngày Rộn Ràng',   // (the daytime song everywhere — it was called "Market Street" even at the beach)
     bpm: 114,
     chords: ['G', 'Em', 'C', 'D', 'G', 'Em', 'C', 'G',
       'G', 'Em', 'C', 'D', 'G', 'Em', 'C', 'G',
@@ -198,7 +198,7 @@ export const SONGS = {
 
   // ---- the beaches and Coconut Cove: a sunny lilt, offbeat strums (F pentatonic)
   beach: {
-    en: 'Coconut Cove', vi: 'Vịnh Dừa',
+    en: 'Sun & Sand', vi: 'Nắng và Cát',   // (it plays on every beach — named after a place, it said "Coconut Cove" on Sunny Beach)
     bpm: 110,
     chords: ['F', 'C', 'Dm', 'Bb', 'F', 'C', 'Bb', 'C', 'Dm', 'Bb', 'F', 'C', 'Bb', 'C', 'F', 'F'],
     lines: {

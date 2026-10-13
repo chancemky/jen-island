@@ -40,6 +40,9 @@ export function openSheet({ title, sub = '', who = null, cls = '', full = false,
   const api = { wrap, sheet, body, close, rebuild: () => {
     // keep every list where it was scrolled to (buying shouldn't jump to the top)
     const tops = [...body.querySelectorAll('.scroll, .list')].map(e => e.scrollTop);
+    // …and never let the sheet shrink under your finger while it's open (buying the "stock up"
+    // row used to drop the whole sheet, so the next tap meant for ✕ landed somewhere else)
+    if (!sheet.classList.contains('full')) sheet.style.minHeight = Math.max(parseFloat(sheet.style.minHeight) || 0, sheet.offsetHeight) + 'px';
     body.innerHTML = ''; build?.(body, api);
     [...body.querySelectorAll('.scroll, .list')].forEach((e, i) => { if (tops[i]) e.scrollTop = tops[i]; });
   } };
@@ -141,13 +144,14 @@ export function present(show) {
 
 // Big celebratory card (recipe discovered, business opened…)
 export function showReward(opts) { return present(() => rewardCard(opts)); }
-function rewardCard({ kicker = '', title, sub = '', icon = null, text = '', steps = null, button = null }) {
+function rewardCard({ kicker = '', title, sub = '', icon = null, art = null, text = '', steps = null, button = null }) {   // (art: a canvas to show instead of an icon)
   button ||= T('Wonderful!', 'Tuyệt vời!');
   return new Promise(res => {
     releaseJoystick();
     G.runtime.pause++; ui.open++;
     const el = h('div', 'reward');
     el.innerHTML = `<div class="reward-card"><div class="reward-inner"><div class="rays"></div><div class="kicker">${escapeHtml(kicker)}</div><h2>${escapeHtml(title)}</h2>${sub ? `<h3>${escapeHtml(sub)}</h3>` : ''}${icon ? `<div class="art"><img src="${iconURL(icon, 110)}" alt=""></div>` : ''}${steps ? `<div class="steps-mini">${steps.map(s => `<img src="${iconURL(s, 30)}" alt="">`).join('<span style="align-self:center;font-weight:900;opacity:.4">›</span>')}</div>` : ''}${text ? `<p>${escapeHtml(text)}</p>` : ''}<button class="btn big pink" type="button">${escapeHtml(button)}</button></div></div>`;
+    if (art) { const a = h('div', 'art'); if (!art.style.width) art.style.width = art.style.height = '110px'; a.appendChild(art); el.querySelector('h2').after(a); }
     document.getElementById('app').appendChild(el);
     sfx('sparkle'); setTimeout(() => sfx('success'), 250);
     let done = false;

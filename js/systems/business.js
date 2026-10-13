@@ -265,7 +265,13 @@ function walkToSlot(c) {
   const q = QUEUES[c.bizId], [x, y] = q[Math.min(c.slot, q.length - 1)];
   const island = G.scenes.island;
   const pts = c.state === 'walking' && dist(c.actor.x, c.actor.y, x, y) > 60 ? island.nav.path(c.actor.x, c.actor.y, x, y) : [[x, y]];
-  c.actor.walkTo(pts).then(ok => { if (ok && c.state === 'walking') { c.state = 'waiting'; c.actor.face('up'); if (c.slot === 0) c.actor.showEmote(c.order.special ? 'heart' : '...', 1.4); if (c.slot === 0 && G.state.regulars[c.key]?.visits >= 3 && !c._named) { c._named = true; import('./fun.js').then(m => m.bark(c.actor, `♥ ${c.name}`, 2.2)); } } else if (ok) c.actor.face('up'); });
+  const walkId = c._walkId = (c._walkId || 0) + 1;
+  c.actor.walkTo(pts).then(ok => {
+    if (walkId !== c._walkId) return;                   // (a newer walk replaced this one: the queue moved up)
+    // a walk that failed (path blocked, someone in the way) used to leave them "walking" forever — the
+    // shop could never close behind them. Try again once, then just step into place.
+    if (!ok && c.state === 'walking' && rt(c.bizId).queue.includes(c)) { if (!c._retried) { c._retried = true; setTimeout(() => c.state === 'walking' && walkToSlot(c), 600); return; } c.actor.x = x; c.actor.y = y; c.actor.path = null; ok = true; }
+    if (ok && c.state === 'walking') { c.state = 'waiting'; c.actor.face('up'); if (c.slot === 0) c.actor.showEmote(c.order.special ? 'heart' : '...', 1.4); if (c.slot === 0 && G.state.regulars[c.key]?.visits >= 3 && !c._named) { c._named = true; import('./fun.js').then(m => m.bark(c.actor, `♥ ${c.name}`, 2.2)); } } else if (ok) c.actor.face('up'); });
 }
 function shiftQueue(bizId) {
   const r = rt(bizId);
@@ -438,7 +444,9 @@ export function completeOrder(c, quality) {
   addMoney(price, 'sale');
   if (tip > 0) { addMoney(tip, 'tip'); s.today.tips += tip; s.stats.tipsTotal += tip; }
   // a bargain gets talked about
-  const rep = (quality === 'perfect' ? 2 + (order.special ? 1 : 0) : 1) + (priceMul(order.recipe) < 0.95 && chance(0.5) ? 1 : 0);
+  // word of mouth: quick at first, slower the more famous you already are (it used to be a flat +2
+  // per order forever — a day of nonstop serving jumped several chapters' worth of reputation)
+  const rep = ((quality === 'perfect' ? 2 + (order.special ? 1 : 0) : 1) + (priceMul(order.recipe) < 0.95 && chance(0.5) ? 1 : 0)) * 100 / (100 + Math.max(0, s.reputation));
   addRep(rep);
   s.stats.served++; s.today.served++; seasonServed();
   if (quality === 'perfect') { s.stats.perfect++; s.today.perfect++; }
@@ -488,6 +496,12 @@ function timeoutCustomer(c) {
   rt(c.bizId).streak = 0; bus.emit('streak', c.bizId, 0);
   customerLeave(c, 'angry');
   bus.emit('customer:timeout', c);
+  // early on, say why (a new player wandering off with the shop open just saw people leave, and reputation drop)
+  const S = G.state, f = S.story.flags;
+  if (S.day <= 4 && G.runtime.serviceOpen !== c.bizId && !S.keepers?.[c.bizId] && f.waitHintDay !== S.day) {
+    f.waitHintDay = S.day; markDirty();
+    bus.emit('toast', { text: T('A customer got tired of waiting', 'Một vị khách chờ lâu quá nên bỏ đi'), sub: T(`Stay at the ${bizName(c.bizId)} counter while it's open — or tap Close before you head off.`, `Hãy đứng quầy ${bizName(c.bizId)} khi đang mở cửa — hoặc bấm Đóng cửa trước khi đi đâu nhé.`), icon: 'person', ms: 4200 });
+  }
 }
 
 // ---------------------------------------------------------------- per-frame
@@ -563,6 +577,9 @@ export function demandAt(id, h = G.state.time / 60) {
   if (id === 'truck') { const sp = TRUCK_SPOTS[G.state.truckSpot || 'beach']; if (sp.steady) k = (k + 1) / 2 * sp.steady; if (sp.ferry && G.runtime.boatBoost > 0) k *= sp.ferry; }
   return k * (def.pace || 1);
 }
+// how many customers a shop can expect in a day before the crowd thins out
+export const dailyCrowd = id => Math.round(45 * (BUSINESSES[id].upgrades?.[G.state.biz[id]?.level]?.attract || 1) * eventBoost(BUSINESSES[id].biz) * (BUSINESSES[id].hours ? 0.8 : 1));
+const r0Warn = id => { const r = rt(id); if (r.rushDay === G.state.day || G.runtime.serviceOpen !== id) return false; r.rushDay = G.state.day; return true; };
 function nextSpawnDelay(id) {
   const s = G.state, def = BUSINESSES[id], b = s.biz[id];
   const attract = def.upgrades?.[b.level]?.attract || 1;
@@ -578,8 +595,12 @@ function nextSpawnDelay(id) {
   const appeal = recs.length ? recs.reduce((a, r) => a + priceAppeal(r, id), 0) / recs.length : 1;
   const gear = eq(id, 'attract') * (h >= 18 ? eq(id, 'night') : 1);
   const front = frontAttract(id) * (def.biz === 'night' ? nightBuzz() : 1);                                 // a well-dressed shop front (storefront.js)
+  // a small island only gets so hungry: once a shop has fed most of its crowd today, people come
+  // more slowly (a bigger, nicer shop draws a bigger crowd). Serving nonstop still pays — just not without end.
+  const fed = s.today.biz?.[id]?.served || 0, crowd = dailyCrowd(id), tired = fed <= crowd ? 1 : Math.pow(crowd / fed, 3);
+  if (tired < 1 && r0Warn(id)) bus.emit('toast', { cat: 'sales', text: T('The rush is over', 'Hết giờ cao điểm rồi'), sub: T(`Most of the island has eaten at ${bizName(id)} today — customers come slower now.`, `Hầu hết cả đảo đã ghé ${bizName(id)} hôm nay — khách sẽ tới thưa hơn.`), icon: 'sign_open', ms: 3200 });
   const rate = attract * rep * tf * boat * special * early * appeal * gear * owned * festive * front; // customers per ~34 game-minutes baseline
-  return clamp(rand(32, 52) / rate, 7, 70);                 // a steady trickle, not a flood
+  return Math.min(180, clamp(rand(32, 52) / rate, 7, 70) / tired);   // a steady trickle, not a flood (and after the rush, slower still)
 }
 
 export function ingredientsForBiz(bizId) {
