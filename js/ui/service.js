@@ -72,6 +72,8 @@ export function openService(bizId, { onClose, tutorial = false, single = null } 
 }
 export function closeService() {
   if (!S) return;
+  // anything already in the cup goes back on the shelf (closing used to throw it away)
+  if (S.asm?.steps?.length && !S.busy) for (const k of S.asm.steps) if (STATION[k].uses) returnStock(S.bizId, STATION[k].uses);
   const s = S; S = null;
   G.runtime.serviceOpen = null;
   document.body.classList.remove('sheet-open', 'svc-open');

@@ -5,7 +5,7 @@
 // cutscene can be safely re-entered after a reload.
 
 import { G, T, flag, setFlag, hasMats, spendMats, addMoney, canAfford, learnRecipe, unlockAchievement, markDirty, bizOf, pantry, mats } from './state.js';
-import { ingName, bizName, recipeName, BUSINESSES, RECIPES, CHAPTERS, NIGHT_MARKET_RESTORE, STATUE_COST, STATION, BRIDGE_REPAIR, VY_VIEWS, HARBOUR_BRIDGE, COVE_BRIDGE, FESTIVAL_REQ, KEEPER_REQ } from '../data/game.js';
+import { ingName, bizName, recipeName, stationLabel, BUSINESSES, RECIPES, CHAPTERS, NIGHT_MARKET_RESTORE, STATUE_COST, STATION, BRIDGE_REPAIR, VY_VIEWS, HARBOUR_BRIDGE, COVE_BRIDGE, FESTIVAL_REQ, KEEPER_REQ } from '../data/game.js';
 import { MEO_MEMORIES } from '../data/lore.js';
 import { keeperOf, keeperActor, staffedCount, PLACES, propertyPrice, upgradeCost } from './economy.js';
 import { cs, wait, say, ask, camTo, camFollow, walk, face, emote, hop, startFollow, stopFollow, caption } from './cutscene.js';
@@ -21,7 +21,7 @@ import { addXP, GATES, gateText, gatePaid, payGate, level } from './progress.js'
 import { meoJoke, randomJoke, meoAntic, playRPS } from './fun.js';
 import { Actor } from '../world/actor.js';
 import { sfx, setMood } from '../core/audio.js';
-import { bus, rand, choice, dist, sleep, money, moneyShort } from '../core/util.js';
+import { bus, rand, choice, dist, sleep, money, moneyShort, islandDay } from '../core/util.js';
 import { PROJECTS, projectDone } from './projects.js';
 import { rt as bizRT, openBiz as openShop } from './business.js';
 import { availableRecipes } from '../ui/shops.js';
@@ -47,16 +47,18 @@ const boughtStalls = () => STALL_IDS.filter(id => id !== 'night');
 const stallsServed = () => boughtStalls().reduce((a, id) => a + bizOf(id).stats.served, 0) - (S().flags['stalls@stallServe'] ?? 0);
 // multi-part chapter goals: [label, current, target]
 const moneyGoal = (have, need) => have >= need ? '✓' : moneyShort(have, need, T);
-const goals = (title, list) => title + ': ' + list.map(([l, c, t, m]) => c >= t ? `${l} ✓` : m ? `${l} ${moneyGoal(c, t)}` : `${l} ${Math.floor(c)}/${t}`).join(' · ');
+// the next two goals still to do (+ how many more): five at once filled three lines over the island
+const goals = (title, list) => { const left = list.filter(([, c, t]) => c < t), shown = left.slice(0, 2).map(([l, c, t, m]) => m ? `${l} ${moneyGoal(c, t)}` : `${l} ${Math.floor(c)}/${t}`);
+  return title + ': ' + (shown.length ? shown.join(' · ') + (left.length > 2 ? T(` · +${left.length - 2} more`, ` · +${left.length - 2} nữa`) : '') : '✓'); };
 const allDone = list => list.every(([, c, t]) => c >= t);
 const perfSince = key => G.state.stats.perfect - (S().flags['perf@' + key] ?? G.state.stats.perfect);
 const earnedSince = key => (G.state.lifetime || 0) - (S().flags['life@' + key] ?? (G.state.lifetime || 0));
 const settleGoals = () => [
-  [T('serve customers', 'phục vụ khách'), since('settle'), 40],
-  [T('perfect orders', 'món hoàn hảo'), perfSince('settle'), 12],
-  [T('money earned', 'tiền kiếm được'), earnedSince('settle'), 900, 1],
+  [T('serve customers', 'phục vụ khách'), since('settle'), 30],
+  [T('perfect orders', 'món hoàn hảo'), perfSince('settle'), 10],
+  [T('money earned', 'tiền kiếm được'), earnedSince('settle'), 700, 1],
   [T('reputation', 'danh tiếng'), G.state.reputation, 15],
-  [T('day', 'ngày'), G.state.day, 5],
+  [T('reach day', 'tới ngày'), G.state.day, 4],   // (chapter 1 was a long, samey wait; "day 2/5" read like a timer)
 ];
 const regularGoals = () => [
   [T('regular customers', 'khách quen'), regularsCount(), 3],
@@ -150,7 +152,7 @@ export const STEPS = {
   // ---- Chapter 19: the island runs itself
   allStaff: { ch: 19, text: () => { const c = staffedCount(); return T(`The island runs itself: every business staffed — shopkeepers, stall keepers and a restaurant team (${c.staffed}/${c.total}) — Menu → Business`, `Hòn đảo tự vận hành: quán nào cũng có người trông, nhà hàng có đội nhân viên (${c.staffed}/${c.total}) — Menu → Kinh doanh`); }, target: () => null, done: () => { const c = staffedCount(); return c.total >= Object.keys(BUSINESSES).length && c.staffed >= c.total; }, next: 'keeper', scene: () => automationMontage().then(() => newChapter(20)) },
   materials: { ch: 1, text: () => { const r = BUSINESSES.shed1.repair; return T(`Buy ${r.wood} wood, ${r.metal} metal and ${r.paint} paint at Ben Vung Materials (${mats('wood')}/${r.wood} · ${mats('metal')}/${r.metal} · ${mats('paint')}/${r.paint})`, `Mua ${r.wood} gỗ, ${r.metal} tôn, ${r.paint} sơn ở VLXD Bền Vững (${mats('wood')}/${r.wood} · ${mats('metal')}/${r.metal} · ${mats('paint')}/${r.paint})`); }, target: () => G.scene?.id === 'materials' ? { scene: 'materials', x: 140, y: 124 } : doorOf('materials'), done: () => hasMats(BUSINESSES.shed1.repair) || bizOf('shed1').repair >= 1, next: 'repair' },
-  repair: { ch: 1, text: () => T('Repair the little shed on the beach', 'Sửa căn chòi nhỏ ở bãi biển'), target: () => frontOf('shed1'), done: () => bizOf('shed1').repair >= 1, next: 'ingredients', scene: () => afterFirstRepair() },
+  repair: { ch: 1, text: () => T('Repair your Drink Stand on the beach', 'Sửa quán nước của bạn ở bãi biển'), target: () => frontOf('shed1'), done: () => bizOf('shed1').repair >= 1, next: 'ingredients', scene: () => afterFirstRepair() },
   // ---- Chapter 1 (continued): first ingredients, prep, opening day
   ingredients: { ch: 1, text: () => { const need = ['tea', 'kumquat', 'sugar', 'ice'].filter(k => !hasStockFor(k)); return need.length ? T(`Buy kumquat tea ingredients at Binh Minh Supermarket (still need: ${need.map(k => ingName(k).toLowerCase()).join(', ')})`, `Mua nguyên liệu trà tắc ở Siêu thị Bình Minh (còn thiếu: ${need.map(k => ingName(k).toLowerCase()).join(', ')})`) : T('You have everything!', 'Đủ nguyên liệu rồi!'); }, target: () => G.scene?.id === 'supermarket' ? { scene: 'supermarket', x: 150, y: 132 } : doorOf('supermarket'), done: () => ['tea', 'kumquat', 'sugar', 'ice'].every(hasStockFor), next: 'prep' },
   prep: { ch: 1, text: () => T('Slice kumquats at the prep table in Your Drink Stand', 'Cắt tắc ở bàn sơ chế trong quán nước của bạn'), target: () => G.scene?.id === 'shed1' ? { scene: 'shed1', x: 194, y: 108 } : doorOf('shed1'), done: () => (bizOf('shed1').prepped.kumquat_cut || 0) > 0 || flag('firstServed3'), next: 'open' },
@@ -204,7 +206,7 @@ function freeText() {
   const g = G.state.goal;
   if (g) return T(`Saving for ${g.en}: ${money(Math.min(G.state.money, g.cost))} / ${money(g.cost)}`, `Đang để dành mua ${g.vi}: ${money(Math.min(G.state.money, g.cost))} / ${money(g.cost)}`);
   const P = PROJECTS.find(p => !projectDone(p.id));
-  if (P) return T(`Next dream: ${P.en} (${money(P.cost)}) — Island Board, Wind Plaza`, `Ước mơ tiếp: ${P.vi} (${money(P.cost)}) — Bảng tin, Quảng trường gió`);
+  if (P) return T(`Next dream: ${P.en} (${money(P.cost)}) — Island Board, Wind Plaza`, `Ước mơ tiếp: ${P.vi} (${money(P.cost)}) — Bảng tin, Quảng Trường Gió`);
   return T(`Day ${G.state.day}: ${G.state.island.name} is buzzing!`, `Ngày ${G.state.day}: đảo ${G.state.island.name} đang rộn ràng!`);
 }
 function hasStockFor(k) {
@@ -241,6 +243,8 @@ export function refreshQuest() {
 }
 export async function checkStory() {
   if (checking || cs.active || !flag('freeRoam')) return;
+  // a recipe that unlocks in the middle of the day (your reputation just got there) gets its own note
+  if (!flag('recipeNote' + G.state.day) && !isUiOpen() && availableRecipes().length) { setFlag('recipeNote' + G.state.day); toast({ text: T('Mèo Mây has a new recipe!', 'Mèo Mây có công thức mới!'), sub: T('Your reputation unlocked it — visit Mèo Mây\'s house to learn it.', 'Danh tiếng của bạn đã mở khóa — ghé nhà Mèo Mây để học nhé.'), icon: 'notebook' }); }
   // never start a story moment on top of something else: a menu, a reward card, a line of
   // dialogue, a door, sleeping or the lighthouse. The story check runs every second, so it
   // simply happens a moment later.
@@ -499,8 +503,8 @@ export async function runTour() {
     await pl.walkTo([[880, 1705]], { speed: 70 });
     face(m, { x: 900, y: 1540 }); face(pl, { x: 900, y: 1540 });
     await camTo(900, 1560, { zoom: 1.0, rate: 2 });
-    await say('meo', T('Wind Plaza. Everyone meets here — for gossip, for chess, for pretending not to gossip.', 'Quảng trường gió. Ai cũng tụ tập ở đây — để buôn chuyện, đánh cờ, và giả vờ không buôn chuyện.'), { emo: 'happy' });
-    await say('meo', T('Market Street is just north of here: *Binh Minh Supermarket* for ingredients, *Chú Bảy* for materials, *Anh Khoa* for furniture.', 'Phố Chợ ở ngay phía bắc: *Siêu thị Bình Minh* bán nguyên liệu, *Chú Bảy* bán vật liệu, *Anh Khoa* bán nội thất.'), { act: 'point' });
+    await say('meo', T('Wind Plaza. Everyone meets here — for gossip, for chess, for pretending not to gossip.', 'Quảng Trường Gió. Ai cũng tụ tập ở đây — để buôn chuyện, đánh cờ, và giả vờ không buôn chuyện.'), { emo: 'happy' });
+    await say('meo', T('Market Street is just north of here: *Binh Minh Supermarket* for ingredients, Chú Bảy\'s *Ben Vung Materials* for wood and paint, *Anh Khoa* for furniture.', 'Phố Chợ ở ngay phía bắc: *Siêu thị Bình Minh* bán nguyên liệu, *VLXD Bền Vững* của Chú Bảy bán gỗ và sơn, *Anh Khoa* bán nội thất.'), { act: 'point' });
     camFollow(pl, 1.05);
     startFollow(m, 30);
     await walk(m, 1000, 1590, { speed: 80 });
@@ -513,9 +517,8 @@ export async function runTour() {
     await say('meo', T('And this… is *your home*! Yellow walls, green shutters, a roof that only leaks when it rains.', 'Còn đây… là *nhà của bạn*! Tường vàng, cửa sổ xanh, mái chỉ dột khi trời mưa thôi.'), { emo: 'happy' });
     face(m, pl);
     // it's rented — and it doesn't have to stay that way
-    await say('meo', T(`One thing: this house is *rented*, like every shop you'll run. The rent is ${money(PLACES.house.rent)} a day, and it starts on *day 3* — I talked the landlord into a little welcome discount.`, `Có điều này: căn nhà này là nhà *thuê*, giống mọi quán bạn sẽ mở. Tiền thuê là ${money(PLACES.house.rent)} mỗi ngày, bắt đầu từ *ngày 3* — mình đã xin chủ nhà giảm giá chào mừng rồi.`));
-    await say('meo', T(`Rent comes out of your money automatically every night when you sleep. But you can also *buy the property outright* for ${money(propertyPrice('house'))} — then it's yours forever and the rent stops.`, `Tiền thuê tự trừ vào tiền của bạn mỗi tối khi đi ngủ. Nhưng bạn cũng có thể *mua đứt* với giá ${money(propertyPrice('house'))} — khi đó nhà là của bạn mãi mãi và không phải trả thuê nữa.`));
-    await say('meo', T('To buy, open the *Menu → Business* tab and tap *Buy property*. Every shop you rent works the same way. Save up — owning beats renting!', 'Muốn mua thì mở *Menu → Kinh doanh* rồi bấm *Mua đứt*. Quán nào bạn thuê cũng vậy. Ráng dành dụm nha — có nhà riêng vẫn hơn đi thuê!'), { emo: 'happy' });
+    // one line now; the how-to-buy details come on day 3, when rent actually starts (three lines of it in the first minutes was a lot)
+    await say('meo', T(`One thing: this house is *rented*, ${money(PLACES.house.rent)} a day from *day 3*, paid while you sleep. One day you can buy it and stop paying.`, `Có điều này: nhà này là nhà *thuê*, ${money(PLACES.house.rent)} mỗi ngày từ *ngày 3*, trả lúc bạn ngủ. Sau này bạn có thể mua đứt để khỏi trả nữa.`));
     await say('meo', T('It\'s a bit empty inside. Anh Khoa sells furniture — you can arrange it however you like.', 'Bên trong hơi trống. Anh Khoa có bán đồ nội thất — bạn muốn bày sao cũng được.'));
     await say('meo', T('When you\'re tired, *sleep in your bed*. That ends the day, and I\'ll tell you how it went. I\'m very good at counting coins.', 'Khi mệt thì *đi ngủ trên giường* nhé. Vậy là hết một ngày, và mình sẽ kể bạn nghe ngày hôm đó thế nào. Mình đếm tiền giỏi lắm.'), { emo: 'happy' });
     B('house').doorTarget = 0;
@@ -626,7 +629,7 @@ export async function upgradeScene(bizId, lv) {
 export async function discoverRecipe(id, { from = 'meo' } = {}) {
   if (!learnRecipe(id)) return;
   const R = RECIPES[id];
-  await showReward({ kicker: T('New recipe', 'Công thức mới'), title: recipeName(id), sub: '', icon: R.icon, steps: R.steps.map(s => STATION[s].icon), text: T(R.blurb, R.blurbVi || R.blurb), button: T('Got it!', 'Học xong!') });
+  await showReward({ kicker: T('New recipe', 'Công thức mới'), title: recipeName(id), sub: '', icon: R.icon, steps: R.steps.map(s => [STATION[s].icon, stationLabel(s)]), text: T(R.blurb, R.blurbVi || R.blurb), button: T('Got it!', 'Học xong!') });
   if (G.state.recipes.length >= 5) unlockAchievement('recipes_5');
   if (G.state.recipes.length >= Object.keys(RECIPES).length) unlockAchievement('recipes_all');
   // give this business a daily special if it has none yet
@@ -678,7 +681,10 @@ export async function morningHooks() {
   morningEvent();
   import('./seasonal.js').then(m => m.seasonalCheck());
   npcs.spawnIsletResidents?.();                   // newcomers move in as the island grows
-  for (const rid of birthdaysToday()) toast({ text: T(`It's ${RESIDENTS[rid]?.name}'s birthday!`, `Hôm nay là sinh nhật ${RESIDENTS[rid]?.name}!`), sub: T(`They love ${(BIRTHDAYS[rid]?.likes || []).map(k => ingName(k)).join(' and ')} — chat → Give a gift.`, `Họ thích ${(BIRTHDAYS[rid]?.likes || []).map(k => ingName(k)).join(' và ')} — trò chuyện → Tặng quà.`), icon: 'heart', ms: 5200 });
+  // birthdays follow the real calendar: say it once per real day, and only for neighbours you've met
+  // (it repeated every island morning, about people you didn't know yet)
+  for (const rid of birthdaysToday().filter(r => (s.friends?.[r] || 0) > 0 && !flag('bdayNote:' + r + ':' + islandDay()))) setFlag('bdayNote:' + rid + ':' + islandDay()), toast({ text: T(`It's ${RESIDENTS[rid]?.name}'s birthday!`, `Hôm nay là sinh nhật ${RESIDENTS[rid]?.name}!`), sub: T(`They love ${(BIRTHDAYS[rid]?.likes || []).map(k => ingName(k)).join(' and ')} — chat → Give a gift.`, `Họ thích ${(BIRTHDAYS[rid]?.likes || []).map(k => ingName(k)).join(' và ')} — trò chuyện → Tặng quà.`), icon: 'heart', ms: 5200 });
+  if (s.day === 3 && !flag('rentHint')) { setFlag('rentHint'); toast({ text: T(`Rent starts today: ${money(PLACES.house.rent)} a day`, `Hôm nay bắt đầu trả tiền thuê: ${money(PLACES.house.rent)} mỗi ngày`), sub: T('It comes out when you sleep. To stop paying, buy the place: Menu → Business → Buy property.', 'Tiền tự trừ khi bạn ngủ. Muốn khỏi trả thì mua đứt: Menu → Kinh doanh → Mua đứt.'), icon: 'key', ms: 6000 }); }
   if (S().step === 'grow' && !flag('ch3intro')) await wordSpreadingIntro();
   else if (availableRecipes().length && !flag('recipeNote' + s.day)) { setFlag('recipeNote' + s.day); toast({ text: T('Mèo Mây has a new recipe!', 'Mèo Mây có công thức mới!'), sub: T('Visit Mèo Mây\'s house to learn it.', 'Ghé nhà Mèo Mây để học nhé.'), icon: 'notebook' }); }
 }
@@ -1286,7 +1292,7 @@ async function epilogue() {
   const s = G.state, regs = regularsCount(), shops = Object.values(s.biz).filter(b => b.owned).length;
   const friends = Object.keys(RESIDENTS).filter(r => (s.friends[r] || 0) >= 20).length;
   const stops = [
-    [900, 1560, T('Wind Plaza — where the whole island meets again.', 'Quảng trường gió — nơi cả đảo lại tụ họp.')],
+    [900, 1560, T('Wind Plaza — where the whole island meets again.', 'Quảng Trường Gió — nơi cả đảo lại tụ họp.')],
     [430, 650, T('The Night Market — every lantern lit.', 'Chợ Đêm — mọi chiếc lồng đèn đều sáng.')],
     [1200, 700, T(`The restaurant on the hill — ${s.biz.restaurant.employees.length} people work there now.`, `Nhà hàng trên đồi — giờ có ${s.biz.restaurant.employees.length} người làm việc ở đó.`)],
     [2650, 640, T('Harbour Town — boats at every mooring.', 'Phố Cảng — bến nào cũng có thuyền.')],

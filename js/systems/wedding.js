@@ -81,11 +81,11 @@ export function initWedding() {
     // the invitation: good friends with both, Chapter 17 on — the wedding is the next evening
     if (!w.day && (s.story.chapter || 1) >= 17 && friendLevel('minh') >= 3 && friendLevel('linh') >= 3 && RESIDENTS.minh && RESIDENTS.linh) {
       w.day = s.day + 1; markDirty(true);
-      bus.emit('toast', { text: T('A wedding invitation!', 'Thiệp mời đám cưới!'), sub: T('Minh & Linh are getting married tomorrow evening (17:00–20:00) on Wind Plaza.', 'Minh & Linh làm đám cưới tối mai (17:00–20:00) ở Quảng trường gió.'), icon: 'heart', cls: 'ach', ms: 6000 });
+      bus.emit('toast', { text: T('A wedding invitation!', 'Thiệp mời đám cưới!'), sub: T('Minh & Linh are getting married tomorrow evening (17:00–20:00) on Wind Plaza.', 'Minh & Linh làm đám cưới tối mai (17:00–20:00) ở Quảng Trường Gió.'), icon: 'heart', cls: 'ach', ms: 6000 });
     }
     if (w.day && !w.done && s.day > w.day) {             // missed it: they married anyway, and send you a lantern
       w.done = true; (s.home.owned ||= []).push('song_hy_lantern'); markDirty(true);
-      bus.emit('toast', { text: T('Minh & Linh got married!', 'Minh & Linh đã cưới nhau!'), sub: T('They missed you — a lantern from the wedding is waiting at home.', 'Hai bạn nhớ bạn lắm — chiếc đèn lồng đám cưới đang chờ ở nhà.'), icon: 'heart', ms: 5000 });
+      bus.emit('toast', { text: T('Minh & Linh got married!', 'Minh & Linh đã cưới nhau!'), sub: T('They missed you — a lantern from the wedding is waiting at home.', 'Hai người nhớ bạn lắm — chiếc đèn lồng đám cưới đang chờ ở nhà.'), icon: 'heart', ms: 5000 });
     }
     if (weddingOn()) gather(); else if (gathered) disperse();
   });

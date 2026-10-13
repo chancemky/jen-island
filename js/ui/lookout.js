@@ -54,7 +54,7 @@ export async function leaveLighthouse() {
 
 function buildOverlay() {
   const el = document.createElement('div'); el.className = 'lookout-ui';
-  el.innerHTML = `<canvas></canvas><div class="lk-title"><b>${T('The Old Lighthouse', 'Ngọn Hải Đăng Cũ')}</b><small>${T(`${G.state.island.name || 'The island'}, seen from the gallery`, `${G.state.island.name || 'Hòn đảo'} nhìn từ ban công hải đăng`)}</small></div><button type="button" class="btn big ghost lk-scope">🔭 ${T('Telescope', 'Ống nhòm')}</button><button type="button" class="btn big pink lk-leave">${T('Leave the lighthouse', 'Rời hải đăng')}</button>`;
+  el.innerHTML = `<canvas></canvas><div class="lk-title"><b>${T('The Old Lighthouse', 'Ngọn Hải Đăng Cũ')}</b><small>${T(`${G.state.island.name || 'The island'}, seen from the gallery`, `${G.state.island.name || 'Hòn đảo'} nhìn từ ban công hải đăng`)}</small></div><button type="button" class="btn big ghost lk-scope">🔭 ${T('Telescope', 'Kính viễn vọng')}</button><button type="button" class="btn big pink lk-leave">${T('Leave the lighthouse', 'Rời hải đăng')}</button>`;
   document.getElementById('app').appendChild(el);
   el.querySelector('.lk-leave').onclick = () => leaveLighthouse();
   // the telescope: zoom in and drag to look around the island

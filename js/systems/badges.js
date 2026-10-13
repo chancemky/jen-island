@@ -19,14 +19,19 @@ function shareNameBadge() { const b = BADGES[showcaseBadge()]; G.runtime.nameBad
 function pickShowcase() { const s = G.state; if (!s.showBadge || !hasBadge(s.showBadge)) s.showBadge = earnedBadges()[0] || null; shareNameBadge(); }
 export function setShowcase(id) { if (hasBadge(id)) { G.state.showBadge = id; shareNameBadge(); markDirty(true); } }
 
+const later = [];   // badge news waits until you step away from the counter (it doubled up with the achievement for the same moment)
 export function checkBadges() {
   const s = G.state; if (!s?.story?.flags?.freeRoam) return;
+  if (later.length && !G.runtime.serviceOpen) for (const id of later.splice(0)) badgeToast(id);
   const got = (s.badges ||= []), fresh = [];
   for (const [id, b] of Object.entries(BADGES)) if (!b.server && !got.includes(id) && b.got(s)) { got.push(id); fresh.push(id); }
   if (!fresh.length) return;
   pickShowcase(); markDirty(true);
-  for (const id of fresh) bus.emit('toast', { text: T(`Badge earned: ${BADGES[id].en}`, `Nhận huy hiệu: ${BADGES[id].vi}`), sub: T(BADGES[id].need[0], BADGES[id].need[1]), icon: 'star', cls: 'ach', ms: 4200 });
+  for (const id of fresh) if (G.runtime.serviceOpen) later.push(id); else badgeToast(id);
   bus.emit('badges', fresh);
+}
+function badgeToast(id) {
+  bus.emit('toast', { text: T(`Badge earned: ${BADGES[id].en}`, `Nhận huy hiệu: ${BADGES[id].vi}`), sub: T(BADGES[id].need[0], BADGES[id].need[1]), icon: 'star', cls: 'ach', ms: 4200 });
 }
 // consecutive real-world days you've opened the game
 export function touchStreak() {

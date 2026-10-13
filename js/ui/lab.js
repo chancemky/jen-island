@@ -4,7 +4,7 @@
 // one portion of what you put in, and the stations you can use are the ones your known
 // recipes have taught you.
 import { G, T, pantry, addPantry, markDirty, learnRecipe } from '../systems/state.js';
-import { RECIPES, STATION, PREPPED, BUSINESSES, recipeName, ingName } from '../data/game.js';
+import { RECIPES, STATION, PREPPED, BUSINESSES, recipeName, ingName, stationLabel } from '../data/game.js';
 import { openSheet, h, btn, showReward } from './sheets.js';
 import { iconURL } from '../gfx/food.js';
 import { sfx } from '../core/audio.js';
@@ -57,6 +57,6 @@ function cook(pick, api) {
   if (s.recipes.includes(hit)) { setTimeout(() => toast({ text: T(`Your ${recipeName(hit)} — as good as ever!`, `Món ${recipeName(hit)} của bạn — vẫn ngon như mọi khi!`), icon: RECIPES[hit].icon }), 900); api.rebuild(); return; }
   learnRecipe(hit); api.close(true);
   const shop = Object.entries(BUSINESSES).find(([, b]) => b.biz === RECIPES[hit].biz)?.[0];
-  setTimeout(() => showReward({ kicker: T('Secret recipe discovered!', 'Khám phá món bí mật!'), title: recipeName(hit), icon: RECIPES[hit].icon, steps: RECIPES[hit].steps.map(k => STATION[k].icon), text: T(`${RECIPES[hit].blurb || ''} It's on the menu at ${shop ? BUSINESSES[shop].en : 'your shop'} now.`, `${RECIPES[hit].blurbVi || ''} Món này đã có trong thực đơn ${shop ? BUSINESSES[shop].name : 'quán bạn'}.`) }), 700);
+  setTimeout(() => showReward({ kicker: T('Secret recipe discovered!', 'Khám phá món bí mật!'), title: recipeName(hit), icon: RECIPES[hit].icon, steps: RECIPES[hit].steps.map(k => [STATION[k].icon, stationLabel(k)]), text: T(`${RECIPES[hit].blurb || ''} It's on the menu at ${shop ? BUSINESSES[shop].en : 'your shop'} now.`, `${RECIPES[hit].blurbVi || ''} Món này đã có trong thực đơn ${shop ? BUSINESSES[shop].name : 'quán bạn'}.`) }), 700);
 }
 export const isLabStove = () => G.scene?.id === 'house';

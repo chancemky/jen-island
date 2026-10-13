@@ -19,15 +19,15 @@ export const PROJECTS = [
     props: () => [818, 982].flatMap(x => along(x, 1800, x, 2230, 8).map(([px, py]) => ['flowerPatch', px, py, { cullR: 30, cullH: 30, flat: true }])) },
   { id: 'beach_cabanas', cost: 35000, icon: '⛱️', en: 'Cabanas on Sunny Beach', vi: 'Lều dù trên Bãi Biển', blurb: ['Striped parasols and loungers for the beach crowd.', 'Dù sọc và ghế nằm cho khách tắm biển.'],
     props: () => [[360, 2300], [470, 2318], [580, 2306], [300, 2228], [690, 2262]].flatMap(([x, y], i) => [['lounger', x + 10, y + 6, { cullR: 40, cullH: 30 }], ['umbrella', x, y, { col: ['#f28f7c', '#6fbfb0', '#f7de8c', '#8fb7e0', '#c9b6e8'][i], cullR: 50, cullH: 90 }]]) },
-  { id: 'plaza_lamps', cost: 45000, icon: '💡', en: 'A ring of lamps round Wind Plaza', vi: 'Vòng đèn quanh Quảng trường gió', blurb: ['Eight iron lamps so the plaza glows every evening.', 'Tám cây đèn sắt cho quảng trường sáng rực mỗi tối.'],
+  { id: 'plaza_lamps', cost: 45000, icon: '💡', en: 'A ring of lamps round Wind Plaza', vi: 'Vòng đèn quanh Quảng Trường Gió', blurb: ['Eight iron lamps so the plaza glows every evening.', 'Tám cây đèn sắt cho quảng trường sáng rực mỗi tối.'],
     props: () => ring(PLAZA.x, PLAZA.y, 205, 8, Math.PI / 8).map(([x, y]) => ['lampPost', x, y, { cullR: 40, cullH: 60 }]) },
   { id: 'nm_canopy', cost: 60000, icon: '✨', en: 'A lantern canopy over the Night Market', vi: 'Mái lồng đèn trên Chợ Đêm', blurb: ['Strings of lanterns criss-crossing above the stalls.', 'Những dây lồng đèn đan chéo phía trên các sạp.'],
     props: () => [600, 645, 735, 780].map(y => ['lanternString', 270, y, { sortY: 99990, x2: 590, h: 34, n: 12, cull: { x: 260, y: y - 60, w: 340, h: 80 } }]) },
-  { id: 'dock_arches', cost: 90000, icon: '🌸', en: 'Flower arches up to the plaza', vi: 'Cổng hoa lên quảng trường', blurb: ['A tunnel of bougainvillea arches from the dock to Wind Plaza.', 'Một đường cổng hoa giấy từ bến tàu lên Quảng trường gió.'],
+  { id: 'dock_arches', cost: 90000, icon: '🌸', en: 'Flower arches up to the plaza', vi: 'Cổng hoa lên quảng trường', blurb: ['A tunnel of bougainvillea arches from the dock to Wind Plaza.', 'Một đường cổng hoa giấy từ bến tàu lên Quảng Trường Gió.'],
     props: () => along(900, 1900, 900, 2180, 4).map(([x, y]) => ['flowerArch', x, y, { cullR: 60, cullH: 90 }]) },
   { id: 'golden_meo', cost: 250000, icon: '🐱', en: 'The Golden Mèo Mây statue', vi: 'Tượng Mèo Mây vàng', blurb: ['A giant golden Mèo Mây greeting every boat at the dock. She approves.', 'Một Mèo Mây vàng khổng lồ chào mọi con thuyền ở bến. Mèo Mây rất duyệt.'],
     props: () => [['goldMeo', 1035, 2338, { cullR: 70, cullH: 140, solidR: 0 }]] },
-  { id: 'fireworks', cost: 400000, icon: '🎆', en: 'Fireworks every night at nine', vi: 'Pháo hoa mỗi tối lúc chín giờ', blurb: ['The island lights up the sky over Wind Plaza at 21:00, every night.', 'Hòn đảo bắn pháo hoa trên Quảng trường gió lúc 21:00, mỗi tối.'], props: () => [] },
+  { id: 'fireworks', cost: 400000, icon: '🎆', en: 'Fireworks every night at nine', vi: 'Pháo hoa mỗi tối lúc chín giờ', blurb: ['The island lights up the sky over Wind Plaza at 21:00, every night.', 'Hòn đảo bắn pháo hoa trên Quảng Trường Gió lúc 21:00, mỗi tối.'], props: () => [] },
 ];
 const S = () => (G.state.projects ||= {});
 export const projectDone = id => !!S()[id];

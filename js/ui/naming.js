@@ -28,7 +28,9 @@ export function askText({ title, sub = '', placeholder = '', max = 16, value = '
       if (closed) return;
       const v = inp.value.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
       const blocked = nameBlocked(v);
-      el.querySelector('.name-err').style.display = blocked ? '' : 'none';
+      const err = el.querySelector('.name-err');
+      err.textContent = blocked ? T('Please pick a different name.', 'Bạn chọn tên khác nhé.') : T('Type a name first ✏️', 'Nhập tên trước nhé ✏️');   // (empty just shook, with no word why)
+      err.style.display = blocked || !v ? '' : 'none';
       if (!v || blocked) { sfx('error'); inp.parentElement.animate([{ transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'none' }], { duration: 240 }); inp.focus(); return; }
       closed = true; sfx('success'); inp.blur(); G.runtime.pause--;
       el.style.transition = 'opacity .2s'; el.style.opacity = 0;

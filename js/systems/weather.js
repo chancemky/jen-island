@@ -30,7 +30,7 @@ export function updateWeather(dt) {
   G.runtime.season = seasonOf();
   const w = weatherOn(), h = s.time / 60, want = w.rain && h >= w.start && h < w.end && G.scene === G.scenes.island ? (w.heavy ? 1 : w.drizzle ? 0.5 : 0.7) : 0;
   const a = (G.runtime.rainA || 0) + (want - (G.runtime.rainA || 0)) * Math.min(1, dt * 0.6);
-  if (want > 0 && !G.runtime.rainA) bus.emit('toast', w.drizzle ? { cat: 'weather', text: T('A fine winter drizzle', 'Mưa phùn mùa đông'), sub: T('Warm drinks weather.', 'Thời tiết hợp đồ uống nóng.'), icon: 'ice', ms: 2600 } : { cat: 'weather', text: T('It\'s starting to rain', 'Trời bắt đầu mưa'), sub: T('Cafés fill up, the beach empties.', 'Quán cà phê đông khách, bãi biển vắng người.'), icon: 'ice', ms: 2600 });
+  if (want > 0 && !G.runtime.rainA) bus.emit('toast', w.drizzle ? { cat: 'weather', text: T('A fine winter drizzle', 'Mưa phùn mùa đông'), sub: T('Warm drinks weather.', 'Thời tiết hợp đồ uống nóng.'), icon: 'umbrella', ms: 2600 } : { cat: 'weather', text: T('It\'s starting to rain', 'Trời bắt đầu mưa'), sub: T('Cafés fill up, the beach empties.', 'Quán cà phê đông khách, bãi biển vắng người.'), icon: 'umbrella', ms: 2600 });
   G.runtime.rainA = a < 0.01 ? 0 : a;
   // umbrellas up (and down again) for everyone walking around outside
   const isl = G.scenes.island, up = a > 0.3;

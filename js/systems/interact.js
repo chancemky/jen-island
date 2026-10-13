@@ -24,7 +24,7 @@ export const DISCOVERIES = {
   fish: ['Fed the fish', 'Cho cá ăn'], lamp: ['Switched a lamp', 'Bật tắt đèn'], clock: ['Checked the clock', 'Xem đồng hồ'], calendar: ['Read the calendar', 'Xem lịch'],
   mirror: ['Looked in a mirror', 'Soi gương'], books: ['Read from a bookshelf', 'Đọc sách trên kệ'], photo: ['Looked at the photos', 'Ngắm ảnh'],
   coin: ['Made a wish at the fountain', 'Ước ở đài phun nước'], stones: ['Skipped stones', 'Ném thia lia'], timetable: ['Read the ferry timetable', 'Xem lịch tàu'],
-  wave: ['Waved at the ferry', 'Vẫy tay chào tàu'], telescope: ['Looked through the telescope', 'Nhìn qua ống nhòm'], fishing: ['Went fishing', 'Đi câu cá'],
+  wave: ['Waved at the ferry', 'Vẫy tay chào tàu'], telescope: ['Looked through the telescope', 'Nhìn qua kính viễn vọng'], fishing: ['Went fishing', 'Đi câu cá'],
   garden: ['Grew something', 'Trồng cây'], trick: ['Taught a pet a trick', 'Dạy thú cưng làm xiếc'], meo_pet: ['Introduced Mèo Mây to a pet', 'Cho Mèo Mây gặp thú cưng'],
   fitting: ['Used the fitting room', 'Vào phòng thử đồ'], kitchen: ['Poked around a kitchen', 'Khám phá nhà bếp'], display: ['Browsed a shop display', 'Ngắm quầy trưng bày'],
   plaque: ['Read a plaque', 'Đọc bảng ghi chú'], gift: ['Gave a neighbour a gift', 'Tặng quà hàng xóm'], snack: ['Found a favourite snack', 'Tìm ra món vặt ruột'],
@@ -358,7 +358,7 @@ export function nextEvent() {
 // how much busier a business is today
 export function eventBoost(biz) { const ev = eventOn(); return (ev ? (ev.boost[biz] || ev.boost.all || 1) : 1) * weatherBoost(biz); }
 export function morningEvent() {
-  const w = weatherOn(); if (w.rain) setTimeout(() => toast({ text: T(`Rain expected around ${Math.floor(w.start)}:00`, `Dự báo mưa khoảng ${Math.floor(w.start)} giờ`), sub: T('Hot drinks and the restaurant will be busy.', 'Đồ uống nóng và nhà hàng sẽ đông khách.'), icon: 'ice', ms: 4200 }), 2500);
+  const w = weatherOn(); if (w.rain) setTimeout(() => toast({ text: T(`Rain expected around ${Math.floor(w.start)}:00`, `Dự báo mưa khoảng ${Math.floor(w.start)} giờ`), sub: T('Hot drinks and the restaurant will be busy.', 'Đồ uống nóng và nhà hàng sẽ đông khách.'), icon: 'umbrella', ms: 4200 }), 2500);
   const ev = eventOn(); if (!ev) return;
   toast({ text: T(`Today: ${ev.en}`, `Hôm nay: ${ev.vi}`), sub: T(ev.line[0], ev.line[1]), icon: 'lantern', ms: 5200 });
 }

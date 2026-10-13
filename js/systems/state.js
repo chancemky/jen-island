@@ -33,7 +33,7 @@ function baseState() {
     player: { name: '', look: null },
     island: { name: '' },
     day: 1, time: 7 * 60,
-    money: 380, reputation: 0, lifetime: 0,   // the first repair + first ingredients, with one spare pack's worth left over
+    money: 440, reputation: 0, lifetime: 0,   // the first repair + a real first day's ingredients (two packs of each), with a little left over
     pantry: {},              // raw ingredients: id → portions
     materials: {},           // id → count
     recipes: [],             // discovered recipe ids

@@ -308,7 +308,7 @@ function traceLine(c, pts) { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for 
 export const TRUCK_SPOTS = {
   beach: { x: 1420, y: 2152, en: 'Sunny Beach', vi: 'Bãi Biển', fx: 'Beach lunches and hot afternoons', fxVi: 'Trưa bãi biển và chiều nắng' },
   dock: { x: 1064, y: 2340, en: 'Ferry Dock', vi: 'Bến tàu', fx: 'A rush whenever the ferry comes in; tourists mind prices less', fxVi: 'Đông mỗi khi tàu cập bến; du khách ít để ý giá', ferry: 1.6, tolerance: 1.12 },
-  plaza: { x: 1000, y: 1720, en: 'Wind Plaza', vi: 'Quảng trường gió', fx: 'Steady neighbours all day, busy evenings', fxVi: 'Hàng xóm ghé đều cả ngày, tối đông', steady: 1.15 },
+  plaza: { x: 1000, y: 1720, en: 'Wind Plaza', vi: 'Quảng Trường Gió', fx: 'Steady neighbours all day, busy evenings', fxVi: 'Hàng xóm ghé đều cả ngày, tối đông', steady: 1.15 },
   harbour: { x: 2552, y: 707, en: 'Harbour Town', vi: 'Phố Cảng', need: 'harbourBridge', fx: 'Visitors from the guesthouse; pricier menus are fine', fxVi: 'Khách từ nhà nghỉ; giá cao hơn cũng được', tolerance: 1.18, steady: 1.05 },
 };
 export const NAV_ONLY = new Set(['nm', 'bridge', 'hbridge', 'cbridge', 'coveRoad']);   // walkable routes for NPCs with no road drawn (coveRoad: no road from Chú Hải's house down to the cove bridge)
@@ -1065,7 +1065,7 @@ export const AREAS = [
   { name: 'Cù Lao Đom Đóm', en: 'Firefly Islet', test: (x, y) => x > 1930 },
   { name: 'Bến Tàu', en: 'Ferry Dock', test: (x, y) => y > 2380 },
   { name: 'Bãi Biển', en: 'Sunny Beach', test: (x, y) => y > 2150 || (x > 1450 && y > 1900) },
-  { name: 'Quảng trường gió', en: 'Wind Plaza', test: (x, y) => dist(x, y, PLAZA.x, PLAZA.y) < 190 },
+  { name: 'Quảng Trường Gió', en: 'Wind Plaza', test: (x, y) => dist(x, y, PLAZA.x, PLAZA.y) < 190 },
   { name: 'Phố Chợ', en: 'Market Street', test: (x, y) => y > 1060 && y < 1330 && x > 460 && x < 1480 },
   { name: 'Xóm Đông', en: 'East Village', test: (x, y) => x > 1040 && y > 1500 && y < 1900 },
   { name: 'Xóm Tây', en: 'West Village', test: (x, y) => x < 820 && y > 1290 && y < 1900 },

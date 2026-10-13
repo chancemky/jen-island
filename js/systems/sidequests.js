@@ -89,7 +89,9 @@ export async function questTalk(a, rid) {
     return true;
   }
   if (!st) {
-    await say(who, tr(q.ask), { emo: q.type === 'meet' || q.type === 'puzzle' ? 'happy' : 'sad' });
+    // you choose to take it on (it used to start the moment they asked)
+    const yes = await ask(who, tr(q.ask), [T('I\'ll help!', 'Để mình giúp!'), T('Maybe later', 'Để sau nhé')], { emo: q.type === 'meet' || q.type === 'puzzle' ? 'happy' : 'sad' });
+    if (yes !== 0) { await say(who, T('No rush — I\'ll be around.', 'Không vội đâu — {me} vẫn ở đây mà.'), { emo: 'happy' }); return true; }
     Q()[q.id] = q.type === 'deliver' ? 'found' : 'active'; markDirty(true);
     if (q.type === 'deliver') { G.player.setAct?.('hold', q.icon || 'star'); setTimeout(() => G.player.act === 'hold' && G.player.setAct(null), 1200); }
     acceptToast(q); refreshGuide();

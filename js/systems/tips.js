@@ -11,7 +11,7 @@ const TIPS = [
   { id: 'runner', when: s => Object.keys(s.keepers || {}).length >= 1 && !Object.keys(s.supply || {}).length && s.day >= 6,
     text: ['Tip: a supply runner restocks shops', 'Mẹo: người giao hàng bổ sung nguyên liệu'], sub: ['Menu → Business. Every morning they top up a shop\'s ingredients (for a fee).', 'Menu → Kinh doanh. Mỗi sáng họ bổ sung nguyên liệu cho quán (có phí).'], icon: 'bag' },
   { id: 'board', when: s => s.story.flags.freeRoam && !(s.stats.boardDone > 0) && s.board?.day === s.day,
-    text: ['Tip: the Island Board on Wind Plaza', 'Mẹo: Bảng tin đảo ở Quảng trường gió'], sub: ['Neighbours pin new requests every morning.', 'Hàng xóm ghim lời nhờ mới mỗi sáng.'], icon: 'notebook' },
+    text: ['Tip: the Island Board on Wind Plaza', 'Mẹo: Bảng tin đảo ở Quảng Trường Gió'], sub: ['Neighbours pin new requests every morning.', 'Hàng xóm ghim lời nhờ mới mỗi sáng.'], icon: 'notebook' },
   { id: 'photo', when: s => s.day >= 3 && !(s.stats.photos > 0),
     text: ['Tip: photo mode', 'Mẹo: chế độ chụp ảnh'], sub: ['Tap 📷 to frame a shot, pick a filter and strike a pose.', 'Bấm 📷 để chọn khung, bộ lọc và tạo dáng.'], icon: 'photo' },
   { id: 'decorate', when: s => (s.home?.owned || []).length >= 1 && homePieces(s.home).length < 2,

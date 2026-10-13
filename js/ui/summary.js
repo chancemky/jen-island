@@ -51,7 +51,10 @@ function summaryCard(sum) {
     const f = G.state.story.flags, adOffer = adsReady() && sum.tips > 0 && f.adDay !== sum.day;   // (once a day, only when there were tips)
     const biz = Object.entries(sum.biz || {}).filter(([, v]) => v.served);
     const pl = sum.books?.biz || {};
-    const vs = (a, b) => b != null && b !== 0 ? ` <span style="opacity:.7;font-size:.85em">${a >= b ? '▲' : '▼'}${Math.abs(Math.round((a - b) / Math.abs(b) * 100))}%</span>` : '';
+    // (a change against a day that lost money is meaningless — "▲169%" — so only compare with a positive day)
+    const vs = (a, b) => b != null && b > 0 ? ` <span style="opacity:.7;font-size:.85em">${a >= b ? '▲' : '▼'}${Math.abs(Math.round((a - b) / Math.abs(b) * 100))}%</span>` : '';
+    // money spent on things you keep (repairs, upgrades, a new shop, furniture…) isn't a loss from trading
+    const sp = sum.books?.spending || {}, kept = ['materials', 'building', 'upgrades', 'businesses', 'property', 'home', 'personal'].reduce((a, c) => a + (sp[c] || 0), 0), trading = (sum.net ?? 0) + kept;
     const DID = { served: ['served', 'bưng'], orders: ['orders', 'order'], cooked: ['cooked', 'nấu'], cleaned: ['tables cleaned', 'bàn dọn'], prepped: ['preps', 'mẻ sơ chế'], deposits: ['deposits', 'lần nộp'], helped: ['helped', 'giúp'] };
     const staffLine = st => st.biz ? T(`${st.name} served ${st.served} guests at ${bizName(st.biz)}`, `${st.name} bán cho ${st.served} khách ở ${bizName(st.biz)}`)
       : `${st.name} (${T(ROLES[st.role]?.en || '', ROLES[st.role]?.vi || '')}): ${Object.entries(st.did).filter(([, n]) => n).map(([k, n]) => `${n} ${T(...DID[k])}`).join(', ') || T('a quiet day', 'một ngày yên ả')}`;
@@ -63,7 +66,7 @@ function summaryCard(sum) {
         <div class="sum-stat"><small>${T('Perfect', 'Hoàn hảo')}</small><b data-n="${sum.perfect}">0</b></div>
         <div class="sum-stat"><small>${T('Sales', 'Bán hàng')}</small><b data-n="${sum.sales ?? sum.revenue - sum.tips}" data-money="1">0</b></div>
         <div class="sum-stat"><small>${T('Tips', 'Tiền boa')}</small><b data-n="${sum.tips}" data-money="1">0</b></div>
-        <div class="sum-stat wide"><small>${T('Net today (all money in − all money out)', 'Lãi hôm nay (tiền vào − tiền ra)')}${vs(sum.net ?? 0, sum.prev?.net)}</small><b data-n="${sum.net ?? 0}" data-money="1" data-sign="1">0</b></div>
+        <div class="sum-stat wide"><small>${T('Net today (all money in − all money out)', 'Lãi hôm nay (tiền vào − tiền ra)')}${vs(sum.net ?? 0, sum.prev?.net)}</small><b data-n="${sum.net ?? 0}" data-money="1" data-sign="1">0</b>${kept >= 1 ? `<small style="display:block;margin-top:4px;opacity:.75">${T(`${money(kept)} of that went on things you keep · from trading: ${trading >= 0 ? '+' : ''}${money(trading)}`, `${money(kept)} trong đó là đồ bạn giữ lại · từ buôn bán: ${trading >= 0 ? '+' : ''}${money(trading)}`)}</small>` : ''}</div>
         <div class="sum-stat"><small>${T('Reputation', 'Danh tiếng')}</small><b data-n="${sum.repDelta}" data-sign="1">0</b></div>
         ${sum.lost ? `<div class="sum-stat wide"><small>${T('Customers who left', 'Khách bỏ đi')}</small><b data-n="${sum.lost}">0</b></div>` : ''}
       </div></div>

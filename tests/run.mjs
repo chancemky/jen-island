@@ -294,7 +294,7 @@ if (run('economy')) {
     // Chapter 1: the first repair is 230–260k and leaves enough for the first ingredients,
     // with a 40–100k cushion so one mistake doesn't leave you soft-broke (but no windfall either)
     const rep = Object.entries(E.BUSINESSES.shed1.repair).reduce((a, [k, n]) => a + E.MATERIALS[k].price * n, 0);
-    const firstStock = ['tea', 'kumquat', 'sugar', 'ice'].reduce((a, k) => a + E.INGREDIENTS[k].price, 0);
+    const firstStock = ['tea', 'kumquat', 'sugar', 'ice'].reduce((a, k) => { const g = E.INGREDIENTS[k]; return a + g.price * Math.ceil(Math.max(g.pack, 12) / g.pack); }, 0);   // ("Stock up" before any sales: about 12 of each)
     out.info.repair = rep; out.info.firstStock = firstStock;
     if (rep < 230 || rep > 260) bad(`first repair costs ${rep}k (want 230–260k)`);
     const start = (await import('/js/systems/state.js')).defaultState().money, spare = start - rep - firstStock;

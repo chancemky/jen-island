@@ -182,6 +182,13 @@ export const ICONS = {
   plate: c => { ell(c, 0, 2, 13, 8, '#fffdf5'); ell(c, 0, 1, 8, 5, '#e9a25a', null); },
   person: c => { circ(c, 0, -5, 7, '#f8d6bd'); c.beginPath(); c.arc(0, -7, 7.4, Math.PI, 0); c.fillStyle = '#4a322b'; c.fill(); box(c, -8, 3, 16, 10, 5, '#9fd8c8'); },
   map: c => { poly(c, [-12, -9, -4, -12, 4, -9, 12, -12, 12, 9, 4, 12, -4, 9, -12, 12], '#f5e2b3', INK, 1.2); line(c, -4, -12, -4, 9, INK, 0.8); line(c, 4, -9, 4, 12, INK, 0.8); ell(c, 0, 0, 5, 4, '#a3d68a', null); circ(c, 7, -3, 1.6, '#e8584e', null); },
+  umbrella: c => {   // (for the rain forecast: it showed an ice cube)
+    c.beginPath(); c.moveTo(-12, 1); c.quadraticCurveTo(-11, -12, 0, -12); c.quadraticCurveTo(11, -12, 12, 1);
+    for (let i = 0; i < 4; i++) c.quadraticCurveTo(9 - i * 6, -3, 6 - i * 6, 1);
+    c.closePath(); c.fillStyle = '#6fa8dc'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke();
+    c.beginPath(); c.moveTo(0, -12); c.lineTo(0, 9); c.quadraticCurveTo(0, 12, -3, 12); c.quadraticCurveTo(-5, 12, -5, 10); c.strokeStyle = INK; c.lineWidth = 1.6; c.stroke();
+    c.fillStyle = '#9fd0f5'; for (const [x, y] of [[-9, 6], [9, 7], [6, 12]]) { c.beginPath(); c.ellipse(x, y, 1.2, 2, 0, 0, Math.PI * 2); c.fill(); }
+  },
   sleep_moon: c => { c.beginPath(); c.arc(0, 0, 11, 0.6, Math.PI * 2 - 0.6); c.quadraticCurveTo(-2, 0, Math.cos(0.6) * 11, Math.sin(0.6) * 11); c.fillStyle = '#fff4c8'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke(); },
   // pantry goods
   wood: c => { for (let i = 0; i < 3; i++) { c.save(); c.translate(0, -6 + i * 6); box(c, -12, -2.8, 24, 5.6, 1.6, i % 2 ? '#c88a52' : '#d9a064'); circ(c, -12 + 2.6, 0, 1.6, '#b0753f', INK, 0.5); c.restore(); } },

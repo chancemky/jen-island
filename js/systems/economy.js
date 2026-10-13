@@ -306,7 +306,7 @@ export function toggleSupply(id) { const s = G.state.supply?.[id]; if (s) { s.on
 // portions this shop is likely to need (recent sales, or a sensible first guess)
 export function shopNeed(id, k) {
   const g = INGREDIENTS[k], used = G.state.usage?.[id]?.[k];
-  return Math.max(4, Math.ceil(used != null ? used * SUPPLY.days : g.pack));
+  return Math.max(4, Math.ceil(used != null ? used * SUPPLY.days : Math.max(g.pack, 12)));   // (a first guess of one pack — 6 kumquats — sold out within the first hour)
 }
 const preppedAt = (id, k) => { const to = INGREDIENTS[k]?.prep?.to; return to ? bizOf(id).prepped?.[to] || 0 : 0; };
 export function runSupply(id) {

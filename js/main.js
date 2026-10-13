@@ -543,6 +543,9 @@ function updateInteraction(dt) {
     const verb = T('Talk', 'Nói chuyện'), label = talk.name ? `${verb} · ${talk.name}` : verb;
     setAction(label, () => talkTo(talk), 'talk'); return;
   }
+  // standing in an open doorway: the button says Enter, and tapping it goes in (walking in still works;
+  // the button used to sit there blank, and tapping it did nothing)
+  if (trHere?.kind === 'door' && enterable(trHere.building) && inTrigger(trHere, pl.x, pl.y, 8)) { const door = trHere; setAction(T('Enter', 'Vào'), () => enterBuilding(door), 'door'); return; }
   if (trAct) {
     const tr = trAct;
     if (tr.kind === 'door') return doorAction(tr);
@@ -822,7 +825,12 @@ function cookSingle(g, onResult) {
 }
 function toggleBiz(bizId) {
   const z = bizOf(bizId);
-  if (z.open) { closeBiz(bizId); sfx('back'); toast({ text: T(`${bizName(bizId)} is closed`, `${bizName(bizId)} đã đóng cửa`) }); return; }
+  if (z.open) {
+    // Close sits beside the big action button: with people in line, it takes a second tap (one slip used to send them all away)
+    const waiting = bizRT(bizId).queue.length;
+    if (waiting && !(G.runtime.closeArm?.id === bizId && performance.now() - G.runtime.closeArm.t < 3000)) { G.runtime.closeArm = { id: bizId, t: performance.now() }; sfx('tap'); toast({ text: T(`${waiting} customer${waiting > 1 ? 's are' : ' is'} waiting`, `${waiting} khách đang chờ`), sub: T('Tap Close again to close anyway.', 'Bấm Đóng cửa lần nữa để đóng.'), icon: 'person', now: true, ms: 2600 }); return; }
+    G.runtime.closeArm = null; closeBiz(bizId); sfx('back'); toast({ text: T(`${bizName(bizId)} is closed`, `${bizName(bizId)} đã đóng cửa`) }); return;
+  }
   const r = openBiz(bizId);
   if (!r.ok) { toast({ text: r.why.split('\n')[0], sub: r.why.split('\n')[1] || '', bad: true, ms: 3400 }); return; }
   toast({ text: T(`${bizName(bizId)} is open!`, `${bizName(bizId)} mở cửa!`), sub: T('Customers are on the way', 'Khách đang tới'), icon: 'sign_open' });
@@ -966,7 +974,15 @@ $('bagBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() |
 $('camBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen() || isPresenting() || G.runtime.inCutscene) return; openPhotoMode(); });
 $('mapBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen() || isPresenting()) return; sfx('ui'); openMenu({ onLogout: logout }); });
 $('menuBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() || isPrepOpen() || isUiOpen() || isPresenting()) return; sfx('ui'); openMenu({ onLogout: logout }); });
-$('questPill').addEventListener('click', () => { if (cs.active) return; const st = currentStep(); if (st?.text) toast({ text: T('Objective', 'Mục tiêu'), sub: st.text(), icon: 'star', ms: 4000 }); });
+// tapping the goal: show where it is — the camera glides over to it and back (it used to just repeat the text)
+let peekT = null;
+$('questPill').addEventListener('click', () => {
+  if (cs.active || cam.override || isUiOpen()) return; const st = currentStep(); if (!st?.text) return;
+  toast({ text: T('Objective', 'Mục tiêu'), sub: st.text(), icon: 'star', ms: 4000, now: true });
+  const tg = st.target?.(); if (!tg || tg.x == null || (tg.scene || 'island') !== G.scene?.id) return;
+  cam.override = { x: tg.x, y: tg.y - 10, rate: 3.2 }; fx.float(tg.x, tg.y - 50, T('here!', 'ở đây!'), '#ffd35a', { life: 2.2, size: 11 });
+  clearTimeout(peekT); peekT = setTimeout(() => { if (cam.override?.rate === 3.2) cam.override = null; }, 1700);
+});
 $('repChip').addEventListener('click', () => { const s = G.state, need = Math.round(90 * Math.pow(s.level || 1, 1.5)); toast({ text: T(`Level ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} XP`, `Cấp ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} KN`), sub: T(`Reputation ${Math.floor(s.reputation)}. Serve customers, repair and upgrade to level up!`, `Danh tiếng ${Math.floor(s.reputation)}. Phục vụ khách, sửa và nâng cấp quán để lên cấp!`), icon: 'trophy' }); });
 $('clockChip').addEventListener('click', () => toast({ text: T(`Day ${G.state.day}`, `Ngày ${G.state.day}`), sub: T('Your shops close at 11 pm. Sleep in your bed to start a new day.', 'Các quán của bạn đóng cửa lúc 23 giờ. Ngủ trên giường để sang ngày mới.'), icon: 'sleep_moon' }));
 
@@ -1027,14 +1043,17 @@ let msSeen = 0;
 // tell the player the moment a milestone is ready, and which one
 const msAnnounced = {};
 function checkMilestonesReady() {
-  if (!G.state?.player?.name || !G.state.story.flags.freeRoam || G.runtime.inCutscene || cs.active) return;
+  if (!G.state?.player?.name) return;
+  // a dot on the menu button while a reward waits (unclaimed milestones used to sit there unseen)
+  document.getElementById('menuBtn')?.classList.toggle('dot', TRACKS.some(t => trackState(t).ready));
+  if (!G.state.story.flags.freeRoam || G.runtime.inCutscene || cs.active) return;
   const fresh = TRACKS.filter(t => trackState(t).ready).filter(t => !msAnnounced[t.id + ':' + (G.state.milestones?.[t.id] || 0)]);
   if (!fresh.length) return;
   for (const t of fresh) msAnnounced[t.id + ':' + (G.state.milestones?.[t.id] || 0)] = true;
   if (msSeen++ > 40) return;
   // several at once (after a jump, an update or a long session away): one card, not a stream of them
-  if (fresh.length > 1) toast({ text: T(`${fresh.length} milestones ready!`, `${fresh.length} cột mốc sẵn sàng!`), sub: T('Claim them in Menu → Milestones ★', 'Nhận thưởng ở Menu → Cột mốc ★'), icon: 'trophy', ms: 3400 });
-  else { const t = fresh[0]; toast({ text: T(`Milestone ready: ${t.en}!`, `Cột mốc sẵn sàng: ${t.vi}!`), sub: T('Claim it in Menu → Milestones ★', 'Nhận thưởng ở Menu → Cột mốc ★'), icon: t.icon || 'trophy', ms: 3400 }); }
+  if (fresh.length > 1) toast({ text: T(`${fresh.length} milestones ready!`, `${fresh.length} cột mốc sẵn sàng!`), sub: T('Claim them in Menu → 🏆 Goals', 'Nhận thưởng ở Menu → 🏆 Mục tiêu'), icon: 'trophy', ms: 3400 });
+  else { const t = fresh[0]; toast({ text: T(`Milestone ready: ${t.en}!`, `Cột mốc sẵn sàng: ${t.vi}!`), sub: T('Claim it in Menu → 🏆 Goals', 'Nhận thưởng ở Menu → 🏆 Mục tiêu'), icon: t.icon || 'trophy', ms: 3400 }); }
 }
 setInterval(checkMilestonesReady, 4000);
 setInterval(() => G.renderer?.sweepSprites?.(), 2000);
@@ -1104,3 +1123,12 @@ boot().catch(e => { console.error(e); $('bootMsg').textContent = bootText('err')
 // Offline support + "Add to Home Screen" on the website (not on a local copy, so tests always
 // get fresh files, and not in the store app, which carries its files inside)
 if ('serviceWorker' in navigator && !devHost() && !nativeApp()) navigator.serviceWorker.register('./sw.js').catch(() => {});
+
+// Escape closes whatever is on top: a menu or sheet, the counter, the prep table, photo mode, the
+// lighthouse view (on a keyboard or an iPad with one, it used to do nothing)
+window.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || e.target?.matches?.('input, textarea')) return;
+  const sheets = [...document.querySelectorAll('.sheet-wrap:not(.out) .x')];
+  const btn = sheets[sheets.length - 1] || document.querySelector('.svc:not(.out) .svc-close, .prep:not(.out) .svc-close, .photo-ui .ph-x, .lookout-ui .lk-leave');
+  if (btn) { e.preventDefault(); btn.click(); }
+});

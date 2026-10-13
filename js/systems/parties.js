@@ -30,7 +30,7 @@ function start(rid) {
   });
   party = { rid, guests, joined: false, day: G.state.day };
   blockZone('party', SPOT.x, SPOT.y + 10, 64);
-  bus.emit('toast', { text: T(`It's ${RESIDENTS[rid].name}'s birthday!`, `Hôm nay sinh nhật ${RESIDENTS[rid].name}!`), sub: T('Party on Wind Plaza until 20:00 — come join!', 'Tiệc ở Quảng trường gió tới 20 giờ — ghé chơi nha!'), icon: 'heart', ms: 5200 });
+  bus.emit('toast', { text: T(`It's ${RESIDENTS[rid].name}'s birthday!`, `Hôm nay sinh nhật ${RESIDENTS[rid].name}!`), sub: T('Party on Wind Plaza until 20:00 — come join!', 'Tiệc ở Quảng Trường Gió tới 20 giờ — ghé chơi nha!'), icon: 'heart', ms: 5200 });
 }
 function end() { for (const a of party?.guests || []) { a.data.party = false; a.data.state = 'idle'; a.data.until = 0; } party = null; unblockZone('party'); }
 async function join() {

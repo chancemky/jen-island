@@ -152,7 +152,11 @@ export function showArea(name, en) {
   if (name === lastArea) return;
   lastArea = name;
   $('areaName').textContent = name; $('areaEn').textContent = en || '';
-  const a = $('areaToast'); a.classList.add('on');
+  const a = $('areaToast');
+  // just under the goal bar, however many lines it has (a long goal used to sit on top of the place name)
+  const q = $('questPill'), qr = q?.offsetParent ? q.getBoundingClientRect() : null, ar = $('app').getBoundingClientRect();
+  if (qr?.height) a.style.top = `${qr.bottom - ar.top + 6}px`; else a.style.removeProperty('top');
+  a.classList.add('on');
   clearTimeout(areaTimer); areaTimer = setTimeout(() => a.classList.remove('on'), 2200);
 }
 export function resetArea() { lastArea = ''; }
@@ -236,7 +240,8 @@ function pumpToasts() {
   const box = $('toasts'); if (!box || !tq.length) return;
   const u = tq[0].now || tq[0].bad || tq[0].cls === 'ach';
   // ambient news also waits while a menu is open (it would cover its buttons) and while the place name shows
-  const held = !u && (!!document.querySelector('.sheet-wrap:not(.out)') || $('areaToast')?.classList.contains('on'));
+  // …and everything but a direct answer waits out a cutscene (achievements used to pop up mid-wedding)
+  const held = (!u && (!!document.querySelector('.sheet-wrap:not(.out)') || $('areaToast')?.classList.contains('on'))) || (G.runtime?.inCutscene && !tq[0].now);
   if (blocking() || held || ([...box.children].filter(e => !e.classList.contains('out')).length >= 2 && !u)) { tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 450); return; }
   showToast(tq.shift());
   tTimer = setTimeout(() => { tTimer = null; pumpToasts(); }, 650);

@@ -21,7 +21,7 @@ const regionOpen = r => !!G.state.story.flags[REGIONS[r].flag];
 const landRegion = l => l.id || (l.cx > 2000 ? 'islet' : null);
 
 const ICON = { shed1: 'tea', shed2: 'banh_mi_thit', truck: 'goi_cuon', restaurant: 'pho_bo', house: 'heart', meo: 'notebook', supermarket: 'bag', materials: 'wood', furniture: 'sofa', boutique: 'shirt', salon: 'scissors', dinh: 'lantern', petshop: 'paw', cafe: 'coffee', grill: 'squid', smoothie: 'drink:sinh_to_xoai' };
-const LABEL = { shed1: ['Your Drink Stand', 'Quán Nước'], shed2: ['Bánh Mì', 'Bánh Mì'], truck: ['Truck', 'Xe Cuốn'], restaurant: ['Restaurant', 'Nhà Hàng'], house: ['Home', 'Nhà bạn'], meo: ['Mèo Mây', 'Mèo Mây'], supermarket: ['Market', 'Siêu thị'], materials: ['Materials', 'Vật liệu'], furniture: ['Furniture', 'Nội thất'], boutique: ['Boutique', 'Tiệm áo'], salon: ['Salon', 'Tiệm tóc'], dinh: ['Village Hall', 'Đình làng'], petshop: ['Pet Shop', 'Thú cưng'], cafe: ['Café', 'Cà phê'], grill: ['Grill', 'Quán nướng'], smoothie: ['Smoothie Bar', 'Sinh tố'], h_mai: ['Clinic', 'Phòng khám'] };
+const LABEL = { shed1: ['Your Drink Stand', 'Quán Nước'], shed2: ['Bánh Mì', 'Bánh Mì'], truck: ['Truck', 'Xe Cuốn'], restaurant: ['Restaurant', 'Nhà Hàng'], house: ['Home', 'Nhà bạn'], meo: ['Mèo Mây', 'Mèo Mây'], supermarket: ['Supermarket', 'Siêu thị'], materials: ['Materials', 'Vật liệu'], furniture: ['Furniture', 'Nội thất'], boutique: ['Boutique', 'Tiệm áo'], salon: ['Salon', 'Tiệm tóc'], dinh: ['Village Hall', 'Đình làng'], petshop: ['Pet Shop', 'Thú cưng'], cafe: ['Café', 'Cà phê'], grill: ['Grill', 'Quán nướng'], smoothie: ['Smoothie Bar', 'Sinh tố'], h_mai: ['Clinic', 'Phòng khám'] };
 const MAP_ICONS = {};
 function icon(k) { if (!MAP_ICONS[k]) { const img = new Image(); img.src = iconURL(k, 64); MAP_ICONS[k] = img; } return MAP_ICONS[k]; }
 
@@ -194,18 +194,6 @@ function draw(cv, view) {
     const a = fits(name, R.x, R.y, 15 * k); if (a) label(c, name, a[0], a[1], 15 * k, '#fff', 'rgba(40,60,80,.85)');
     const b2 = fits(when, a ? a[0] : R.x, (a ? a[1] : R.y) + 22 * k, 11 * k); if (b2) label(c, when, b2[0], b2[1], 11 * k, '#fff', 'rgba(40,60,80,.85)');
   }
-  // area names
-  c.globalAlpha = 0.55;
-  // each name sits on (or just beside) its place: the plaza's right above the fountain square, the
-  // market's under its stalls, Market Street under its row of shops
-  for (const [x, y, en, vi, reg] of [[900, 1418, 'Wind Plaza', 'Quảng trường gió'], [430, 822, 'Night Market', 'Chợ Đêm'], [1000, 1262, 'Market Street', 'Phố Chợ'],
-    [560, 1690, 'West Village', 'Xóm Tây'], [1300, 1720, 'East Village', 'Xóm Đông'], [900, 2340, 'Sunny Beach', 'Bãi Biển'], [1505, 822, 'Rice Paddies', 'Ruộng Lúa'],
-    [860, 585, 'Lotus Spring', 'Hồ Sen'], [900, 238, 'Lighthouse Point', 'Mũi Hải Đăng'], [1200, 640, 'Restaurant Hill', 'Đồi Nhà Hàng'],
-    [2690, 820, 'Harbour Town', 'Phố Cảng', 'harbour'], [2330, 2420, 'Coconut Cove', 'Vịnh Dừa', 'cove'], [2250, 1560, 'Firefly Islet', 'Cù Lao Đom Đóm', 'islet']]) {
-    if (reg && !regionOpen(reg)) continue;
-    const at = fits(T(en, vi), x, y, 13 * k, 'italic 900'); if (at) label(c, T(en, vi), at[0], at[1], 13 * k, '#5b3f36', null, 'italic 900');
-  }
-  c.globalAlpha = 1;
   // building badges with icons
   for (const bd of BUILDINGS) {
     const lab = LABEL[bd.id], ic = ICON[bd.id] || (bd.home ? 'person' : null);
@@ -237,6 +225,20 @@ function draw(cv, view) {
     c.beginPath(); c.arc(st.x, y, r + 3 * k, 0, TAU); c.fillStyle = own ? '#f08ca0' : '#fff8ea'; c.fill(); c.lineWidth = 3 * k; c.strokeStyle = '#5b3f36'; c.stroke();
     const img = icon('lantern'); if (img.complete && img.naturalWidth) c.drawImage(img, st.x - r, y - r, r * 2, r * 2);
   }
+  // area names — on top of the badges, with a pale outline (drawn first, faint, the shop icons hid them)
+  c.globalAlpha = 0.9;
+  // each name sits on (or just beside) its place: the plaza's right above the fountain square, the
+  // market's under its stalls, Market Street under its row of shops
+  for (const [x, y, en, vi, reg] of [[900, 1418, 'Wind Plaza', 'Quảng Trường Gió'], [430, 822, 'Night Market', 'Chợ Đêm'], [1000, 1262, 'Market Street', 'Phố Chợ'],
+    [560, 1690, 'West Village', 'Xóm Tây'], [1300, 1720, 'East Village', 'Xóm Đông'], [900, 2340, 'Sunny Beach', 'Bãi Biển'], [1505, 822, 'Rice Paddies', 'Ruộng Lúa'],
+    [860, 585, 'Lotus Spring', 'Hồ Sen'], [900, 238, 'Lighthouse Point', 'Mũi Hải Đăng'], [1200, 640, 'Restaurant Hill', 'Đồi Nhà Hàng'],
+    [2690, 820, 'Harbour Town', 'Phố Cảng', 'harbour'], [2330, 2420, 'Coconut Cove', 'Vịnh Dừa', 'cove'], [2250, 1560, 'Firefly Islet', 'Cù Lao Đom Đóm', 'islet']]) {
+    if (reg && !regionOpen(reg)) continue;
+    // the two places everyone asks for always show; the rest where there's room (zoom in for more)
+    const at = fits(T(en, vi), x, y, 13 * k, 'italic 900') || (en === 'Wind Plaza' || en === 'Market Street' ? [x, y] : null);
+    if (at) label(c, T(en, vi), at[0], at[1], 13 * k, '#5b3f36', 'rgba(255,248,234,.85)', 'italic 900');
+  }
+  c.globalAlpha = 1;
   // side quest stars
   for (const q of activeQuests()) if (G.state.sideQuests[q.id] === 'active') { const sp = questSpot(q); starAt(c, sp.x, sp.y, 12 * k); }
   // goal

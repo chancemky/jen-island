@@ -93,8 +93,8 @@ export class Interior extends Scene {
     this.drawWindowLine(c, t);
     if (this.noDoor) return;
     const { door, h } = this, pl = G.player;
-    const near = pl && Math.hypot(pl.x - door.x, pl.y - h) < 70;
-    const k = near ? 1 : 0.7;
+    const d = pl ? Math.hypot(pl.x - door.x, pl.y - h) : 1e9, near = d < 70;
+    const k = d < 30 ? 0.3 : near ? 1 : 0.7;   // (standing on the mat it fades: it sat right over your head)
     const bob = Math.sin(t * 4) * 3;
     const y = h - 44 + bob;
     c.save(); c.globalAlpha = k;
@@ -455,7 +455,7 @@ function buildHomes() {
     r.wallItem('painting', 150); r.wallItem('window', 206, { w: 36, h: 22, hgt: 48, curtain: '#e8584e' });
     r.furn('fishtank', 190, 110, {}, [-16, -16, 32, 16]); r.furn('sacks', 214, 220, {}, [-20, -14, 40, 12]);
     r.furn('table', 130, 160, { w: 36, col: '#8a5f3e' }, [-18, -10, 36, 10]); r.furn('stool', 104, 168, {});
-  }, [[80, 114, 'A fish tank. One fish has a tiny name tag: "Not Dinner".', 'Bể cá. Một con cá đeo bảng tên nhỏ xíu: “Không Phải Bữa Tối”.'], [150, 66, 'A painting of a stormy sea. Chú Hải says it\'s a portrait of his mood before coffee.', 'Bức tranh biển động. Chú Hải bảo đó là tâm trạng chú trước khi uống cà phê.'], [214, 220, 'Nets, rope, and a sandal that is definitely Bà Tư\'s.', 'Lưới, dây thừng, và một chiếc dép chắc chắn là của Bà Tư.']]);
+  }, [[80, 114, 'A fish tank. One fish has a tiny name tag: "Not Dinner".', 'Bể cá. Một con cá đeo bảng tên nhỏ xíu: “Không Phải Bữa Tối”.'], [150, 66, 'A painting of a stormy sea. Chú Hải says it\'s a portrait of his mood before coffee.', 'Bức tranh biển động. Chú Hải bảo đó là tâm trạng chú trước khi uống cà phê.'], [214, 220, 'Nets, rope, and a lucky float that has ridden out three typhoons.', 'Lưới, dây thừng, và một chiếc phao may mắn đã qua ba cơn bão.']]);
   home('vy', { wall: '#fdf3e0', wall2: '#f6e6c8', floor: '#d9b98a', bed: '#9fd8c8' }, r => {
     r.wallItem('painting', 110); r.wallItem('painting', 170);
     r.prop({ x: 160, y: 140, draw: (c, t) => PR.easel(c, t, {}), cull: { x: 130, y: 90, w: 60, h: 60 } }); r.solid(154, 136, 12, 5);

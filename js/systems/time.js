@@ -117,7 +117,7 @@ function debtHelp() {
 function meoNightLine(t) {
   const q = s => 'Mèo Mây: “' + s + '”';
   if (t.served === 0) return q(T('Quiet day? That\'s okay. Islands are patient.', 'Một ngày yên ả? Không sao. Hòn đảo kiên nhẫn lắm.'));
-  if (t.perfect >= 10) return q(T('Ten perfect orders! My whiskers are still tingling.', 'Mười món hoàn hảo! Râu mình vẫn còn rung rinh nè.'));
+  if (t.perfect >= 10) return q(T(`${t.perfect} perfect orders! My whiskers are still tingling.`, `${t.perfect} món hoàn hảo! Râu mình vẫn còn rung rinh nè.`));   // (the real count: "Ten" sat under a summary saying 12)
   if (t.lost > 3) return q(T('A few people left hungry… tomorrow, a little faster, okay?', 'Có vài người bỏ về vì đói… mai nhanh tay hơn chút nha?'));
   return q(choice(T(['Sleep well. The island is a little brighter tonight.', 'I counted the lanterns tonight. There were more than yesterday.', 'Rest well. Big dreams need small naps.'], ['Ngủ ngon nhé. Tối nay hòn đảo sáng hơn một chút.', 'Tối nay mình đếm lồng đèn. Nhiều hơn hôm qua đó.', 'Nghỉ ngơi đi. Giấc mơ lớn cần những giấc ngủ nhỏ.'])));
 }

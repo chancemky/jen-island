@@ -81,7 +81,10 @@ function hint() {
   for (const li of P.el.querySelectorAll('.prep-guide li')) { li.classList.toggle('now', +li.dataset.s === step); li.classList.toggle('done', +li.dataset.s < step); }
   if (step === 2) P.el.querySelector('.prep-station')?.classList.add('point');
   if (P.stage === 'empty') {
-    tip.textContent = P.raws.some(k => pantry(k) > 0) ? T('Tap an ingredient', 'Chạm vào một nguyên liệu') : T('No raw ingredients — visit the supermarket', 'Hết nguyên liệu — ghé siêu thị nhé');
+    const any = P.raws.some(k => pantry(k) > 0), done = P.raws.some(k => (G.state.prepped?.[INGREDIENTS[k].prep.to] || 0) > 0);
+    // after a round of prepping that's good news, not an error
+    tip.textContent = any ? T('Tap an ingredient', 'Chạm vào một nguyên liệu') : done ? T('All prepped ✓ — buy more at the supermarket when you run low', 'Đã sơ chế hết ✓ — sắp hết thì ghé siêu thị mua thêm') : T('No raw ingredients — visit the supermarket', 'Hết nguyên liệu — ghé siêu thị nhé');
+    P.el.querySelector('.all')?.toggleAttribute('disabled', !any);
     const first = P.raws.find(k => pantry(k) > 0);
     if (first) P.el.querySelector(`.ing[data-k="${first}"]`)?.classList.add('hint', 'point');
   } else if (P.stage === 'placed') { const v = PREP_VERB[INGREDIENTS[P.item].prep.method]; tip.textContent = T(`${v[0]} it — tap the board`, `${v[1]} — chạm vào thớt`); }

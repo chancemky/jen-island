@@ -28,7 +28,7 @@ export const JOKES = [
   ['My fishing rod and I broke up. It was too clingy — always reeling me in.', '{Me} với cần câu chia tay rồi. Nó bám dai quá, cứ kéo {me} lại hoài.'],
   ['What do you call a noodle that tells lies? An im-pasta. Don\'t tell the phở.', 'Gọi sợi mì hay nói dối là gì? Mì… “xạo”. Đừng nói với tô phở nha.'],
   ['The seagull stole my sandwich, so now I\'m on a sea-food diet. I see food, I lose it.', 'Chim hải âu giật ổ bánh mì của {me}. Giờ {me} ăn kiêng kiểu “thấy là mất”.'],
-  ['Why did the scooter get a medal? It was outstanding in its field. It was parked in a field.', 'Sao xe máy được huy chương? Vì nó nổi bật giữa đồng. Nó đậu ngoài đồng thật.'],
+  ['Why did the scooter get a medal? It was outstanding in its field. It was parked in a field.', 'Sao xe máy của cô không bao giờ bị phạt chạy nhanh? Vì con trâu ngoài đồng còn vượt mặt nó.'],
   ['I told the lighthouse a joke. It was very bright about it.', '{Me} kể chuyện cười cho ngọn hải đăng nghe. Nó sáng dạ lắm.'],
 ];
 const MEO_JOKES = [
@@ -53,11 +53,11 @@ JOKES.push(
 );
 // every islander has a few of their own
 const CHAR_JOKES = {
-  ong_loc: [['Why do old fishermen never get lost? Because they know all the knots… I mean, the nots.', 'Sao ngư dân già không bao giờ lạc? Vì họ biết hết mọi nút… à, mọi lối.'], ['I asked the sea for a raise. It sent a wave.', 'Ông xin biển tăng lương. Biển gửi một con sóng.']],
+  ong_loc: [['Why do old fishermen never get lost? Because they know all the knots… I mean, the nots.', 'Sao ngư dân già không bao giờ lạc? Vì đi đâu thì mùi cá cũng dẫn đường về nhà.'], ['I asked the sea for a raise. It sent a wave.', 'Ông xin biển tăng lương. Biển gửi một con sóng.']],
   chi_ngoc: [['My guesthouse has five-star reviews. From the geckos. They love the ceiling.', 'Nhà nghỉ chị được năm sao. Của mấy con thằn lằn. Tụi nó mê cái trần nhà.'], ['A guest asked for a room with a view. I gave them a mirror. They laughed. I gave them the real one.', 'Khách đòi phòng có view. Chị đưa cái gương. Khách cười. Chị đưa phòng thật.']],
   co_dua: [['Why did the coconut go to school? To get a little more mature. Ripe, I mean.', 'Sao trái dừa đi học? Để chín chắn hơn. Chín, ý cô là vậy.'], ['I dropped a coconut on my foot once. It was a very hard lesson.', 'Có lần cô làm rớt trái dừa trúng chân. Bài học rất… cứng.']],
   ba_tu: [['When I was young, kumquats were so sour we used them to wake the roosters.', 'Hồi bà còn trẻ, tắc chua tới mức người ta dùng nó để đánh thức gà trống.'], ['My knees predict the weather. Today they say: sit down.', 'Đầu gối bà dự báo thời tiết giỏi lắm. Hôm nay nó bảo: ngồi xuống đi.'], ['Forty years selling tea, and the best customer was a cat who never paid.', 'Bốn mươi năm bán trà, khách ruột nhất là một con mèo chưa trả đồng nào.']],
-  chu_hai: [['The fish I caught yesterday was THIS big. The one I lost was bigger.', 'Con cá chú câu hôm qua to CỠ NÀY. Con bị sổng còn to hơn.'], ['I talk to the fish. They never answer. Very polite listeners.', 'Chú hay nói chuyện với cá. Tụi nó chẳng bao giờ trả lời. Nghe lịch sự lắm.'], ['Why do fishermen never lie? Because the net always tells the truth. Mostly.', 'Sao ngư dân không bao giờ nói dối? Vì tấm lưới luôn nói thật. Gần như vậy.']],
+  chu_hai: [['The fish I caught yesterday was THIS big. The one I lost was bigger.', 'Con cá chú câu hôm qua to CỠ NÀY. Con bị sổng còn to hơn.'], ['I talk to the fish. They never answer. Very polite listeners.', 'Chú hay nói chuyện với cá. Tụi nó chẳng bao giờ trả lời. Nghe lịch sự lắm.'], ['Why do fishermen never lie? Because the net always tells the truth. Mostly.', 'Sao ngư dân không nói dối được? Vì cá to hay nhỏ, cả xóm đều ra bến xem. Gần như vậy.']],
   linh: [['My exams are like the tide. They come back twice a day.', 'Mấy kỳ thi của mình như thủy triều. Ngày nào cũng quay lại hai lần.'], ['I studied so hard I dreamed in equations. The answer was milk tea.', 'Mình học nhiều tới mức nằm mơ toàn phương trình. Đáp án là trà sữa.'], ['My professor said I have a bright future. Then he looked at my phone battery: 3%.', 'Thầy nói tương lai mình sáng lạn. Rồi thầy nhìn pin điện thoại mình: 3%.']],
   minh: [['I have a thousand photos of the sunset. They\'re all the same sunset.', 'Mình có một ngàn tấm ảnh hoàng hôn. Tấm nào cũng là cùng một cái hoàng hôn.'], ['Photographers never argue. We just see things from different angles.', 'Dân chụp ảnh không bao giờ cãi nhau. Chỉ là nhìn mọi thứ từ góc khác thôi.'], ['I tried to photograph Mèo Mây. I got four hundred pictures of its tail.', 'Mình thử chụp Mèo Mây. Được bốn trăm tấm toàn cái đuôi.']],
   co_lan: [['Why did the rose go to school? To become a little bud-dy smarter.', 'Sao bông hồng đi học? Để… “nở” mày nở mặt.'], ['I talk to my flowers every morning. The sunflowers are the only ones who look at me.', 'Sáng nào cô cũng nói chuyện với hoa. Chỉ có hoa hướng dương là chịu nhìn cô.'], ['A customer asked for flowers that never die. I sold them a painting.', 'Có khách hỏi mua hoa không bao giờ tàn. Cô bán cho họ một bức tranh.']],
@@ -172,7 +172,7 @@ export async function residentMenu(a, rid, chat) {
   if (qo) opts.unshift(qo);
   const gear = rid === 'chu_hai' && G.state.story.flags.fishing;
   if (gear) opts.unshift(T('🎣 Fishing gear', '🎣 Đồ câu cá'));
-  let pick = await ask(a, choice([T('Oh, hi!', 'Ơ, chào {you}!'), T(`Hey ${G.state.player.name}!`, `Ê ${G.state.player.name}!`), T('What\'s up?', 'Có chuyện gì vậy?')]), opts, { emo: 'happy' });
+  let pick = await ask(a, choice([T('Oh, hi!', 'Ơ, chào {you}!'), T(`Hey ${G.state.player.name}!`, `${G.state.player.name} ơi!`), T('What\'s up?', 'Có chuyện gì vậy?')]), opts, { emo: 'happy' });
   if (gear) { if (pick === 0) { (await import('./fishing.js')).openTackle(); return; } pick--; }
   if (qo) { if (pick === 0) { await questTalk(a, rid); return; } pick--; }
   if (canGift && pick === 3) { await giveResidentGift(a, rid); return; }

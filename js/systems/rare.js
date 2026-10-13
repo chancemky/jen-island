@@ -90,7 +90,7 @@ function bringBusker() {
   busker.walkTo(isl.nav.path(from[0], from[1], spot[0], spot[1]).concat([spot])).then(() => busker?.face('down'));
   busker.tune = setInterval(() => { if (!busker) return; busker.showEmote('note', 1.4); busker.setAct(chance(0.5) ? 'dance' : null); }, 3000);
   R().today = { id: 'busker' };
-  bus.emit('toast', { cat: 'island', text: T('A busker is playing by the fountain', 'Có nghệ sĩ đường phố đang đàn bên đài phun nước'), sub: T('Wind Plaza, today only.', 'Quảng trường gió, chỉ hôm nay.'), icon: 'note', ms: 4600 });
+  bus.emit('toast', { cat: 'island', text: T('A busker is playing by the fountain', 'Có nghệ sĩ đường phố đang đàn bên đài phun nước'), sub: T('Wind Plaza, today only.', 'Quảng Trường Gió, chỉ hôm nay.'), icon: 'note', ms: 4600 });
   return true;
 }
 async function tipBusker(a) {

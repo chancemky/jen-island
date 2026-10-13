@@ -38,7 +38,16 @@ export function takeStock(bizId, key, n = 1) {
   if (stockOf(bizId, key) < n) return false;
   if (PREPPED[key]) { const b = bizOf(bizId); b.prepped[key] -= n; markDirty(); }
   else addPantry(key, -n);
+  lowStockNote(bizId, key);
   return true;
+}
+// a heads-up while you serve: running low at 3, out at 0 — once per ingredient per day (you used to find out
+// only when a customer stood there with an order you couldn't make)
+function lowStockNote(bizId, key) {
+  const left = stockOf(bizId, key); if (left > 3 || G.runtime.serviceOpen !== bizId) return;
+  const t = G.state.today, seen = (t.lowWarned ||= {}), tag = key + (left ? ':low' : ':out'); if (seen[tag]) return; seen[tag] = 1;
+  const raw = PREPPED[key]?.from, where = raw && pantry(raw) ? T(`Prep more ${ingName(raw).toLowerCase()} at the prep table.`, `Sơ chế thêm ${ingName(raw).toLowerCase()} ở bàn sơ chế.`) : T('Restock at Binh Minh Supermarket.', 'Mua thêm ở Siêu thị Bình Minh.');
+  bus.emit('toast', { text: left ? T(`Running low: ${ingName(key)} (${left} left)`, `Sắp hết: ${ingName(key)} (còn ${left})`) : T(`Out of ${ingName(key)}!`, `Hết ${ingName(key)} rồi!`), sub: where, icon: key, bad: !left, now: true, ms: 2600 });
 }
 export function returnStock(bizId, key, n = 1) {
   if (PREPPED[key]) { const b = bizOf(bizId); b.prepped[key] = (b.prepped[key] || 0) + n; markDirty(); }

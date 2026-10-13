@@ -440,9 +440,9 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 .cycler { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
 .cycler small { width: 72px; font-weight: 900; font-size: 12px; opacity: .7; }
 .cycler button { width: 38px; height: 38px; border-radius: 12px; background: #f3e6cf; font-weight: 900; font-size: 18px; border: 2.5px solid #e1ccad; }
-.cycler .sw { flex: 1; display: flex; gap: 5px; justify-content: center; }
-.cycler .sw i { width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid transparent; }
-.cycler .sw i.on { border-color: var(--ink); transform: scale(1.2); }
+.cycler .sw { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-start; }   /* left-aligned, so every row lines up */
+.cycler .sw i { width: 28px; height: 28px; border-radius: 50%; border: 3px solid rgba(91,63,54,.15); }   /* (20px dots were too small to hit) */
+.cycler .sw i.on { border-color: var(--ink); transform: scale(1.15); }
 .cycler .val { flex: 1; text-align: center; font-weight: 900; }
 .cycler .g-seg { flex: 1; min-width: 0; }
 .cycler .g-seg button { width: auto; min-width: 0; height: 36px; flex: 1; font-size: 14px; border: none; background: transparent; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; }
@@ -522,6 +522,8 @@ body.show-joy-hint #joyBase:not(.on) { opacity: .6; transform: scale(.92); left:
 .opt-row small .hq { display: block; margin-top: 2px; font-style: normal; font-size: 11px; letter-spacing: 0; opacity: 1; color: var(--ink); text-transform: none; }
 .opt-row small .hq.low { color: #d9433a; }
 .seg button { padding: 8px 2px; }
+.opt-row .seg { min-width: 0; } .opt-row .seg button { min-width: 0; flex: 1 1 0; }   /* four sugar buttons fit: the 100% button ran off the screen and tapping it slid the whole counter sideways */
+.svc-work, .svc-counter { overflow-x: hidden; }
 .svc-grid { flex: 1 1 auto; min-height: 76px; grid-template-columns: repeat(5, 1fr); gap: 6px; padding-top: 6px; }
 .ing .tray { aspect-ratio: 1.45; }
 .ing b { font-size: 10px; }
@@ -751,7 +753,7 @@ body.lookout #hud, body.lookout .hud-top, body.lookout #questPill, body.lookout 
 .fs-bob.dip { animation: dip .25s ease-in-out infinite; }
 @keyframes bob { 50% { transform: translateY(4px); } }
 @keyframes dip { 50% { transform: translateY(16px); } }
-.lookout-ui .lk-scope { position: absolute; right: 14px; bottom: calc(84px + var(--sab)); pointer-events: auto; width: auto; padding: 10px 16px; }
+.lookout-ui .lk-scope { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(100px + var(--sab)); pointer-events: auto; width: auto; padding: 10px 18px; }   /* stacked above Leave, centred: it used to sit half under it */
 .lookout-ui.scoping { pointer-events: auto; touch-action: none; }
 .brand-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .brand-swatches .swatch { background: #fff; border: 2.5px solid #e6d2b2; border-radius: 14px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; font: inherit; }
@@ -1025,3 +1027,9 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
 .ph-frame.postcard::after { content: '✉'; position: absolute; top: 6px; right: 8px; width: 34px; height: 40px; display: grid; place-items: center; background: #fffaf0; border: 2px dashed #c9674a; color: #c9674a; font-size: 18px; }
 .ph-top span.saved { background: #3f8f5f; }
 .sheet.short { max-height: 46%; }
+#menuBtn.dot::after { content: ''; position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #e8584e; border: 2px solid #fffaf0; }
+#menuBtn { position: relative; }
+.steps-mini figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.steps-mini figcaption { font-size: 10px; font-weight: 800; opacity: .75; max-width: 64px; text-align: center; line-height: 1.1; }   /* (names under the icons: you couldn't tell what to buy) */
+/* the goal bar: two lines at most (three covered a sixth of the screen); tap it for the whole goal */
+#questText { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-align: left; }
