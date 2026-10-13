@@ -15,7 +15,7 @@ import { cs, wait, say } from './cutscene.js';
 import { fx } from '../world/render.js';
 import { celebratePhoto } from './album.js';
 
-const SPOT = { x: PLAZA.x + 70, y: PLAZA.y + 64 };
+const SPOT = { x: PLAZA.x + 95, y: PLAZA.y - 70 };   // the plaza's north-east corner (beside the board, its banner covered the Island Board and the table blocked it)
 let party = null;     // { rid, guests: [actor], joined }
 export const partyToday = () => party;
 function start(rid) {

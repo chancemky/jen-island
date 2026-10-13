@@ -533,7 +533,9 @@ export function updateBusinesses(dt, gameMin) {
     r.spawnT -= lastCall ? 0 : dt * (G.runtime.devCustomers || 1);   // real seconds, so the day's length doesn't change customer flow (devCustomers: the dev tab's speed-up)
     if (r.spawnT <= 0) {
       const made = makeableRecipes(id).length;
-      if (!made) { if (!r.noStockWarned) { r.noStockWarned = true; bus.emit('toast', { text: T('Out of ingredients!', 'Hết nguyên liệu!'), sub: T(`${bizName(id)}: restock or prep more.`, `${bizName(id)}: mua thêm hoặc sơ chế nhé.`), bad: true }); } r.spawnT = 6; }
+      if (!made) { if (!r.noStockWarned) { r.noStockWarned = true; const k = s.keepers?.[id], sup = s.supply?.[id]?.on;
+        // a shopkeeper with nothing to sell still gets paid: say so, and what fixes it for good
+        bus.emit('toast', { text: k ? T(`${k.name} has nothing to sell!`, `${k.name} hết hàng để bán!`) : T('Out of ingredients!', 'Hết nguyên liệu!'), sub: k && !sup ? T(`${bizName(id)} is out of stock, but wages are still paid. A supply runner (Menu → Business) restocks it every morning.`, `${bizName(id)} hết hàng nhưng vẫn phải trả lương. Người giao hàng (Menu → Kinh doanh) sẽ nhập hàng mỗi sáng.`) : T(`${bizName(id)}: restock or prep more.`, `${bizName(id)}: mua thêm hoặc sơ chế nhé.`), bad: true }); } r.spawnT = 6; }
       else {
         if (!(G.state.story.chapter >= 4 && chance(0.025) && spawnTeam(id))) spawnCustomer(id);
         r.spawnT = nextSpawnDelay(id);

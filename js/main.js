@@ -1019,7 +1019,11 @@ bus.on('enter', id => {
   if (a.data.state === 'indoors' && sc.actors.includes(a)) { a.data.state = 'busy'; a.data.hosting = id; greet(); return; }
   // only home if they were actually close to their house (no teleporting in from across the island)
   const nearHome = a.visible !== false && dist(a.x, a.y, b.x, b.y) < 170 && a.data.state !== 'busy' && a.data.state !== 'going-home';
-  if (nearHome && Math.random() < 0.8) {
+  // in the evening and early morning people are home — unless you can see them somewhere else right now
+  // (homes were nearly always empty)
+  const h = G.state.time / 60, v = cam.view, seen = v && a.visible !== false && a.x > v.x && a.x < v.x + v.w && a.y > v.y && a.y < v.y + v.h;
+  const evening = (h >= 18 || h < 8.5) && a.data.state !== 'busy' && !a.data.inTalk && !seen && scenes.island.actors.includes(a);
+  if ((nearHome && Math.random() < 0.8) || evening) {
     scenes.island.remove(a); sc.add(a); a.stop(); a.sit = false; a.seatH = undefined; a.setAct(null);
     a.x = sc.host.x; a.y = sc.host.y; a.visible = true; delete a.alpha; a.fadeIn = false;
     a.data.state = 'busy'; a.data.hosting = id; a.face('down');

@@ -158,7 +158,15 @@ function updateResident(island, a, dt) {
   // Linh studies on the mainland during the week once she got into university
   const away = d.rid === 'linh' && s.story.flags.linh_uni && s.day % 7 >= 1 && s.day % 7 <= 4;
   const bedtime = away ? 0 : s.nightMarket.restored ? 22.5 : 21.3;
-  if (d.state === 'busy') return;
+  if (d.state === 'busy') {
+    // a safety net: someone a scene forgot to let go (nothing is happening, they're not at a party or
+    // the wedding) goes back to their day after a while — villagers used to be left out at 1:30 am
+    if (G.runtime.inCutscene || d.party || d.wedding) { d.busySince = null; return; }
+    d.busySince ??= s.time;
+    if (s.time - d.busySince > 90 || (h >= bedtime && s.time - d.busySince > 10)) { d.state = 'idle'; d.until = 0; d.busySince = null; }
+    return;
+  }
+  d.busySince = null;
   if (d.state === 'indoors') {
     const hs = G.scenes['home_' + d.rid], door = HOME_OF[d.rid], pl = G.player;
     const watching = G.scene === hs || (G.scene === island && pl && dist(pl.x, pl.y, door.x, door.y) < 140);

@@ -17,6 +17,8 @@ const CREATURE_NAMES = { hermit: ['Hermit crab', 'Ốc mượn hồn'], starfish
 const TREASURES = ['giant_shell', 'bottle_ship'];
 const FISHES = () => Object.keys(FISH).filter(id => !FISH[id].junk);
 const mus = () => (G.state.museum ||= { fish: {}, creatures: {}, stars: {}, treasures: {} });
+// a clue for every fish you haven't caught (the cards were a wall of "??? Catch one first")
+const fishHint = f => f.nightOnly ? T('Bites at night (19:00–5:00) with a lantern lure', 'Cắn câu ban đêm (19:00–5:00) với mồi đèn lồng') : f.rare ? T('Very rare — try the pier late at night', 'Rất hiếm — thử câu ở cầu tàu lúc khuya') : f.night ? T('Bites more after dark, off the pier', 'Cắn câu nhiều hơn khi trời tối, ở cầu tàu') : f.w <= 6 ? T('Uncommon — keep fishing off the pier', 'Hơi hiếm — cứ câu tiếp ở cầu tàu') : T('Common off the pier — any time of day', 'Hay gặp ở cầu tàu — giờ nào cũng được');
 export function museumCount() { const m = mus(); return Object.keys(m.fish).length + Object.keys(m.creatures).length + Object.keys(m.stars).length + Object.keys(m.treasures).length; }
 export const museumTotal = () => FISHES().length + CREATURES.length + CONSTELLATIONS.length + TREASURES.length;
 function thank() {
@@ -41,7 +43,7 @@ export function openMuseum() {
         list.appendChild(r);
       }
     };
-    section(T('🐟 Fish', '🐟 Cá'), FISHES().map(id => ({ icon: FISH[id].rare ? '🌙' : FISH[id].nightOnly ? '🏮' : '🐟', name: T(FISH[id].en, FISH[id].vi), done: !!m.fish[id], can: (s.fishBag?.[id] || 0) > 0, how: T('Donate one from your catch', 'Hiến một con bạn đã câu'), hint: T('Catch one first', 'Câu được một con trước đã'), give: () => { s.fishBag[id]--; m.fish[id] = s.day; } })));
+    section(T('🐟 Fish', '🐟 Cá'), FISHES().map(id => ({ icon: FISH[id].rare ? '🌙' : FISH[id].nightOnly ? '🏮' : '🐟', name: T(FISH[id].en, FISH[id].vi), done: !!m.fish[id], can: (s.fishBag?.[id] || 0) > 0, how: T('Donate one from your catch', 'Hiến một con bạn đã câu'), hint: fishHint(FISH[id]), give: () => { s.fishBag[id]--; m.fish[id] = s.day; } })));
     section(T('🦀 Tide pool', '🦀 Hồ triều'), CREATURES.map(id => ({ icon: '🖼️', name: T(...CREATURE_NAMES[id]), done: !!m.creatures[id], can: !!s.tidepool?.[id], how: T('Donate your sketch of it', 'Hiến bức ký họa của bạn'), hint: T('Find it in the tide pool', 'Tìm nó ở hồ triều'), give: () => { m.creatures[id] = s.day; } })));
     section(T('✨ Star charts', '✨ Bản đồ sao'), CONSTELLATIONS.map(c => ({ icon: '✨', name: T(c.en, c.vi), done: !!m.stars[c.id], can: !!s.constellations?.[c.id], how: T('Donate your star chart', 'Hiến bản đồ sao của bạn'), hint: T('Join it up at Lighthouse Point', 'Nối chòm sao ở Mũi Hải Đăng'), give: () => { m.stars[c.id] = s.day; } })));
     section(T('🏺 Treasures', '🏺 Báu vật'), TREASURES.map(id => ({ icon: '🏺', name: T(FURNITURE[id].en, FURNITURE[id].vi), done: !!m.treasures[id], can: (s.home.owned || []).includes(id), how: T('Donate it from your storage', 'Hiến từ kho đồ của bạn'), hint: T('Found at Turtle Cove', 'Tìm ở Vịnh Rùa'), give: () => { const i = s.home.owned.indexOf(id); if (i >= 0) s.home.owned.splice(i, 1); m.treasures[id] = s.day; } })));
