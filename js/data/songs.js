@@ -15,7 +15,7 @@ export const SONGS = {
   // ---- the boat ride in: wide, hopeful, a sáo over rippling strings (D major pentatonic)
   title: {
     en: 'Over the Waves', vi: 'Vượt Sóng',
-    bpm: 84,
+    bpm: 100,
     chords: ['D', 'Bm', 'G', 'A', 'D', 'Bm', 'G', 'A', 'G', 'D', 'Em', 'A', 'G', 'Bm', 'Asus4/A', 'D'],
     lines: {
       lead: { inst: 'flute', vol: 0.11, notes: A(
@@ -27,13 +27,13 @@ export const SONGS = {
     arps: [{ inst: 'pluck', oct: 4, vol: 0.06, pattern: '1.5.8.5.3.5.8.5.', len: 3 }],
     bass: { pattern: '1.......5.......', vol: 0.09, len: 6 },
     pad: { oct: 3, vol: 0.022 },
-    drums: { c: 'x...............' },
+    drums: { k: 'x.......x.......', s: '........o.......', sh: 'o.o.o.o.o.o.o.o.', c: 'x...............' },
   },
 
   // ---- morning on the island: bright marimba, a strummed pluck, shaker (C pentatonic)
   morning: {
     en: 'Island Morning', vi: 'Sáng Trên Đảo',
-    bpm: 96,
+    bpm: 108,
     chords: ['C', 'Am', 'F', 'G', 'C', 'Am', 'F/G', 'C',
       'C', 'Am', 'F', 'G', 'C', 'Am', 'F/G', 'C',
       'F', 'C', 'Dm', 'G', 'F', 'C', 'Dm', 'G',
@@ -51,14 +51,14 @@ export const SONGS = {
     },
     arps: [{ inst: 'kalimba', oct: 4, vol: 0.07, pattern: '1.358.5.1.358.5.', len: 2 }],
     bass: { pattern: '1...5...1.5.8...', vol: 0.1 },
-    drums: { sh: 'o.x.o.x.o.x.o.x.', k: 'x.......x.......' },
+    drums: { sh: 'o.x.o.x.o.x.o.x.', k: 'x.....x.x.......', s: '....o.......o...' },
     drumsLight: { sh: 'o...o...o...o...' },
   },
 
   // ---- Market Street at midday: a busy plucked tune, the sáo answers (G pentatonic)
   day: {
     en: 'Market Street', vi: 'Phố Chợ',
-    bpm: 104,
+    bpm: 114,
     chords: ['G', 'Em', 'C', 'D', 'G', 'Em', 'C', 'G',
       'G', 'Em', 'C', 'D', 'G', 'Em', 'C', 'G',
       'C', 'D', 'Bm', 'Em', 'C', 'D', 'G', 'G',
@@ -85,10 +85,10 @@ export const SONGS = {
     drumsLight: { h: 'o...o...o...o...' },
   },
 
-  // ---- the island at night: đàn bầu over a soft pad (A minor pentatonic)
+  // ---- the island at night: đàn bầu over an easy evening groove (A minor pentatonic)
   night: {
     en: 'Night Breeze', vi: 'Gió Đêm',
-    bpm: 72,
+    bpm: 98,
     chords: ['Am', 'F', 'C', 'G', 'Am', 'F', 'Dm', 'Am',
       'Dm', 'Am', 'Em', 'Am', 'F', 'C', 'G', 'Am',
       'Am', 'F', 'C', 'G', 'Am', 'F', 'Dm', 'Am'],
@@ -101,15 +101,17 @@ export const SONGS = {
         'E5~-8 D5-4 C5-4', 'A4-12 r-4', 'C5-4 D5-4 E5-4 G5-4', 'D5-12 r-4',
         'E5~-8 G5-4 A5-4', 'A5-6 G5-2 E5-8', 'D5-4 E5-4 D5-4 C5-4', 'A4-16') },
     },
-    arps: [{ inst: 'pluck', oct: 3, vol: 0.045, pattern: '1...5...8...5...', len: 4, light: 'rest' }],
-    bass: { pattern: '1...............', vol: 0.08, len: 12 },
-    pad: { oct: 3, vol: 0.028 },
+    arps: [{ inst: 'pluck', oct: 4, vol: 0.05, pattern: '1.5.8.5.3.5.8.9.', len: 2 }, { inst: 'epiano', oct: 3, vol: 0.035, pattern: '..3...5...3...5.', len: 2, light: 'rest' }],
+    bass: { pattern: '1..1..5.1...5.3.', vol: 0.1, len: 2 },
+    pad: { oct: 3, vol: 0.016, light: 'rest' },
+    drums: { k: 'x.....x...x.....', s: '....x.......x...', h: '..o...o...o...o.', sh: 'o.o.o.o.o.o.o.o.' },
+    drumsLight: { k: 'x.......x.......', h: '..o...o...o...o.', sh: 'o.o.o.o.o.o.o.o.' },
   },
 
   // ---- the Night Market: lanterns, woodblock, a đàn bầu in the southern mode (D)
   nightmarket: {
     en: 'Night Market', vi: 'Chợ Đêm',
-    bpm: 92,
+    bpm: 104,
     chords: ['Dm', 'C', 'Gm', 'Dm', 'F', 'C', 'Dm', 'Dm',
       'Dm', 'C', 'Gm', 'Dm', 'F', 'C', 'Dm', 'Dm',
       'Bb', 'F', 'C', 'Dm', 'Bb', 'F', 'Gm', 'A',
@@ -133,10 +135,10 @@ export const SONGS = {
     gong: 16,
   },
 
-  // ---- your home: a music-box waltz (F major, 3/4)
+  // ---- your home: a bouncy music-box waltz, oom-pah-pah (F major, 3/4)
   home: {
     en: 'Home Sweet Home', vi: 'Tổ Ấm',
-    bpm: 66, steps: 12,
+    bpm: 96, steps: 12,
     chords: ['F', 'Dm', 'Bb', 'C', 'F', 'Dm', 'Bb', 'C', 'Bb', 'F', 'Gm', 'C', 'F', 'Dm', 'C', 'F'],
     lines: {
       lead: { inst: 'musicbox', vol: 0.13, notes: A(
@@ -145,14 +147,16 @@ export const SONGS = {
         'F5-4 G5-4 A5-4', 'C6-8 A5-4', 'Bb5-4 A5-4 G5-4', 'E5-8 G5-4',
         'A5-4 G5-4 F5-4', 'D6-8 C6-4', 'Bb5-4 A5-4 G5-4', 'F5-12') },
     },
-    arps: [{ inst: 'epiano', oct: 3, vol: 0.05, pattern: '1...35..35..', len: 3 }, { inst: 'kalimba', oct: 5, vol: 0.03, pattern: '...........5', len: 2, light: 'rest' }],
-    bass: { pattern: '1...........', vol: 0.06, len: 10 },
+    arps: [{ inst: 'epiano', oct: 3, vol: 0.055, pattern: '....35..35..', len: 2 }, { inst: 'marimba', oct: 5, vol: 0.035, pattern: '1.5.8.5.3.5.', len: 1, light: 'rest' }],
+    bass: { inst: 'pluck', oct: 2, pattern: '1.......5...', vol: 0.09, len: 3 },
+    drums: { k: 'x...........', h: '....o...o...', sh: '..o...o...o.' },
+    drumsLight: { k: 'x...........', h: '....o...o...' },
   },
 
   // ---- a café: brushed swing, electric piano, a sáo playing jazz (C major)
   cafe: {
     en: 'Café Corner', vi: 'Góc Cà Phê',
-    bpm: 100, swing: 0.33,
+    bpm: 108, swing: 0.33,
     chords: ['Fmaj7', 'Em7', 'Dm7', 'G7', 'Cmaj7', 'Am7', 'Dm7', 'G7', 'Fmaj7', 'Em7', 'Dm7', 'G7', 'Cmaj7', 'Am7', 'Dm7', 'G7'],
     lines: {
       lead: { inst: 'flute', vol: 0.09, light: 'rest', notes: A(
@@ -169,7 +173,7 @@ export const SONGS = {
   // ---- the Lantern Festival: drums, gong, the whole island playing (C pentatonic)
   festival: {
     en: 'Festival of Lanterns', vi: 'Hội Đèn Lồng',
-    bpm: 116,
+    bpm: 124,
     chords: ['C', 'F', 'Am', 'G', 'C', 'F', 'G', 'C',
       'C', 'F', 'Am', 'G', 'C', 'F', 'G', 'C',
       'Am', 'Em', 'F', 'C', 'Am', 'Em', 'F', 'G',
@@ -195,7 +199,7 @@ export const SONGS = {
   // ---- the beaches and Coconut Cove: a sunny lilt, offbeat strums (F pentatonic)
   beach: {
     en: 'Coconut Cove', vi: 'Vịnh Dừa',
-    bpm: 100,
+    bpm: 110,
     chords: ['F', 'C', 'Dm', 'Bb', 'F', 'C', 'Bb', 'C', 'Dm', 'Bb', 'F', 'C', 'Bb', 'C', 'F', 'F'],
     lines: {
       lead: { inst: 'marimba', vol: 0.15, light: 'rest', notes: A(
@@ -206,14 +210,14 @@ export const SONGS = {
     },
     arps: [{ inst: 'nylon', oct: 3, vol: 0.07, pattern: '1.3.5.3.1.3.5.8.', len: 2 }, { inst: 'pluck', oct: 4, vol: 0.035, pattern: '..3.5...3.5.8...', len: 2, light: 'rest' }],
     bass: { pattern: '1.....1.5.......', vol: 0.1, len: 3 },
-    drums: { sh: 'o.x.o.x.o.x.o.x.', k: 'x.......x.......' },
+    drums: { sh: 'o.x.o.x.o.x.o.x.', k: 'x.....x.x.......', s: '....o.......o...' },
     drumsLight: { sh: 'o...o...o...o...' },
   },
 
   // ---- Harbour Town: gulls, ropes and a seaside sáo (G major)
   harbour: {
     en: 'Harbour Town', vi: 'Phố Cảng',
-    bpm: 98,
+    bpm: 108,
     chords: ['G', 'D', 'Em', 'C', 'G', 'D', 'C', 'D', 'Em', 'C', 'G', 'D', 'C', 'D', 'G', 'G'],
     lines: {
       lead: { inst: 'flute', vol: 0.1, notes: A(
@@ -224,13 +228,13 @@ export const SONGS = {
     },
     arps: [{ inst: 'epiano', oct: 3, vol: 0.045, pattern: '1...35..1...35..', len: 3 }, { inst: 'pluck', oct: 4, vol: 0.04, pattern: '......8.......8.', light: 'rest' }],
     bass: { pattern: '1.......5.......', vol: 0.1, len: 6 },
-    drums: { h: 'o...o...o...o...', s: '........o.......' },
+    drums: { k: 'x.......x.x.....', h: 'o.o.o.o.o.o.o.o.', s: '....o.......o...' },
   },
 
   // ---- Firefly Islet: a hush, a music box, little lights in the dark (E minor)
   islet: {
     en: 'Firefly Islet', vi: 'Cù Lao Đom Đóm',
-    bpm: 60,
+    bpm: 84,
     chords: ['Em', 'C', 'G', 'D', 'C', 'Am', 'Em', 'Em'],
     lines: {
       lead: { inst: 'musicbox', vol: 0.13, notes: A(
@@ -239,13 +243,14 @@ export const SONGS = {
     },
     arps: [{ inst: 'pluck', oct: 4, vol: 0.035, pattern: '1.......5.......', len: 6, light: 'rest' }, { inst: 'bells', oct: 5, vol: 0.025, pattern: '......8.......5.', len: 4 }],
     pad: { oct: 3, vol: 0.026 },
-    drums: { c: 'x...............' },
+    bass: { inst: 'pluck', oct: 2, pattern: '1.......5.......', vol: 0.07, len: 4 },
+    drums: { k: 'x.......x.......', sh: '..o...o...o...o.', c: 'x...............' },
   },
 
   // ---- Mèo Mây: a tiptoeing, curious little theme (C major)
   meo: {
     en: 'Mèo Mây\'s Tiptoe', vi: 'Mèo Mây Rón Rén',
-    bpm: 120,
+    bpm: 126,
     chords: ['C', 'F', 'G', 'C', 'Am', 'Dm', 'G7', 'C'],
     lines: {
       lead: { inst: 'marimba', vol: 0.15, notes: A(

@@ -2,6 +2,8 @@
 // a hat and an accessory. Each item is a set of overrides on the player's
 // base look (skin, hair and eyes never change). Some need a higher level.
 
+import { luxuryPrice } from '../core/util.js';
+
 export const SLOTS = [
   { id: 'outfit', en: 'Outfits', vi: 'Trang phục' },
   { id: 'hat', en: 'Hats', vi: 'Mũ nón' },
@@ -126,6 +128,26 @@ export const CLOTHES = {
   heart_shades: { slot: 'extra', price: 130, lv: 3, en: 'Heart Shades', vi: 'Kính trái tim', look: { shades: '#f36d86', shadesHeart: true } },
   pearls:       { slot: 'extra', price: 260, lv: 6, en: 'Pearl Necklace', vi: 'Vòng ngọc trai', look: { necklace: '#fffaf0' } },
   surfboard:    { slot: 'extra', price: 480, lv: 11, en: 'Surfboard', vi: 'Ván lướt sóng', look: { surf: '#6fbfb0' } },
+  // ---- the designer rack: exclusive pieces, three on the rack each day (the same for everyone),
+  // priced in the tens of millions — the big things to save up for
+  d_midnight_aodai: { slot: 'outfit', designer: true, price: 68000, en: 'Midnight Silk Áo Dài', vi: 'Áo dài lụa nửa đêm', look: { top: '#1f2a52', topStyle: 'aodai', sleeve: 1, bottom: '#f4ead2', bottomLen: 5, shoe: '#f2c14e', motif: 'lanterns', trim: '#f2c14e' } },
+  d_jade_aodai:     { slot: 'outfit', designer: true, price: 72000, en: 'Jade Phoenix Áo Dài', vi: 'Áo dài phượng ngọc', look: { top: '#2f8f74', topStyle: 'aodai', sleeve: 1, bottom: '#fffaf0', bottomLen: 5, shoe: '#fffaf0', motif: 'blossom', motifCols: ['#ffd35a', '#fff1a8', '#ffffff'], trim: '#ffd35a', necklace: '#fff6e0' } },
+  d_hue_aodai:      { slot: 'outfit', designer: true, price: 95000, en: 'Imperial Huế Áo Dài', vi: 'Áo dài hoàng cung Huế', look: { top: '#f2c14e', topStyle: 'aodai', sleeve: 1, bottom: '#7a2f4a', bottomLen: 5, shoe: '#7a2f4a', motif: 'blossom', motifCols: ['#e8584e', '#ffffff', '#7a2f4a'], trim: '#7a2f4a' } },
+  d_pearl_dress:    { slot: 'outfit', designer: true, price: 54000, en: 'Pearl Evening Dress', vi: 'Đầm dạ hội ngọc trai', look: { top: '#f7efe6', topStyle: 'dress', sleeve: 0.5, shoe: '#e8d8c8', trim: '#d9c2a6', necklace: '#ffffff' } },
+  d_lotus_dress:    { slot: 'outfit', designer: true, price: 48000, en: 'Lotus Pond Dress', vi: 'Đầm hồ sen', look: { top: '#f4a9b8', topStyle: 'dress', sleeve: 0.5, shoe: '#9fd67a', motif: 'waves', motifCols: ['#9fd67a', '#ffffff'], trim: '#5f9a3e' } },
+  d_dragon_hoodie:  { slot: 'outfit', designer: true, price: 42000, en: 'Golden Dragon Hoodie', vi: 'Hoodie rồng vàng', look: { top: '#7a1f2a', topStyle: 'hoodie', sleeve: 1, bottom: '#2f2a30', bottomLen: 5, shoe: '#f2c14e', motif: 'fireflies', motifCols: ['#f2c14e'], trim: '#f2c14e' } },
+  d_neon_varsity:   { slot: 'outfit', designer: true, price: 38000, en: 'Saigon Neon Varsity', vi: 'Áo varsity neon Sài Gòn', look: { top: '#2a2f5e', topStyle: 'varsity', sleeve: 1, bottom: '#f36d86', bottomLen: 3, shoe: '#9fd8c8', trim: '#9fd8c8' } },
+  d_monsoon_shirt:  { slot: 'outfit', designer: true, price: 30000, en: 'Monsoon Silk Shirt', vi: 'Sơ mi lụa gió mùa', look: { top: '#5f8fb8', topStyle: 'shirt', sleeve: 0.5, bottom: '#f4ead2', bottomLen: 4, shoe: '#7a4a32', shoeStyle: 'loafer', motif: 'waves', motifCols: ['#ffffff', '#cfe2f2'] } },
+  d_lantern_gown:   { slot: 'outfit', designer: true, price: 120000, en: 'Thousand Lanterns Gown', vi: 'Đầm ngàn đèn lồng', look: { top: '#c0392b', topStyle: 'dress', sleeve: 1, shoe: '#f2c14e', motif: 'lanterns', trim: '#f2c14e', necklace: '#ffd35a' } },
+  d_gold_crown:     { slot: 'hat', designer: true, price: 150000, en: 'Island Gold Crown', vi: 'Vương miện vàng của đảo', look: { hat: 'crown', hatColor: '#f2c14e' } },
+  d_jade_crown:     { slot: 'hat', designer: true, price: 110000, en: 'Jade Tiara', vi: 'Vương miện ngọc bích', look: { hat: 'crown', hatColor: '#3aa688' } },
+  d_lacquer_nonla:  { slot: 'hat', designer: true, price: 46000, en: 'Lacquer Nón Lá', vi: 'Nón lá sơn mài', look: { hat: 'nonla', hatColor: '#7a1f2a', hatMotif: 'flowers' } },
+  d_pearl_beret:    { slot: 'hat', designer: true, price: 28000, en: 'Pearl Beret', vi: 'Mũ nồi ngọc trai', look: { hat: 'beret', hatColor: '#f7efe6' } },
+  d_velvet_slip:    { slot: 'shoes', designer: true, price: 25000, en: 'Velvet Slippers', vi: 'Dép nhung', look: { shoe: '#7a2f4a', shoeStyle: 'slipper' } },
+  d_jade_sandals:   { slot: 'shoes', designer: true, price: 32000, en: 'Jade Sandals', vi: 'Dép quai ngọc', look: { shoe: '#3aa688', shoeStyle: 'sandal' } },
+  d_gold_boots:     { slot: 'shoes', designer: true, price: 60000, en: 'Gilded Boots', vi: 'Bốt mạ vàng', look: { shoe: '#f2c14e', shoeStyle: 'boot' } },
+  d_silk_scarf:     { slot: 'extra', designer: true, price: 36000, en: 'Hội An Silk Scarf', vi: 'Khăn lụa Hội An', look: { scarf: '#c0392b', scarfLong: true } },
+  d_jade_scarf:     { slot: 'extra', designer: true, price: 52000, en: 'Jade Silk Stole', vi: 'Khăn choàng lụa ngọc', look: { scarf: '#3aa688', scarfLong: true } },
 };
 export const FREE_CLOTHES = ['classic', 'no_hat', 'no_extra', 'basic_shoes'];
 
@@ -144,4 +166,14 @@ export function applyOutfit(base, wardrobe) {
 
 // everyday clothes are affordable; the rare, premium pieces (list price ≥ 250) are the
 // luxury goal, so a full wardrobe is a long-term one
-for (const v of Object.values(CLOTHES)) if (v.price) { v.luxury = v.price >= 250; v.price = Math.round(v.price * (v.luxury ? 8 : 3.5) / 10) * 10; }
+for (const v of Object.values(CLOTHES)) if (v.price && !v.designer) { v.luxury = v.price >= 250; v.price = luxuryPrice(Math.round(v.price * (v.luxury ? 8 : 3.5) / 10) * 10, [[2000, 4], [500, 2]]); }   // (then the luxury curve: designer outfits cost tens of millions)
+
+// today's designer rack: three pieces, picked by the shared island day (everyone sees the same rack)
+export const DESIGNER = Object.keys(CLOTHES).filter(k => CLOTHES[k].designer);
+export function designerRack(dayNum) {
+  let a = (dayNum * 0x9E3779B1) >>> 0;
+  const rnd = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const pool = [...DESIGNER], out = [];
+  while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+  return out;
+}

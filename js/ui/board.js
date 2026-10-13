@@ -5,9 +5,11 @@ import { openSheet, h, btn } from './sheets.js';
 import { todaysNotes, noteText, giverName, have, takeNote, handIn, canHandIn, dropNote } from '../systems/board.js';
 import { RESIDENTS } from '../data/looks.js';
 import { drawVillagerHead } from '../gfx/villager.js';
-import { escapeHtml } from '../core/util.js';
+import { escapeHtml, money } from '../core/util.js';
+import { PROJECTS, projectDone, projectsDone, fundProject } from '../systems/projects.js';
+import { setGoal, isGoal, goalBought } from '../systems/goal.js';
 import { sfx } from '../core/audio.js';
-import { toast } from './hud.js';
+import { toast, moneyShortfall } from './hud.js';
 import { iconURL } from '../gfx/food.js';
 
 const PAPER = ['#fff8e1', '#fdeef2', '#eaf6f1', '#eef1fd'];
@@ -32,7 +34,24 @@ export function openBoard() {
       if (n.state === 'taken') { const d = h('button', 'note-drop', T('Put it back', 'Trả lại')); d.type = 'button'; d.onclick = () => { if (dropNote(n)) api.rebuild(); }; info.appendChild(d); }
       wall.appendChild(card);
     });
+    const pj = btn(T(`🏗️ Island projects · ${projectsDone()}/${PROJECTS.length} built`, `🏗️ Công trình của đảo · đã xây ${projectsDone()}/${PROJECTS.length}`), () => { api.close(true); openProjects(); }, 'btn gold');
+    pj.style.margin = '6px auto 10px'; pj.style.display = 'block'; wall.appendChild(pj);
     wall.appendChild(h('div', 'note-foot', T('Notes you take are counted as you play. Bring-notes are handed over here. Unfinished notes come down at midnight.', 'Lời nhờ đã nhận được tính khi bạn chơi. Mang đồ thì gửi ở đây. Lời nhờ chưa xong sẽ được gỡ lúc nửa đêm.')));
+    sfx('page');
+  } });
+}
+
+// island projects: the big builds that make the island prettier for good
+export function openProjects() {
+  openSheet({ title: T('Island projects', 'Công trình của đảo'), sub: T('Big builds the whole island will enjoy — they stay for good', 'Những công trình lớn cả đảo cùng vui — còn mãi mãi'), full: true, build: (body, api) => {
+    const list = h('div', 'list scroll'); list.style.flex = '1'; body.appendChild(list);
+    list.appendChild(h('div', 'empty-note', T(`${projectsDone()} of ${PROJECTS.length} built. Each one changes the island — go and see it when it's done!`, `Đã xây ${projectsDone()}/${PROJECTS.length}. Mỗi công trình thay đổi hòn đảo — xây xong nhớ đi xem nha!`)));
+    for (const P of PROJECTS) {
+      const done = projectDone(P.id);
+      const r = h('div', 'row' + (done ? ' done' : ''), `<div class="ico" style="font-size:24px">${P.icon}</div><div class="info"><b>${escapeHtml(T(P.en, P.vi))}</b><small>${escapeHtml(T(...P.blurb))}</small>${done ? `<span class="have">${T('Built ✓', 'Đã xây ✓')}</span>` : ''}</div>`);
+      if (!done) { const col = h('div', 'btn-col'); col.append(btn(money(P.cost), () => { if (!fundProject(P.id)) return moneyShortfall(P.cost); goalBought('project', P.id); api.rebuild(); }, 'buy'), btn(isGoal('project', P.id) ? T('📌 Saving', '📌 Đang để dành') : T('📌 Save for it', '📌 Để dành'), () => { setGoal({ kind: 'project', id: P.id, en: P.en, vi: P.vi, cost: P.cost }); api.rebuild(); }, 'buy alt', isGoal('project', P.id))); r.appendChild(col); }
+      list.appendChild(r);
+    }
     sfx('page');
   } });
 }

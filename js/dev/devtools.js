@@ -112,7 +112,7 @@ export function renderDevPane(pane, api) {
   b(g, 'Money to 0', () => { t.money = 0; });
   b(g, '+30 of every material', () => { for (const k of Object.keys(MATERIALS)) t.materials[k] = (t.materials[k] || 0) + 30; });
   b(g, '+50 of every ingredient', () => { for (const k of Object.keys(INGREDIENTS)) t.pantry[k] = (t.pantry[k] || 0) + 50; });
-  b(g, 'Empty the pantry', () => { t.pantry = {}; for (const id of Object.keys(t.biz)) t.biz[id].prepped = {}; });
+  b(g, 'Empty the pantry', () => { t.pantry = {}; t.prepped = {}; for (const b of Object.values(t.biz)) Object.defineProperty(b, 'prepped', { get: () => t.prepped, set: v => { Object.assign(t.prepped, v || {}); }, enumerable: false, configurable: true }); });
   b(g, 'Supply runners everywhere', () => { for (const id of Object.keys(t.biz)) if (t.biz[id].owned) (t.supply ||= {})[id] = { on: true }; });
 
   // progress

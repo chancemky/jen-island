@@ -2,15 +2,16 @@
 // Every item shows a live preview of *you* wearing it.
 
 import { G, T, markDirty, addMoney, canAfford } from '../systems/state.js';
-import { CLOTHES, SLOTS, FREE_CLOTHES, applyOutfit } from '../data/wardrobe.js';
+import { CLOTHES, SLOTS, FREE_CLOTHES, applyOutfit, designerRack } from '../data/wardrobe.js';
 import { playerLook } from '../data/looks.js';
 import { openSheet, tabs, h, btn } from './sheets.js';
 import { drawHuman } from '../gfx/character.js';
 import { sfx } from '../core/audio.js';
-import { money, escapeHtml } from '../core/util.js';
+import { money, escapeHtml, jstDayNum, islandNow, JST } from '../core/util.js';
 import { toast } from './hud.js';
 import { level, addXP } from '../systems/progress.js';
 import { fx } from '../world/render.js';
+import { setGoal, isGoal, goalBought } from '../systems/goal.js';
 
 export const BA = { name: 'Cô Ba', look: { skin: '#f8d6bd', hair: '#6e4430', hairStyle: 'wavy', top: '#fff', topStyle: 'dress', bottom: '#fff', shoe: '#f0e6da', lashes: true, hat: 'sunhat', hatColor: '#f3dcae' } };
 
@@ -48,23 +49,39 @@ export function itemRow(id, right, { dim = false, note = '' } = {}) {
   return r;
 }
 
+// buy a piece (and put it on)
+function buyPiece(id, api) {
+  const it = CLOTHES[id], w = wardrobe();
+  if (!canAfford(it.price)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
+  addMoney(-it.price, 'clothes'); goalBought('clothes', id); w.owned.push(id); w[it.slot] = id; addXP(it.designer ? 60 : 10, 'clothes');
+  markDirty(true); refreshPlayerLook(); sfx(it.designer ? 'fanfare' : 'buy');
+  toast({ text: T(`${it.en} — you're wearing it!`, `${it.vi} — mặc luôn rồi nè!`), sub: T('Change any time at the wardrobe in your room.', 'Thay đồ bất cứ lúc nào ở tủ quần áo trong phòng.'), icon: 'shirt', cls: it.designer ? 'ach' : '' });
+  if (G.player) fx.burst('spark', G.player.x, G.player.y - 30, it.designer ? 24 : 10, { up: 40, col: '#ffd35a' });
+  api.rebuild();
+}
+// the designer rack: three exclusive pieces today (the same for everyone), new ones at midnight
+function designerPane(pane, api) {
+  const w = wardrobe(), list = h('div', 'list'); pane.appendChild(list);
+  const left = Math.max(0, (jstDayNum() + 1) * 864e5 - JST - islandNow()), hrs = Math.floor(left / 3600e3), mins = Math.floor(left % 3600e3 / 60e3);
+  list.appendChild(h('div', 'empty-note', T(`✦ Today's designer pieces — one of a kind, only on the rack today. New pieces in ${hrs}h ${mins}m.`, `✦ Hàng thiết kế hôm nay — độc nhất, chỉ có trên kệ hôm nay. Đồ mới sau ${hrs} giờ ${mins} phút.`)));
+  for (const id of designerRack(jstDayNum())) {
+    const it = CLOTHES[id], own = w.owned.includes(id);
+    let right = null;
+    if (!own) { right = h('div', 'btn-col'); right.append(btn(money(it.price), () => buyPiece(id, api), 'buy gold'), btn(isGoal('clothes', id) ? T('📌 Saving', '📌 Đang để dành') : T('📌 Save for it', '📌 Để dành'), () => { setGoal({ kind: 'clothes', id, en: it.en, vi: it.vi, cost: it.price }); api.rebuild(); }, 'buy alt', isGoal('clothes', id))); }
+    list.appendChild(itemRow(id, right, { note: own ? T('In your wardrobe ✓', 'Đã có trong tủ ✓') : money(it.price) + T(' · ✦ Designer', ' · ✦ Hàng thiết kế') }));
+  }
+}
 export function openBoutique() {
   openSheet({ title: T('Cô Ba\'s Boutique', 'Tiệm thời trang cô Ba'), sub: T('Clothes, hats and accessories', 'Quần áo, mũ nón và phụ kiện'), who: BA, full: true, build: (body, api) => {
-    tabs(body, SLOTS.map(sl => T(sl.en, sl.vi)), (i, pane) => {
-      const slot = SLOTS[i].id, w = wardrobe();
+    tabs(body, [T('✦ Designer', '✦ Thiết kế'), ...SLOTS.map(sl => T(sl.en, sl.vi))], (i, pane) => {
+      if (i === 0) return designerPane(pane, api);
+      const slot = SLOTS[i - 1].id, w = wardrobe();
       const list = h('div', 'list'); pane.appendChild(list);
-      const ids = Object.keys(CLOTHES).filter(k => CLOTHES[k].slot === slot && !FREE_CLOTHES.includes(k) && !CLOTHES[k].store).sort((a, b) => (CLOTHES[a].lv || 0) - (CLOTHES[b].lv || 0) || CLOTHES[a].price - CLOTHES[b].price);
+      const ids = Object.keys(CLOTHES).filter(k => CLOTHES[k].slot === slot && !FREE_CLOTHES.includes(k) && !CLOTHES[k].store && !CLOTHES[k].designer).sort((a, b) => (CLOTHES[a].lv || 0) - (CLOTHES[b].lv || 0) || CLOTHES[a].price - CLOTHES[b].price);
       for (const id of ids) {
         const it = CLOTHES[id], own = w.owned.includes(id), locked = level() < (it.lv || 0);
         const note = own ? T('In your wardrobe ✓', 'Đã có trong tủ ✓') : locked ? T(`Unlocks at level ${it.lv}`, `Mở ở cấp ${it.lv}`) : money(it.price) + (it.luxury ? T(' · ✦ Rare piece', ' · ✦ Hàng hiếm') : '');
-        const b = own ? null : btn(money(it.price), () => {
-          if (!canAfford(it.price)) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
-          addMoney(-it.price, 'clothes'); w.owned.push(id); w[slot] = id; addXP(10, 'clothes');
-          markDirty(true); refreshPlayerLook(); sfx('buy');
-          toast({ text: T(`${it.en} — you're wearing it!`, `${it.vi} — mặc luôn rồi nè!`), sub: T('Change any time at the wardrobe in your room.', 'Thay đồ bất cứ lúc nào ở tủ quần áo trong phòng.'), icon: 'shirt' });
-          if (G.player) fx.burst('spark', G.player.x, G.player.y - 30, 10, { up: 40, col: '#ffd35a' });
-          api.rebuild();
-        }, 'buy', locked);
+        const b = own ? null : btn(money(it.price), () => buyPiece(id, api), 'buy', locked);
         list.appendChild(itemRow(id, b, { dim: locked && !own, note }));
       }
     }, 0, api);

@@ -15,6 +15,8 @@
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundleDisplayName</key>
 	<string>Bistro Island</string>
 	<key>CFBundleExecutable</key>
@@ -33,8 +35,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>Bistro Island uses this to show you fewer, more relevant optional ads. You can always say no.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

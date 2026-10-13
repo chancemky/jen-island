@@ -76,6 +76,7 @@ for (const [id, g] of Object.entries(INGREDIENTS)) if (g.prep) PREPPED[g.prep.to
 export const PREP_VERB = { whip: ['Whip', 'Đánh bông'], chop: ['Slice', 'Cắt'], split: ['Split', 'Xẻ'], scoop: ['Scoop', 'Nạo'], grill: ['Grill', 'Nướng'], fry: ['Fry', 'Chiên'], boil: ['Boil', 'Luộc'], press: ['Press', 'Ép'] };
 export const PREP_BATCH = 4;
 import { T } from '../systems/state.js';
+import { luxuryPrice } from '../core/util.js';
 export function ingName(id) { const g = INGREDIENTS[id] || PREPPED[id]; if (!g) return id; return PREPPED[id] ? T(g.enCut, g.vi) : T(g.en, g.vi); }
 export const matName = id => T(MATERIALS[id].en, MATERIALS[id].vi);
 export const recipeName = id => T(RECIPES[id].en, RECIPES[id].vi);
@@ -571,12 +572,13 @@ export const STATUE_COST = { cost: 3500, mats: { paint: 10, tile: 10 } };
 // pets (pets.js), level and milestone rewards (progress.js).
 export const ECON = {
   furniture: 5,          // furniture × list price
+  furnitureCurve: [[2500, 6], [1000, 3], [400, 1.6]],   // …then the luxury curve: a 6,000k centrepiece becomes 36M
   upgrades: 3.5,         // shop upgrades × list price
   businesses: 1.5,       // buying a business (and its key from Mèo Mây) ×
   build: 1.75,           // the bridges, the statue and the Night Market restoration ×
   ingredients: 1.25,     // what ingredients cost × — thinner margins on every sale
 };
-for (const v of Object.values(FURNITURE)) if (!v.fixed) v.price = Math.round(v.price * ECON.furniture / 5) * 5;
+for (const v of Object.values(FURNITURE)) if (!v.fixed) v.price = luxuryPrice(Math.round(v.price * ECON.furniture / 5) * 5, ECON.furnitureCurve);
 for (const b of Object.values(BUSINESSES)) for (const u of b.upgrades || []) if (u?.cost) u.cost = Math.round(u.cost * ECON.upgrades / 10) * 10;
 for (const b of Object.values(BUSINESSES)) if (b.buy) b.buy = Math.round(b.buy * ECON.businesses / 50) * 50;
 for (const r of [BRIDGE_REPAIR, HARBOUR_BRIDGE, COVE_BRIDGE, STATUE_COST, NIGHT_MARKET_RESTORE]) r.cost = Math.round(r.cost * ECON.build / 50) * 50;

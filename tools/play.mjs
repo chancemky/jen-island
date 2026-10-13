@@ -10,10 +10,10 @@ const b = await chromium.launch(), ctx = await b.newContext(process.env.VIEW ? {
 const errs = []; p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => m.type() === 'error' ? errs.push(m.text().slice(0, 300)) : m.type() === 'log' && process.env.LOGS && console.log('page:', m.text()));
 await p.route(/supabase\.co/, r => r.fulfill({ json: [] }));
 const tag = 'play' + Date.now(), base = `http://127.0.0.1:${server.address().port}/?dev=${tag}`;
-await p.goto(base + '&fresh');
+await p.addInitScript(s => { window.__step = s; }, process.env.STEP || 'free'); await p.goto(base + '&fresh');
 await p.waitForFunction(() => window.done, null, { timeout: 30000 });
 // jump this test island to free play (chapter 20), save, and reload into it: no intro
-await p.evaluate(async () => { const d = await import('/js/dev/devtools.js'); d.jumpTo('free'); const st = window.__jen.G.state; st.player.name = 'Tester'; st.island.name = 'Test Isle'; const s = await import('/js/systems/save.js'); s.saveLocal(); });
+await p.evaluate(async () => { const d = await import('/js/dev/devtools.js'); d.jumpTo(window.__step || 'free'); const st = window.__jen.G.state; st.player.name = 'Tester'; st.island.name = 'Test Isle'; const s = await import('/js/systems/save.js'); s.saveLocal(); });
 await p.goto(base); await p.waitForFunction(() => window.done, null, { timeout: 30000 });
 for (let i = 0; i < 24; i++) {         // clear the start-of-day popups and any cutscene
   await p.evaluate(() => { document.querySelector('#skipBtn:not(.hidden)')?.click(); document.querySelector('.modal .btn, .reward button')?.click(); }).catch(() => {});

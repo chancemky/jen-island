@@ -14,9 +14,19 @@ export const SAVE_VERSION = 7, OLDEST_SAVE = 7;
 // one function per version: UPGRADES[n] turns a version n−1 save into version n
 const UPGRADES = {};
 
-export function defaultState() {
+// Prepped ingredients (sliced mango, pressed cane juice…) belong to the whole island, not to one
+// shop: a single pool in s.prepped. Each shop's b.prepped is a window onto that same pool (not saved
+// with the shop), so everything that reads or writes it per shop shares it automatically (and
+// assigning a shop's prep adds those portions to the pool rather than replacing it).
+function sharePrep(s) {
+  s.prepped ||= {};
+  for (const b of Object.values(s.biz || {})) Object.defineProperty(b, 'prepped', { get: () => s.prepped, set: v => { Object.assign(s.prepped, v || {}); }, enumerable: false, configurable: true });
+  return s;
+}
+export function defaultState() { return sharePrep(baseState()); }
+function baseState() {
   const biz = {};
-  for (const id of Object.keys(BUSINESSES)) biz[id] = { id, repair: 0, level: 1, owned: id === 'shed1', unlocked: id === 'shed1', open: false, prepped: {}, recipes: [], special: null, stats: { served: 0, revenue: 0 }, employees: [], register: 0, decor: [] };
+  for (const id of Object.keys(BUSINESSES)) biz[id] = { id, repair: 0, level: 1, owned: id === 'shed1', unlocked: id === 'shed1', open: false, recipes: [], special: null, stats: { served: 0, revenue: 0 }, employees: [], register: 0, decor: [] };
   return {
     v: SAVE_VERSION,
     savedAt: 0,
@@ -69,7 +79,11 @@ export function migrate(raw) {
   s.nightMarket = { ...d.nightMarket, ...(raw.nightMarket || {}) };
   s.biz = { ...d.biz };
   for (const id of Object.keys(d.biz)) s.biz[id] = { ...d.biz[id], ...(raw.biz?.[id] || {}), open: false };
-  for (const b of Object.values(s.biz)) { b.equip ||= {}; b.prepped ||= {}; b.employees ||= []; b.stats ||= { served: 0, revenue: 0 }; b.decor ||= []; }
+  // the shared prep pool; a save from before 5.19 kept prep per shop: add those up once
+  if (raw.prepped && typeof raw.prepped === 'object') s.prepped = { ...raw.prepped };
+  else { s.prepped = {}; for (const b of Object.values(raw.biz || {})) for (const [k, n] of Object.entries(b?.prepped || {})) if (n > 0) s.prepped[k] = (s.prepped[k] || 0) + Math.floor(n); }
+  for (const b of Object.values(s.biz)) { b.equip ||= {}; delete b.prepped; b.employees ||= []; b.stats ||= { served: 0, revenue: 0 }; b.decor ||= []; }
+  sharePrep(s);
   for (const e of s.biz.restaurant?.employees || []) e.stats = { speed: 3, cooking: 3, service: 3, reliability: 3, ...(e.stats || {}) };   // (a damaged employee never breaks the nightly bills)
   s.recipes = (raw.recipes || []).filter(r => RECIPES[r]);
   s.achievements = (raw.achievements || []).filter(a => ACHIEVEMENTS[a]);

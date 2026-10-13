@@ -60,10 +60,19 @@ function holds(s) { const o = s.owner; return !!o && o.data?.stand === s && o.vi
 function occupiedNow(island, s, me) {
   return island.actors.some(o => o !== me && o.visible !== false && !o.path && dist(o.x, o.y, s.x, s.y) < BODY);
 }
+// areas an event has taken over (a birthday table, a wedding): no standing spots are handed out
+// there while it lasts, and whoever stood there is asked to choose again
+const zones = new Map();
+const inZone = s => { for (const z of zones.values()) if (dist(s.x, s.y, z.x, z.y) < z.r) return true; return false; };
+export function blockZone(id, x, y, r) {
+  zones.set(id, { x, y, r });
+  for (const s of stands) if (s.owner && inZone(s) && !s.owner.data?.party && !s.owner.data?.wedding) { const a = s.owner; releaseStand(a); if (a.data && a.data.state !== 'busy') { a.data.state = 'idle'; a.data.until = 0; } }
+}
+export const unblockZone = id => zones.delete(id);
 export function releaseStand(a) { const s = a.data?.stand; if (s && s.owner === a) s.owner = null; if (a.data) a.data.stand = null; }
 // claim a free spot with this tag (nearest to `near` if given, otherwise any of them)
 export function claimStand(island, a, tag, near = null) {
-  let list = stands.filter(s => s.tags.has(tag) && (s.owner === a || !holds(s)) && !occupiedNow(island, s, a));
+  let list = stands.filter(s => s.tags.has(tag) && (s.owner === a || !holds(s)) && !occupiedNow(island, s, a) && !inZone(s));
   if (!list.length) return null;
   // nearest first (to `near`), otherwise in random order — and only somewhere you can walk to
   // from where you are now (not across the water to an island whose bridge isn't built)

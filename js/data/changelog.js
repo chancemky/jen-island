@@ -3,9 +3,26 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.18.1';
+export const APP_VERSION = '5.19.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.19.0', date: '2026-10-13T14:34:38Z',
+    title: ['Big Dreams', 'Ước Mơ Lớn'],
+    items: [
+      ['Prepped ingredients are shared by every shop now: slice mangoes once and any shop that needs them can use them', 'Nguyên liệu sơ chế giờ dùng chung cho mọi quán: thái xoài một lần, quán nào cần cũng dùng được'],
+      ['Island projects on the Island Board: lantern lights, beach cabanas, a ring of plaza lamps, flower arches, a Golden Mèo Mây statue and fireworks every night at nine', 'Công trình của đảo trên Bảng tin: đèn lồng, lều dù trên biển, vòng đèn quanh quảng trường, cổng hoa, tượng Mèo Mây vàng và pháo hoa mỗi tối lúc chín giờ'],
+      ['Cô Ba\'s designer rack: three exclusive pieces a day, from silk áo dài to a gold crown', 'Kệ hàng thiết kế của cô Ba: ba món độc quyền mỗi ngày, từ áo dài lụa đến vương miện vàng'],
+      ['Save up for something big: pin it and watch the bar under your money fill', 'Để dành cho món lớn: ghim lại và xem thanh dưới số tiền đầy dần'],
+      ['Livelier music everywhere — faster tunes with a beat, and no more sleepy songs', 'Nhạc sôi động hơn khắp nơi — giai điệu nhanh có nhịp, không còn bài buồn ngủ'],
+      ['Bigger homes cost more and feel like a real milestone; buying on credit now takes a deposit and a little interest', 'Nhà lớn đắt hơn và đáng mơ ước hơn; mua trả góp giờ cần trả trước và chịu chút lãi'],
+      ['Shopkeepers keep a share of what they sell, so serving customers yourself pays best', 'Người trông quán giữ một phần tiền họ bán, nên tự bán là lời nhất'],
+      ['Rare furniture, outfits, pets and salon visits are pricier treats', 'Nội thất, quần áo hiếm, thú cưng và làm tóc là những món xa xỉ hơn'],
+      ['Fireworks, menus and pop-ups no longer overlap each other', 'Pháo hoa, menu và thông báo không còn chồng lên nhau'],
+      ['iPad: the order and prep screens sit in the middle (they were half off the screen), and rooms fill the screen', 'iPad: màn hình gọi món và sơ chế nằm giữa (trước bị lệch ra ngoài), và các phòng hiện to vừa màn hình'],
+      ['Birthday parties and the wedding: guests each have their own space, nobody stands on top of anyone', 'Tiệc sinh nhật và đám cưới: khách đứng chỗ riêng, không ai đứng chồng lên ai'],
+    ],
+  },
   {
     v: '5.18.1', date: '2026-10-09T13:15:00Z',
     title: ['Launch Polish', 'Chuẩn Bị Ra Mắt'],

@@ -68,6 +68,7 @@ export const keeperOff = (id, k = keeperOf(id)) => !!k && k.offDay === G.state.d
 export function giveDayOff(id, which = 'today') { const k = keeperOf(id); if (!k) return false; k.offDay = G.state.day + (which === 'tomorrow' ? 1 : 0); markDirty(true); bus.emit('keeper', id); return true; }
 export const keeperWage = (id, k = keeperOf(id)) => Math.round(wageFor(id, keeperSkill(k)) * (k?.head ? 1.2 : 1));
 export const HIRE_DAYS = 2;
+export const KEEPER_CUT = 0.35;          // a shopkeeper's share of each sale they make
 export const keeperOf = id => G.state.keepers?.[id] || null;
 export const canHaveKeeper = id => BUSINESSES[id].kind !== 'restaurant';
 export const keeperUnlocked = () => G.state.story.chapter >= 5;
@@ -252,8 +253,13 @@ export function updateKeepers(dt) {
     useStock(id, o);
     const q = chance(keeperPerfect(k)) ? 'perfect' : 'good';
     k.served = (k.served || 0) + 1; k.today = (k.today || 0) + 1; keeperGrow(id, k);
+    const m0 = G.state.money;
     completeOrder(c, q);
-    noteKeeperSale(id, k, o);
+    // the shopkeeper keeps a share of every sale they make (on top of the daily wage): staffed shops
+    // still pay, but serving customers yourself is clearly the best money
+    const made = G.state.money - m0, cut = Math.round(made * KEEPER_CUT);
+    if (cut > 0) { addMoney(-cut, 'hire'); recordCost(id, 'wages', cut); }
+    noteKeeperSale(id, k, { ...o, price: made - cut });
     for (const who of [a, inside[id]]) if (who) { who.doHop(50); who.showEmote(q === 'perfect' ? 'heart' : 'happy', 1); }
     setTimeout(() => { if (a?.act === null) a.setAct('wave'); }, 250);
   }

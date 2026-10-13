@@ -163,6 +163,39 @@ Legend: ✅ checked and fine · 🔧 problem found and fixed · ⏳ needs you
   - Each opens a big striped market umbrella on a weighted stand over herself and the cart, and it folds away when the rain stops.
   - The carts' push handle, which crossed the grandmas' faces, moved to the far end of the cart.
 
+## 16. Round 2 (October 13, 2026)
+- 🔧 **Prepped ingredients are shared by every shop.**
+  - Prep used to belong to the shop where it was made, so sliced mango at the Smoothie Bar couldn't be used anywhere else.
+  - There's now one island-wide pool. Every shop reads and writes the same stock, and older saves add up their per-shop prep once on load.
+  - The bag lists "Prepped — ready for any shop".
+  - Tested: merging, saving, reloading without doubling, and one shop using another's prep.
+- 🔧 **Music** (a tester said it was "way too sleepy"):
+  - All 12 songs are faster: night 72→98 bpm, home 66→96, Firefly Islet 60→84, title 84→100, the rest +8–10.
+  - The night, home, islet and title songs now have a beat and a bass line; morning, beach and harbour gained a backbeat.
+- 🔧 **Money: hard to earn, rewarding to spend.**
+  - Shopkeepers keep 35% of what they sell. Late game nets about 22M per in-game day, about 50M per real hour.
+  - Items that can be bought now total about 3.8B (from about 1B).
+  - The luxury curve: rare furniture up to 27M; rare clothes up to tens of millions; pets 3.5–9M; haircuts 300k+; dyes 450k.
+  - The bigger house costs 25M / 90M, the upstairs 60M / 150M, the basement 70M / 160M.
+  - A home loan now takes a 30% deposit plus 15% interest.
+- ✨ **New money sinks:**
+  - Cô Ba's ✦ Designer rack: 18 exclusive pieces at 25M–150M, three a day, the same for everyone.
+  - 🏗️ Island projects (Island Board), 12M–400M: Market Street lanterns, flower beds up the dock road, beach cabanas, plaza lamps, a Night Market canopy, flower arches, a Golden Mèo Mây statue, and fireworks every night at 21:00.
+- ✨ **Saving up:** pin a big purchase (📌) and a bar under your money fills toward it, with a cheer when you can afford it.
+- 🔧 **iPad:**
+  - The serving and prep screens were 270 px off the left edge (a transform fighting their animation). They're now centred.
+  - Rooms were tiny on large screens; they now fill the screen.
+- 🔧 **Store screenshots:** the "Make every order by hand" shot showed a closed, empty shop. It now shows a customer ordering. Added iPad 13" sets (2064×2752) in English and Vietnamese.
+- 🔧 **Pop-ups:**
+  - Pop-ups already showing step aside when a menu opens.
+  - The song-name chip no longer appears over menus.
+- 🔧 **App Store build:**
+  - Added the privacy manifest (`PrivacyInfo.xcprivacy`, no tracking).
+  - Declared no non-exempt encryption.
+  - Removed the unused ad SDK and its tracking prompt (ads were never switched on).
+  - Wrote `tools/ios-release.sh`, which builds and uploads in one go.
+- ⏳ **Real Safari:** it still reports Remote Automation off. Run `sudo safaridriver --enable` once.
+
 ---
 
 ## Needs you

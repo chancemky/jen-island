@@ -8,8 +8,7 @@ const T = { '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css', 
 const server = http.createServer((q, r) => { let p = decodeURIComponent(q.url.split('?')[0]); if (p.endsWith('/')) p += 'index.html'; const f = path.join(ROOT, p); if (!fs.existsSync(f)) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': T[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r); });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${server.address().port}`;
-// (the iOS app is iPhone-only for now, so no iPad set: add ['ipad129', { width: 1024, height: 1366 }, 2] once iPad has its own layout)
-const SIZES = [['iphone67', { width: 430, height: 932 }, 3], ['play', { width: 412, height: 915 }, 2.625]];
+const SIZES = [['iphone67', { width: 430, height: 932 }, 3], ['ipad13', { width: 1032, height: 1376 }, 2], ['play', { width: 412, height: 915 }, 2.625]];   // (iPad 13": 2064×2752)
 const CAP = {
   en: ['Run your own little café', 'Make every order by hand', 'Grow a whole island of shops', 'Festivals on the real dates', 'Decorate your dream home', 'Make friends, top the board'],
   vi: ['Mở quán nhỏ của riêng bạn', 'Tự tay làm từng món', 'Cả hòn đảo đầy quán xá', 'Lễ hội đúng ngày thật', 'Trang trí ngôi nhà mơ ước', 'Kết bạn, lên bảng xếp hạng'],

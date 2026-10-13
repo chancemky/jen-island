@@ -84,6 +84,7 @@ import { showWhatsNew } from './ui/whatsnew.js';
 import { openBoutique, openWardrobe, currentLook } from './ui/clothes.js';
 import { openSalon } from './ui/salon.js';
 import { spawnVendors, updateVendors, buyFromVendor, vendorDrawables } from './systems/vendors.js';
+import { placeProjects, updateProjects, drawFireworks } from './systems/projects.js';
 import { updateKeepers, spawnKeepers, keeperActor } from './systems/economy.js';
 import { rebuildPets, updatePets, petMenu, followerUid, setFollower } from './systems/pets.js';
 import { openPetShop } from './ui/petshop.js';
@@ -132,6 +133,7 @@ async function boot() {
   for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) window.addEventListener(ev, unlock, { capture: true, passive: true });
   await sleep(10);
   scenes.island = new Island();
+  placeProjects(scenes.island);
   progress(0.55, bootText('decor'));
   Object.assign(scenes, buildInteriors());
   COUNTS.homes = Object.keys(scenes).filter(k => k.startsWith('home_')).length; COUNTS.areas = AREAS.length;
@@ -418,7 +420,7 @@ function loop(now) {
   updateWorldEvents(dt);
   updateSeasonal(dt);
   updateAmbience();
-  updateWeather(dt); updateNature(dt);
+  updateWeather(dt); updateNature(dt); updateProjects(dt);
   if (G.scene === scenes.island) updateVendors(dt);
   // shops stand still while a menu or the prep table has the clock paused (no new
   // customers, no lost patience), so checking your bag never costs you a sale
@@ -439,7 +441,7 @@ function loop(now) {
   if (!(isServiceOpen() || isPrepOpen())) G.renderer.render(sc, t, {
     player: pl, light,
     worldExtra: sc === scenes.island ? [...npcDrawables(), ...vendorDrawables()] : null,
-    overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawRain(c, tt); drawRainbow(c, tt); G.runtime.decoOverlay?.(c, tt); },
+    overlay: (c, tt) => { drawSkyLife(c, tt); drawBeam(c, tt); drawFireworks(c, tt); drawRain(c, tt); drawRainbow(c, tt); G.runtime.decoOverlay?.(c, tt); },
   });
   updateHud(dt);
   tickCelebrations(() => !cs.active && !isUiOpen() && !isPresenting() && !isServiceOpen() && !isPrepOpen() && !dialogue.active && !isDecorating() && !G.runtime.paused);

@@ -8,6 +8,7 @@ import { birthdaysToday } from './interact.js';
 import { RESIDENTS } from '../data/looks.js';
 import { PLAZA } from '../world/island.js';
 import { npcs } from './npc.js';
+import { blockZone, unblockZone, releaseStand } from './crowd.js';
 import { befriend } from './friends.js';
 import { addXP } from './progress.js';
 import { cs, wait, say } from './cutscene.js';
@@ -21,14 +22,15 @@ function start(rid) {
   const guests = [], host = npcs.residents.find(a => a.data.rid === rid && a.visible);
   const others = npcs.residents.filter(a => a !== host && a.visible && a.data.state !== 'busy' && !a.data.inTalk).slice(0, 3);
   [host, ...others].filter(Boolean).forEach((a, i) => {
-    const ang = Math.PI * (0.15 + i * 0.35), x = SPOT.x + Math.cos(ang) * 30, y = SPOT.y + Math.sin(ang) * 18 + 6;
-    a.stop?.(); a.data.state = 'busy'; a.data.party = true; a.walkTo?.([[x, y]]).then(() => { a.face?.('up'); a.showEmote?.('note', 2); });
+    const ang = Math.PI * (0.05 + i * 0.3), x = SPOT.x + Math.cos(ang) * 42, y = SPOT.y + Math.sin(ang) * 26 + 6;   // (a semicircle in front of the table, everyone in their own space)
+    a.stop?.(); releaseStand(a); a.data.state = 'busy'; a.data.party = true; a.walkTo?.([[x, y]]).then(() => { a.face?.('up'); a.showEmote?.('note', 2); });
     guests.push(a);
   });
   party = { rid, guests, joined: false, day: G.state.day };
+  blockZone('party', SPOT.x, SPOT.y + 10, 64);
   bus.emit('toast', { text: T(`It's ${RESIDENTS[rid].name}'s birthday!`, `Hôm nay sinh nhật ${RESIDENTS[rid].name}!`), sub: T('Party on Wind Plaza until 20:00 — come join!', 'Tiệc ở Quảng trường gió tới 20 giờ — ghé chơi nha!'), icon: 'heart', ms: 5200 });
 }
-function end() { for (const a of party?.guests || []) { a.data.party = false; a.data.state = 'idle'; a.data.until = 0; } party = null; }
+function end() { for (const a of party?.guests || []) { a.data.party = false; a.data.state = 'idle'; a.data.until = 0; } party = null; unblockZone('party'); }
 async function join() {
   const p = party; if (!p || p.joined) return; p.joined = true;
   const s = G.state, name = RESIDENTS[p.rid].name, host = p.guests[0];

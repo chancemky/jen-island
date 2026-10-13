@@ -14,6 +14,7 @@ export const isUiOpen = () => ui.open > 0;
 
 export function openSheet({ title, sub = '', who = null, cls = '', full = false, clear = false, onClose = null, pauseTime = true, build }) {
   releaseJoystick();
+  for (const e of document.querySelectorAll('#toasts .toast:not(.ach):not(.bad)')) e.classList.add('out');   // (island news already showing steps aside for the menu)
   const wrap = document.createElement('div');
   wrap.className = 'sheet-wrap' + (clear ? ' clear' : '');
   wrap.innerHTML = `<div class="sheet ${full ? 'full' : ''} ${cls}"><div class="sheet-head">${who ? '<div class="who"><canvas width="120" height="120"></canvas></div>' : ''}<h2>${escapeHtml(title)}${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</h2><button class="x" type="button" aria-label="Close">✕</button></div><div class="sheet-body"></div></div>`;

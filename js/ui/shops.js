@@ -17,7 +17,8 @@ import { MEO_MEMORIES } from '../data/lore.js';
 import { DISCOVERIES } from '../systems/interact.js';
 import { albumPhotos, syncAlbumIfStale } from '../systems/album.js';
 import { openPhotoViewer } from './album.js';
-import { nextHome, homeLoan, upgradeHome, nextFloor, upgradeFloor, placedFurniture } from '../systems/home.js';
+import { setGoal, isGoal, goalBought } from '../systems/goal.js';
+import { nextHome, homeLoan, upgradeHome, nextFloor, upgradeFloor, placedFurniture, loanDeposit } from '../systems/home.js';
 import { setProgress, comfortBonus } from '../data/sets.js';
 import { upgradeCost, shopNeed } from '../systems/economy.js';
 import { toast, moneyShortfall } from './hud.js';
@@ -100,13 +101,13 @@ export function openIngredientShop() {
         api.rebuild();
       });
       right.append(q.el, b);
-      // The supermarket sells raw ingredients; prepped portions stay listed separately in the bag.
+      // The supermarket sells raw ingredients; prepped portions (shared by every shop) are listed in the bag.
       list.appendChild(rowEl({ icon: id, title: escapeHtml(ingName(id)), sub: T(`${g.pack} portions per pack`, `${g.pack} phần / gói`), have: haveText(id), right }));
     }
   } });
 }
-// portions of an ingredient already prepped in your shops (sliced mango, pressed cane juice…)
-export function preppedOf(k) { const to = INGREDIENTS[k]?.prep?.to; if (!to) return 0; let n = 0; for (const b of Object.values(G.state.biz)) n += b.prepped?.[to] || 0; return n; }
+// portions of an ingredient already prepped (sliced mango, pressed cane juice…), ready for any shop
+export function preppedOf(k) { const to = INGREDIENTS[k]?.prep?.to; return to ? G.state.prepped?.[to] || 0 : 0; }   // (prep is shared by every shop)
 const haveText = id => { const p = preppedOf(id); return p ? T(`Have: ${pantry(id)} + ${p} prepped`, `Có: ${pantry(id)} + ${p} đã sơ chế`) : T(`Have: ${pantry(id)}`, `Có: ${pantry(id)}`); };
 // Missing packs to make ~8 of each known recipe.
 export function shoppingNeeds() {
@@ -173,14 +174,14 @@ export function openFurnitureShop() {
     const up = nextHome();
     if (up || homeLoan()) {
       const r = h('div', 'row', `<div class="ico">🏡</div><div class="info"><b>${escapeHtml(up ? T(up.en, up.vi) : T('Home loan', 'Tiền nhà'))}</b><small>${homeLoan() ? T(`Still owed: ${money(homeLoan())} (paid back from good days)`, `Còn nợ: ${money(homeLoan())} (trả dần vào ngày có lãi)`) : escapeHtml(T(...up.note))}</small></div>`);
-      if (up && !homeLoan()) { const col = h('div', 'btn-col'); col.append(btn(money(up.cost), () => { if (!upgradeHome('cash')) return moneyShortfall(up.cost); sfx('fanfare'); api.rebuild(); }, 'buy'), btn(T('Pay later', 'Trả dần'), () => { upgradeHome('loan'); sfx('fanfare'); api.rebuild(); }, 'buy alt')); r.appendChild(col); }
+      if (up && !homeLoan()) { const col = h('div', 'btn-col'); col.append(btn(money(up.cost), () => { if (!upgradeHome('cash')) return moneyShortfall(up.cost); goalBought('home', 'house'); sfx('fanfare'); api.rebuild(); }, 'buy'), btn(isGoal('home', 'house') ? T('📌 Saving', '📌 Đang để dành') : T('📌 Save for it', '📌 Để dành'), () => { setGoal({ kind: 'home', id: 'house', en: up.en, vi: up.vi, cost: up.cost }); api.rebuild(); }, 'buy alt', isGoal('home', 'house')), btn(T(`${money(loanDeposit(up.cost))} down · rest later`, `Trả trước ${money(loanDeposit(up.cost))} · còn lại trả dần`), () => { if (!upgradeHome('loan')) return moneyShortfall(loanDeposit(up.cost)); sfx('fanfare'); api.rebuild(); }, 'buy alt')); r.appendChild(col); }
       list.appendChild(r);
     }
     // once the house is at its biggest: build up and down
     for (const which of ['up', 'down']) {
       const fu = nextFloor(which); if (!fu) continue;
       const r = h('div', 'row', `<div class="ico">${which === 'up' ? '🪜' : '🕯️'}</div><div class="info"><b>${escapeHtml(T(fu.en, fu.vi))}</b><small>${homeLoan() ? T('Pay off your home loan first', 'Trả xong tiền nhà trước đã') : escapeHtml(T(...fu.note))}</small></div>`);
-      if (!homeLoan()) { const col = h('div', 'btn-col'); col.append(btn(money(fu.cost), () => { if (!upgradeFloor(which, 'cash')) return moneyShortfall(fu.cost); sfx('fanfare'); api.rebuild(); }, 'buy'), btn(T('Pay later', 'Trả dần'), () => { upgradeFloor(which, 'loan'); sfx('fanfare'); api.rebuild(); }, 'buy alt')); r.appendChild(col); }
+      if (!homeLoan()) { const col = h('div', 'btn-col'); col.append(btn(money(fu.cost), () => { if (!upgradeFloor(which, 'cash')) return moneyShortfall(fu.cost); sfx('fanfare'); api.rebuild(); }, 'buy'), btn(T(`${money(loanDeposit(fu.cost))} down · rest later`, `Trả trước ${money(loanDeposit(fu.cost))} · còn lại trả dần`), () => { if (!upgradeFloor(which, 'loan')) return moneyShortfall(loanDeposit(fu.cost)); sfx('fanfare'); api.rebuild(); }, 'buy alt')); r.appendChild(col); }
       list.appendChild(r);
     }
     // furniture sets: place every piece for the home-comfort bonus
@@ -278,9 +279,8 @@ export function openBag() {
         const ids = Object.keys(INGREDIENTS).filter(k => pantry(k) > 0);
         if (!ids.length) list.appendChild(h('div', 'empty-note', T('No ingredients yet. Visit the supermarket on Market Street.', 'Chưa có nguyên liệu. Ghé siêu thị ở Phố Chợ nhé.')));
         for (const k of ids) list.appendChild(rowEl({ icon: k, title: escapeHtml(ingName(k)), have: T(`${pantry(k)} portions`, `${pantry(k)} phần`) }));
-        const prepped = [];
-        for (const [bid, b] of Object.entries(s.biz)) for (const [k, n] of Object.entries(b.prepped || {})) if (n > 0) prepped.push([bid, k, n]);
-        if (prepped.length) { list.appendChild(h('div', 'section-title', T('Prepped at your shops', 'Đã sơ chế ở các quán'))); for (const [bid, k, n] of prepped) list.appendChild(rowEl({ icon: k, title: escapeHtml(ingName(k)), sub: escapeHtml(bizName(bid)), have: T(`${n} portions`, `${n} phần`) })); }
+        const prepped = Object.entries(s.prepped || {}).filter(([, n]) => n > 0);
+        if (prepped.length) { list.appendChild(h('div', 'section-title', T('Prepped — ready for any shop', 'Đã sơ chế — quán nào cũng dùng được'))); for (const [k, n] of prepped) list.appendChild(rowEl({ icon: k, title: escapeHtml(ingName(k)), have: T(`${n} portions`, `${n} phần`) })); }
       } else if (i === 1) {
         const ids = Object.keys(MATERIALS).filter(k => mats(k) > 0);
         if (!ids.length) list.appendChild(h('div', 'empty-note', T('No materials yet. Ben Vung Materials on Market Street sells wood, metal and paint.', 'Chưa có vật liệu. VLXD Bền Vững ở Phố Chợ bán gỗ, tôn và sơn.')));

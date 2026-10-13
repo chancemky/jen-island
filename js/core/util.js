@@ -174,3 +174,12 @@ class Emitter {
   emit(ev, ...a) { this.h.get(ev)?.forEach(fn => { try { fn(...a); } catch (e) { console.error('[bus]', ev, e); } }); }
 }
 export const bus = new Emitter();
+
+// The luxury curve (prices in k): everyday things stay affordable, the special pieces get steeply
+// dearer, so there's always something big to save up for. steps: [[from, ×], …], highest first.
+export function luxuryPrice(p, steps) {
+  if (!(p > 0)) return p;
+  const m = (steps.find(([from]) => p >= from) || [0, 1])[1], v = p * m;
+  const q = v >= 20000 ? 1000 : v >= 5000 ? 250 : v >= 1000 ? 50 : 10;
+  return Math.round(v / q) * q;
+}

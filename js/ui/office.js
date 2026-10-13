@@ -15,7 +15,7 @@ import { toast, moneyShortfall, setWaypoint } from './hud.js';
 import { openShopFront, canDecorateFront } from './storefront.js';
 import { scoreFront, frontAttract } from '../systems/storefront.js';
 import { fx } from '../world/render.js';
-import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName, rentToday, keeperOf, keeperWage, candidate, hireKeeper, fireKeeper, giveDayOff, keeperTrait, canHaveKeeper, keeperUnlocked, hasSupply, buySupply, toggleSupply, SUPPLY, supplyUnlocked, staffedCount, keeperSkill, SKILL_NAMES, wageFor, hireFee, recentShopNet, canTrain, trainCost, trainKeeper, promoteCost, promoteKeeper } from '../systems/economy.js';
+import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName, rentToday, keeperOf, keeperWage, KEEPER_CUT, candidate, hireKeeper, fireKeeper, giveDayOff, keeperTrait, canHaveKeeper, keeperUnlocked, hasSupply, buySupply, toggleSupply, SUPPLY, supplyUnlocked, staffedCount, keeperSkill, SKILL_NAMES, wageFor, hireFee, recentShopNet, canTrain, trainCost, trainKeeper, promoteCost, promoteKeeper } from '../systems/economy.js';
 import { daySheet, netWorth, lifetimeTotals, catName } from '../systems/ledger.js';
 import { dailyWages } from '../systems/restaurant.js';
 import { openStaffBoard } from './staff.js';
@@ -113,7 +113,7 @@ export function renderOffice(pane, api) {
       if (k) {
         const tr = keeperTrait(k);
         const sk = SKILL_NAMES[keeperSkill(k)];
-        card.appendChild(h('div', 'oc-line', `👤 <b>${escapeHtml(k.name)}</b> · ${escapeHtml(T(...sk))} · ${escapeHtml(T(tr.en, tr.vi))} · ${T(`${money(keeperWage(id))}/day · served ${k.today || 0} today, ${k.served || 0} in all`, `${money(keeperWage(id))}/ngày · hôm nay bán ${k.today || 0}, tổng ${k.served || 0}`)}`));
+        card.appendChild(h('div', 'oc-line', `👤 <b>${escapeHtml(k.name)}</b> · ${escapeHtml(T(...sk))} · ${escapeHtml(T(tr.en, tr.vi))} · ${T(`${money(keeperWage(id))}/day + ${Math.round(KEEPER_CUT * 100)}% of sales · served ${k.today || 0} today, ${k.served || 0} in all`, `${money(keeperWage(id))}/ngày + ${Math.round(KEEPER_CUT * 100)}% doanh thu · hôm nay bán ${k.today || 0}, tổng ${k.served || 0}`)}`));
         if (canTrain(id)) row.appendChild(btn(T(`Train · ${money(trainCost(id))}`, `Đào tạo · ${money(trainCost(id))}`), () => { if (!trainKeeper(id)) return moneyShortfall(trainCost(id)); sfx('success'); toast({ text: T(`${k.name} is now ${SKILL_NAMES[keeperSkill(k)][0].toLowerCase()}!`, `${k.name} giờ đã ${SKILL_NAMES[keeperSkill(k)][1].toLowerCase()}!`), icon: 'star' }); api.rebuild(); }, 'buy'));
         else if (keeperSkill(k) >= 3 && !k.head) row.appendChild(btn(T(`Promote · ${money(promoteCost(id))}`, `Thăng chức · ${money(promoteCost(id))}`), () => { if (!promoteKeeper(id)) return moneyShortfall(promoteCost(id)); sfx('fanfare'); toast({ text: T(`${k.name} is your head keeper now!`, `${k.name} giờ là trưởng quán!`), icon: 'star' }); api.rebuild(); }, 'buy'));
         // a day off (today or tomorrow) — and, tucked away, letting them go for good (tap twice)
@@ -128,7 +128,7 @@ export function renderOffice(pane, api) {
       } else if (keeperUnlocked()) {
         const c = candidate(id), tr = keeperTrait(c);
         const w = wageFor(id, keeperSkill(c)), fee = hireFee(id, c);
-        card.appendChild(h('div', 'oc-line', `${T('Applicant', 'Ứng viên')}: <b>${escapeHtml(c.name)}</b> · ${escapeHtml(T(...SKILL_NAMES[keeperSkill(c)]))} · ${escapeHtml(T(tr.en, tr.vi))} · ${T(`${money(w)}/day`, `${money(w)}/ngày`)}`));
+        card.appendChild(h('div', 'oc-line', `${T('Applicant', 'Ứng viên')}: <b>${escapeHtml(c.name)}</b> · ${escapeHtml(T(...SKILL_NAMES[keeperSkill(c)]))} · ${escapeHtml(T(tr.en, tr.vi))} · ${T(`${money(w)}/day + ${Math.round(KEEPER_CUT * 100)}% of what they sell`, `${money(w)}/ngày + ${Math.round(KEEPER_CUT * 100)}% số tiền họ bán`)}`));
         // wage vs what the shop actually makes, so hiring is never a blind loss
         const net = recentShopNet(id);
         if (net == null) card.appendChild(h('div', 'oc-line dim', T('No books for this shop yet — run it yourself for a day or two to see what it makes before hiring.', 'Quán này chưa có sổ sách — tự bán một hai ngày để xem quán lời bao nhiêu rồi hẵng thuê.')));

@@ -6,6 +6,7 @@ import { G, T, markDirty, addMoney, canAfford } from './state.js';
 import { bus, dist } from '../core/util.js';
 import { PLAZA } from '../world/island.js';
 import { npcs } from './npc.js';
+import { blockZone, unblockZone, releaseStand } from './crowd.js';
 import { friendLevel, befriend } from './friends.js';
 import { RESIDENTS } from '../data/looks.js';
 import { addXP } from './progress.js';
@@ -24,14 +25,16 @@ function gather() {
   const couple = ['minh', 'linh'].map(rid => npcs.residents.find(a => a.data.rid === rid)).filter(Boolean);
   const guests = npcs.residents.filter(a => !couple.includes(a) && a.visible && !a.data.inTalk && a.data.state !== 'busy').slice(0, 5);
   gathered = { couple, guests, looks: couple.map(a => a.look) };
+  for (const a of [...couple, ...guests]) { releaseStand(a); a.data.wedding = true; }
+  blockZone('wedding', SPOT.x, SPOT.y + 14, 64);
   couple.forEach((a, i) => { a.look = { ...a.look, ...outfit[a.data.rid] }; a.stop?.(); a.data.state = 'busy'; a.walkTo?.([[SPOT.x - 10 + i * 20, SPOT.y - 6]]).then(() => a.face?.('down')); });
   guests.forEach((a, i) => { const ang = Math.PI * (0.2 + i * 0.15), x = SPOT.x + Math.cos(ang) * 46 - 0, y = SPOT.y + 26 + Math.sin(ang) * 12; a.stop?.(); a.data.state = 'busy'; a.walkTo?.([[x, y]]).then(() => { a.face?.('up'); a.showEmote?.('heart', 2); }); });
 }
 function disperse() {
   if (!gathered) return;
   gathered.couple.forEach((a, i) => { a.look = gathered.looks[i]; });
-  for (const a of [...gathered.couple, ...gathered.guests]) { a.data.state = 'idle'; a.data.until = 0; }
-  gathered = null;
+  for (const a of [...gathered.couple, ...gathered.guests]) { a.data.state = 'idle'; a.data.until = 0; a.data.wedding = false; }
+  gathered = null; unblockZone('wedding');
 }
 async function attend() {
   const w = W(); if (w.done) return; w.done = true; markDirty(true);

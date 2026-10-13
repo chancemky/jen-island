@@ -59,6 +59,8 @@ export const cam = {
     let z = this.baseZoom * (scene.zoomBias || 1);
     // interiors fit the room's width, but never so small that characters get tiny
     if (scene.fitW) z = Math.min(z, Math.max(cssW / scene.fitW, this.baseZoom * 0.8));
+    // on a big screen (a tablet) a room is shown large enough to fill most of it, not a postage stamp
+    if (scene.kind !== 'island' && cssW >= 700 && scene.w && scene.h) z = Math.max(z, Math.min(cssW * 0.86 / scene.w, cssH * 0.8 / (scene.h + 40)));
     z *= this.zoomMul;
     this.zoom = z;
     const vw = cssW / z, vh = cssH / z;
