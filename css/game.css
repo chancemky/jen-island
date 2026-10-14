@@ -376,7 +376,7 @@ button:active, .chip:active { transform: translateY(2px) scale(.97); }
 .toast { display: flex; align-items: center; gap: 10px; max-width: calc(100% - 28px); padding: 9px 16px 9px 10px; background: var(--paper); border: 3px solid var(--ink); border-radius: 18px; font-weight: 900; font-size: 14px; box-shadow: 0 4px 0 rgba(91,63,54,.25); animation: toastIn .4s cubic-bezier(.3,1.5,.5,1); }
 .toast.out { animation: toastOut .3s ease forwards; }
 .toast img { width: 32px; height: 32px; }
-.toast small { display: block; font-size: 11.5px; opacity: .7; font-weight: 800; }
+.toast small { display: block; font-size: 11.5px; opacity: .7; font-weight: 800; white-space: pre-line; }
 .toast.ach { background: #fff3c8; }
 .toast.bad { background: #ffe9e4; }
 .toast.song { background: rgba(255,253,246,.92); font-size: 12.5px; padding: 6px 14px; border-width: 2px; }
@@ -561,7 +561,7 @@ body.svc-open #toasts .toast:nth-child(n+2) { display: none; }
 .aisle.on { background: #fff; border-color: var(--pink2); color: var(--pink2); box-shadow: 0 2px 0 rgba(91,63,54,.15); }
 
 /* discreet pause button, under the menu button */
-.pause-btn { flex: none; width: 30px; height: 30px; margin-right: -2px; border-radius: 50%; background: rgba(255,248,234,.72); border: 2px solid rgba(91,63,54,.35); display: flex; gap: 4px; align-items: center; justify-content: center; pointer-events: auto; opacity: .8; }
+.pause-btn { flex: none; width: 30px; height: 30px; margin-right: 0; margin-left: 2px; border-radius: 50%; background: rgba(255,248,234,.72); border: 2px solid rgba(91,63,54,.35); display: flex; gap: 4px; align-items: center; justify-content: center; pointer-events: auto; opacity: .8; }
 .pause-btn i { width: 4px; height: 12px; border-radius: 2px; background: var(--ink); opacity: .75; }
 .pause-btn:active { transform: scale(.92); }
 body.hide-controls .pause-btn, body.cutscene .pause-btn { display: none; }
@@ -1066,3 +1066,16 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
 .tabs.icons.reveal { flex-wrap: wrap; }
 .tabs.icons.reveal button { flex: 1 1 22%; flex-direction: column; gap: 1px; padding: 5px 2px; }
 .tabs.icons.reveal button span { display: block; font-size: 10px; }
+/* narrow phones (iPhone SE / mini, many Androids): the top bar fits — the menu button ran off the right edge */
+.hud-top .chip { flex: 0 1 auto; min-width: 0; }
+@media (max-width: 389px) {
+  .hud-top { gap: 4px; }
+  .hud-top .chip { padding: 0 8px 0 6px; gap: 4px; }
+  .chip-rep .stars { display: none; }
+  .pause-btn { width: 28px; height: 28px; margin-left: 0; }
+}
+@media (max-width: 345px) {
+  .hud-top .chip { font-size: 13px; padding: 0 6px 0 4px; }
+  .hud-top .chip .coin, .hud-top .chip .sun { transform: scale(.85); }
+  .chip-rep .rep-num { display: none; }
+}

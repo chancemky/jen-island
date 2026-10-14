@@ -3,7 +3,7 @@
 
 import { G, T, canAfford, bizOf, markDirty } from '../systems/state.js';
 import { ROLES, TRAITS } from '../data/game.js';
-import { candidates, hire, fire, setRole, restaurantAutomated, dailyWages, staffByRole, STAFF_ROLES, roleAvailable, wageOf, feeOf, RETAINER } from '../systems/restaurant.js';
+import { candidates, hire, fire, setRole, restaurantAutomated, openWages, staffByRole, STAFF_ROLES, roleAvailable, wageOf, feeOf, RETAINER } from '../systems/restaurant.js';
 import { employeeLook } from '../data/looks.js';
 import { openSheet, tabs, h, btn, portrait } from './sheets.js';
 import { toast } from './hud.js';
@@ -28,7 +28,7 @@ export function openStaffBoard() {
   openSheet({ title: T('Staff Board', 'Bảng nhân viên'), sub: T('The restaurant team (shopkeepers for the small shops: Menu → Business)', 'Đội nhà hàng (người trông quán nhỏ: Menu → Kinh doanh)'), full: true, build: (body, api) => {
     const b = bizOf('restaurant');
     const auto = restaurantAutomated();
-    const status = h('div', 'row', `<div class="info"><b>${auto ? T('Runs on its own ✓', 'Nhà hàng tự vận hành ✓') : T('Not automated yet', 'Chưa tự vận hành')}</b><small>${auto ? T('Your cook and server keep it running while you are away.', 'Đầu bếp và phục vụ giữ nhà hàng hoạt động khi bạn vắng mặt.') : T('Hire at least a cook and a server so it runs without you.', 'Thuê ít nhất một đầu bếp và một phục vụ để nhà hàng tự chạy.')} ${T('Wages', 'Lương')}: ${money(dailyWages())}/${T('day', 'ngày')}</small></div>`);
+    const status = h('div', 'row', `<div class="info"><b>${auto ? T('Runs on its own ✓', 'Nhà hàng tự vận hành ✓') : T('Not automated yet', 'Chưa tự vận hành')}</b><small>${auto ? T('Your cook and server keep it running while you are away.', 'Đầu bếp và phục vụ giữ nhà hàng hoạt động khi bạn vắng mặt.') : T('Hire at least a cook and a server so it runs without you.', 'Thuê ít nhất một đầu bếp và một phục vụ để nhà hàng tự chạy.')} ${T('Wages', 'Lương')}: ${money(openWages())}/${T('day', 'ngày')} ${T(`(${money(Math.round(openWages() * RETAINER))} on a closed day)`, `(${money(Math.round(openWages() * RETAINER))} ngày đóng cửa)`)}</small></div>`);
     status.style.background = auto ? '#effae9' : '#fff7e0';
     body.appendChild(status);
     body.appendChild(h('div', 'empty-note', T('Wages are paid each night. On a day the restaurant stays closed, the team gets 30% as a retainer.', 'Lương trả mỗi tối. Ngày nhà hàng đóng cửa, đội ngũ nhận 30% để giữ chỗ.')));

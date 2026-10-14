@@ -528,6 +528,8 @@ function updateInteraction(dt) {
   // (an open door has no button: you walk in. So someone standing by a door can always be talked to.)
   const trAct = tr?.kind === 'door' && enterable(tr.building) ? null : tr;
   // pick the best context action
+  // 0) the statue pedestal while it's the goal: a villager standing there used to turn it into "Talk"
+  if (sc === scenes.island && G.state.story.step === 'destination' && dist(pl.x, pl.y, 900, 1600) < 50) { setAction(T('Statue', 'Tượng đài'), () => statueSheet(), 'star'); return; }
   // 1) restaurant guest who wants to order
   if (sc.id === 'restaurant') {
     const g = guestNeedingOrder(pl.x, pl.y);
@@ -776,7 +778,12 @@ function actAction(tr) {
     look: () => { const t = lookText(tr); return say(null, T(t[0], t[1])); },
     homeSnack: () => homeSnack(),
     'shop:ingredients': () => openIngredientShop(),
-    'shop:materials': () => { const st = G.state.story.step; if (st === 'materials') G.runtime.materialNeed = () => ({ label: bizName('shed1'), mats: BUSINESSES.shed1.repair }); openMaterialShop(); },
+    'shop:materials': () => { const st = G.state.story.step;
+      // the bundle follows the story, not just the last repair site you visited
+      const need = { materials: 'shed1', repair2: 'shed2', repairResto: 'restaurant' }[st];
+      if (need) G.runtime.materialNeed = () => ({ label: bizName(need), mats: BUSINESSES[need].repair });
+      else if (st === 'restoreNM') G.runtime.materialNeed = () => ({ label: T('the Night Market', 'Chợ Đêm'), mats: NIGHT_MARKET_RESTORE.mats });
+      else if (st === 'destination') G.runtime.materialNeed = () => ({ label: T('the statue', 'bức tượng'), mats: STATUE_COST.mats }); openMaterialShop(); },
     'shop:furniture': () => openFurnitureShop(),
     'shop:boutique': () => openBoutique(),
     'shop:salon': () => openSalon(),
@@ -985,7 +992,7 @@ $('menuBtn').addEventListener('click', () => { if (cs.active || isServiceOpen() 
 let peekT = null;
 $('questPill').addEventListener('click', () => {
   if (cs.active || cam.override || isUiOpen()) return; const st = currentStep(); if (!st?.text) return;
-  toast({ text: T('Objective', 'Mục tiêu'), sub: st.text(), icon: 'star', ms: 4000, now: true });
+  G.runtime.goalFull = null; const short = st.text(); toast({ text: T('Objective', 'Mục tiêu'), sub: G.runtime.goalFull || short, icon: 'star', ms: 5200, now: true });   // (every goal, not the shortened bar)
   const tg = st.target?.(); if (!tg || tg.x == null || (tg.scene || 'island') !== G.scene?.id) return;
   cam.override = { x: tg.x, y: tg.y - 10, rate: 3.2 }; fx.float(tg.x, tg.y - 50, T('here!', 'ở đây!'), '#ffd35a', { life: 2.2, size: 11 });
   clearTimeout(peekT); peekT = setTimeout(() => { if (cam.override?.rate === 3.2) cam.override = null; }, 1700);

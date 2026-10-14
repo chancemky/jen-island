@@ -488,6 +488,8 @@ export function restaurantAutomated() { return ['cook', 'server'].every(r => sta
 // On a day the restaurant stays closed the team is kept on a retainer, not a full day's pay.
 export const RETAINER = 0.3;
 const payToday = () => G.state.today.opened?.restaurant ? 1 : RETAINER;
+// the full day's pay if it opens (dailyWages() is what tonight costs: the retainer if it stayed shut)
+export function openWages() { const z = bizOf('restaurant'); return z.repair < 1 ? 0 : z.employees.reduce((s, e) => s + (empOff(e) ? 0 : wageOf(e)), 0); }
 export function dailyWages() { const z = bizOf('restaurant'); return z.repair < 1 ? 0 : Math.round(z.employees.reduce((s, e) => s + (empOff(e) ? 0 : wageOf(e)), 0) * payToday()); }
 export function resetRestaurantDay() {
   const r = restRT(), sc = scene();

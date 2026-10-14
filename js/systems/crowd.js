@@ -24,7 +24,8 @@ export function buildStands(island) {
   const doors = island.triggers.filter(t => t.kind === 'door' && t.doorX != null).map(t => [t.doorX, t.doorY])
     // (and every spot where you do something — fishing off the pier, the Island Board: Chú Hải standing on
     // the pier end turned "Fish" into "Talk" right at dawn)
-    .concat(island.triggers.filter(t => t.kind === 'act' && t.w).map(t => [t.x + t.w / 2, t.y + (t.h || 0) / 2]));
+    .concat(island.triggers.filter(t => t.kind === 'act' && t.w).map(t => [t.x + t.w / 2, t.y + (t.h || 0) / 2]))
+    .concat([[900, 1600]]);   // (the statue pedestal)
   const inLine = (x, y) => (x > 858 && x < 942 && y > 2250 && y < 2615) || lines.some(q => dist(q[0], q[1], x, y) < GAP + 6) || doors.some(d => dist(d[0], d[1], x, y) < 40);
   const add = (x, y, tags, node = null) => {
     if (!island.canStand(x, y, 6) || inLine(x, y)) return null;

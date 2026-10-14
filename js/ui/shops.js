@@ -484,7 +484,9 @@ export function needChips(need, cost = 0) {
   const s = G.state, n = h('div', 'need');
   if (cost) n.appendChild(h('span', s.money >= cost ? 'ok' : 'no', `<img src="${iconURL('coin', 22)}">${money(cost)}`));
   for (const [k, v] of Object.entries(need || {})) {
-    const chip = h('button', 'chip ' + (mats(k) >= v ? 'ok' : 'no'), `<img src="${iconURL(k, 22)}">${escapeHtml(matName(k))} ${mats(k)}/${v}`);
+    // a material the shop doesn't sell yet says when it arrives (level-3 upgrades need tiles, sold from Chapter 7)
+    const later = MATERIALS[k]?.unlock && s.story.chapter < MATERIALS[k].unlock ? T(` · from Ch. ${MATERIALS[k].unlock}`, ` · từ Ch. ${MATERIALS[k].unlock}`) : '';
+    const chip = h('button', 'chip ' + (mats(k) >= v ? 'ok' : 'no'), `<img src="${iconURL(k, 22)}">${escapeHtml(matName(k))} ${mats(k)}/${v}${later}`);
     chip.type = 'button';
     chip.onclick = e => { e.stopPropagation(); sfx('ui'); toast({ text: `${matName(k)} · ${mats(k)}/${v}`, sub: matWhere(k), icon: k, ms: 3600 }); };
     n.appendChild(chip);
@@ -508,9 +510,11 @@ export function openRecipeBook({ onDiscover } = {}) {
       list.appendChild(rowEl({ icon: RECIPES[id].icon, title: `${escapeHtml(recipeName(id))} <span class="pill new">${T('New!', 'Mới!')}</span>`, right: btn(T('Learn', 'Học'), () => { api.close(true); onDiscover?.(id); }, 'buy pink') }));
     }
     list.appendChild(h('div', 'section-title', T('Upgrade recipes', 'Nâng cấp công thức')));
-    for (const id of s.recipes) {
-      const R = RECIPES[id], lv = s.recipeLevels[id] || 1, next = RECIPE_UPGRADES[lv + 1];
-      const r = rowEl({ icon: R.icon, title: `${escapeHtml(recipeName(id))} <span class="pill lv">${T('Lv', 'Cấp')} ${lv}</span>`, sub: next ? T(`${next.label}: +${Math.round((next.price - 1) * 100)}% price, calmer customers, bigger tips`, `${next.labelVi}: giá +${Math.round((next.price - 1) * 100)}%, khách kiên nhẫn hơn, boa nhiều hơn`) : T('Perfect! Fully upgraded.', 'Hoàn hảo! Đã nâng cấp tối đa.') });
+    // grouped by shop, each with where it sells and for how much (fourteen identical rows told you nothing)
+    const shopOf = id => Object.keys(BUSINESSES).find(b => BUSINESSES[b].menu ? BUSINESSES[b].menu.includes(id) : BUSINESSES[b].biz === RECIPES[id].biz);
+    for (const id of [...s.recipes].sort((a, b) => (shopOf(a) || '').localeCompare(shopOf(b) || ''))) {
+      const R = RECIPES[id], lv = s.recipeLevels[id] || 1, next = RECIPE_UPGRADES[lv + 1], at = shopOf(id);
+      const r = rowEl({ icon: R.icon, title: `${escapeHtml(recipeName(id))} <span class="pill lv">${T('Lv', 'Cấp')} ${lv}</span>`, sub: (at ? `${escapeHtml(bizName(at))} · ${money(recipePrice(at, id))} · ` : '') + (next ? T(`${next.label}: +${Math.round((next.price - 1) * 100)}% price, calmer customers, bigger tips`, `${next.labelVi}: giá +${Math.round((next.price - 1) * 100)}%, khách kiên nhẫn hơn, boa nhiều hơn`) : T('Perfect! Fully upgraded.', 'Hoàn hảo! Đã nâng cấp tối đa.')) });
       const nextCost = next ? recipeUpgradeCost(id, lv + 1) : 0;
       if (next) r.appendChild(btn(money(nextCost), () => {
         if (!canAfford(nextCost)) return moneyShortfall(nextCost);

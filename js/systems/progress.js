@@ -55,12 +55,14 @@ export const GATES = {
   shed2: { level: 4, en: 'the Bánh Mì Corner', vi: 'Bánh Mì Góc Phố' },
   truck: { level: 8, en: 'the Roll Truck', vi: 'Xe Cuốn' },
   night: { level: 12, en: 'the Night Market stall', vi: 'Sạp Chợ Đêm' },
-  restaurant: { level: 18, en: 'the Restaurant on the Hill', vi: 'Nhà Hàng trên đồi' },
+  restaurant: { level: 15, en: 'the Restaurant on the Hill', vi: 'Nhà Hàng trên đồi' },   // (18 was a long climb with nothing to do on the way)
 };
 for (const [id, g] of Object.entries(GATES)) Object.defineProperty(g, 'cost', { get: () => BUSINESSES[id].buy, enumerable: true });
 export function gateText(id) {
   const g = GATES[id], lv = level();
-  return `${T('Lv', 'Cấp')} ${Math.min(lv, g.level)}/${g.level} · ${moneyShort(G.state.money, g.cost, T)}`;
+  // short of the level: say how to get there (serving earns XP, perfect orders the most)
+  const how = lv < g.level ? T(' · serve customers to level up — perfect orders give the most', ' · phục vụ khách để lên cấp — món hoàn hảo được nhiều nhất') : '';
+  return `${T('Lv', 'Cấp')} ${Math.min(lv, g.level)}/${g.level} · ${moneyShort(G.state.money, g.cost, T)}${how}`;
 }
 export const gateReady = id => level() >= GATES[id].level && G.state.money >= GATES[id].cost;
 export const gatePaid = id => !!G.state.keys?.[id];
@@ -75,7 +77,9 @@ export function payGate(id) {
 }
 function unlocksAt(lv) {
   const out = [];
-  for (const [id, g] of Object.entries(GATES)) if (g.level === lv) out.push(T(`Mèo Mây will sell you the key to ${g.en}`, `Mèo Mây sẽ bán chìa khóa ${g.vi}`));
+  // (only promise the key when the story is there: at level 8 it promised a truck key you couldn't buy until day 15)
+  const KEY_CH = { shed2: 4, truck: 7, night: 8, restaurant: 10 };
+  for (const [id, g] of Object.entries(GATES)) if (g.level === lv) out.push((G.state.story.chapter || 1) >= (KEY_CH[id] || 0) ? T(`Mèo Mây will sell you the key to ${g.en}`, `Mèo Mây sẽ bán chìa khóa ${g.vi}`) : T(`Level reached for ${g.en} (its story starts in Chapter ${KEY_CH[id]})`, `Đủ cấp cho ${g.vi} (câu chuyện bắt đầu ở Chương ${KEY_CH[id]})`));
   for (const u of LEVEL_UNLOCKS) if (u.lv === lv) out.push(T(u.en, u.vi));
   return out;
 }

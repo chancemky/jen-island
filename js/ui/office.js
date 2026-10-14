@@ -17,7 +17,7 @@ import { scoreFront, frontAttract } from '../systems/storefront.js';
 import { fx } from '../world/render.js';
 import { PLACES, usedPlaces, ownsProperty, propertyPrice, buyProperty, placeName, rentToday, keeperOf, keeperWage, KEEPER_CUT, candidate, hireKeeper, fireKeeper, giveDayOff, keeperTrait, canHaveKeeper, keeperUnlocked, hasSupply, buySupply, toggleSupply, SUPPLY, supplyUnlocked, staffedCount, keeperSkill, SKILL_NAMES, wageFor, hireFee, recentShopNet, canTrain, trainCost, trainKeeper, promoteCost, promoteKeeper } from '../systems/economy.js';
 import { daySheet, netWorth, lifetimeTotals, catName } from '../systems/ledger.js';
-import { dailyWages } from '../systems/restaurant.js';
+import { openWages } from '../systems/restaurant.js';
 import { openStaffBoard } from './staff.js';
 import { openUniform } from './uniform.js';
 import { openRoomStyle } from '../systems/homestyle.js';
@@ -55,19 +55,26 @@ function restaurantStatus(card, row, api) {
   card.appendChild(h('div', 'oc-line', `🍽 <b>${T('Your restaurant', 'Nhà hàng của bạn')}</b> · ${repaired ? T('repaired ✓', 'đã sửa ✓') : T(`repair ${Math.round((z.repair || 0) * 100)}% — finish it to open`, `sửa được ${Math.round((z.repair || 0) * 100)}% — sửa xong mới mở được`)}${repaired ? ` · ${z.open ? T('open now', 'đang mở cửa') : T('closed', 'đang đóng cửa')}` : ''}`));
   const roles = team.map(e => `${escapeHtml(e.name)} (${escapeHtml(T(ROLES[e.role]?.en || e.role, ROLES[e.role]?.vi || e.role))})`).join(', ');
   card.appendChild(h('div', 'oc-line' + (team.length ? '' : ' dim'), team.length
-    ? `👥 ${T(`Staff ${team.length}`, `Nhân viên ${team.length}`)}: ${roles} · ${T(`wages ${money(dailyWages())}/day`, `lương ${money(dailyWages())}/ngày`)}${repaired ? '' : ` <span style="opacity:.75">${T('(paid once it\'s repaired)', '(trả lương khi đã sửa xong)')}</span>`}`
+    ? `👥 ${T(`Staff ${team.length}`, `Nhân viên ${team.length}`)}: ${roles} · ${T(`wages ${money(openWages())}/day when open`, `lương ${money(openWages())}/ngày khi mở cửa`)}${repaired ? '' : ` <span style="opacity:.75">${T('(paid once it\'s repaired)', '(trả lương khi đã sửa xong)')}</span>`}`
     : T('No staff yet — hire a cook and a server so it runs on its own.', 'Chưa có nhân viên — thuê một đầu bếp và một phục vụ để nhà hàng tự vận hành.')));
   if (repaired) row.appendChild(btn(T('Hire / Let go', 'Thuê / Cho nghỉ'), () => { api.close(true); openStaffBoard(); }, 'buy alt'));
 }
 
 export function renderOffice(pane, api) {
   const s = G.state, places = usedPlaces();
-  const wages = Object.keys(s.keepers || {}).reduce((a, id) => a + keeperWage(id), 0) + (s.biz.restaurant?.owned ? dailyWages() : 0);
+  const wages = Object.keys(s.keepers || {}).reduce((a, id) => a + keeperWage(id), 0) + (s.biz.restaurant?.owned ? openWages() : 0);
   const st = staffedCount();
   pane.appendChild(h('div', 'office-head', `<div><small>${T('Rent per day', 'Tiền thuê mỗi ngày')}</small><b>${money(rentToday())}</b></div><div><small>${T('Wages per day', 'Lương mỗi ngày')}</small><b>${money(wages)}</b></div><div><small>${T('Shops running themselves', 'Quán tự vận hành')}</small><b>${st.staffed}/${st.total}</b></div>`));
   pane.appendChild(h('div', 'oc-line dim', T('Island level unlocks features; each shop has its own upgrade level.', 'Cấp đảo mở khóa tính năng; mỗi quán có cấp nâng cấp riêng.')));
   if (s.day < 3) pane.appendChild(h('div', 'empty-note', T('Rent starts on day 3 — Mèo Mây talked the landlords into a welcome discount.', 'Tiền thuê bắt đầu từ ngày 3 — Mèo Mây đã xin chủ nhà giảm giá chào mừng.')));
   const list = h('div', 'list'); pane.appendChild(list);
+  // what the story is asking for right now goes first (the Hire button used to be far below the fold)
+  { const step = s.story.step, shop = ['shed1', 'shed2'].find(id => s.biz[id]?.owned && !keeperOf(id));
+    if ((step === 'hireKeeper' || step === 'keeperRun') && shop && canHaveKeeper(shop) && keeperUnlocked()) {
+      const c = candidate(shop), fee = hireFee(shop, c), r = h('div', 'row'); r.style.background = '#fff7e0'; r.style.borderColor = '#f2c14e';
+      r.appendChild(h('div', 'info', `<b>⭐ ${T(`Hire a shopkeeper for ${bizName(shop)}`, `Thuê người trông ${bizName(shop)}`)}</b><small>${T(`${escapeHtml(c.name)} · ${money(keeperWage(shop, c))}/day + ${Math.round(KEEPER_CUT * 100)}% of what they sell`, `${escapeHtml(c.name)} · ${money(keeperWage(shop, c))}/ngày + ${Math.round(KEEPER_CUT * 100)}% tiền bán`)}</small>`));
+      r.appendChild(btn(money(fee), () => { if (!hireKeeper(shop)) return moneyShortfall(fee); sfx('success'); api.rebuild(); }, 'buy')); list.appendChild(r);
+    } }
   // one tap: phone Cô Hoa and have everything your shops need delivered (+10% for the delivery)
   { const needs = shoppingNeeds();
     if (needs.length) {
