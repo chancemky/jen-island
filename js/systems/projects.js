@@ -13,6 +13,11 @@ const ring = (cx, cy, r, n, a0 = 0) => Array.from({ length: n }, (_, i) => { con
 const along = (x0, y0, x1, y1, n) => Array.from({ length: n }, (_, i) => [Math.round(x0 + (x1 - x0) * i / (n - 1)), Math.round(y0 + (y1 - y0) * i / (n - 1))]);
 
 export const PROJECTS = [
+  // smaller dreams for the middle of the game (the first project used to be 12M)
+  { id: 'street_benches', cost: 2500, icon: '🪑', en: 'Benches along Market Street', vi: 'Ghế đá dọc Phố Chợ', blurb: ['Somewhere to sit with a drink and watch the island go by.', 'Chỗ ngồi nhâm nhi và ngắm người qua lại.'],
+    props: () => [[640, 1262], [800, 1262], [1000, 1262], [1160, 1262]].map(([x, y]) => ['bench', x, y, { cullR: 40, cullH: 40 }]) },
+  { id: 'beach_lamps', cost: 6000, icon: '🏮', en: 'Lamps along the beach path', vi: 'Đèn dọc đường bãi biển', blurb: ['Warm lights for evening walks by the sea.', 'Ánh đèn ấm cho những buổi tối dạo biển.'],
+    props: () => [[300, 2210], [430, 2212], [700, 2226], [1080, 2238]].map(([x, y]) => ['lampPost', x, y, { cullR: 40, cullH: 60 }]) },
   { id: 'market_lights', cost: 12000, icon: '🏮', en: 'Lantern lights over Market Street', vi: 'Đèn lồng trên Phố Chợ', blurb: ['Two more rows of silk lanterns from end to end.', 'Thêm hai dãy lồng đèn lụa dọc cả con phố.'],
     props: () => [1150, 1290].flatMap(y => [0, 1, 2, 3].map(i => ['lanternString', 560 + i * 200, y, { sortY: 99990, x2: 560 + i * 200 + 150, h: 46, cull: { x: 560 + i * 200 - 10, y: y - 70, w: 180, h: 80 } }])) },
   { id: 'dock_flowers', cost: 18000, icon: '🌺', en: 'Flower beds up the dock road', vi: 'Luống hoa dọc đường bến tàu', blurb: ['Welcome every ferry with flowers on both sides of the road.', 'Đón mỗi chuyến phà bằng hoa hai bên đường.'],

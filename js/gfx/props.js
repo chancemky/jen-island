@@ -232,9 +232,11 @@ export function lanternShape(c, x, y, s, col, t, seed = 0) {
 }
 // A string of lanterns between two poles. p: {x,y (left pole base), x2, y2, h, cols, broken}
 export function lanternString(c, t, p) {
-  const x2 = p.x2 - p.x, y2 = (p.y2 ?? p.y) - p.y, h = p.h || 46;
+  // poles tall enough, and a shallow enough sag, that the lanterns hang above people's heads
+  // (they used to dangle at face height, drawn over anyone walking underneath)
+  const x2 = p.x2 - p.x, y2 = (p.y2 ?? p.y) - p.y, h = Math.max(62, p.h || 46);
   for (const [px, py] of [[0, 0], [x2, y2]]) { shadow(c, px, py + 1, 5, 2, 0.16); limb(c, [px, py, px, py - h], 3, '#8a5f3e'); circ(c, px, py - h, 2.2, '#f2c14e'); }
-  const sag = p.sag || 16, n = p.n || Math.max(3, Math.round(Math.abs(x2) / 26));
+  const sag = Math.min(p.sag || 16, 10), n = p.n || Math.max(3, Math.round(Math.abs(x2) / 26));
   const at = k => [x2 * k, y2 * k - h + Math.sin(k * Math.PI) * sag + Math.sin(t * 1.2 + p.x) * Math.sin(k * Math.PI) * 1.2];
   c.beginPath(); for (let i = 0; i <= 20; i++) { const [x, y] = at(i / 20); i ? c.lineTo(x, y) : c.moveTo(x, y); }
   c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();

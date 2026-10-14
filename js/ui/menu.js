@@ -347,7 +347,7 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
         // which kinds of little pop-up news you want (important ones always show)
         { const r = h('div', 'row alert-row', `<div class="info"><b>${T('Pop-up news', 'Thông báo nhỏ')}</b><small>${T('Tap to switch a kind off. Warnings and rewards always show.', 'Chạm để tắt từng loại. Cảnh báo và phần thưởng luôn hiện.')}</small></div>`), chips = h('div', 'chip-row');
           const al = (s.settings.alerts ||= {});
-          for (const [k, en, vi] of [['sales', 'Staff sales', 'Nhân viên bán'], ['weather', 'Weather', 'Thời tiết'], ['discover', 'Discoveries', 'Khám phá'], ['friends', 'Friends', 'Bạn bè'], ['island', 'Island news', 'Tin trên đảo'], ['tips', 'Tips', 'Mẹo']]) {
+          for (const [k, en, vi] of [['sales', 'Shop news', 'Tin quán'], ['weather', 'Weather', 'Thời tiết'], ['discover', 'Discoveries', 'Khám phá'], ['friends', 'Friends', 'Bạn bè'], ['island', 'Island news', 'Tin trên đảo'], ['tips', 'Tips', 'Mẹo']]) {
             const b = h('button', 'chip' + (al[k] === false ? '' : ' on'), T(en, vi)); b.type = 'button'; b.setAttribute('aria-pressed', al[k] !== false);
             b.onclick = () => { al[k] = al[k] === false; b.classList.toggle('on', al[k] !== false); b.setAttribute('aria-pressed', al[k] !== false); markDirty(true); sfx('ui'); };
             chips.appendChild(b);

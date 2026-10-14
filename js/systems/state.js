@@ -69,6 +69,8 @@ export function migrate(raw) {
   if (!raw || typeof raw !== 'object') return d;
   for (let v = (raw.v || OLDEST_SAVE) + 1; v <= SAVE_VERSION; v++) if (UPGRADES[v]) raw = UPGRADES[v](raw) || raw;
   const s = { ...d, ...raw };
+  // one-a-day story markers piled up in old saves ("recipeNote37", "recipeNote38"…): one value does the job
+  const fl = raw.story?.flags; if (fl) for (const k of Object.keys(fl)) if (/^(recipeNote|rumour)\d+$|^bdayNote:|^gift:/.test(k)) delete fl[k];
   s.player = { ...d.player, ...(raw.player || {}) };
   s.island = { ...d.island, ...(raw.island || {}) };
   s.story = { ...d.story, ...(raw.story || {}), flags: { ...(raw.story?.flags || {}) } };

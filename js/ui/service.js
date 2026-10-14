@@ -10,6 +10,7 @@ import { drawCup, DISHES, ICONS, iconURL } from '../gfx/food.js';
 import { drawAssembly } from '../gfx/assemble.js';
 import { drawHuman, EL } from '../gfx/character.js';
 import { drawVillagerHead } from '../gfx/villager.js';
+import { RESIDENTS } from '../data/looks.js';
 import { circ, box } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
 import { escapeHtml, money, bus, TAU, clock } from '../core/util.js';
@@ -357,7 +358,7 @@ function renderOrder() {
   bubble.classList.remove('hidden'); wait.classList.add('hidden');
   const txt = escapeHtml(c.order.text || orderText(c.order, c)).replace(/\*(.+?)\*/g, '<em>$1</em>');
   const reg = G.state.regulars[c.key]?.visits >= 3;
-  S.el.querySelector('.svc-order').innerHTML = `<b style="font-size:12px;opacity:.6">${escapeHtml(c.name)}${reg ? T(' · regular ♥', ' · khách quen ♥') : c.personality === 'tourist' ? T(' · tourist', ' · du khách') : ''}</b><br>${txt}`;
+  S.el.querySelector('.svc-order').innerHTML = `<b style="font-size:12px;opacity:.6">${escapeHtml(c.key?.startsWith('res:') ? RESIDENTS[c.key.slice(4)]?.name || c.name : c.name)}${reg ? T(' · regular ♥', ' · khách quen ♥') : c.personality === 'tourist' ? T(' · tourist', ' · du khách') : ''}</b><br>${txt}`;
   updateChips();
 }
 function updateChips() {

@@ -76,7 +76,7 @@ export function openIngredientShop() {
     if (needs.length) {
       const total = needs.reduce((s, [k, n]) => s + INGREDIENTS[k].price * n, 0);
       const r = highlightRow();
-      r.innerHTML = `<div class="ico"><img src="${iconURL('bag', 44)}" alt=""></div><div class="info"><b>${T('Stock up · about 1½ days of what you sell', 'Mua đủ · khoảng 1,5 ngày bán hàng')}</b><div class="mini-chips">${needs.slice(0, 12).map(([k, n]) => `<span class="mini-chip" title="${escapeHtml(ingName(k))}"><img src="${iconURL(k, 28)}" alt="${escapeHtml(ingName(k))}">×${n}</span>`).join('')}${needs.length > 12 ? `<span class="mini-chip more">${T(`+${needs.length - 12} more`, `+${needs.length - 12} món`)}</span>` : ''}</div></div>`;
+      r.innerHTML = `<div class="ico"><img src="${iconURL('bag', 44)}" alt=""></div><div class="info"><b>${T('Stock up · about 1½ days of what you sell', 'Mua đủ · khoảng 1,5 ngày bán hàng')}</b><div class="mini-chips">${needs.slice(0, 12).map(([k, n]) => `<span class="mini-chip" title="${escapeHtml(ingName(k))}"><img src="${iconURL(k, 28)}" alt="${escapeHtml(ingName(k))}">×${n * INGREDIENTS[k].pack}</span>`).join('')}${needs.length > 12 ? `<span class="mini-chip more">${T(`+${needs.length - 12} more`, `+${needs.length - 12} món`)}</span>` : ''}</div></div>`;
       r.appendChild(btn(money(total), (b) => {
         if (!canAfford(total)) return moneyShortfall(total);
         addMoney(-total, 'ingredients');

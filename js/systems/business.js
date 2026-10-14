@@ -537,7 +537,7 @@ export function updateBusinesses(dt, gameMin) {
         // a shopkeeper with nothing to sell still gets paid: say so, and what fixes it for good
         bus.emit('toast', { text: k ? T(`${k.name} has nothing to sell!`, `${k.name} hết hàng để bán!`) : T('Out of ingredients!', 'Hết nguyên liệu!'), sub: k && !sup ? T(`${bizName(id)} is out of stock, but wages are still paid. A supply runner (Menu → Business) restocks it every morning.`, `${bizName(id)} hết hàng nhưng vẫn phải trả lương. Người giao hàng (Menu → Kinh doanh) sẽ nhập hàng mỗi sáng.`) : T(`${bizName(id)}: restock or prep more.`, `${bizName(id)}: mua thêm hoặc sơ chế nhé.`), bad: true }); } r.spawnT = 6; }
       else {
-        if (!(G.state.story.chapter >= 4 && chance(0.025) && spawnTeam(id))) spawnCustomer(id);
+        if (!(G.state.story.chapter >= 2 && chance(0.025) && spawnTeam(id))) spawnCustomer(id);   // (team orders from chapter 2: a little excitement in the first days)
         r.spawnT = nextSpawnDelay(id);
         if (r.first) { r.first = false; }
       }

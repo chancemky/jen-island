@@ -147,7 +147,7 @@ try {
 
   if (want('island')) {
     cur = 'island';
-    const spots = [['dock', 900, 2440], ['plaza', 900, 1660], ['home-street', 1260, 1780], ['market-street', 900, 1210], ['drink-stand', 600, 2240], ['banh-mi', 560, 1610], ['truck', 1420, 2200], ['night-market', 440, 700], ['restaurant-hill', 1500, 1000], ['beach', 300, 2300], ['cove', 1900, 2300], ['lighthouse', 1950, 600], ['islet', 2300, 1500], ['bridges', 1200, 1400]];
+    const spots = [['dock', 900, 2440], ['plaza', 900, 1660], ['home-street', 1260, 1780], ['market-street', 900, 1210], ['drink-stand', 600, 2240], ['banh-mi', 560, 1610], ['truck', 1420, 2200], ['night-market', 440, 700], ['restaurant-hill', 1200, 830], ['beach', 470, 2290], ['cove', 2250, 2250], ['lighthouse', 900, 380], ['harbour', 2600, 720], ['islet', 2350, 1460], ['bridges', 1820, 1519]];
     for (const t of [10 * 60, 18 * 60 + 40, 22 * 60]) {
       await setTime(t);
       for (const [nm, x, y] of spots) { await go('island', x, y); await wait(900); await shot(`island-${nm}-${Math.floor(t / 60)}h`); }

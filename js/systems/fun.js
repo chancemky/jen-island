@@ -166,7 +166,7 @@ export async function playRPS(a, who) {
 export async function residentMenu(a, rid, chat) {
   const P = x => applyPlayerPronouns(x, profileOf(rid));   // what you say, addressed properly (bà / cô / anh / bạn…)
   const opts = [T('Chat', 'Trò chuyện'), T('Tell me a joke!', P('{Them} kể chuyện cười cho {i} nghe đi!')), T('Rock, paper, scissors?', P('{Them} chơi oẳn tù tì với {i} không?')), T('Bye!', P('{I} chào {them} nha!'))];
-  const canGift = BIRTHDAYS[rid] && G.state.story.flags['gift:' + rid + ':' + G.state.day] == null;
+  const canGift = BIRTHDAYS[rid] && G.state.story.flags.giftDay?.[rid] !== G.state.day;   // (one gift a day each — one marker per neighbour, not one per day)
   if (canGift) opts.splice(3, 0, isBirthday(rid) ? T('🎂 Give a birthday gift', '🎂 Tặng quà sinh nhật') : T('Give a gift', 'Tặng quà'));
   const qo = questOption(rid);
   if (qo) opts.unshift(qo);
@@ -194,7 +194,7 @@ async function giveResidentGift(a, rid) {
   if (!choices.length) { await say(a, T('That\'s sweet — but your bag is empty! Bring something from the market another time.', 'Dễ thương ghê — mà túi {you} trống trơn! Lần sau mang gì đó từ chợ nha.'), { emo: 'happy' }); return; }
   const pick = await ask(null, T('What will you give?', 'Tặng gì đây?'), [...choices.map(k => ingName(k) + (likes.includes(k) ? ' ♥' : '')), T('Never mind', 'Thôi')]);
   const k = choices[pick]; if (!k) return;
-  addPantry(k, -1); s.story.flags['gift:' + rid + ':' + s.day] = 1; if (bday) s.story.flags[bkey] = 1; markDirty(true);
+  addPantry(k, -1); (s.story.flags.giftDay ||= {})[rid] = s.day; if (bday) s.story.flags[bkey] = 1; markDirty(true);
   const loved = likes.includes(k), pts = (loved ? 4 : 1) * (bday ? 2 : 1) + (bday ? 1 : 0);
   s.friends[rid] = (s.friends[rid] || 0) + pts;
   a.setEmo('love', 2.5); a.showEmote('heart', 1.8); a.doHop?.(60); sfx(loved ? 'success' : 'pop');
