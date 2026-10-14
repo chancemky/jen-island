@@ -14,7 +14,7 @@ import { INK, ell, circ, text } from '../gfx/draw.js';
 import { RECIPES, BUSINESSES, TRAITS, EMPLOYEE_NAMES, PERSONALITIES, RECIPE_UPGRADES, PREPPED, INGREDIENTS, recipeCost } from '../data/game.js';
 import { visitorLook, employeeLook } from '../data/looks.js';
 import { addXP } from './progress.js';
-import { rand, randi, choice, chance, dist, bus, clamp, rng } from '../core/util.js';
+import { rand, randi, choice, chance, dist, bus, clamp, rng, money } from '../core/util.js';
 import { canMake, takeStock, recipeUses, bizRecipes, recipePrice } from './business.js';
 import { recordSale, recordCost } from './ledger.js';
 import { recordUse } from './economy.js';
@@ -115,7 +115,7 @@ function workDone(a, name) {
   const key = KEY_STAT[e.role];
   if (key && e.xp >= growAt(e) && e.stats[key] < 5) {
     e.xp = 0; e.grown = (e.grown || 0) + 1; e.stats[key]++; e.wage = wageOf(e);
-    bus.emit('toast', { text: T(`${e.name} is getting better!`, `${e.name} ngày càng giỏi!`), sub: T(`+1 ${key} · wage now ${e.wage}k/day`, `+1 ${({ cooking: 'nấu ăn', service: 'phục vụ', speed: 'tốc độ', reliability: 'chăm chỉ' })[key]} · lương ${e.wage}k/ngày`), icon: 'person' });
+    bus.emit('toast', { text: T(`${e.name} is getting better!`, `${e.name} ngày càng giỏi!`), sub: T(`+1 ${key} · wage now ${money(e.wage)}/day`, `+1 ${({ cooking: 'nấu ăn', service: 'phục vụ', speed: 'tốc độ', reliability: 'chăm chỉ' })[key]} · lương ${money(e.wage)}/ngày`), icon: 'person' });
   }
   markDirty();
 }
@@ -473,7 +473,7 @@ export function updateRestaurant(dt, gameMin) {
   if (r.depositT <= 0) {
     r.depositT = 20;
     const cashier = staffByRole('cashier')[0];
-    if (cashier && b.register > 0) { const k = Math.round(b.register); b.register = 0; addMoney(k, 'deposit'); workDone(cashier, 'deposit'); cashier.showEmote('coin', 1.4); bus.emit('toast', { text: T(`${cashier.name} deposited ${k}k`, `${cashier.name} đã nộp ${k}k`), sub: T('The restaurant\'s takings', 'Tiền bán hàng của nhà hàng'), icon: 'coin', ms: 1800 }); }
+    if (cashier && b.register > 0) { const k = Math.round(b.register); b.register = 0; addMoney(k, 'deposit'); workDone(cashier, 'deposit'); cashier.showEmote('coin', 1.4); bus.emit('toast', { text: T(`${cashier.name} deposited ${money(k)}`, `${cashier.name} đã nộp ${money(k)}`), sub: T('The restaurant\'s takings', 'Tiền bán hàng của nhà hàng'), icon: 'coin', ms: 1800 }); }
   }
 }
 export function collectRegister() {

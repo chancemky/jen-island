@@ -789,7 +789,7 @@ function actAction(tr) {
     journal: () => openJournal(),
     lighthouse: () => enterLighthouse(),
     isletTower: () => enterLighthouse({ from: [2470, 1330], to: [1700, 1480], title: ['Firefly Lookout', 'Chòi canh Đom Đóm'], sub: ['The whole island, seen from the islet', 'Cả hòn đảo nhìn từ cù lao'] }),
-    collectRegister: () => { const k = collectRegister(); if (k) { toast({ text: T(`Collected ${k}k`, `Thu được ${k}k`), sub: T('The restaurant\'s takings', 'Tiền bán hàng của nhà hàng'), icon: 'coin' }); fx.float(G.player.x, G.player.y - 50, '+' + k + 'k', '#ffe07a'); } },
+    collectRegister: () => { const k = collectRegister(); if (k) { toast({ text: T(`Collected ${money(k)}`, `Thu được ${money(k)}`), sub: T('The restaurant\'s takings', 'Tiền bán hàng của nhà hàng'), icon: 'coin' }); fx.float(G.player.x, G.player.y - 50, '+' + k + 'k', '#ffe07a'); } },
     staff: () => openStaffBoard(),
     cookTicket: () => cookTicket(),
     deliverDish: () => playerDeliver(),

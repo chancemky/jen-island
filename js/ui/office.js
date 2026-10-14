@@ -113,6 +113,23 @@ export function renderOffice(pane, api) {
       }
     }
     if (canDecorateFront(id)) { const sc = scoreFront(id), n = (G.state.biz[id].decor || []).length; row.appendChild(btn(T(`Shop front${n ? ` · ${n}` : ''}`, `Mặt tiền${n ? ` · ${n}` : ''}`), () => { api.close(true); openShopFront(id); }, 'buy alt')); if (n) card.appendChild(h('div', 'oc-line dim', T(`Shop front draws +${Math.round((frontAttract(id) - 1) * 100)}% customers`, `Mặt tiền thu hút thêm ${Math.round((frontAttract(id) - 1) * 100)}% khách`))); void sc; }
+    const supplyBits = () => {
+      if (supplyUnlocked()) {
+        if (hasSupply(id)) {
+          const on = G.state.supply[id].on;
+          card.appendChild(h('div', 'oc-line', `🚚 ${on ? T('Supply runner restocks every morning', 'Người giao hàng tiếp tế mỗi sáng') : T('Supply runner paused', 'Người giao hàng đang tạm nghỉ')}`));
+          row.appendChild(btn(on ? T('Pause deliveries', 'Tạm ngưng giao') : T('Resume deliveries', 'Giao tiếp'), () => { toggleSupply(id); sfx('ui'); api.rebuild(); }, 'buy alt'));
+        } else {
+          const p = SUPPLY.price(id);
+          const feePct = Math.round((SUPPLY.fee - 1) * 100);
+          card.appendChild(h('div', 'oc-line dim', T(`A supply runner looks at what this shop has been selling (and what's already prepped) and brings about a day and a half of ingredients every morning — shop price + ${feePct}% delivery.`, `Người giao hàng xem quán bán gì gần đây (và đã sơ chế bao nhiêu) rồi mang đủ nguyên liệu cho khoảng một ngày rưỡi mỗi sáng — giá siêu thị + ${feePct}% phí giao.`)));
+          row.appendChild(btn(T(`Supply runner · ${money(p)}`, `Người giao hàng · ${money(p)}`), () => {
+            if (!buySupply(id)) return moneyShortfall(p);
+            sfx('success'); toast({ text: T('Deliveries start now!', 'Bắt đầu giao hàng!'), sub: T('The pantry is topped up every morning at 6:00.', 'Kho được bổ sung mỗi sáng lúc 6:00.'), icon: 'bag' }); api.rebuild();
+          }, 'buy'));
+        }
+      }
+    };
     if (id !== 'house' && canHaveKeeper(id)) {
       const k = keeperOf(id);
       if (k) {
@@ -144,22 +161,9 @@ export function renderOffice(pane, api) {
           api.rebuild();
         }, 'buy'));
       } else card.appendChild(h('div', 'oc-line dim', T('Shopkeepers can be hired from Chapter 5.', 'Có thể thuê người trông quán từ Chương 5.')));
-      if (supplyUnlocked()) {
-        if (hasSupply(id)) {
-          const on = G.state.supply[id].on;
-          card.appendChild(h('div', 'oc-line', `🚚 ${on ? T('Supply runner restocks every morning', 'Người giao hàng tiếp tế mỗi sáng') : T('Supply runner paused', 'Người giao hàng đang tạm nghỉ')}`));
-          row.appendChild(btn(on ? T('Pause deliveries', 'Tạm ngưng giao') : T('Resume deliveries', 'Giao tiếp'), () => { toggleSupply(id); sfx('ui'); api.rebuild(); }, 'buy alt'));
-        } else {
-          const p = SUPPLY.price(id);
-          const feePct = Math.round((SUPPLY.fee - 1) * 100);
-          card.appendChild(h('div', 'oc-line dim', T(`A supply runner looks at what this shop has been selling (and what's already prepped) and brings about a day and a half of ingredients every morning — shop price + ${feePct}% delivery.`, `Người giao hàng xem quán bán gì gần đây (và đã sơ chế bao nhiêu) rồi mang đủ nguyên liệu cho khoảng một ngày rưỡi mỗi sáng — giá siêu thị + ${feePct}% phí giao.`)));
-          row.appendChild(btn(T(`Supply runner · ${money(p)}`, `Người giao hàng · ${money(p)}`), () => {
-            if (!buySupply(id)) return moneyShortfall(p);
-            sfx('success'); toast({ text: T('Deliveries start now!', 'Bắt đầu giao hàng!'), sub: T('The pantry is topped up every morning at 6:00.', 'Kho được bổ sung mỗi sáng lúc 6:00.'), icon: 'bag' }); api.rebuild();
-          }, 'buy'));
-        }
-      }
+      supplyBits();
     }
+    if (id === 'restaurant' && G.state.biz.restaurant?.owned) supplyBits();   // (the restaurant uses the most ingredients of all: it can have a runner too)
     card.appendChild(row);
     list.appendChild(card);
   }

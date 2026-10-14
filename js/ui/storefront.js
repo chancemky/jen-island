@@ -10,7 +10,7 @@ import { BUSINESSES, bizName } from '../data/game.js';
 import { sfx } from '../core/audio.js';
 import { toast, moneyShortfall } from './hud.js';
 import { drawDecor } from '../systems/growth.js';
-import { escapeHtml } from '../core/util.js';
+import { escapeHtml, money } from '../core/util.js';
 
 let ui = null;
 export function openShopFront(id) {
@@ -29,7 +29,7 @@ export function openShopFront(id) {
   const refresh = () => {
     const th = themeOf(), sc = scoreFront(id, th), stars = Math.max(0, Math.min(5, Math.round(sc.total / 3)));
     info.innerHTML = id === 'house' ? `${T('Your garden', 'Vườn nhà bạn')} · <small>${T('flowers, fences, a vegetable patch — whatever you like', 'hoa, hàng rào, luống rau — tùy bạn')}</small>` : `${escapeHtml(bizName(id))} · ${T('Theme', 'Chủ đề')}: <b>${escapeHtml(T(th.en, th.vi))}</b> · ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}`;
-    tray.innerHTML = Object.entries(DECOR).map(([k, d]) => `<button type="button" data-k="${k}" class="${st.pick === k ? 'on' : ''}">${escapeHtml(T(d.en, d.vi))} <small>${d.price}k</small>${id !== 'house' && d.tags.includes(th.id) ? ' ✦' : ''}</button>`).join('');
+    tray.innerHTML = Object.entries(DECOR).map(([k, d]) => `<button type="button" data-k="${k}" class="${st.pick === k ? 'on' : ''}">${escapeHtml(T(d.en, d.vi))} <small>${money(d.price)}</small>${id !== 'house' && d.tags.includes(th.id) ? ' ✦' : ''}</button>`).join('');
     selBar.innerHTML = st.sel >= 0 ? `<button type="button" class="btn small ghost fr-del">${T('Remove (half back)', 'Gỡ (hoàn nửa tiền)')}</button>` : `<small>${st.pick ? T('Tap in front of the shop to place it', 'Chạm trước quán để đặt') : id === 'house' ? T('Pick a piece, then tap in front of your house · drag to move', 'Chọn món rồi chạm trước nhà · kéo để di chuyển') : T('Pick a piece · ✦ fits this week\'s theme · drag to move', 'Chọn món · ✦ hợp chủ đề tuần · kéo để di chuyển')}</small>`;
     selBar.querySelector('.fr-del')?.addEventListener('click', () => { removeDecor(id, st.sel); st.sel = -1; sfx('back'); refresh(); });
   };

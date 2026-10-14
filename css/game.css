@@ -1058,3 +1058,8 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
   .svc-bottom .btn { padding: 10px; }
 }
 .buy.quiet { background: transparent; color: var(--ink); text-shadow: none; box-shadow: none; border-style: dashed; }
+/* the restaurant's pass: a warm dining room behind the guest, not the beach sky */
+.svc.indoor .svc-awning { background: repeating-linear-gradient(90deg, #8a5f3e 0 34px, #9c6e46 34px 68px); }
+.svc.indoor .svc-awning::after { display: none; }
+.svc.indoor .svc-outside, .svc.indoor .svc-outside.dusk, .svc.indoor .svc-outside.night { background: linear-gradient(180deg, #f6e6d6 0%, #efd9c3 58%, #c98f5a 58.5%, #b9824f 100%); }
+.svc.indoor .svc-sky { display: none; }

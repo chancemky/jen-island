@@ -184,6 +184,14 @@ function renderMilestoneList(pane, api) {
   pane.appendChild(head);
   const list = TRACKS.map(tr => ({ tr, st: trackState(tr) })).sort((a, b) => b.st.ready - a.st.ready || a.st.completed - b.st.completed);
   const done = list.filter(x => x.st.completed).length;
+  // several waiting: one tap claims them all, with one card (claiming sixteen one by one was a chore)
+  const ready = list.filter(x => x.st.ready);
+  if (ready.length > 1) pane.appendChild(btn(T(`🎁 Claim all ${ready.length} rewards`, `🎁 Nhận cả ${ready.length} phần thưởng`), () => {
+    let m = 0, xp = 0, n = 0; const gifts = [];
+    for (const tr of TRACKS) while (trackState(tr).ready) { const r = claimMilestone(tr.id); if (!r) break; n++; m += r.money; xp += r.xp; if (r.gift) gifts.push(r.gift); }
+    sfx('fanfare'); showReward({ icon: 'trophy', kicker: meoCheer(false), title: T(`${n} milestones!`, `${n} cột mốc!`), text: T(`+${money(m)} · +${xp} XP${gifts.length ? ' · 🎁 ' + gifts.join(', ') : ''}`, `+${money(m)} · +${xp} EXP${gifts.length ? ' · 🎁 ' + gifts.join(', ') : ''}`) }).then(() => api.rebuild?.());
+    api.rebuild?.();
+  }, 'buy pink'));
   if (done) pane.appendChild(h('div', 'empty-note', T(`${done} milestone${done > 1 ? 's' : ''} completed ✓`, `Đã hoàn thành ${done} cột mốc ✓`)));
   for (const { tr, st } of list) {
     const fmt = v => tr.money ? money(v) : v;

@@ -51,6 +51,7 @@ export function openService(bizId, { onClose, tutorial = false, single = null } 
       <div class="svc-bottom"><button class="btn trash" type="button" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5 3.5 10l5 4.5" /><path d="M4 10h10.5a5 5 0 0 1 0 10H10" /></svg><small>${T('Undo', 'Hoàn tác')}</small></button><button class="btn pink serve" type="button">${T('Serve', 'Phục vụ')}</button></div>
     </div>`;
   root.appendChild(el);
+  if (bizId === 'restaurant') el.classList.add('indoor');   // (the restaurant's kitchen pass is indoors: it showed the street stall's sky and awning)
   G.runtime.serviceOpen = bizId;
   document.body.classList.add('sheet-open', 'svc-open');
   S = {
