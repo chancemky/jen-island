@@ -147,7 +147,7 @@ async function prepAll() {
     bus.emit('prepped', P.bizId, to, n);
   }
   markDirty(true);
-  if (!any) { sfx('error'); toast({ text: T('Nothing left to prep', 'Không còn gì để sơ chế'), ms: 1600 }); }
+  if (!any) { sfx('error'); toast({ text: T('Nothing left to prep', 'Không còn gì để sơ chế'), ms: 1600 , now: true }); }
   else sfx('success');
   build();
 }

@@ -31,7 +31,7 @@ bus.on('streak', (bizId, n) => {
   el.hidden = n < 2; if (n < 2) return;
   el.innerHTML = `🔥 ×${n}<small>+${Math.min(30, (n - 1) * 5)}% ${T('tips', 'boa')}</small>`;
   el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
-  if (n % 5 === 0) { sfx('sparkle'); toast({ text: T(`${n} perfect in a row!`, `${n} món hoàn hảo liên tiếp!`), icon: 'star', ms: 1600 }); }
+  if (n % 5 === 0) { sfx('sparkle'); toast({ text: T(`${n} perfect in a row!`, `${n} món hoàn hảo liên tiếp!`), icon: 'star', ms: 1600 , now: true }); }
 });
 export function openService(bizId, { onClose, tutorial = false, single = null } = {}) {
   if (S) return;
@@ -218,14 +218,14 @@ function tapIngredient(k, btnEl) {
   if (R.options.includes('size') && !S.asm.size) {
     sfx('error');
     const seg = S.el.querySelector('.seg[data-k="size"]'); seg?.classList.add('shake'); setTimeout(() => seg?.classList.remove('shake'), 300);
-    toast({ text: T('Pick a cup size first!', 'Chọn size ly trước!'), ms: 1600 });
+    toast({ text: T('Pick a cup size first!', 'Chọn size ly trước!'), ms: 1600 , now: true });
     return;
   }
   if (S.asm.steps.length >= 7) { sfx('error'); return; }
   // after midnight you're sleepy: sometimes your hand grabs the wrong thing
   if (G.runtime.sleepy && Math.random() < 0.25) {
     const others = stationKeys().filter(x => x !== k && (!STATION[x].uses || stockOf(S.bizId, STATION[x].uses) > 0));
-    if (others.length) { k = others[Math.floor(Math.random() * others.length)]; toast({ text: T('So sleepy… grabbed the wrong thing!', 'Buồn ngủ quá… lấy nhầm rồi!'), icon: 'sleep_moon', ms: 1600 }); btnEl = S.el.querySelector(`.ing[data-k="${k}"]`) || btnEl; }
+    if (others.length) { k = others[Math.floor(Math.random() * others.length)]; toast({ text: T('So sleepy… grabbed the wrong thing!', 'Buồn ngủ quá… lấy nhầm rồi!'), icon: 'sleep_moon', ms: 1600, now: true }); btnEl = S.el.querySelector(`.ing[data-k="${k}"]`) || btnEl; }
   }
   const st2 = STATION[k];
   if (st2.uses && !takeStock(S.bizId, st2.uses)) {
@@ -246,12 +246,12 @@ function wobble() { const b = S?.el.querySelector('.svc-board'); if (!b) return;
 
 function serve() {
   if (S.busy || !S.cust) return;
-  if (!S.asm.steps.length) { sfx('error'); toast({ text: T('Build the order first!', 'Chưa làm gì cả!'), ms: 1400 }); return; }
+  if (!S.asm.steps.length) { sfx('error'); toast({ text: T('Build the order first!', 'Chưa làm gì cả!'), ms: 1400 , now: true }); return; }
   const c = S.cust, R = RECIPES[c.order.recipe];
   // missing required option choices
   for (const k of R.options) if (S.asm[k] === undefined || S.asm[k] === null) {
     sfx('error'); const seg = S.el.querySelector(`.seg[data-k="${k}"]`); seg?.classList.add('shake'); setTimeout(() => seg?.classList.remove('shake'), 300);
-    toast({ text: T(`Choose the ${(OPTIONS[k].en || OPTIONS[k].label).toLowerCase()} first`, `Chưa chọn ${OPTIONS[k].label.toLowerCase()}`), ms: 1600 });
+    toast({ text: T(`Choose the ${(OPTIONS[k].en || OPTIONS[k].label).toLowerCase()} first`, `Chưa chọn ${OPTIONS[k].label.toLowerCase()}`), ms: 1600 , now: true });
     return;
   }
   // consume option stock (sugar, ice, topping, chili)

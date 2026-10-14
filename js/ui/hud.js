@@ -228,7 +228,9 @@ export function toast(o) {
   if (lastShown.text === o.text && Date.now() - lastShown.at < 2500) return;
   if (tq.some(q => q.text === o.text && q.sub === o.sub)) return;
   // ambient news is rationed: the same line at most once a minute, and no backlog of it
-  if (!urgent) { const now = Date.now(); if (now - (seen.get(o.text) || 0) < 60000) return; seen.set(o.text, now); if (seen.size > 80) seen.clear();
+  // (the once-a-minute limit is for island news — tagged with a category; a reply to something you just did,
+  // like a second coin in the fountain, used to be silently dropped)
+  if (!urgent) { const now = Date.now(); if (o.cat) { if (now - (seen.get(o.text) || 0) < 60000) return; seen.set(o.text, now); if (seen.size > 80) seen.clear(); }
     if (tq.filter(q => !(q.cls === 'ach' || q.bad || q.now)).length >= 3) return; }
   if (urgent) tq.unshift(o); else tq.push(o);
   while (tq.length > 8) { const i = tq.findIndex(q => q.cls !== 'ach' && !q.bad); tq.splice(i < 0 ? 0 : i, 1); }
