@@ -186,7 +186,7 @@ export const STEPS = {
   islet: { ch: 14, text: () => T('Cross the bridge and find the painter on Firefly Islet', 'Qua cầu và tìm cô họa sĩ trên Cù Lao Đom Đóm'), target: () => ({ scene: 'island', x: 2350, y: 1700 }), done: () => flag('metVy') || (G.scene?.id === 'island' && dist(G.player.x, G.player.y, 2350, 1700) < 90), next: 'vyViews', scene: () => meetVy() },
   vyViews: { ch: 14, text: () => { const n = VY_VIEWS.filter(v => flag('view:' + v.id)).length; const next = VY_VIEWS.find(v => !flag('view:' + v.id)); return T(`Show Vy the island's best views (${n}/3)${next ? ' — next: ' + next.en : ''}`, `Chỉ cho Vy những cảnh đẹp nhất đảo (${n}/3)${next ? ' — tiếp: ' + next.vi : ''}`); }, target: () => { const v = VY_VIEWS.find(v => !flag('view:' + v.id)); return v ? { scene: 'island', x: v.x, y: v.y } : null; }, done: () => { for (const v of VY_VIEWS) if (!flag('view:' + v.id) && G.scene?.id === 'island' && dist(G.player.x, G.player.y, v.x, v.y) < 60) { setFlag('view:' + v.id); toast({ text: T(`What a view: ${v.en}!`, `Cảnh đẹp quá: ${v.vi}!`), sub: T('Vy will love this.', 'Vy sẽ mê lắm.'), icon: 'photo' }); sfx('success'); } return VY_VIEWS.every(v => flag('view:' + v.id)); }, next: 'landlord', scene: () => newChapter(15) },
   // ---- Chapter 16: the Lantern Festival
-  festival: { ch: 16, text: () => goals(T('Lantern Festival', 'Lễ hội đèn lồng'), festivalGoals()), target: () => null, done: () => allDone(festivalGoals()), next: 'cove', scene: () => festivalNight() },
+  festival: { ch: 16, text: () => goals(T('Lantern Festival', 'Lễ hội lồng đèn'), festivalGoals()), target: () => null, done: () => allDone(festivalGoals()), next: 'cove', scene: () => festivalNight() },
   // ---- Chapter 20: Keeper of the Island
   keeper: { ch: 20, text: () => goals(T('Keeper of the Island', 'Người giữ đảo'), keeperFinalGoals()), target: () => null, done: () => allDone(keeperFinalGoals()), next: 'free', scene: () => keeperCeremony() },
   free: { ch: 20, text: () => freeText(), target: () => null, done: () => false },
@@ -409,7 +409,7 @@ export async function runArrival() {
     m.tiltTarget = 0.18;
     await say('meo', T('Oh! A new face on the island!', 'Ơ! Một người mới đến đảo kìa!'), { emo: 'surprised' });
     m.tiltTarget = 0; await hop(m, 2);
-    await say('meo', T('Hello, hello! Welcome! I\'m *Mèo Mây* — the island\'s official greeter, lantern-counter and nap expert.', 'Chào bạn, chào bạn! Mình là *Mèo Mây* — người chào đón, đếm lồng đèn và chuyên gia ngủ trưa của đảo.'), { emo: 'happy' });
+    await say('meo', T('Hello, hello! Welcome! I\'m *Mèo Mây* — the island\'s official greeter, lantern-counter and nap expert.', 'Chào bạn, chào bạn! Mình là *Mèo Mây* — chuyên đón khách, đếm lồng đèn và ngủ trưa giỏi nhất đảo.'), { emo: 'happy' });
     await say('meo', T('Hmm… you don\'t look like a fisherman. And you\'re definitely not a tourist — you packed way too much.', 'Hừm… trông bạn không giống ngư dân. Mà cũng chẳng phải khách du lịch — bạn mang nhiều đồ quá trời.'), { tilt: 0.15 });
     m.tiltTarget = 0.2;
     await say('meo', T('What should I call you?', 'Mình nên gọi bạn là gì nhỉ?'));
@@ -715,7 +715,7 @@ async function wordSpreadingIntro() {
     await say('meo', T('More visitors are coming by ferry now. And they\'ll want something to wake them up…', 'Giờ khách đi tàu tới đông hơn rồi. Và họ sẽ muốn thứ gì đó cho tỉnh ngủ…'));
     await discoverRecipe('ca_phe_sua_da');
     await say('meo', T('Iced milk coffee! Condensed milk first, *then* coffee. Never the other way. That\'s the law.', 'Cà phê sữa đá! Sữa đặc trước, *rồi mới* tới cà phê. Không bao giờ ngược lại. Luật đó.'), { emo: 'happy', tilt: 0.15 });
-    await say('meo', T('Serve lots of customers and grow your reputation. If the island starts believing in you, I have… another shed in mind.', 'Phục vụ thật nhiều khách để tăng danh tiếng nhé. Nếu cả đảo bắt đầu tin bạn, mình có… một căn chòi khác trong đầu.'));
+    await say('meo', T('Serve lots of customers and grow your reputation. If the island starts believing in you, I have… another shed in mind.', 'Phục vụ thật nhiều khách để tăng danh tiếng nhé. Nếu cả đảo bắt đầu tin bạn, mình đang nhắm… một căn chòi khác.'));
     releaseMeo('plaza'); walk(m, 970, 1650, { speed: 70 });
     await wait(0.6);
   });
@@ -781,7 +781,7 @@ async function firstHelper() {
     await say('meo', T('Your first helper! A shop that opens even when you\'re somewhere else… that\'s how an island starts to breathe again.', 'Người phụ giúp đầu tiên của bạn! Một quán tự mở cửa khi bạn ở chỗ khác… đó là lúc hòn đảo bắt đầu thở lại.'), { emo: 'happy' });
     await say('meo', T('Keep the pantry stocked and they\'ll do the rest. Shopkeepers are paid a wage every day — check it in Menu → Business.', 'Giữ kho đủ hàng là họ lo phần còn lại. Người trông quán được trả lương mỗi ngày — xem ở Menu → Kinh doanh.'));
     unlockAchievement('first_keeper'); addXP(80, 'helper');
-    await showReward({ icon: 'person', kicker: T('Chapter 5 milestone', 'Cột mốc Chương 5'), title: T('A Helping Hand', 'Có người phụ giúp'), text: T(`${k.name} now runs the drink stand during opening hours. +80 XP`, `${k.name} giờ trông quán nước trong giờ mở cửa. +80 KN`) });
+    await showReward({ icon: 'person', kicker: T('Chapter 5 milestone', 'Cột mốc Chương 5'), title: T('A Helping Hand', 'Có người phụ giúp'), text: T(`${k.name} now runs the drink stand during opening hours. +80 XP`, `${k.name} giờ trông quán nước trong giờ mở cửa. +80 EXP`) });
     releaseMeo('plaza');
   });
   G.runtime.inCutscene = false;
@@ -893,7 +893,7 @@ export async function restoreNightMarket() {
     m.setEmo('happy', 3); await hop(m, 2);
     await camTo(430, 760, { zoom: 1.2, rate: 2 });
     await say(ba, T('Look at that… It\'s just like when I was a girl.', 'Nhìn kìa… Y như hồi bà còn con gái.'), { emo: 'happy' });
-    await say('meo', T('The Night Market is open! And one of these stalls is *yours*, partner.', 'Chợ Đêm mở cửa rồi! Và một trong những sạp này là *của bạn* đó, cộng sự.'), { emo: 'happy' });
+    await say('meo', T('The Night Market is open! And one of these stalls is *yours*, partner.', 'Chợ Đêm mở cửa rồi! Và một trong những sạp này là *của bạn* đó, bạn hiền.'), { emo: 'happy' });
     await discoverRecipe('banh_trang_nuong');
     await discoverRecipe('che_ba_mau');
     await say('meo', T('Your stall opens from 17:00 to 23:00. Grilled rice paper, right next to the chè stall — the two best smells in Việt Nam.', 'Sạp của bạn mở từ 17:00 tới 23:00. Bánh tráng nướng, ngay cạnh sạp chè — hai mùi thơm nhất Việt Nam.'));
@@ -1073,7 +1073,7 @@ async function festivalIntro() {
   await cs.run('ch9', async () => {
     G.runtime.inCutscene = true;
     await summonMeo();
-    await say('meo', T('Vy finished her painting! She hung it in the plaza and now EVERYONE wants a festival. A real Lantern Festival, like the old days.', 'Vy vẽ xong tranh rồi! Cô ấy treo ở quảng trường và giờ AI CŨNG muốn có lễ hội. Một Lễ Hội Đèn Lồng thật sự, như ngày xưa.'), { emo: 'happy' });
+    await say('meo', T('Vy finished her painting! She hung it in the plaza and now EVERYONE wants a festival. A real Lantern Festival, like the old days.', 'Vy vẽ xong tranh rồi! Cô ấy treo ở quảng trường và giờ AI CŨNG muốn có lễ hội. Một Lễ Hội Lồng Đèn thật sự, như ngày xưa.'), { emo: 'happy' });
     await titleCard(16);
     const F = FESTIVAL_REQ;
     await say('meo', T(`We need ${F.lanterns} silk lanterns, a famous shop owner — island level ${F.level} at least — and one really busy day: ${F.served} happy customers. Then, fireworks!`, `Mình cần ${F.lanterns} chiếc lồng đèn lụa, một chủ quán nổi tiếng — đảo ít nhất cấp ${F.level} — và một ngày thật đông: ${F.served} vị khách vui vẻ. Rồi thì, pháo hoa!`), { tilt: 0.15 });
@@ -1124,7 +1124,7 @@ async function keeperCeremony() {
     setFlag('keeper'); S().flags.keeperDay = G.state.day; sfx('fanfare'); addXP(500, 'keeper'); addMoney(2000, 'keeper'); unlockAchievement('keeper_island');
     fx.burst('confetti', pl.x, pl.y - 40, 50, { up: 120, speed: 110, col: ['#f08ca0', '#ffd35a', '#9fd8c8', '#fff'], g: 70, life: 2 });
     await hop(m, 3);
-    await showReward({ icon: 'trophy', kicker: T('The end… of the beginning', 'Kết thúc… của sự khởi đầu'), title: T('Keeper of the Island', 'Người Giữ Đảo'), text: T('+2,000k · +500 XP. The island will keep growing with you — levels have no cap!', '+2.000k · +500 KN. Hòn đảo sẽ tiếp tục lớn lên cùng bạn — cấp độ không giới hạn!') });
+    await showReward({ icon: 'trophy', kicker: T('The end… of the beginning', 'Kết thúc… của sự khởi đầu'), title: T('Keeper of the Island', 'Người Giữ Đảo'), text: T('+2,000k · +500 XP. The island will keep growing with you — levels have no cap!', '+2.000k · +500 EXP. Hòn đảo sẽ tiếp tục lớn lên cùng bạn — cấp độ không giới hạn!') });
     await epilogue();
     face(m, pl); face(pl, m); await camTo((m.x + pl.x) / 2, pl.y - 20, { zoom: 1.3 });
     await say('meo', T('Now… about my salary as Chief Cat Officer. Let\'s say… one fish a day?', 'Giờ thì… về lương của mình, Giám Đốc Mèo. Mỗi ngày một con cá nhé?'), { emo: 'happy', tilt: 0.2 });
@@ -1348,7 +1348,7 @@ export async function talkToMeo() {
     if (fishy) opts.unshift(T('🐟 Here\'s a fish for you!', '🐟 Cá cho bạn nè!'));
     const pick = await ask('meo', choice([T(`Hi ${G.state.player.name}! Need something?`, `Chào ${G.state.player.name}! Cần gì không?`), T('Mew? Oh, it\'s you! Hello!', 'Meo? Ơ, bạn đó hả! Chào nha!'), T('I was *definitely* not asleep. What\'s up?', 'Mình *chắc chắn* không có ngủ. Có chuyện gì?')]), opts, { emo: 'happy' });
     let p = pick;
-    if (fishy) { if (p === 0) { G.state.fishForMeo--; markDirty(true); m.doHop(90); sfx('meow'); fx.burst('heart', m.x, m.y - 30, 8, { up: 40 }); await say('meo', choice([T('A FISH. For ME. This is the best day of my life. (Until tomorrow\'s fish.)', 'CÁ. Cho MÌNH. Hôm nay là ngày đẹp nhất đời mình. (Cho tới con cá ngày mai.)'), T('*happy crunching noises* …Chú Hải taught you well.', '*tiếng nhai rộp rộp sung sướng* …Chú Hải dạy bạn giỏi ghê.'), T('You know the way to a cat\'s heart. It\'s through the fish.', 'Bạn biết đường tới trái tim mèo rồi đó. Đi qua con cá.')]), { emo: 'love' }); addXP(15, 'meo'); p = -1; } else p--; }
+    if (fishy) { if (p === 0) { G.state.fishForMeo--; markDirty(true); m.doHop(90); sfx('meow'); fx.burst('heart', m.x, m.y - 30, 8, { up: 40 }); await say('meo', choice([T('A FISH. For ME. This is the best day of my life. (Until tomorrow\'s fish.)', 'CÁ. Cho MÌNH. Hôm nay là ngày đẹp nhất đời mình. (Cho tới con cá ngày mai.)'), T('*happy crunching noises* …Chú Hải taught you well.', '*tiếng nhai rộp rộp sung sướng* …Chú Hải dạy bạn giỏi ghê.'), T('You know the way to a cat\'s heart. It\'s through the fish.', 'Bạn biết đường tới trái tim mèo rồi đó. Muốn lấy lòng mèo thì cứ có cá là xong.')]), { emo: 'love' }); addXP(15, 'meo'); p = -1; } else p--; }
     if (p >= 0 && qo) { if (p === 0) { await questTalk(m, 'meo'); p = -1; } else p--; }
     if (p >= 0 && gate) { if (p === 0) { await keyTalk(gate); p = -1; } else p--; }
     if (p === 0) {

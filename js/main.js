@@ -532,7 +532,7 @@ function updateInteraction(dt) {
   if (sc.id === 'restaurant') {
     const g = guestNeedingOrder(pl.x, pl.y);
     const hasServer = [...restRT().staff.values()].some(a => a.data.emp.role === 'server');
-    if (g && !hasServer) { setAction(T('Take order', 'Nhận order'), () => takeRestaurantOrder(g), RECIPES[g.recipe].icon); return; }
+    if (g && !hasServer) { setAction(T('Take order', 'Nhận món'), () => takeRestaurantOrder(g), RECIPES[g.recipe].icon); return; }
   }
   // 2) nearby talkable actors — over a trigger only when they're genuinely closer
   //    (or standing still by a door); a pet never takes over the bed, a door or a counter
@@ -984,7 +984,7 @@ $('questPill').addEventListener('click', () => {
   cam.override = { x: tg.x, y: tg.y - 10, rate: 3.2 }; fx.float(tg.x, tg.y - 50, T('here!', 'ở đây!'), '#ffd35a', { life: 2.2, size: 11 });
   clearTimeout(peekT); peekT = setTimeout(() => { if (cam.override?.rate === 3.2) cam.override = null; }, 1700);
 });
-$('repChip').addEventListener('click', () => { const s = G.state, need = Math.round(90 * Math.pow(s.level || 1, 1.5)); toast({ text: T(`Level ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} XP`, `Cấp ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} KN`), sub: T(`Reputation ${Math.floor(s.reputation)}. Serve customers, repair and upgrade to level up!`, `Danh tiếng ${Math.floor(s.reputation)}. Phục vụ khách, sửa và nâng cấp quán để lên cấp!`), icon: 'trophy' }); });
+$('repChip').addEventListener('click', () => { const s = G.state, need = Math.round(90 * Math.pow(s.level || 1, 1.5)); toast({ text: T(`Level ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} XP`, `Cấp ${s.level || 1} · ${Math.floor(s.xp || 0)}/${need} EXP`), sub: T(`Reputation ${Math.floor(s.reputation)}. Serve customers, repair and upgrade to level up!`, `Danh tiếng ${Math.floor(s.reputation)}. Phục vụ khách, sửa và nâng cấp quán để lên cấp!`), icon: 'trophy' }); });
 $('clockChip').addEventListener('click', () => toast({ text: T(`Day ${G.state.day}`, `Ngày ${G.state.day}`), sub: T('Your shops close at 11 pm. Sleep in your bed to start a new day.', 'Các quán của bạn đóng cửa lúc 23 giờ. Ngủ trên giường để sang ngày mới.'), icon: 'sleep_moon' }));
 
 // tapping animals on the island makes them squeak, hop and show hearts

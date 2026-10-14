@@ -137,10 +137,10 @@ function renderWeekly(pane, api) {
   pane.appendChild(h('div', 'section-title', T('This week\'s island goals', 'Mục tiêu tuần này')));
   for (const g of goals) {
     const fmt = n => g.money ? money(n) : n, pct = Math.round(g.have / g.target * 100);
-    const row = h('div', 'ms-row' + (g.done && !g.claimed ? ' ready' : ''), `<img src="${iconURL(g.icon, 48)}" alt=""><div class="ms-info"><b>${escapeHtml(g.label(fmt(g.target)))}</b><small>${g.claimed ? T('Claimed ✓', 'Đã nhận ✓') : `${fmt(g.have)} / ${fmt(g.target)} · ${T(`reward ${money(r.money)} + ${r.xp} XP`, `thưởng ${money(r.money)} + ${r.xp} KN`)}`}</small><div class="ms-bar"><i style="width:${pct}%"></i></div></div>`);
+    const row = h('div', 'ms-row' + (g.done && !g.claimed ? ' ready' : ''), `<img src="${iconURL(g.icon, 48)}" alt=""><div class="ms-info"><b>${escapeHtml(g.label(fmt(g.target)))}</b><small>${g.claimed ? T('Claimed ✓', 'Đã nhận ✓') : `${fmt(g.have)} / ${fmt(g.target)} · ${T(`reward ${money(r.money)} + ${r.xp} XP`, `thưởng ${money(r.money)} + ${r.xp} EXP`)}`}</small><div class="ms-bar"><i style="width:${pct}%"></i></div></div>`);
     if (g.done && !g.claimed) row.appendChild(btn(T('Claim', 'Nhận'), () => {
       const got = claimGoal(g.id); if (!got) return;
-      sfx('coin'); toast({ text: T(`+${money(got.money)} · +${got.xp} XP`, `+${money(got.money)} · +${got.xp} KN`), icon: 'coin' });
+      sfx('coin'); toast({ text: T(`+${money(got.money)} · +${got.xp} XP`, `+${money(got.money)} · +${got.xp} EXP`), icon: 'coin' });
       if (got.chest) { sfx('fanfare'); toast({ text: got.chest, icon: 'heart', cls: 'ach', ms: 4200 }); }
       api.rebuild();
     }, 'buy'));
@@ -180,7 +180,7 @@ function renderMilestones(pane, api) {
 function renderMilestoneList(pane, api) {
   const s = G.state;
   const lv = s.level || 1;
-  const head = h('div', 'ms-row', `<img src="${iconURL('trophy', 48)}" alt=""><div class="ms-info"><b>${T(`Level ${lv}`, `Cấp ${lv}`)}</b><small>${T(`${Math.floor(s.xp || 0)} / ${xpNeed(lv)} XP to level ${lv + 1}`, `${Math.floor(s.xp || 0)} / ${xpNeed(lv)} KN để lên cấp ${lv + 1}`)}</small><div class="ms-bar"><i style="width:${Math.min(100, (s.xp || 0) / xpNeed(lv) * 100)}%"></i></div></div>`);
+  const head = h('div', 'ms-row', `<img src="${iconURL('trophy', 48)}" alt=""><div class="ms-info"><b>${T(`Level ${lv}`, `Cấp ${lv}`)}</b><small>${T(`${Math.floor(s.xp || 0)} / ${xpNeed(lv)} XP to level ${lv + 1}`, `${Math.floor(s.xp || 0)} / ${xpNeed(lv)} EXP để lên cấp ${lv + 1}`)}</small><div class="ms-bar"><i style="width:${Math.min(100, (s.xp || 0) / xpNeed(lv) * 100)}%"></i></div></div>`);
   pane.appendChild(head);
   const list = TRACKS.map(tr => ({ tr, st: trackState(tr) })).sort((a, b) => b.st.ready - a.st.ready || a.st.completed - b.st.completed);
   const done = list.filter(x => x.st.completed).length;

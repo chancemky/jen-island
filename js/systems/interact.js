@@ -189,7 +189,7 @@ function workout(p, how) {
 async function incense(p) {
   discover('incense'); sfx('sparkle'); G.player.face('up'); G.player.setAct('bow'); setTimeout(() => G.player.act === 'bow' && G.player.setAct(null), 1600);
   fx.burst('dust', p.x + 4, p.y - 46, 5, { up: 20, col: '#e6e6e6', life: 1.6 });
-  await say(null, T('You light three sticks of incense and think of the people who made you who you are.', 'Bạn thắp ba nén hương và nhớ đến những người đã cho bạn trở thành chính mình.'));
+  await say(null, T('You light three sticks of incense and think of the people who made you who you are.', 'Bạn thắp ba nén hương và nhớ đến những người đã làm nên con người bạn hôm nay.'));
 }
 async function arcade(p) {
   discover('arcade'); sfx('click'); G.player.face('up'); G.player.setAct('work');
@@ -351,8 +351,8 @@ const REAL = [
   { id: 'nationalday', span: [-1, 1], days: y => [`${y}-09-02`], en: 'National Day', vi: 'Quốc Khánh', boost: { all: 1.2 }, fireworks: true, line: ['Red flags along every street, and fireworks over the harbour tonight.', 'Cờ đỏ sao vàng khắp phố, và pháo hoa trên bến cảng tối nay.'], hat: 'star_band' },
   { id: 'tet', span: [-6, 6], days: () => LUNAR.tet, ...EVENTS[0], hat: 'lucky_nonla' },
   { id: 'midautumn', span: [-5, 2], days: () => LUNAR.midautumn, ...EVENTS[2], hat: 'moon_bow' },
-  { id: 'halloween', span: [-7, 0], days: y => [`${y}-10-31`], en: 'Pumpkin Nights', vi: 'Đêm Bí Ngô', boost: { night: 1.3, all: 1.1 }, line: ['Pumpkin lanterns all over the island, and the Night Market is spooky tonight!', 'Đèn bí ngô khắp đảo, và Chợ Đêm tối nay rùng rợn lắm!'], hat: 'black_cat_ears' },
-  { id: 'christmas', span: [-6, 1], days: y => [`${y}-12-25`], en: 'Christmas Lights', vi: 'Đèn Giáng Sinh', boost: { cafe: 1.3, all: 1.15 }, tip: 1.15, line: ['Fairy lights over the plaza and hot drinks everywhere.', 'Đèn lấp lánh trên quảng trường và đồ uống nóng khắp nơi.'], hat: 'snow_beanie' },
+  { id: 'halloween', span: [-7, 0], days: y => [`${y}-10-31`], en: 'Pumpkin Nights', vi: 'Halloween', boost: { night: 1.3, all: 1.1 }, line: ['Pumpkin lanterns all over the island, and the Night Market is spooky tonight!', 'Đèn bí ngô khắp đảo, và Chợ Đêm tối nay rùng rợn lắm!'], hat: 'black_cat_ears' },
+  { id: 'christmas', span: [-6, 1], days: y => [`${y}-12-25`], en: 'Christmas Lights', vi: 'Giáng Sinh', boost: { cafe: 1.3, all: 1.15 }, tip: 1.15, line: ['Fairy lights over the plaza and hot drinks everywhere.', 'Đèn lấp lánh trên quảng trường và đồ uống nóng khắp nơi.'], hat: 'snow_beanie' },
 ];
 export function realEvent(now = new Date(islandDay() + 'T00:00:00Z')) {   // (the date in Japan)
   const y = now.getUTCFullYear(), day = Date.UTC(y, now.getUTCMonth(), now.getUTCDate()) / 864e5;

@@ -537,7 +537,7 @@ export function feedDucks() {
     crumbs.push({ x: pl.x, y: pl.y - 2, vx: (tx - pl.x) / T, vy: (ty - pl.y) / T, z: 14, vz: 60 + rand(0, 40), life: 12, landed: 0 });
   }
   const s = G.state, key = 'ducksFed';
-  if (s.story.flags[key] !== s.day) { s.story.flags[key] = s.day; s.stats.duckDays = (s.stats.duckDays || 0) + 1; if (s.stats.duckDays >= 5) unlockAchievement('duck_friend'); bus.emit('toast', { text: G.lang === 'vi' ? 'Lũ vịt thích lắm!' : 'The ducks love you!', sub: G.lang === 'vi' ? '+5 KN · quay lại mai nhé' : '+5 XP · come back tomorrow', icon: 'heart' }); bus.emit('xp:add', 5); }
+  if (s.story.flags[key] !== s.day) { s.story.flags[key] = s.day; s.stats.duckDays = (s.stats.duckDays || 0) + 1; if (s.stats.duckDays >= 5) unlockAchievement('duck_friend'); bus.emit('toast', { text: G.lang === 'vi' ? 'Lũ vịt thích lắm!' : 'The ducks love you!', sub: G.lang === 'vi' ? '+5 EXP · quay lại mai nhé' : '+5 XP · come back tomorrow', icon: 'heart' }); bus.emit('xp:add', 5); }
 }
 
 // ---------------------------------------------------------------- per frame

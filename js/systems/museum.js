@@ -18,7 +18,7 @@ const TREASURES = ['giant_shell', 'bottle_ship'];
 const FISHES = () => Object.keys(FISH).filter(id => !FISH[id].junk);
 const mus = () => (G.state.museum ||= { fish: {}, creatures: {}, stars: {}, treasures: {} });
 // a clue for every fish you haven't caught (the cards were a wall of "??? Catch one first")
-const fishHint = f => f.nightOnly ? T('Bites at night (19:00–5:00) with a lantern lure', 'Cắn câu ban đêm (19:00–5:00) với mồi đèn lồng') : f.rare ? T('Very rare — try the pier late at night', 'Rất hiếm — thử câu ở cầu tàu lúc khuya') : f.night ? T('Bites more after dark, off the pier', 'Cắn câu nhiều hơn khi trời tối, ở cầu tàu') : f.w <= 6 ? T('Uncommon — keep fishing off the pier', 'Hơi hiếm — cứ câu tiếp ở cầu tàu') : T('Common off the pier — any time of day', 'Hay gặp ở cầu tàu — giờ nào cũng được');
+const fishHint = f => f.nightOnly ? T('Bites at night (19:00–5:00) with a lantern lure', 'Cắn câu ban đêm (19:00–5:00) với mồi lồng đèn') : f.rare ? T('Very rare — try the pier late at night', 'Rất hiếm — thử câu ở cầu tàu lúc khuya') : f.night ? T('Bites more after dark, off the pier', 'Cắn câu nhiều hơn khi trời tối, ở cầu tàu') : f.w <= 6 ? T('Uncommon — keep fishing off the pier', 'Hơi hiếm — cứ câu tiếp ở cầu tàu') : T('Common off the pier — any time of day', 'Hay gặp ở cầu tàu — giờ nào cũng được');
 export function museumCount() { const m = mus(); return Object.keys(m.fish).length + Object.keys(m.creatures).length + Object.keys(m.stars).length + Object.keys(m.treasures).length; }
 export const museumTotal = () => FISHES().length + CREATURES.length + CONSTELLATIONS.length + TREASURES.length;
 function thank() {

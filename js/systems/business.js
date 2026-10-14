@@ -5,6 +5,7 @@
 import { G, T, addMoney, addRep, markDirty, pantry, addPantry, unlockAchievement, bizOf } from './state.js';
 import { EQUIPMENT, BUSINESSES, RECIPES, STATION, OPTIONS, PERSONALITIES, INGREDIENTS, PREPPED, RECIPE_UPGRADES, PRICE_RANGE, bizName, recipeCost, ingName, recipeName } from '../data/game.js';
 import { RESIDENTS, visitorLook } from '../data/looks.js';
+import { HAIRCUTS } from '../data/hair.js';
 import { addXP } from './progress.js';
 import { Actor } from '../world/actor.js';
 import { QUEUES, TRUCK_SPOTS } from '../world/island.js';
@@ -20,9 +21,16 @@ import { recordUse } from './economy.js';
 import { eventBoost } from './interact.js';
 import { seasonServed } from './store.js';
 
-export const LOCAL_NAMES = ['Chị Thu', 'Anh Nam', 'Cô Ba', 'Bác Tâm', 'Em Bi', 'Chú Lộc', 'Chị Hằng', 'Anh Khôi', 'Cô Duyên', 'Bác Hòa', 'Em Tí', 'Chị Loan', 'Anh Phong', 'Cô Mận', 'Chú Tư', 'Chị Vân', 'Anh Hùng', 'Em Su', 'Cô Nga', 'Bác Sang', 'Chị Ánh', 'Anh Tín', 'Em Cốm', 'Cô Liên'];
+export const LOCAL_NAMES = ['Chị Thu', 'Anh Nam', 'Cô Bảy', 'Bác Tâm', 'Em Bi', 'Chú Lộc', 'Chị Hằng', 'Anh Khôi', 'Cô Duyên', 'Bác Hòa', 'Em Tí', 'Chị Loan', 'Anh Phong', 'Cô Mận', 'Chú Tư', 'Chị Vân', 'Anh Hùng', 'Em Su', 'Cô Nga', 'Bác Sang', 'Chị Ánh', 'Anh Tín', 'Em Cốm', 'Cô Liên'];
 const TOURIST_NAMES = ['Emma', 'Kenji', 'Lucas', 'Aiko', 'Mia', 'Noah', 'Hana', 'Leo', 'Sofia', 'Min-jun', 'Ava', 'Oliver', 'Chloé', 'Mateo', 'Yuki', 'Sam'];
 
+// the title before a local's name matches who they are (a little girl was "Chị Ánh", an old man "Em Bi")
+const TITLES = { kid: ['Bé', 'Bé'], teen: ['Em', 'Em'], adult: ['Chị', 'Anh'], peer: ['Chị', 'Anh'], middle: ['Cô', 'Chú'], elder: ['Bà', 'Ông'] };
+function titled(name, look) {
+  const base = name.replace(/^(Chị|Anh|Cô|Chú|Bác|Em|Bé|Bà|Ông) /, ''), age = look?.age || ((look?.scale || 1) < 0.9 ? 'kid' : 'adult');
+  const fem = !!look?.lashes || HAIRCUTS[look?.hairStyle]?.g === 'f', t = TITLES[age] || TITLES.adult;
+  return `${fem ? t[0] : t[1]} ${base}`;
+}
 export function rt(id) {
   G.runtime.biz[id] ||= { queue: [], spawnT: 4, flap: 0, signFlip: 0, repairAnim: null, noStockWarned: false, first: true };
   return G.runtime.biz[id];
@@ -220,6 +228,7 @@ export function spawnCustomer(bizId, opts = {}) {
     const n = randi(0, LOCAL_NAMES.length - 1); key = 'local:' + n; name = LOCAL_NAMES[n];
     personality = G.state.regulars[key]?.visits >= 3 ? 'regular' : pickPersonality(false);
     look = visitorLook(n * 31 + 7, personality);
+    name = titled(name, look);
   }
   if (!resident && !opts.special && look?.age === 'kid') personality = 'kid';
   else if (!resident && !opts.special && look?.age === 'elder') personality = 'elder';
@@ -346,7 +355,7 @@ export function orderText(order, cust) {
   // regulars sound like people who come back: the longer they've been coming, the warmer;
   // now and then they notice the shop, the island, or order "the usual"
   if (reg) { const line = regularLine(order, cust, regRec, pn); if (line) return line; }
-  if (cust.friendOf) return cust.friendOf && T(`${cust.friendOf} brought me! They said to order the ${R.en}.`, applyPronouns(`${cust.friendOf} dẫn {me} tới đó! Bảo phải gọi ${R.vi}.`, customerProfile(cust)));
+  if (cust.friendOf) return cust.friendOf && T(`${cust.friendOf} brought me! They said to order the ${R.en}.`, applyPronouns(`${cust.friendOf} dẫn {me} tới đây! Bạn ấy bảo phải gọi ${R.vi}.`, customerProfile(cust)));
   if (G.lang === 'vi') {
     const prof = customerProfile(cust), P = x => applyPronouns(x, prof);
     const name = `*${R.vi}*`, parts = [];
@@ -360,9 +369,9 @@ export function orderText(order, cust) {
     const k = pickLine(cust, 3);
     if (reg) return P([`Chào ${pn}! Như mọi khi nha: 1 ${v} ${name}${tail}!`, `Lại là {me} nè ${pn}! Cho {me} 1 ${v} ${name}${tail} nhé!`, `${pn} ơi, món quen: 1 ${v} ${name}${tail}!`][k]);
     if (cust.personality === 'tourist') return P([`Xin chào {you}! Cho {me} 1 ${v} ${name}${tail}, cảm ơn nha!`, `Chào {you}! {Me} muốn 1 ${v} ${name}${tail} nhé!`, `Cho {me} thử 1 ${v} ${name}${tail} nha {you}!`][k]);
-    if (cust.team) return P(`Cả đội {me} đây! Cho {me} 1 ${v} ${name}${tail} nha, mình vừa đá xong mệt quá!`);
-    if (cust.personality === 'kid') return P([`{You} ơi! Cho con 1 ${v} ${name}${tail} ạ! Nhiều đường nha!`, `Con được mẹ cho tiền nè! 1 ${v} ${name}${tail} ạ!`, `Con muốn 1 ${v} ${name}${tail}! Con ngoan lắm á!`][k]);
-    if (cust.personality === 'elder') return P([`Chào con. Từ từ thôi con nhé, cho bà 1 ${v} ${name}${tail}.`, `Con ơi, cho ông 1 ${v} ${name}${tail}. Không vội đâu.`, `Ngày xưa ở đây bán trà ngon lắm. Cho 1 ${v} ${name}${tail} nhé con.`][k]);
+    if (cust.team) return P(`Cả đội tụi {me} tới nè! Cho {me} 1 ${v} ${name}${tail} nha, tụi {me} vừa đá banh xong, mệt quá!`);
+    if (cust.personality === 'kid') return P([`{You} ơi! Cho {me} 1 ${v} ${name}${tail} ạ!`, `{Me} được mẹ cho tiền nè! 1 ${v} ${name}${tail} ạ!`, `{Me} muốn 1 ${v} ${name}${tail}! {Me} ngoan lắm á!`][k]);
+    if (cust.personality === 'elder') return P([`Chào {you}. Từ từ thôi nhé, cho {me} 1 ${v} ${name}${tail}.`, `{You} ơi, cho {me} 1 ${v} ${name}${tail}. Không vội đâu.`, `Ngày xưa ở đây bán trà ngon lắm. Cho {me} 1 ${v} ${name}${tail} nhé {you}.`][k]);
     if (cust.personality === 'rushed') return P(`{You} ơi, nhanh giúp {me} nha! 1 ${v} ${name}${tail}!`);
     if (cust.personality === 'picky') return P(`Làm kỹ giúp {me} nhé {you}: 1 ${v} ${name}${tail}. Đúng y vậy nha.`);
     if (cust.personality === 'excited') return P([`Oa, thơm quá! {You} cho {me} 1 ${v} ${name}${tail} đi!`, `{Me} nghe đồn quán ngon lắm! 1 ${v} ${name}${tail} nha {you}!`, `Hôm nay {me} thèm 1 ${v} ${name}${tail} ghê!`][k]);

@@ -27,6 +27,9 @@ function walletTrail(sum) {
   ].join('')}</ul>${w && w.bills > w.start ? `<div style="margin-top:6px;font-weight:800;color:#ffb38a">${T(`Tonight's bills (${money(w.bills)}) were more than you had (${money(w.start)}).`, `Chi phí đêm nay (${money(w.bills)}) nhiều hơn số tiền bạn có (${money(w.start)}).`)}${w.end < 0 ? '<br>' + T('You\'re in debt. Sales pay it back first. To spend less each night, pause a supply runner or let a shopkeeper go in Menu → Business.', 'Bạn đang nợ. Tiền bán hàng sẽ trả nợ trước. Muốn bớt chi mỗi đêm, hãy tạm dừng người giao hàng hoặc cho người trông quán nghỉ trong Menu → Kinh doanh.') : ''}</div>` : ''}</div>`;
 }
 import { catName } from '../systems/ledger.js';
+import { currentStep } from '../systems/story.js';
+// what you're working toward, so each day ends pointing at the next one
+const nextGoal = () => { try { const t = currentStep()?.text?.(); return t ? t.replace(/\*/g, '') : ''; } catch { return ''; } };
 
 export function showSummary(sum, force = false) {
   // remember the last two weeks of results for the little chart (kept in the save)
@@ -66,16 +69,17 @@ function summaryCard(sum) {
         <div class="sum-stat"><small>${T('Perfect', 'Hoàn hảo')}</small><b data-n="${sum.perfect}">0</b></div>
         <div class="sum-stat"><small>${T('Sales', 'Bán hàng')}</small><b data-n="${sum.sales ?? sum.revenue - sum.tips}" data-money="1">0</b></div>
         <div class="sum-stat"><small>${T('Tips', 'Tiền boa')}</small><b data-n="${sum.tips}" data-money="1">0</b></div>
-        <div class="sum-stat wide"><small>${T('Net today (all money in − all money out)', 'Lãi hôm nay (tiền vào − tiền ra)')}${vs(sum.net ?? 0, sum.prev?.net)}</small><b data-n="${sum.net ?? 0}" data-money="1" data-sign="1">0</b>${kept >= 1 ? `<small style="display:block;margin-top:4px;opacity:.75">${T(`${money(kept)} of that went on things you keep · from trading: ${trading >= 0 ? '+' : ''}${money(trading)}`, `${money(kept)} trong đó là đồ bạn giữ lại · từ buôn bán: ${trading >= 0 ? '+' : ''}${money(trading)}`)}</small>` : ''}</div>
+        <div class="sum-stat wide"><small>${T('Net today (all money in − all money out)', 'Lãi hôm nay (tiền vào − tiền ra)')}${vs(sum.net ?? 0, sum.prev?.net)}</small><b data-n="${sum.net ?? 0}" data-money="1" data-sign="1">0</b>${kept >= 1 ? `<small style="display:block;margin-top:4px;opacity:.75">${T(`${money(kept)} of that went on things you keep · from trading: ${trading >= 0 ? '+' : ''}${money(trading)}`, `trong đó ${money(kept)} là tiền mua đồ dùng lâu dài · từ buôn bán: ${trading >= 0 ? '+' : ''}${money(trading)}`)}</small>` : ''}</div>
         <div class="sum-stat"><small>${T('Reputation', 'Danh tiếng')}</small><b data-n="${sum.repDelta}" data-sign="1">0</b></div>
         ${sum.lost ? `<div class="sum-stat wide"><small>${T('Customers who left', 'Khách bỏ đi')}</small><b data-n="${sum.lost}">0</b></div>` : ''}
       </div></div>
       ${chart()}
       ${biz.length ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Your shops', 'Cửa hàng')}</div><ul class="sum-list">${biz.map(([id, v]) => `<li><span>${escapeHtml(bizName(id))}</span><span>${T(`${v.served} served`, `${v.served} khách`)} · ${money(v.revenue)}${pl[id] ? ` · ${T('net', 'lãi')} <b>${money(pl[id].net)}</b>` : ''}</span></li>`).join('')}</ul></div>` : ''}
-      ${spend.length ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Where the money went', 'Tiền đã chi vào')}</div><ul class="sum-list">${spend.map(([c, v]) => `<li><span>${escapeHtml(catName(c))}</span><span>${money(v)}</span></li>`).join('')}</ul></div>` : ''}
+      ${spend.length ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Where the money went', 'Các khoản chi')}</div><ul class="sum-list">${spend.map(([c, v]) => `<li><span>${escapeHtml(catName(c))}</span><span>${money(v)}</span></li>`).join('')}</ul></div>` : ''}
       ${sum.staff?.length ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Your team today', 'Đội của bạn hôm nay')}</div><ul class="sum-list">${sum.staff.map(st => `<li><span>${escapeHtml(staffLine(st))}</span></li>`).join('')}</ul></div>` : ''}
       ${sum.gift ? `<div class="sum-card" style="text-align:center;font-weight:800">${escapeHtml(sum.gift)}</div>` : ''}
       ${(sum.milestones.length || sum.achievements.length) ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Milestones', 'Cột mốc')}</div><ul class="sum-list">${sum.milestones.map(m => `<li class="ach"><span>★ ${escapeHtml(tr(m))}</span></li>`).join('')}</ul></div>` : ''}
+      ${nextGoal() ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Tomorrow', 'Ngày mai')}</div><div style="font-weight:800">${escapeHtml(nextGoal())}</div></div>` : ''}
       <div class="sum-card" style="text-align:center;font-weight:800;opacity:.85">${escapeHtml(sum.meoLine)}</div>
       ${walletTrail(sum)}
       ${adOffer ? `<button class="btn big gold sum-ad" type="button" style="max-width:420px;margin-bottom:8px">${T(`▶ Watch a short ad: double today's tips (+${money(sum.tips)})`, `▶ Xem quảng cáo ngắn: nhân đôi tiền boa hôm nay (+${money(sum.tips)})`)}</button>` : ''}

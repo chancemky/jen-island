@@ -15,6 +15,7 @@ const SCEN = {
   midCasual: { step: 'truck', money: 3000, days: 8, mode: 'casual' },                    // chapter 7: two sheds and a keeper
   late: { step: 'free', money: 40000, days: 8, mode: 'grind' },                   // everything owned and staffed
   lateAfk: { step: 'free', money: 40000, days: 8, mode: 'afk' },                  // the same island, never serving
+  lateAfkSupply: { step: 'free', money: 40000, days: 6, mode: 'afk', supply: true }, // …with a supply runner at every shop (a real "runs itself" island)
   lateCasual: { step: 'free', money: 40000, days: 8, mode: 'casual' },            // serves now and then (a third of the day)
   soak: { step: 'free', money: 40000, days: +(process.env.DAYS || 60), mode: 'grind' },   // two months of island days: leaks, save growth, slowdowns
 };
@@ -111,7 +112,8 @@ for (const name of list) {
   await p.route(/supabase\.co/, r => r.fulfill({ json: [] }));
   const base = `http://127.0.0.1:${server.address().port}/?dev=grind${name}${Date.now()}`;
   await p.goto(base + '&fresh'); await p.waitForFunction(() => window.done, null, { timeout: 30000 });
-  await p.evaluate(async ([step, money]) => { const d = await import('/js/dev/devtools.js'); d.jumpTo(step); const st = window.__jen.G.state; st.player.name = 'Grinder'; st.island.name = 'Test Isle'; st.money = money; st.settings.lowPower = true; (await import('/js/systems/save.js')).saveLocal(); }, [sc.step, sc.money]);
+  if (sc.supply) await p.evaluate(() => { window.__supplyAll = true; });
+  await p.evaluate(async ([step, money]) => { const d = await import('/js/dev/devtools.js'); d.jumpTo(step); const st = window.__jen.G.state; st.player.name = 'Grinder'; st.island.name = 'Test Isle'; st.money = money; st.settings.lowPower = true; if (window.__supplyAll) for (const id of Object.keys(st.biz)) if (st.biz[id].owned && id !== 'restaurant') (st.supply ||= {})[id] = { on: true }; (await import('/js/systems/save.js')).saveLocal(); }, [sc.step, sc.money]);
   await p.goto(base); await p.waitForFunction(() => window.done, null, { timeout: 30000 });
   // click through whatever the game puts up, like a player tapping past it (dialogue: the first choice)
   const clear = async () => {
@@ -124,9 +126,11 @@ for (const name of list) {
   const shop = await p.evaluate(`(${BOT})(${JSON.stringify({ ...sc, serve: +(process.env.SERVE || 4.5), turbo: +(process.env.TURBO || 12), lastDay: 0 })})`);
   await p.evaluate(n => { window.__grind.cfg.lastDay = window.__jen.G.state.day + n; }, sc.days);
   console.log(`${name}: grinding ${shop} from day ${startDay} for ${sc.days} days`);
-  const t0 = Date.now();
+  const t0 = Date.now(); let shown = 0;
   while (!(await p.evaluate(() => window.__grind.done))) {
     await clear(); await p.waitForTimeout(400);
+    const nd = await p.evaluate(n => (window.__grind?.days || []).slice(n), shown).catch(() => []);   // print each day as it finishes
+    for (const d of nd) { shown++; console.log(`  · day ${d.day}: ${d.start}→${d.end} served ${d.youServed}/${d.served} lv${d.level} rep ${d.rep} heap ${d.heapMB}MB actors ${d.actors} save ${d.saveKB}KB`); }
     if ((Date.now() - t0) % 60000 < 450) console.log('  …', await p.evaluate(() => { const s = window.__jen.G.state; return `day ${s.day} ${Math.floor(s.time / 60)}:${String(Math.floor(s.time % 60)).padStart(2, '0')} ch${s.story.chapter} ${s.story.step} money ${Math.round(s.money)} cs ${!!window.__jen.G.runtime.inCutscene}`; }).catch(() => '?'));
     if (Date.now() - t0 > (+process.env.MAXMIN || 40) * 60 * 1000) { console.log('  timed out'); break; }
   }

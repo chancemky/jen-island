@@ -30,8 +30,8 @@ export const HEARTS = {
     [['My scooter finally retired. I\'m keeping the horn — and the radio, for you.', 'Chiếc xe của anh cuối cùng cũng nghỉ hưu. Anh giữ cái còi — còn cái radio thì cho em.'], ['It only plays one station. It\'s a good station.', 'Nó chỉ bắt được một đài. Mà đài hay lắm.']],
   ],
   chi_mai: [
-    [['Island doctors don\'t get days off. But on your shop\'s quiet afternoons, I pretend I do.', 'Bác sĩ trên đảo không có ngày nghỉ. Nhưng những buổi chiều quán vắng, chị giả vờ là có.'], ['Thank you for always saving me the corner seat.', 'Cảm ơn em luôn để dành chị cái ghế trong góc.']],
-    [['Doctor\'s orders: rest more, smile often, eat one bánh mì a week. I\'m writing it down.', 'Lời dặn của bác sĩ: nghỉ ngơi nhiều hơn, cười thường xuyên, mỗi tuần một ổ bánh mì. Chị ghi lại rồi.'], ['And this — a lamp for your bedside. You read too late. I can tell.', 'Còn đây — cái đèn đầu giường. Em đọc sách khuya quá. Chị biết mà.']],
+    [['Island doctors don\'t get days off. But on your shop\'s quiet afternoons, I pretend I do.', 'Bác sĩ trên đảo không có ngày nghỉ. Nhưng những buổi chiều quán vắng, anh giả vờ là có.'], ['Thank you for always saving me the corner seat.', 'Cảm ơn em luôn để dành anh cái ghế trong góc.']],
+    [['Doctor\'s orders: rest more, smile often, eat one bánh mì a week. I\'m writing it down.', 'Lời dặn của bác sĩ: nghỉ ngơi nhiều hơn, cười thường xuyên, mỗi tuần một ổ bánh mì. Anh ghi lại rồi.'], ['And this — a lamp for your bedside. You read too late. I can tell.', 'Còn đây — cái đèn đầu giường. Em đọc sách khuya quá. Anh biết mà.']],
   ],
   ong_loc: [
     [['I was harbour master when this harbour had forty boats. Now it has nine, and one is yours.', 'Ông làm trưởng bến khi bến này có bốn mươi chiếc thuyền. Giờ còn chín, một chiếc là của cháu.'], ['Nine is enough. Nine good ones.', 'Chín là đủ rồi. Chín chiếc tốt.']],

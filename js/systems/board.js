@@ -136,7 +136,7 @@ function finish(n) {
   if (n.present) { const [id, k] = n.present; addMat(id, k); extra = ` · +${k} ${T(MATERIALS[id]?.en || id, MATERIALS[id]?.vi || id).toLowerCase()}`; }
   markDirty(true); track('board_done', { kind: n.kind });
   bus.emit('sfx', 'success'); if (up) bus.emit('stinger', 'friend');
-  bus.emit('toast', { text: T(`${giverName(n)}: "Thank you so much!"`, `${giverName(n)}: "Cảm ơn nhiều nha!"`), sub: `+${n.pay}k${extra}${up ? T(` · now ${FRIEND_LEVELS[up].en}`, ` · giờ là ${FRIEND_LEVELS[up].vi}`) : ''}`, icon: 'heart', ms: 3600 });
+  bus.emit('toast', { text: T(`${giverName(n)}: "Thank you so much!"`, `${giverName(n)}: "Cảm ơn nhiều nha!"`), sub: `+${n.pay}k${extra}${up ? T(` · now ${FRIEND_LEVELS[up].en}`, ` · tình bạn: ${FRIEND_LEVELS[up].vi}`) : ''}`, icon: 'heart', ms: 3600 });
   bus.emit('boardDone', n);
   return n;
 }

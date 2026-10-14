@@ -21,26 +21,26 @@ export const JOKES = [
   ['Why did the kumquat stop halfway up the hill? It ran out of juice.', 'Tại sao trái tắc leo nửa dốc thì dừng? Vì hết nước.'],
   ['What do you call a sleepy bánh mì? A baguette-to-bed.', 'Gọi ổ bánh mì buồn ngủ là gì? Bánh mì… ngủ gật.'],
   ['I tried to catch fog this morning. I mist.', 'Sáng nay {me} cố bắt sương mù. Mà trượt. Mù thật.'],
-  ['Why don\'t crabs share their snacks? Because they\'re shellfish.', 'Sao cua không chia đồ ăn? Vì nó… “cua” lắm.'],
+  ['Why don\'t crabs share their snacks? Because they\'re shellfish.', 'Sao con cua không bao giờ đi thẳng? Vì nó sợ gặp người quen ngoài chợ.'],
   ['What did the ocean say to the beach? Nothing, it just waved.', 'Biển nói gì với bờ cát? Không nói gì, chỉ vẫy tay thôi.'],
   ['Coffee has a rough life. It gets mugged every morning.', 'Cà phê khổ lắm. Sáng nào cũng bị “phin” cho một trận.'],
   ['Why was the phở so calm? It had plenty of broth-er-ly love.', 'Sao tô phở bình tĩnh thế? Vì có nước dùng… “hầm” lâu rồi.'],
   ['My fishing rod and I broke up. It was too clingy — always reeling me in.', '{Me} với cần câu chia tay rồi. Nó bám dai quá, cứ kéo {me} lại hoài.'],
   ['What do you call a noodle that tells lies? An im-pasta. Don\'t tell the phở.', 'Gọi sợi mì hay nói dối là gì? Mì… “xạo”. Đừng nói với tô phở nha.'],
   ['The seagull stole my sandwich, so now I\'m on a sea-food diet. I see food, I lose it.', 'Chim hải âu giật ổ bánh mì của {me}. Giờ {me} ăn kiêng kiểu “thấy là mất”.'],
-  ['Why did the scooter get a medal? It was outstanding in its field. It was parked in a field.', 'Sao xe máy của cô không bao giờ bị phạt chạy nhanh? Vì con trâu ngoài đồng còn vượt mặt nó.'],
+  ['Why did the scooter get a medal? It was outstanding in its field. It was parked in a field.', 'Sao xe máy của {me} không bao giờ bị phạt chạy nhanh? Vì con trâu ngoài đồng còn vượt mặt nó.'],
   ['I told the lighthouse a joke. It was very bright about it.', '{Me} kể chuyện cười cho ngọn hải đăng nghe. Nó sáng dạ lắm.'],
 ];
 const MEO_JOKES = [
   ['Why did the cat sit on the computer? To keep an eye on the mouse. I don\'t know what a computer is.', 'Sao con mèo ngồi lên máy tính? Để canh con chuột. Mình không biết máy tính là gì.'],
-  ['What\'s a cat\'s favourite colour? Purr-ple. Laugh. Please.', 'Mèo thích màu gì nhất? Màu… “meo-ve”. Cười đi mà.'],
+  ['What\'s a cat\'s favourite colour? Purr-ple. Laugh. Please.', 'Mèo sợ nhất ngày nào trong tuần? Thứ… “Sáu Cá”. À không, mình mê cá mà. Cười đi mà.'],
   ['I\'m not lazy. I\'m in energy-saving mode. Forever.', 'Mình không lười. Mình đang ở chế độ tiết kiệm năng lượng. Vĩnh viễn.'],
   ['I knocked a cup off the table yesterday. Science requires it.', 'Hôm qua mình hất cái ly khỏi bàn. Vì khoa học thôi.'],
   ['Nine lives? I spent three of them on naps this week.', 'Chín mạng à? Tuần này mình tiêu ba mạng vào ngủ trưa rồi.'],
 ];
 // more shared jokes (visitors and anyone without their own)
 JOKES.push(
-  ['Why did the tourist bring a ladder to the café? They heard the coffee was on the house.', 'Sao du khách mang thang tới quán cà phê? Vì nghe nói cà phê… “nhà làm”.'],
+  ['Why did the tourist bring a ladder to the café? They heard the coffee was on the house.', 'Sao du khách gọi ba ly cà phê sữa đá? Vì nghe nói uống một ly là chưa biết Việt Nam.'],
   ['I asked the sea for advice. It said: go with the flow.', '{Me} hỏi biển xin lời khuyên. Biển bảo: cứ trôi theo dòng.'],
   ['My sunscreen and I have a relationship. It protects me, I forget it at home.', 'Kem chống nắng với {me} thân lắm. Nó bảo vệ {me}, còn {me} thì bỏ quên nó ở nhà.'],
   ['What do you call a fish with no eyes? A fsh.', 'Gọi con cá không có mắt là gì? Là… cá “mù” tịt.'],
@@ -63,13 +63,13 @@ const CHAR_JOKES = {
   co_lan: [['Why did the rose go to school? To become a little bud-dy smarter.', 'Sao bông hồng đi học? Để… “nở” mày nở mặt.'], ['I talk to my flowers every morning. The sunflowers are the only ones who look at me.', 'Sáng nào cô cũng nói chuyện với hoa. Chỉ có hoa hướng dương là chịu nhìn cô.'], ['A customer asked for flowers that never die. I sold them a painting.', 'Có khách hỏi mua hoa không bao giờ tàn. Cô bán cho họ một bức tranh.']],
   be_na: [['Why is chè the best? Because it\'s sweet AND you eat it with a spoon. Two good things!', 'Sao chè ngon nhất? Vì nó ngọt MÀ còn ăn bằng muỗng. Hai điều tuyệt vời!'], ['I tried to count the stars. I got to eleven and fell asleep.', 'Em thử đếm sao. Đếm tới mười một là ngủ mất tiêu.'], ['My tooth is wobbly. Mèo Mây says that means I\'m becoming a grown-up. I\'m not ready.', 'Răng em lung lay rồi. Mèo Mây nói vậy là em sắp thành người lớn. Em chưa sẵn sàng.']],
   anh_tuan: [['My scooter and I have been together ten years. It still won\'t start on Mondays.', 'Anh với chiếc xe này mười năm rồi. Thứ Hai nó vẫn không chịu nổ máy.'], ['Why did the scooter go to therapy? Too many people honking at it.', 'Sao xe máy đi gặp bác sĩ tâm lý? Vì bị bóp còi nhiều quá.'], ['I drove a tourist to the market. They tipped me in seashells. I accepted.', 'Anh chở du khách ra chợ. Họ boa anh bằng vỏ sò. Anh nhận luôn.']],
-  chi_mai: [['A patient told me they felt like a deck of cards. I said: I\'ll deal with you later.', 'Có bệnh nhân nói họ thấy mình như bộ bài. Anh bảo: để anh “chia” thời gian khám sau.'], ['The best medicine is laughter. The second best is kumquat tea. The third is actual medicine.', 'Thuốc tốt nhất là tiếng cười. Thứ hai là trà tắc. Thứ ba mới là thuốc thật.'], ['Mèo Mây came in with a cough. Turned out it just wanted a treat.', 'Mèo Mây tới khám vì ho. Hóa ra nó chỉ muốn xin đồ ăn vặt.']],
+  chi_mai: [['A patient told me they felt like a deck of cards. I said: I\'ll deal with you later.', 'Có bệnh nhân than đau bụng vì ăn ba tô phở. Anh kê đơn: ngày mai ăn hai tô thôi.'], ['The best medicine is laughter. The second best is kumquat tea. The third is actual medicine.', 'Thuốc tốt nhất là tiếng cười. Thứ hai là trà tắc. Thứ ba mới là thuốc thật.'], ['Mèo Mây came in with a cough. Turned out it just wanted a treat.', 'Mèo Mây tới khám vì ho. Hóa ra nó chỉ muốn xin đồ ăn vặt.']],
   vy: [['I painted a perfect sunset. Then the real sun came out and ruined it.', 'Mình vẽ được bức hoàng hôn hoàn hảo. Rồi mặt trời thật ló ra làm hỏng hết.'], ['Why did the painter go to the island? For a change of scenery. Literally.', 'Sao họa sĩ ra đảo? Để đổi phong cảnh. Theo đúng nghĩa đen.'], ['My brushes are always wet. My tea is always cold. That\'s art.', 'Cọ của mình lúc nào cũng ướt. Trà lúc nào cũng nguội. Nghệ thuật là vậy.']],
   chi_tien: [['A customer asked for a haircut like Mèo Mây. I said: I don\'t do fur.', 'Có khách đòi cắt tóc giống Mèo Mây. Chị nói: chị không cắt lông.'], ['Bad hair day? On this island we call it a windy day.', 'Tóc xấu hả? Trên đảo này gọi là ngày gió to.']],
   co_ba: [['I sewed a shirt so fine the needle asked for a raise.', 'Cô may cái áo khéo tới mức cây kim đòi tăng lương.'], ['Fashion tip: anything looks good if you walk like you own the beach.', 'Mẹo thời trang: mặc gì cũng đẹp nếu con đi như thể bãi biển là của mình.']],
   co_hoa: [['A customer asked if the kumquats were fresh. I said: they were on the tree this morning, gossiping.', 'Có khách hỏi tắc có tươi không. Cô nói: sáng nay tụi nó còn đang trên cây buôn chuyện.'], ['I stack the oranges so neatly that nobody dares to buy one.', 'Cô xếp cam gọn tới mức chẳng ai dám lấy trái nào.']],
   chu_bay: [['Why did the plank go to school? It wanted to be a little board-er.', 'Sao tấm ván đi học? Để “ván” sự như ý.'], ['I sold a nail to a tourist. They asked what to do with it. I said: hit it off.', 'Chú bán cây đinh cho du khách. Họ hỏi dùng làm gì. Chú nói: cứ đóng cho thân.']],
-  anh_khoa: [['I made a chair so comfy, I\'ve been sitting on it since Tuesday.', 'Anh đóng cái ghế êm tới mức ngồi từ thứ Ba tới giờ chưa đứng dậy.'], ['A table walks into a bar. It had legs, it could.', 'Cái bàn đi vô quán. Nó có chân mà, sao không đi được.']],
+  anh_khoa: [['I made a chair so comfy, I\'ve been sitting on it since Tuesday.', 'Anh đóng cái ghế êm tới mức ngồi từ thứ Ba tới giờ chưa đứng dậy.'], ['A table walks into a bar. It had legs, it could.', 'Anh đóng cái tủ kỹ tới mức khách mua về… mở không ra. Bền quá cũng khổ.']],
   co_bong: [['My parrot learned to say "bánh mì". Now it won\'t say anything else.', 'Con vẹt của cô học được chữ “bánh mì”. Giờ nó không chịu nói gì khác.'], ['Ducklings follow me everywhere. Even to the bathroom. Especially to the bathroom.', 'Vịt con theo cô khắp nơi. Cả vô nhà tắm. Nhất là vô nhà tắm.']],
   ba_sau: [['In my day, the night market had one lantern, and we took turns looking at it.', 'Hồi bà còn nhỏ, chợ đêm chỉ có một cái lồng đèn, cả xóm thay phiên nhau ngắm.'], ['My grilled rice paper is so crispy, you can hear it from the pier.', 'Bánh tráng nướng của bà giòn tới mức đứng ngoài bến tàu cũng nghe tiếng.']],
   captain: [['I\'ve sailed this route a thousand times. The fish still don\'t wave back.', 'Chú chạy tuyến này cả ngàn lần. Cá vẫn chưa chịu vẫy tay chào lại.'], ['Why is the ferry always calm? It knows how to keep its boat together.', 'Sao tàu lúc nào cũng bình tĩnh? Vì nó biết “giữ thuyền” mà.']],
@@ -151,7 +151,7 @@ export async function playRPS(a, who) {
       sfx('success'); if (prize) addMoney(prize, 'game'); addXP(8, 'game');
       if (a.data?.rid) s.friends[a.data.rid] = (s.friends[a.data.rid] || 0) + 1;
       if (!prize) await say(a, choice([T('You win! I\'m out of coins today — take my admiration instead.', '{You} thắng! Hôm nay {me} hết tiền lẻ rồi — nhận lời khen của {me} nhé.'), T('Again?! You\'re too good. No prize — just glory.', 'Lại thắng?! {You} giỏi quá. Không có quà — chỉ có vinh quang thôi.')]), { emo: 'happy' });
-      else if (cat) await say(a, choice([T(`Paws can't make scissors! That's not fair. Fine — ${prize}k.`, `Chân mèo đâu ra được cái kéo! Không công bằng. Thôi — ${prize}k nè.`), T(`I demand a rematch… after my nap. Here's ${prize}k.`, `Tôi đòi đấu lại… sau giấc ngủ trưa. ${prize}k nè.`), T(`You read my whiskers. ${prize}k, and not a word to the ducks.`, `Bạn đọc được râu tôi rồi. ${prize}k, và không được kể với lũ vịt.`)]), { emo: 'sad' });
+      else if (cat) await say(a, choice([T(`Paws can't make scissors! That's not fair. Fine — ${prize}k.`, `Chân mèo đâu ra được cái kéo! Không công bằng. Thôi — ${prize}k nè.`), T(`I demand a rematch… after my nap. Here's ${prize}k.`, `Mình đòi đấu lại… sau giấc ngủ trưa. ${prize}k nè.`), T(`You read my whiskers. ${prize}k, and not a word to the ducks.`, `Bạn đọc được râu mình rồi. ${prize}k, và không được kể với lũ vịt.`)]), { emo: 'sad' });
       else await say(a, choice([T(`Nooo! You win. Here's ${prize}k — a deal's a deal.`, `Khônggg! {You} thắng. ${prize}k nè — chơi là chịu.`), T(`How?! Fine, ${prize}k. You must have practised on Mèo Mây.`, `Sao được vậy?! Thôi, ${prize}k. Chắc {you} luyện với Mèo Mây rồi.`), T(`Best of three? No? Fine, ${prize}k.`, `Ba ván thắng hai nha? Không hả? Thôi, ${prize}k.`)]), { emo: 'sad' });
     } else {
       sfx('sad');

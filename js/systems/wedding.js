@@ -51,7 +51,7 @@ async function attend() {
       G.player.setAct('clap'); bus.emit('stinger', 'award');
       fx.burst('confetti', SPOT.x, SPOT.y - 40, 50, { up: 110, speed: 80, col: ['#d9433a', '#f2c14e', '#fff', '#f08ca0'], g: 60, life: 2 });
       await wait(1.4);
-      if (groom) await say(groom, T('Trăm năm hạnh phúc — a hundred happy years! Take a lantern home, from us.', 'Trăm năm hạnh phúc! Cầm một chiếc đèn lồng về nhà nha, quà của tụi mình.'), { emo: 'happy' });
+      if (groom) await say(groom, T('Trăm năm hạnh phúc — a hundred happy years! Take a lantern home, from us.', 'Trăm năm hạnh phúc! Cầm một chiếc lồng đèn về nhà nha, quà của tụi mình.'), { emo: 'happy' });
       for (const a of [...(gathered?.guests || []), groom, bride].filter(Boolean)) a.setAct(null); G.player.setAct(null);
     } finally { G.runtime.inCutscene = false; }
   });
@@ -85,7 +85,7 @@ export function initWedding() {
     }
     if (w.day && !w.done && s.day > w.day) {             // missed it: they married anyway, and send you a lantern
       w.done = true; (s.home.owned ||= []).push('song_hy_lantern'); markDirty(true);
-      bus.emit('toast', { text: T('Minh & Linh got married!', 'Minh & Linh đã cưới nhau!'), sub: T('They missed you — a lantern from the wedding is waiting at home.', 'Hai người nhớ bạn lắm — chiếc đèn lồng đám cưới đang chờ ở nhà.'), icon: 'heart', ms: 5000 });
+      bus.emit('toast', { text: T('Minh & Linh got married!', 'Minh & Linh đã cưới nhau!'), sub: T('They missed you — a lantern from the wedding is waiting at home.', 'Hai người nhớ bạn lắm — chiếc lồng đèn đám cưới đang chờ ở nhà.'), icon: 'heart', ms: 5000 });
     }
     if (weddingOn()) gather(); else if (gathered) disperse();
   });

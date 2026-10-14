@@ -167,7 +167,7 @@ const MOMENTS = {
   first_repair: ['The first shed, fixed', 'Căn chòi đầu tiên, đã sửa xong'], first_sale: ['My very first customer', 'Vị khách đầu tiên'],
   first_keeper: ['My first helper', 'Người phụ giúp đầu tiên'], truck: ['The truck is ours', 'Chiếc xe là của mình'],
   night_market: ['The Night Market lights up again', 'Chợ Đêm sáng đèn trở lại'], restaurant: ['Grand opening on the hill', 'Khai trương nhà hàng trên đồi'],
-  statue: ['The night the statue was unveiled', 'Đêm khánh thành bức tượng'], lantern_festival: ['The Lantern Festival', 'Lễ Hội Đèn Lồng'],
+  statue: ['The night the statue was unveiled', 'Đêm khánh thành bức tượng'], lantern_festival: ['The Lantern Festival', 'Lễ Hội Lồng Đèn'],
   keeper_island: ['Keeper of the Island', 'Người Giữ Đảo'], sunrise: ['Sunrise from the lighthouse', 'Bình minh từ hải đăng'],
 };
 export function initAlbum() {

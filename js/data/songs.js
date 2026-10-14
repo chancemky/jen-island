@@ -172,7 +172,7 @@ export const SONGS = {
 
   // ---- the Lantern Festival: drums, gong, the whole island playing (C pentatonic)
   festival: {
-    en: 'Festival of Lanterns', vi: 'Hội Đèn Lồng',
+    en: 'Festival of Lanterns', vi: 'Hội Lồng Đèn',
     bpm: 124,
     chords: ['C', 'F', 'Am', 'G', 'C', 'F', 'G', 'C',
       'C', 'F', 'Am', 'G', 'C', 'F', 'G', 'C',

@@ -18,7 +18,7 @@ export const FISH = {
   moonfish: { en: 'Moonfish', vi: 'Cá mặt trăng', w: 1, rare: true, night: 3 },
   // night fishing (19:00–5:00) — a lantern lure brings them up
   firefly_squid: { en: 'Firefly squid', vi: 'Mực đom đóm', w: 6, nightOnly: true, ing: 'squid' }, ribbonfish: { en: 'Ribbonfish', vi: 'Cá hố', w: 9, nightOnly: true },
-  lanternfish: { en: 'Lanternfish', vi: 'Cá đèn lồng', w: 3, nightOnly: true, rare: true }, moon_jelly: { en: 'Moon jellyfish (let go!)', vi: 'Sứa mặt trăng (thả lại!)', w: 4, nightOnly: true },
+  lanternfish: { en: 'Lanternfish', vi: 'Cá lồng đèn', w: 3, nightOnly: true, rare: true }, moon_jelly: { en: 'Moon jellyfish (let go!)', vi: 'Sứa mặt trăng (thả lại!)', w: 4, nightOnly: true },
 };
 // tackle from Chú Hải: better rods give more casts a day and a kinder bite window; bait
 // (one per cast, used automatically) makes the rare fish more likely
@@ -95,7 +95,7 @@ export async function openTackle() {
     list.appendChild(h('div', 'section-title', T(`Bait · ${fs.bait || 0} left`, `Mồi câu · còn ${fs.bait || 0}`)));
     const b = h('div', 'row', `<div class="ico">🪱</div><div class="info"><b>${T(`${BAIT.n} bait`, `${BAIT.n} mồi`)}</b><small>${T('Used one per cast: rare fish bite far more often, boots far less.', 'Mỗi lần câu dùng một mồi: cá hiếm cắn nhiều hơn, ủng cũ ít hơn.')}</small></div>`);
     b.appendChild(btn(money(BAIT.cost), () => { if (!canAfford(BAIT.cost)) return moneyShortfall(BAIT.cost); addMoney(-BAIT.cost, 'equipment'); fs.bait = (fs.bait || 0) + BAIT.n; markDirty(true); sfx('buy'); api.rebuild(); }, 'buy')); list.appendChild(b);
-    const lu = h('div', 'row', `<div class="ico">🏮</div><div class="info"><b>${T(`${LURE.n} lantern lures`, `${LURE.n} mồi đèn`)}</b><small>${T(`For night fishing (19:00–5:00): squid, ribbonfish and lanternfish come up to the light. You have ${fs.lure || 0}.`, `Câu đêm (19:00–5:00): mực, cá hố và cá đèn lồng bơi lên theo ánh sáng. Bạn có ${fs.lure || 0}.`)}</small></div>`);
+    const lu = h('div', 'row', `<div class="ico">🏮</div><div class="info"><b>${T(`${LURE.n} lantern lures`, `${LURE.n} mồi đèn`)}</b><small>${T(`For night fishing (19:00–5:00): squid, ribbonfish and lanternfish come up to the light. You have ${fs.lure || 0}.`, `Câu đêm (19:00–5:00): mực, cá hố và cá lồng đèn bơi lên theo ánh sáng. Bạn có ${fs.lure || 0}.`)}</small></div>`);
     lu.appendChild(btn(money(LURE.cost), () => { if (!canAfford(LURE.cost)) return moneyShortfall(LURE.cost); addMoney(-LURE.cost, 'equipment'); fs.lure = (fs.lure || 0) + LURE.n; markDirty(true); sfx('buy'); api.rebuild(); }, 'buy')); list.appendChild(lu);
     list.appendChild(h('div', 'section-title', T('Fish journal', 'Sổ tay cá')));
     for (const [id, f] of Object.entries(FISH)) { const seen = s.fishSeen?.[id]; list.appendChild(h('div', 'row' + (seen ? '' : ' dim'), `<div class="ico">${seen ? (f.junk ? '🥾' : f.nightOnly ? '🏮' : f.rare ? '🌙' : '🐟') : '❔'}</div><div class="info"><b>${seen ? T(f.en, f.vi) : '???'}</b><small>${seen ? T(`Caught ${s.fishBag?.[id] || 0} · biggest ${fs.records?.[id] || '?'} cm`, `Đã câu ${s.fishBag?.[id] || 0} · lớn nhất ${fs.records?.[id] || '?'} cm`) : (f.night ? T('Bites after dark…', 'Cắn câu khi trời tối…') : T('Not caught yet', 'Chưa câu được'))}</small></div>`)); }

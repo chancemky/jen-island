@@ -119,7 +119,7 @@ useLanguage(() => G.lang);
 export function setLang(l) { deviceLang = l; if (G.state?.settings) G.state.settings.lang = l; try { localStorage.setItem(LANG_KEY, l); } catch {} bus.emit('lang', l); markDirty(true); }
 export const T = (en, vi) => (G.lang === 'vi' ? vi : en);
 // Resolve a label that may be a [en, vi] pair, a function, or a plain string.
-export const tr = v => (Array.isArray(v) ? T(v[0], v[1]) : typeof v === 'function' ? v() : v);
+export const tr = v => (Array.isArray(v) ? T(v[0], v[1]) : typeof v === 'function' ? tr(v()) : v);   // (a function may hand back a [en, vi] pair too)
 
 export function markDirty(important = false) { G.dirty = true; if (important) bus.emit('save:now'); }
 

@@ -18,7 +18,7 @@ export const PROJECTS = [
     props: () => [[640, 1262], [800, 1262], [1000, 1262], [1160, 1262]].map(([x, y]) => ['bench', x, y, { cullR: 40, cullH: 40 }]) },
   { id: 'beach_lamps', cost: 6000, icon: '🏮', en: 'Lamps along the beach path', vi: 'Đèn dọc đường bãi biển', blurb: ['Warm lights for evening walks by the sea.', 'Ánh đèn ấm cho những buổi tối dạo biển.'],
     props: () => [[300, 2210], [430, 2212], [700, 2226], [1080, 2238]].map(([x, y]) => ['lampPost', x, y, { cullR: 40, cullH: 60 }]) },
-  { id: 'market_lights', cost: 12000, icon: '🏮', en: 'Lantern lights over Market Street', vi: 'Đèn lồng trên Phố Chợ', blurb: ['Two more rows of silk lanterns from end to end.', 'Thêm hai dãy lồng đèn lụa dọc cả con phố.'],
+  { id: 'market_lights', cost: 12000, icon: '🏮', en: 'Lantern lights over Market Street', vi: 'Lồng đèn trên Phố Chợ', blurb: ['Two more rows of silk lanterns from end to end.', 'Thêm hai dãy lồng đèn lụa dọc cả con phố.'],
     props: () => [1150, 1290].flatMap(y => [0, 1, 2, 3].map(i => ['lanternString', 560 + i * 200, y, { sortY: 99990, x2: 560 + i * 200 + 150, h: 46, cull: { x: 560 + i * 200 - 10, y: y - 70, w: 180, h: 80 } }])) },
   { id: 'dock_flowers', cost: 18000, icon: '🌺', en: 'Flower beds up the dock road', vi: 'Luống hoa dọc đường bến tàu', blurb: ['Welcome every ferry with flowers on both sides of the road.', 'Đón mỗi chuyến phà bằng hoa hai bên đường.'],
     props: () => [818, 982].flatMap(x => along(x, 1800, x, 2230, 8).map(([px, py]) => ['flowerPatch', px, py, { cullR: 30, cullH: 30, flat: true }])) },

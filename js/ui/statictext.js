@@ -6,7 +6,7 @@ const TEXT = {
   email: ['Email', 'Email'], password: ['Password', 'Mật khẩu'], play: ['Play', 'Lên đảo'],
   feat1: ['Run little drink stands, food carts and a restaurant', 'Mở quán nước, xe đồ ăn và cả nhà hàng'],
   feat2: ['Decorate your home and dress up your way', 'Trang trí nhà và ăn mặc theo ý bạn'],
-  feat3: ['Restore the Night Market and light the Lantern Festival', 'Hồi sinh Chợ Đêm và thắp sáng Lễ Hội Đèn Lồng'],
+  feat3: ['Restore the Night Market and light the Lantern Festival', 'Hồi sinh Chợ Đêm và thắp sáng Lễ Hội Lồng Đèn'],
   feat4: ['Make friends with Mèo Mây and the whole island', 'Làm bạn với Mèo Mây và cả hòn đảo'],
   playfree: ['Play now — free', 'Chơi ngay — miễn phí'], haveaccount: ['I have an account', 'Tôi đã có tài khoản'],
   guestnote: ['No account needed. Your island saves on this device; create an account any time to keep it safe in the cloud.', 'Không cần tài khoản. Hòn đảo được lưu trên máy này; tạo tài khoản bất cứ lúc nào để lưu an toàn lên mây.'],

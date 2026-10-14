@@ -1,6 +1,6 @@
 // Shop lists and inventory screens.
 
-import { G, T, addMoney, canAfford, addPantry, addMat, mats, pantry, hasMats, markDirty } from '../systems/state.js';
+import { G, T, tr, addMoney, canAfford, addPantry, addMat, mats, pantry, hasMats, markDirty } from '../systems/state.js';
 import { INGREDIENTS, AISLES, MATERIALS, FURNITURE, RECIPES, STATION, BUSINESSES, RECIPE_UPGRADES, ACHIEVEMENTS, CHAPTERS, ingName, matName, recipeName, bizName, furnName, EQUIPMENT, SHOP_LEVEL_REQ, PRICE_RANGE, recipeUpgradeCost, BRAND_COLOURS, SIGN_STYLES, BRAND_RECOLOUR } from '../data/game.js';
 import { MERCHANTS, RESIDENTS } from '../data/looks.js';
 import { openSheet, tabs, rowEl, btn, h, flyIcon } from './sheets.js';
@@ -199,7 +199,7 @@ export function openFurnitureShop() {
     // home upgrades (pay now, or move in now and pay back a little each good night)
     const up = nextHome();
     if (up || homeLoan()) {
-      const r = h('div', 'row', `<div class="ico">🏡</div><div class="info"><b>${escapeHtml(up ? T(up.en, up.vi) : T('Home loan', 'Tiền nhà'))}</b><small>${homeLoan() ? T(`Still owed: ${money(homeLoan())} (paid back from good days)`, `Còn nợ: ${money(homeLoan())} (trả dần vào ngày có lãi)`) : escapeHtml(T(...up.note))}</small></div>`);
+      const r = h('div', 'row', `<div class="ico">🏡</div><div class="info"><b>${escapeHtml(up ? T(up.en, up.vi) : T('Home loan', 'Khoản trả góp'))}</b><small>${homeLoan() ? T(`Still owed: ${money(homeLoan())} (paid back from good days)`, `Còn nợ: ${money(homeLoan())} (trả dần vào ngày có lãi)`) : escapeHtml(T(...up.note))}</small></div>`);
       if (up && !homeLoan()) { const col = h('div', 'btn-col'); col.append(btn(money(up.cost), () => { if (!upgradeHome('cash')) return moneyShortfall(up.cost); goalBought('home', 'house'); sfx('fanfare'); api.rebuild(); }, 'buy'), btn(isGoal('home', 'house') ? T('📌 Saving', '📌 Đang để dành') : T('📌 Save for it', '📌 Để dành'), () => { setGoal({ kind: 'home', id: 'house', en: up.en, vi: up.vi, cost: up.cost }); api.rebuild(); }, 'buy alt', isGoal('home', 'house')), btn(T(`${money(loanDeposit(up.cost))} down · rest later`, `Trả trước ${money(loanDeposit(up.cost))} · còn lại trả dần`), () => { if (!upgradeHome('loan')) return moneyShortfall(loanDeposit(up.cost)); sfx('fanfare'); api.rebuild(); }, 'buy alt')); r.appendChild(col); }
       list.appendChild(r);
     }
@@ -515,7 +515,7 @@ export function openRecipeBook({ onDiscover } = {}) {
       if (next) r.appendChild(btn(money(nextCost), () => {
         if (!canAfford(nextCost)) return moneyShortfall(nextCost);
         addMoney(-nextCost, 'recipe'); s.recipeLevels[id] = lv + 1; markDirty(true); sfx('success');
-        toast({ text: T(`${recipeName(id)} is now Lv ${lv + 1}!`, `${recipeName(id)} lên Lv ${lv + 1}!`), sub: T(next.label, next.labelVi), icon: R.icon }); api.rebuild();
+        toast({ text: T(`${recipeName(id)} is now Lv ${lv + 1}!`, `${recipeName(id)} lên cấp ${lv + 1}!`), sub: T(next.label, next.labelVi), icon: R.icon }); api.rebuild();
       }));
       list.appendChild(r);
     }
@@ -612,7 +612,7 @@ export function openJournal() {
       list.appendChild(h('div', 'section-title', T('This season', 'Mùa này')));
       { const sp = stampProgress(), n = sp.filter(x => x.done).length, r0 = rowEl({ icon: 'star', title: T(`Season stamp card · ${n}/6`, `Thẻ đóng dấu mùa · ${n}/6`), sub: sp.map(x => (x.done ? '✓ ' : '· ') + x.icon).join('  ') }); r0.style.cursor = 'pointer'; r0.onclick = () => openStampCard(); list.appendChild(r0); }
       list.appendChild(h('div', 'section-title', T('Nature', 'Thiên nhiên')));
-      const r1 = rowEl({ icon: 'fish', title: T(`Tide pool friends · ${Object.keys(tp).length}/${CREATURE_COUNT}`, `Bạn bè hồ triều · ${Object.keys(tp).length}/${CREATURE_COUNT}`), sub: T('West end of Sunny Beach, at low tide (6–9, 17–20)', 'Cuối bãi biển phía tây, khi triều xuống (6–9, 17–20 giờ)') });
+      const r1 = rowEl({ icon: 'fish', title: T(`Tide pool friends · ${Object.keys(tp).length}/${CREATURE_COUNT}`, `Sinh vật vũng triều · ${Object.keys(tp).length}/${CREATURE_COUNT}`), sub: T('West end of Sunny Beach, at low tide (6–9, 17–20)', 'Cuối bãi biển phía tây, khi triều xuống (6–9, 17–20 giờ)') });
       r1.style.cursor = 'pointer'; r1.onclick = () => openTideBook(); list.appendChild(r1);
       list.appendChild(rowEl({ icon: 'star', title: T(`Constellations · ${Object.keys(st).length}/${CONSTELLATIONS.length}`, `Chòm sao · ${Object.keys(st).length}/${CONSTELLATIONS.length}`), sub: Object.keys(st).length ? CONSTELLATIONS.filter(c => st[c.id]).map(c => escapeHtml(T(c.en, c.vi))).join(' · ') : T('Lighthouse Point, on clear nights after 21:00', 'Mũi Hải Đăng, những đêm quang mây sau 21 giờ') })); }
     // the scrapbook: every neighbour you helped, and what they gave you to remember it by
@@ -621,7 +621,7 @@ export function openJournal() {
     if (!doneQs.length) list.appendChild(h('div', 'empty-note', T('Help your neighbours and their stories end up here.', 'Giúp hàng xóm và câu chuyện của họ sẽ được ghi ở đây.')));
     for (const q of doneQs) {
       const k = q.reward?.keepsake, mem = q.memory || q.thanks;
-      list.appendChild(rowEl({ icon: q.icon || 'star', title: escapeHtml(k ? T(k[0], k[1]) : T(q.item[0], q.item[1])), sub: escapeHtml(mem ? T(mem[0], mem[1]) : '') + (G.state.keepsakes?.[q.id] ? T(` · day ${G.state.keepsakes[q.id].day}`, ` · ngày ${G.state.keepsakes[q.id].day}`) : '') }));
+      list.appendChild(rowEl({ icon: q.icon || 'star', title: escapeHtml(k ? T(k[0], k[1]) : T(q.item[0], q.item[1])), sub: escapeHtml(mem ? tr(mem) : '') + (G.state.keepsakes?.[q.id] ? T(` · day ${G.state.keepsakes[q.id].day}`, ` · ngày ${G.state.keepsakes[q.id].day}`) : '') }));
     }
     list.appendChild(h('div', 'section-title', T('Stories Mèo Mây told you', 'Chuyện Mèo Mây kể')));
     for (const [ch, en, vi] of LORE) { if (s.story.chapter >= ch) list.appendChild(rowEl({ icon: 'notebook', title: escapeHtml(T(en, vi)) })); }

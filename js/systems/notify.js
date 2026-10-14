@@ -21,7 +21,7 @@ async function schedule() {
   await clear();
   const s = G.state, isle = s.island.name || 'Bistro Island', now = Date.now(), list = [];
   const morning = new Date(); morning.setDate(morning.getDate() + 1); morning.setHours(8, 0, 0, 0);
-  list.push({ id: 101, title: T('☀️ Morning mail', '☀️ Thư buổi sáng'), body: T(`A gift and new neighbour requests are waiting on ${isle}.`, `Một món quà và lời nhờ mới của hàng xóm đang chờ ở ${isle}.`), schedule: { at: morning } });
+  list.push({ id: 101, title: T('☀️ Morning mail', '☀️ Thư buổi sáng'), body: T(`A gift, new neighbour requests and fresh designer pieces at Cô Ba's are waiting on ${isle}.`, `Một món quà, lời nhờ mới của hàng xóm và đồ thiết kế mới ở tiệm cô Ba đang chờ ở ${isle}.`), schedule: { at: morning } });
   const close = weekEndsAt(islandNow()) - 5 * 3600e3;              // 19:00 Japan time on Sunday
   if (close > now + 3600e3) list.push({ id: 102, title: T('🏆 Weekly board closes tonight', '🏆 Bảng tuần đóng tối nay'), body: T('A few more customers could win you a trophy.', 'Phục vụ thêm vài khách là có thể giành cúp đó.'), schedule: { at: new Date(close) } });
   list.push({ id: 103, title: T('🐱 Mèo Mây misses you', '🐱 Mèo Mây nhớ bạn'), body: T('The tea stand is quiet without you. Come say hi?', 'Quán trà vắng bạn buồn lắm. Ghé chào một tiếng nha?'), schedule: { at: new Date(now + 3 * 864e5) } });

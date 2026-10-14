@@ -140,7 +140,7 @@ function lookInPool() {
 }
 export function openTideBook() {
   const col = G.state.tidepool || {};
-  openSheet({ title: T('Tide pool friends', 'Bạn bè hồ triều'), sub: T(`${Object.keys(col).length} of ${CREATURES.length} found · low tide 6–9 and 17–20`, `Tìm được ${Object.keys(col).length}/${CREATURES.length} · triều xuống 6–9 và 17–20 giờ`), build: body => {
+  openSheet({ title: T('Tide pool friends', 'Sinh vật vũng triều'), sub: T(`${Object.keys(col).length} of ${CREATURES.length} found · low tide 6–9 and 17–20`, `Tìm được ${Object.keys(col).length}/${CREATURES.length} · triều xuống 6–9 và 17–20 giờ`), build: body => {
     const l = h('div', 'list'); body.appendChild(l);
     for (const cr of CREATURES) l.appendChild(h('div', 'row' + (col[cr.id] ? '' : ' locked'), `<div class="ico">${col[cr.id] ? cr.em : '❔'}</div><div class="info"><b>${col[cr.id] ? T(cr.en, cr.vi) : '???'}</b><small>${col[cr.id] ? T(`Seen ${col[cr.id]}×`, `Đã thấy ${col[cr.id]} lần`) : (cr.w < 4 ? T('Very rare — keep checking the rocks at low tide', 'Rất hiếm — cứ ghé đá lúc triều xuống') : cr.w < 12 ? T('Uncommon — the west end of Sunny Beach at low tide', 'Hơi hiếm — cuối phía tây Bãi Biển lúc triều xuống') : T('Common — the tide pool at the west end of Sunny Beach', 'Hay gặp — hồ triều ở cuối phía tây Bãi Biển'))}</small></div>`));
   } });

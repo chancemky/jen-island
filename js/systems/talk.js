@@ -150,7 +150,7 @@ export async function talkToMerchant(a) {
   await say(a, pickT(choice(MERCH[a.data.mid] || [['Hello!', 'Xin chào!']])));
 }
 const KEEPER_TALK = {
-  quick: [['Order, make, hand over, smile. I could do this in my sleep. I might be doing it in my sleep.', 'Nhận order, làm, đưa, cười. {Me} làm trong mơ cũng được. Có khi đang mơ thật.'], ['Fastest hands on the island. Ask anyone. Actually, don\'t, they\'ll say Bà Tư.', 'Tay nhanh nhất đảo đó. Hỏi ai cũng biết. Mà thôi đừng hỏi, họ sẽ nói Bà Tư.']],
+  quick: [['Order, make, hand over, smile. I could do this in my sleep. I might be doing it in my sleep.', 'Nhận món, làm, đưa, cười. {Me} làm trong mơ cũng được. Có khi đang mơ thật.'], ['Fastest hands on the island. Ask anyone. Actually, don\'t, they\'ll say Bà Tư.', 'Tay nhanh nhất đảo đó. Hỏi ai cũng biết. Mà thôi đừng hỏi, họ sẽ nói Bà Tư.']],
   careful: [['I measure everything twice. The ice cubes are a little scared of me.', '{Me} đo mọi thứ hai lần. Mấy viên đá hơi sợ {me}.'], ['Not one complaint this week. I keep a little notebook.', 'Tuần này không có lời phàn nàn nào. {Me} ghi vào sổ nhỏ đó.']],
   friendly: [['I know every regular\'s name, their kids\' names and two of their dogs.', '{Me} biết tên mọi khách quen, tên con họ và hai con chó của họ.'], ['A tourist cried because the tea was so good. I gave her a napkin and a free one.', 'Có du khách khóc vì trà ngon quá. {Me} đưa khăn giấy và tặng thêm một ly.']],
   steady: [['Another good day. Nothing broken, nobody angry. That\'s the job.', 'Thêm một ngày tốt. Không vỡ gì, không ai giận. Việc là vậy đó.']],

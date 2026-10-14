@@ -32,7 +32,7 @@ export const INGREDIENTS = {
   peach_syrup:    { vi: 'Siro đào',      en: 'Peach syrup',     cost: 4, pack: 8 },
   avocado:        { vi: 'Bơ',            en: 'Avocados',        cost: 12, pack: 4, prep: { to: 'avocado_cut', method: 'scoop', verb: 'Scoop' } },
   tapioca:        { vi: 'Trân châu',     en: 'Tapioca pearls',  cost: 3.5, pack: 8 },
-  jelly:          { vi: 'Thạch',         en: 'Grass jelly',     cost: 3, pack: 8 },
+  jelly:          { vi: 'Sương sáo',     en: 'Grass jelly',     cost: 3, pack: 8 },
   cheese_foam:    { vi: 'Kem phô mai',   en: 'Cheese foam',     cost: 5, pack: 8 },
   bread:          { vi: 'Bánh mì',       en: 'Baguettes',       cost: 5, pack: 6, prep: { to: 'bread_split', method: 'split', verb: 'Split' } },
   pate:           { vi: 'Pa tê',         en: 'Pâté',            cost: 4, pack: 8 },
@@ -49,7 +49,7 @@ export const INGREDIENTS = {
   batter:         { vi: 'Bột bánh xèo',  en: 'Bánh xèo batter', cost: 5, pack: 6 },
   sprouts:        { vi: 'Giá',           en: 'Bean sprouts',    cost: 1.5,  pack: 8 },
   fish_sauce:     { vi: 'Nước mắm',      en: 'Fish sauce',      cost: 1.5, pack: 12 },
-  rice:           { vi: 'Cơm tấm',       en: 'Broken rice',     cost: 3, pack: 8 },
+  rice:           { vi: 'Gạo tấm',       en: 'Broken rice',     cost: 3, pack: 8 },
   broth:          { vi: 'Nước dùng phở', en: 'Phở broth',       cost: 7, pack: 8 },
   broth_spicy:    { vi: 'Nước dùng Huế', en: 'Spicy Huế broth', cost: 9, pack: 8 },
   beef:           { vi: 'Thịt bò',       en: 'Beef',            cost: 16, pack: 6, prep: { to: 'beef_sliced', method: 'chop', verb: 'Slice' } },
@@ -163,9 +163,9 @@ export const OPTIONS = {
   ice:     { label: 'Đá', en: 'Ice', values: ['không đá', 'ít đá', 'đá bình thường'], short: ['none', 'less', 'normal'], uses: 'ice',
              btn: { 'không đá': ['None', 'Không'], 'ít đá': ['Less', 'Ít'], 'đá bình thường': ['Normal', 'Thường'] },
              say: { 'không đá': ['no ice', 'không đá'], 'ít đá': ['less ice', 'ít đá'], 'đá bình thường': ['normal ice', 'đá bình thường'] } },
-  topping: { label: 'Topping', en: 'Topping', values: ['none', 'tapioca', 'jelly', 'cheese_foam'], names: { none: 'không topping', tapioca: 'trân châu', jelly: 'thạch', cheese_foam: 'kem phô mai' }, surcharge: { tapioca: 5, jelly: 4, cheese_foam: 7 },   // ≈ ingredient cost × 1.15 (after ECON.ingredients)
+  topping: { label: 'Topping', en: 'Topping', values: ['none', 'tapioca', 'jelly', 'cheese_foam'], names: { none: 'không topping', tapioca: 'trân châu', jelly: 'sương sáo', cheese_foam: 'kem phô mai' }, surcharge: { tapioca: 5, jelly: 4, cheese_foam: 7 },   // ≈ ingredient cost × 1.15 (after ECON.ingredients)
              btn: { none: ['None', 'Không'], tapioca: ['Tapioca', 'Trân châu'], jelly: ['Jelly', 'Thạch'], cheese_foam: ['Cheese foam', 'Kem phô mai'] },
-             say: { none: ['no topping', 'không topping'], tapioca: ['tapioca pearls', 'trân châu'], jelly: ['grass jelly', 'thạch'], cheese_foam: ['cheese foam', 'kem phô mai'] } },
+             say: { none: ['no topping', 'không topping'], tapioca: ['tapioca pearls', 'trân châu'], jelly: ['grass jelly', 'sương sáo'], cheese_foam: ['cheese foam', 'kem phô mai'] } },
   chili:   { label: 'Ớt', en: 'Chili', values: ['không ớt', 'có ớt'], uses: 'chili', btn: { 'không ớt': ['No', 'Không'], 'có ớt': ['Yes', 'Có ớt'] }, say: { 'không ớt': ['no chili', 'không ớt'], 'có ớt': ['with chili', 'có ớt'] } },
 };
 
@@ -301,7 +301,7 @@ const HIGH_UPGRADES = {
   truck: [{ cost: 2200, mats: { metal: 8, paint: 6, cable: 1 }, label: 'Pop-out counter & beach umbrellas', labelVi: 'Quầy kéo ra & dù bãi biển', queue: 6, attract: 1.9, price: 1.15 },
           { cost: 5200, mats: { metal: 10, cable: 3, lantern: 4 }, label: 'Chrome trim & sound system', labelVi: 'Viền chrome & dàn loa', queue: 6, attract: 2.2, price: 1.22 }],
   restaurant: [{ cost: 4200, mats: { tile: 16, paint: 8, lantern: 4 }, label: 'Garden courtyard & koi bowl', labelVi: 'Sân vườn & chậu cá koi', tables: 8, attract: 1.9, price: 1.15 },
-          { cost: 9500, mats: { wood: 20, cable: 4, lantern: 8 }, label: 'Rooftop lanterns & live music corner', labelVi: 'Đèn lồng sân thượng & góc nhạc sống', tables: 8, attract: 2.3, price: 1.25 }],
+          { cost: 9500, mats: { wood: 20, cable: 4, lantern: 8 }, label: 'Rooftop lanterns & live music corner', labelVi: 'Lồng đèn sân thượng & góc nhạc sống', tables: 8, attract: 2.3, price: 1.25 }],
 };
 for (const [id, ups] of Object.entries(HIGH_UPGRADES)) BUSINESSES[id].upgrades.push(...ups);
 // the harbour café, the cove grill and the smoothie bar: kiosk upgrades (string lights,
@@ -357,7 +357,7 @@ export const NIGHT_MARKET_RESTORE = { mats: { wood: 20, metal: 8, paint: 6, lant
 // ---------------------------------------------------------------- employees (restaurants only)
 export const ROLES = {
   cook:    { vi: 'Đầu bếp', en: 'Cook',    desc: 'Cooks tickets at the stove.', descVi: 'Nấu món ở bếp.' },
-  server:  { vi: 'Phục vụ', en: 'Server',  desc: 'Takes orders and carries dishes.', descVi: 'Nhận order và bưng món.' },
+  server:  { vi: 'Phục vụ', en: 'Server',  desc: 'Takes orders and carries dishes.', descVi: 'Nhận món và bưng món.' },
   prep:    { vi: 'Sơ chế',  en: 'Prep',    desc: 'Keeps prepared ingredients stocked.', descVi: 'Luôn chuẩn bị sẵn nguyên liệu.' },
   cleaner: { vi: 'Dọn dẹp', en: 'Cleaner', desc: 'Clears and wipes tables.', descVi: 'Dọn và lau bàn.' },
   keeper:  { vi: 'Người trông quán', en: 'Shopkeeper', desc: 'Runs a small shop for you.', descVi: 'Trông quán nhỏ giúp bạn.' },
@@ -462,8 +462,8 @@ export const FURNITURE = {
   blossom_branch: { vi: 'Cành đào trong bình', en: 'Peach blossom branch', price: 0, w: 16, h: 10, reward: true, fixed: true },
   lotus_lamp:   { vi: 'Đèn hoa sen', en: 'Lotus lamp', price: 0, w: 16, h: 10, reward: true, fixed: true, light: true },
   harvest_basket:{ vi: 'Giỏ mùa gặt', en: 'Harvest basket', price: 0, w: 20, h: 12, reward: true, fixed: true },
-  warm_lantern: { vi: 'Đèn lồng sưởi ấm', en: 'Warm winter lantern', price: 0, w: 14, h: 10, reward: true, fixed: true, light: true },
-  song_hy_lantern: { vi: 'Đèn lồng song hỷ', en: 'Double-happiness lantern', price: 0, w: 14, h: 8, reward: true, fixed: true, light: true, wall: true },
+  warm_lantern: { vi: 'Lồng đèn sưởi ấm', en: 'Warm winter lantern', price: 0, w: 14, h: 10, reward: true, fixed: true, light: true },
+  song_hy_lantern: { vi: 'Lồng đèn song hỷ', en: 'Double-happiness lantern', price: 0, w: 14, h: 8, reward: true, fixed: true, light: true, wall: true },
   museum_model: { vi: 'Mô hình Đình làng', en: 'Village Hall model', price: 0, w: 30, h: 14, reward: true, fixed: true },
   firefly_jar:  { vi: 'Lọ đom đóm', en: 'Jar of fireflies', price: 0, w: 12, h: 10, reward: true, fixed: true, light: true },
   fish_plaque:  { vi: 'Bảng cá vô địch', en: 'Champion\'s mounted fish', price: 0, w: 34, h: 8, reward: true, fixed: true, wall: true },
@@ -487,8 +487,8 @@ export const PERSONALITIES = {
   picky:    { vi: 'Khó tính', en: 'Picky',  patience: 0.9,  tip: 1.45, weight: 1 },
   tourist:  { vi: 'Du khách', en: 'Tourist',  patience: 1.1,  tip: 1.3, weight: 3 },
   // by look, not drawn at random: little ones and grandparents
-  kid:      { vi: 'Em bé', en: 'Kid',  patience: 0.85, tip: 0.6, weight: 0 },
-  elder:    { vi: 'Ông bà', en: 'Grandparent',  patience: 1.7, tip: 1.2, weight: 0 },
+  kid:      { vi: 'Trẻ em', en: 'Kid',  patience: 0.85, tip: 0.6, weight: 0 },
+  elder:    { vi: 'Người lớn tuổi', en: 'Grandparent',  patience: 1.7, tip: 1.2, weight: 0 },
 };
 
 // ---------------------------------------------------------------- chapters
@@ -509,7 +509,7 @@ export const CHAPTERS = [
   { n: 13, title: 'The Harbour Café', vi: 'Quán Cà Phê Bến Cảng' },
   { n: 14, title: 'The Long Bridge', vi: 'Cây Cầu Dài' },
   { n: 15, title: 'Landlord', vi: 'Chủ Đất' },
-  { n: 16, title: 'The Lantern Festival', vi: 'Lễ Hội Đèn Lồng' },
+  { n: 16, title: 'The Lantern Festival', vi: 'Lễ Hội Lồng Đèn' },
   { n: 17, title: 'Coconut Cove', vi: 'Vịnh Dừa' },
   { n: 18, title: 'Star of the Night Market', vi: 'Ngôi Sao Chợ Đêm' },   // (was "Queen": you can be anyone)
   { n: 19, title: 'The Island Runs Itself', vi: 'Hòn Đảo Tự Vận Hành' },
@@ -526,7 +526,7 @@ export const VY_VIEWS = [
 
 export const ACHIEVEMENTS = {
   first_repair:   { en: 'Handy Newcomer', desc: 'Repair your first shed.', vi: 'Tay nghề người mới', descVi: 'Sửa căn chòi đầu tiên.' },
-  first_sale:     { en: 'First Sale', desc: 'Serve your very first customer.', vi: 'Món hàng đầu tiên', descVi: 'Phục vụ vị khách đầu tiên.' },
+  first_sale:     { en: 'First Sale', desc: 'Serve your very first customer.', vi: 'Mở hàng', descVi: 'Phục vụ vị khách đầu tiên.' },
   perfect_10:     { en: 'Steady Hands', desc: 'Make 10 perfect orders.', vi: 'Đôi tay vững vàng', descVi: 'Làm 10 món hoàn hảo.' },
   perfect_50:     { en: 'Island Barista', desc: 'Make 50 perfect orders.', vi: 'Barista của đảo', descVi: 'Làm 50 món hoàn hảo.' },
   served_100:     { en: 'Crowd Pleaser', desc: 'Serve 100 customers.', vi: 'Được lòng mọi người', descVi: 'Phục vụ 100 khách.' },
@@ -534,7 +534,7 @@ export const ACHIEVEMENTS = {
   regulars_5:     { en: 'Neighbourhood Favourite', desc: 'Have 5 regular customers.', vi: 'Quán ruột của xóm', descVi: 'Có 5 khách quen.' },
   recipes_5:      { en: 'Recipe Collector', desc: 'Discover 5 recipes.', vi: 'Nhà sưu tầm công thức', descVi: 'Khám phá 5 công thức.' },
   recipes_all:    { en: 'Island Cookbook', desc: 'Discover every recipe.', vi: 'Sổ tay của đảo', descVi: 'Khám phá mọi công thức.' },
-  money_1000:     { en: 'Pocket Full of Đồng', desc: 'Earn 1,000k in total.', vi: 'Túi đầy tiền', descVi: 'Kiếm tổng cộng 1.000k.' },
+  money_1000:     { en: 'Pocket Full of Đồng', desc: 'Earn 1,000k in total.', vi: 'Túi đầy tiền', descVi: 'Kiếm tổng cộng 1 triệu.' },
   money_10000:    { en: 'Island Tycoon', desc: 'Earn 10M in total.', vi: 'Đại gia của đảo', descVi: 'Kiếm tổng cộng 10 triệu.' },
   two_biz:        { en: 'Second Shop', desc: 'Own two working businesses.', vi: 'Quán thứ hai', descVi: 'Có hai cửa hàng hoạt động.' },
   truck:          { en: 'On Wheels', desc: 'Buy the food truck.', vi: 'Lăn bánh', descVi: 'Mua xe bán đồ ăn.' },
@@ -548,10 +548,10 @@ export const ACHIEVEMENTS = {
   max_level:      { en: 'Master Builder', desc: 'Upgrade a business to level 3.', vi: 'Bậc thầy xây dựng', descVi: 'Nâng cấp một quán lên cấp 3.' },
   tip_big:        { en: 'Big Tipper', desc: 'Receive a tip of 20k or more.', vi: 'Khách sộp', descVi: 'Nhận tiền boa từ 20k trở lên.' },
   first_keeper:   { en: 'A Helping Hand', desc: 'Hire your first shopkeeper.', vi: 'Có người phụ giúp', descVi: 'Thuê người trông quán đầu tiên.' },
-  lantern_festival: { en: 'Festival of Lights', desc: 'Light up the Lantern Festival.', vi: 'Đêm hội đèn lồng', descVi: 'Thắp sáng Lễ Hội Đèn Lồng.' },
+  lantern_festival: { en: 'Festival of Lights', desc: 'Light up the Lantern Festival.', vi: 'Đêm hội lồng đèn', descVi: 'Thắp sáng Lễ Hội Lồng Đèn.' },
   // hidden: shown as ??? until you stumble on them
   sunrise:        { hidden: true, en: 'First Light', desc: 'Watch the sunrise from Lighthouse Point.', vi: 'Tia nắng đầu tiên', descVi: 'Ngắm bình minh ở Ngọn Hải Đăng.', hint: ['Early birds see the lighthouse at its best.', 'Người dậy sớm mới thấy hải đăng đẹp nhất.'] },
-  social_day:     { hidden: true, en: 'Social Butterfly', desc: 'Talk to every resident in a single day.', vi: 'Con bướm xã giao', descVi: 'Trò chuyện với mọi cư dân trong một ngày.', hint: ['Some days, say hello to everyone.', 'Có hôm, hãy chào hỏi tất cả mọi người.'] },
+  social_day:     { hidden: true, en: 'Social Butterfly', desc: 'Talk to every resident in a single day.', vi: 'Thánh xã giao', descVi: 'Trò chuyện với mọi cư dân trong một ngày.', hint: ['Some days, say hello to everyone.', 'Có hôm, hãy chào hỏi tất cả mọi người.'] },
   all_homes:      { hidden: true, en: 'Welcome Everywhere', desc: 'Visit every resident\'s home.', vi: 'Ở đâu cũng được đón', descVi: 'Ghé thăm nhà của mọi cư dân.', hint: ['Every door on the island has a story.', 'Cánh cửa nào trên đảo cũng có một câu chuyện.'] },
   meo_naps:       { hidden: true, en: 'Nap Spotter', desc: 'Find Mèo Mây napping in four different places.', vi: 'Thợ săn giấc ngủ', descVi: 'Bắt gặp Mèo Mây ngủ trưa ở bốn nơi khác nhau.', hint: ['Afternoons are sleepy for some of us.', 'Buổi chiều, có ai đó hay buồn ngủ lắm.'] },
   duck_friend:    { hidden: true, en: 'Friend of Ducks', desc: 'Feed the lotus-pond ducks on five different days.', vi: 'Bạn của lũ vịt', descVi: 'Cho vịt ở hồ sen ăn vào năm ngày khác nhau.', hint: ['The pond has regulars too.', 'Hồ sen cũng có khách quen.'] },
