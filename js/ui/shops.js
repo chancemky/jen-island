@@ -238,13 +238,16 @@ export function openFurnitureShop() {
       const ico = h('div', 'ico'); ico.appendChild(cv); drawFurniturePreview(cv, id, f);
       const inSet = setOf(id), kind = inSet ? T(`Part of the ${inSet.en} set`, `Thuộc bộ ${inSet.vi}`) : f.light ? T('Glows warmly at night', 'Tỏa sáng ấm áp') : f.wall ? T('Hangs on the wall', 'Treo tường') : T('Place it in your home', 'Đặt trong nhà');
       const info = h('div', 'info', `<b>${escapeHtml(furnName(id))}</b><small>${kind}</small>${owned ? `<span class="have">${T('Owned', 'Đã có')}: ${owned}</span>` : ''}`);
-      r.append(ico, info, btn(money(f.price), () => {
+      const buyB = btn(money(f.price), () => {
         if (!canAfford(f.price)) return moneyShortfall(f.price);
         addMoney(-f.price, 'furniture'); sfx('buy'); merchantSay();
-        s.home.owned.push(id); markDirty(true);
+        s.home.owned.push(id); markDirty(true); goalBought('furniture', id);
         noteDelivery(id);
         bus.emit('bought', 'furniture', id); api.rebuild();
-      }));
+      });
+      // the big pieces can be pinned as a savings goal, like houses and designer outfits
+      if (f.price >= 20000 && !canAfford(f.price)) { const col = h('div', 'btn-col'); col.append(buyB, btn(isGoal('furniture', id) ? T('📌 Saving', '📌 Đang để dành') : T('📌 Save for it', '📌 Để dành'), () => { setGoal({ kind: 'furniture', id, en: FURNITURE[id].en, vi: FURNITURE[id].vi, cost: f.price }); api.rebuild(); }, 'buy alt', isGoal('furniture', id))); r.append(ico, info, col); }
+      else r.append(ico, info, buyB);
       list.appendChild(r);
     }
   } });

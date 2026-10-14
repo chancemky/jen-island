@@ -492,7 +492,7 @@ const payToday = () => G.state.today.opened?.restaurant ? 1 : RETAINER;
 // the full day's pay if it opens (dailyWages() is what tonight costs: the retainer if it stayed shut)
 export function openWages() { const z = bizOf('restaurant'); return z.repair < 1 ? 0 : z.employees.reduce((s, e) => s + (empOff(e) ? 0 : wageOf(e)), 0); }
 // (the hiring fee is two days' pay up front: the first night is already covered, not charged again)
-export function dailyWages() { const z = bizOf('restaurant'); return z.repair < 1 ? 0 : Math.round(z.employees.reduce((s, e) => s + (empOff(e) || e.hiredDay === G.state.day ? 0 : wageOf(e)), 0) * payToday()); }
+export function dailyWages() { const z = bizOf('restaurant'); return z.repair < 1 ? 0 : Math.round(z.employees.reduce((s, e) => s + (empOff(e) || G.state.day - e.hiredDay < 2 ? 0 : wageOf(e)), 0) * payToday()); }
 export function resetRestaurantDay() {
   const r = restRT(), sc = scene();
   for (const g of r.guests) sc?.remove(g.actor);

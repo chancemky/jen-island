@@ -352,7 +352,7 @@ export function dailyCosts() {
   const s = G.state;
   const rent = rentToday();
   let wages = 0; const staff = [];
-  for (const [id, k] of Object.entries(s.keepers || {})) if (s.biz[id]?.owned) { const w = k.offDay === s.day || k.hiredDay === s.day ? 0 : keeperWage(id); /* (hired today: the hiring fee already paid for today) */ wages += w; recordCost(id, 'wages', w); staff.push({ name: k.name, biz: id, served: k.today || 0, wage: w }); k.today = 0; }
+  for (const [id, k] of Object.entries(s.keepers || {})) if (s.biz[id]?.owned) { const w = k.offDay === s.day || s.day - k.hiredDay < 2 ? 0 : keeperWage(id); /* (the hiring fee is two days' pay: today and tomorrow are covered) */ wages += w; recordCost(id, 'wages', w); staff.push({ name: k.name, biz: id, served: k.today || 0, wage: w }); k.today = 0; }
   for (const [id, r] of rentLines()) recordCost(id, 'rent', r);
   if (rent) addMoney(-rent, 'rent');
   if (wages) addMoney(-wages, 'wages');

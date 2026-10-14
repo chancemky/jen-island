@@ -164,7 +164,7 @@ export function renderOffice(pane, api) {
         else card.appendChild(h('div', 'oc-line' + (net < w * 1.5 ? '' : ' dim'), `${T(`Lately this shop clears about ${money(net)}/day; the wage would be ${money(w)}/day.`, `Gần đây quán lời khoảng ${money(net)}/ngày; lương sẽ là ${money(w)}/ngày.`)}${net < w * 1.5 ? ` <span style="color:#c0473b">${T('That\'s thin — a shopkeeper would eat most of it. Upgrade recipes, raise prices or wait until it\'s busier.', 'Hơi mỏng — lương sẽ ăn gần hết tiền lời. Hãy nâng cấp công thức, tăng giá hoặc đợi quán đông hơn.')}</span>` : ''}`));
         row.appendChild(btn(T(`Hire shopkeeper · ${money(fee)}`, `Thuê người trông · ${money(fee)}`), () => {
           if (!hireKeeper(id)) return moneyShortfall(fee);
-          sfx('success'); toast({ text: T(`${c.name} will run ${bizName(id)}!`, `${c.name} sẽ trông ${bizName(id)}!`), sub: T('They open, prep and serve during opening hours. Keep the pantry stocked!', 'Họ sẽ mở cửa, sơ chế và bán trong giờ mở cửa. Nhớ giữ kho đủ hàng nha!'), icon: 'person' });
+          sfx('success'); toast({ text: T(`${c.name} will run ${bizName(id)}!`, `${c.name} sẽ trông ${bizName(id)}!`), sub: T(`The ${money(fee)} fee covers today and tomorrow. They open, prep and serve during opening hours — keep the pantry stocked!`, `Phí ${money(fee)} đã gồm lương hôm nay và ngày mai. Họ sẽ mở cửa, sơ chế và bán trong giờ mở cửa — nhớ giữ kho đủ hàng nha!`), icon: 'person' });
           api.rebuild();
         }, 'buy'));
       } else card.appendChild(h('div', 'oc-line dim', T('Shopkeepers can be hired from Chapter 5.', 'Có thể thuê người trông quán từ Chương 5.')));
