@@ -13,7 +13,7 @@ import { homePieces } from '../data/sets.js';
 // reason passed to addMoney → category shown to the player
 const CAT = {
   sale: 'sales', deposit: 'sales', tip: 'tips',
-  level: 'rewards', milestone: 'rewards', quest: 'rewards', festival: 'rewards', keeper: 'rewards', gift: 'rewards', award: 'rewards', game: 'rewards', starter: 'rewards',
+  level: 'rewards', milestone: 'rewards', ad: 'rewards', quest: 'rewards', festival: 'rewards', keeper: 'rewards', gift: 'rewards', award: 'rewards', game: 'rewards', starter: 'rewards',
   ingredients: 'ingredients', delivery: 'deliveries', supply: 'deliveries',
   materials: 'materials', build: 'building', repair: 'building', restore: 'building', statue: 'building',
   upgrade: 'upgrades', recipe: 'upgrades', equipment: 'upgrades',

@@ -25,7 +25,7 @@ export function timePaused() {
 export function billsDue() {
   const s = G.state;
   let wages = s.biz.restaurant.owned ? dailyWages() : 0;
-  for (const id of Object.keys(s.keepers || {})) if (s.biz[id]?.owned) wages += keeperWage(id);
+  for (const [id, k] of Object.entries(s.keepers || {})) if (s.biz[id]?.owned && k.offDay !== s.day) wages += keeperWage(id);   // (a keeper's day off costs nothing)
   return rentToday() + wages;
 }
 let lastHour = -1, warned = false, billWarned = false;

@@ -24,7 +24,7 @@ import { fx } from '../world/render.js';
 import { seasonServed } from './store.js';
 import { wearUniform } from '../ui/uniform.js';
 
-const TABLES = [[84, 214], [176, 214], [268, 214], [84, 290], [176, 290], [268, 290], [352, 214], [352, 290]];
+const TABLES = [[84, 214], [176, 214], [268, 214], [104, 282], [176, 290], [268, 290], [352, 214], [352, 290]];
 const STOVES = [[96, 112], [156, 112]];
 const PREP = [236, 112], SINK = [316, 112];
 const PASS_SLOTS = [[60, 148], [100, 148], [140, 148], [180, 148], [220, 148], [260, 148]];
@@ -211,6 +211,9 @@ function spawnGuest() {
 function seatGuest(g) {
   const fs = freeSeat();
   const sc = scene();
+  const scn = scene();
+  // at most three wait by the door; the next one sees it's full and goes (they used to pile up on the exit)
+  if (!fs && restRT().guests.filter(x => x.state === 'waiting-table' && x !== g).length >= 3) { g.actor.showEmote?.('sweat', 1.2); g.state = 'leaving'; g.actor.walkTo([[210, 400]]).then(() => { scn.remove(g.actor); g.state = 'gone'; }); return; }
   if (!fs) { g.state = 'waiting-table'; const w = ENTRY_WAIT[restRT().guests.filter(x => x.state === 'waiting-table').length % 3]; g.actor.walkTo([[w[0], w[1]]]).then(() => g.actor.face('up')); return; }
   const [table, seat] = fs;
   seat.cust = g; g.table = table; g.seat = seat; g.state = 'to-seat';
@@ -224,6 +227,8 @@ function guestLeave(g, happy) {
   if (g.seat) { g.seat.cust = null; if (happy) { g.table.dirty = true; } g.table.dishes = g.table.dishes.filter((d, i) => i !== g.dishIdx); }
   g.actor.sit = false;
   g.state = 'leaving';
+  // a guest who walks out takes their order with them: nobody cooks it for an empty seat
+  { const r = restRT(); for (const tk of r.tickets.filter(t => t.guest === g && !t.claimed)) dropFrom(r.tickets, tk); }
   if (!happy) { g.actor.setEmo('angry', 3); g.actor.showEmote('angry', 1.6); addRep(-1); G.state.today.lost++; sfx('sad'); }
   g.actor.walkTo(sc.grid.path(g.actor.x, g.actor.y, 210, 372).concat([[210, 400]])).then(() => { sc.remove(g.actor); g.state = 'gone'; });
   // someone waiting can take the seat
@@ -285,7 +290,7 @@ export function nextTicketForPlayer() { const t = restRT().tickets.find(t => !t.
 export function ticketCooked(tk, quality) {
   const r = restRT();
   if (quality === 'wrong') { tk.claimed = null; return; }
-  r.tickets.splice(r.tickets.indexOf(tk), 1);
+  dropFrom(r.tickets, tk);
   tk.guest.perfect = quality === 'perfect';
   const slot = PASS_SLOTS.find(s => !r.pass.some(p => p.slot === s)) || PASS_SLOTS[0];
   r.pass.push({ slot, guest: tk.guest, recipe: tk.recipe }); sfx('bell');
@@ -298,7 +303,7 @@ export async function playerDeliver() {
   lockInput('restaurant');
   try {
     await walkGrid(pl, dish.slot[0], dish.slot[1] + 22); pl.face('up');
-    r.pass.splice(r.pass.indexOf(dish), 1);
+    dropFrom(r.pass, dish);
     pl.setAct('carry', 'plate');
     if (g.state === 'waiting-food') { await walkGrid(pl, g.seat.x + (g.seat.dir === 'right' ? 12 : -12), g.seat.y + 14); pl.face(g.actor); deliverToTable(g); }
     pl.setAct(null);
@@ -320,7 +325,7 @@ function assign(a) {
   if (role === 'server') {
     // 1) deliver ready dishes
     const dish = r.pass.find(p => !p.claimed);
-    if (dish) { dish.claimed = a; return task(a, 'pickup', [dish.slot[0], dish.slot[1] + 22], async () => { a.face('up'); await wait(0.4); r.pass.splice(r.pass.indexOf(dish), 1); a.setAct('carry', 'plate'); const g = dish.guest; if (g.state !== 'waiting-food') { a.setAct(null); return; } await walkGrid(a, g.seat.x + (g.seat.dir === 'right' ? 12 : -12), g.seat.y + 14); a.face(g.actor); await wait(0.3); a.setAct(null); deliverToTable(g); a.showEmote('happy', 1); }); }
+    if (dish) { dish.claimed = a; return task(a, 'pickup', [dish.slot[0], dish.slot[1] + 22], async () => { a.face('up'); await wait(0.4); dropFrom(r.pass, dish); a.setAct('carry', 'plate'); const g = dish.guest; if (g.state !== 'waiting-food') { a.setAct(null); return; } await walkGrid(a, g.seat.x + (g.seat.dir === 'right' ? 12 : -12), g.seat.y + 14); a.face(g.actor); await wait(0.3); a.setAct(null); deliverToTable(g); a.showEmote('happy', 1); }); }
     // 2) take orders
     const g = r.guests.find(g => g.state === 'ordering' && !g.claimed);
     if (g) { g.claimed = a; return task(a, 'order', [g.seat.x + (g.seat.dir === 'right' ? 14 : -14), g.seat.y + 14], async () => { a.face(g.actor); a.setAct('write'); await wait(1.6 * speedK); a.setAct(null); if (g.state !== 'ordering') return; g.state = 'waiting-food'; g.claimed = null; r.tickets.push({ guest: g, recipe: g.recipe }); g.actor.showEmote('happy', 1); sfx('page'); }); }
@@ -344,7 +349,7 @@ function assign(a) {
         r.cooking[stove[0]] = 1; a.setAct('stir'); sfx('sizzle');
         await wait((6 - e.stats.cooking * 0.7) * speedK + 2);
         r.cooking[stove[0]] = 0; a.setAct(null); d.stove = null;
-        r.tickets.splice(r.tickets.indexOf(tk), 1);
+        dropFrom(r.tickets, tk);
         const slot = PASS_SLOTS.find(s => !r.pass.some(p => p.slot === s)) || PASS_SLOTS[0];
         await walkGrid(a, slot[0], slot[1] - 16);
         a.face('down'); a.setAct('carry', 'plate'); await wait(0.3); a.setAct(null);
@@ -387,6 +392,13 @@ function neededPrep() {
   for (const r of bizRecipes('restaurant')) for (const u of recipeUses(r)) if (PREPPED[u] && (b.prepped[u] || 0) < 4 && (G.state.pantry[PREPPED[u].from] || 0) > 0) return PREPPED[u].from;
   return null;
 }
+// the player clears a table themselves
+export async function clearTableByHand(t) {
+  const pl = G.player; if (!t || !t.dirty || t.claimed) return; t.claimed = 'player';
+  pl.face('up'); pl.setAct('clean'); await wait(1.2); pl.setAct(null);
+  t.dirty = false; t.claimed = null; t.dishes = []; fx.burst('spark', t.x, t.y - 14, 5, { up: 30, col: '#fff' });
+  const w = restRT().guests.find(x => x.state === 'waiting-table'); if (w) seatGuest(w);
+}
 function cleanTask(a, t, speedK) {
   t.claimed = a;
   return task(a, 'clean', [t.x, t.y + 16], async () => { a.face('up'); a.setAct('clean'); await wait(2.4 * speedK); a.setAct(null); t.dirty = false; t.claimed = null; fx.burst('spark', t.x, t.y - 14, 5, { up: 30, col: '#fff' }); const w = restRT().guests.find(x => x.state === 'waiting-table'); if (w) seatGuest(w); });
@@ -405,7 +417,10 @@ async function task(a, name, [x, y], fn) {
 function walkGrid(a, x, y) { const sc = scene(); return a.walkTo(sc.grid.path(a.x, a.y, x, y)); }
 // staff timers run on the game loop (updateRestaurant), so they stop while the game is paused
 const timers = [];
-const wait = s => new Promise(r => timers.push({ left: s, r }));
+let dayGen = 0;   // bumped at the end of each day: work left over from yesterday is dropped, not finished
+// remove one item from a list — and nothing if it's already gone (indexOf −1 used to remove the last one)
+const dropFrom = (list, x) => { const i = list.indexOf(x); if (i >= 0) list.splice(i, 1); };
+const wait = s => { const gen = dayGen; return new Promise(r => timers.push({ left: s, r: () => { if (gen === dayGen) r(); } })); };   // (a wait from yesterday never resolves)
 function tickTimers(dt) {
   for (let i = timers.length - 1; i >= 0; i--) if ((timers[i].left -= dt) <= 0) { const { r } = timers[i]; timers.splice(i, 1); r(); }
 }
@@ -429,7 +444,8 @@ export function updateRestaurant(dt, gameMin) {
       const att = BUSINESSES.restaurant.upgrades?.[b.level]?.attract || 1;
       // like the small shops, the dining room's crowd thins out once most of the island has eaten there today
       const fed = G.state.today.biz?.restaurant?.served || 0, crowd = 90 * att, tired = fed <= crowd ? 1 : Math.pow(crowd / fed, 3);
-      r.spawnT = Math.min(180, clamp(rand(26, 44) / (rep * tf * att * 1.25 * eventBoost('restaurant')), 5, 50) / tired);
+      const owned = G.state.property?.restaurant ? 1.05 : 1;   // (your own place: +5% guests, as promised when you buy it)
+      r.spawnT = Math.min(180, clamp(rand(26, 44) / (rep * tf * att * 1.25 * owned * eventBoost('restaurant')), 5, 50) / tired);
       spawnGuest();
     }
   }
@@ -473,6 +489,7 @@ export function resetRestaurantDay() {
   const r = restRT(), sc = scene();
   for (const g of r.guests) sc?.remove(g.actor);
   r.guests.length = 0; r.tickets.length = 0; r.pass.length = 0; r.cooking = {};
+  dayGen++; timers.length = 0;   // (the cook used to finish yesterday's ticket for a guest who'd gone home)
   sc?.tables.forEach(t => { t.dirty = false; t.dishes = []; t.seats.forEach(s => s.cust = null); t.claimed = null; });
   for (const a of r.staff.values()) { a.stop(); a.x = 210 + rand(-40, 40); a.y = 250; a.data.busy = false; a.sit = false; a.setAct(null); }
 }

@@ -67,7 +67,7 @@ const BOT = String(function install(cfg) {
       const now = S(), ach = (now.achievements || []).filter(a => !achBefore.has(a)); achBefore = new Set(now.achievements || []);
       log.days.push({ day: sum.day, chapter: now.story.chapter, step: now.story.step, start: dayStart.money, end: now.money, earnedGross: now.lifetime - dayStart.lifetime,
         revenue: sum.revenue, served: sum.served, youServed, lost: sum.lost, tips: sum.tips, rent: sum.rent, wages: (sum.wages || 0) + (sum.keeperWages || 0), net: sum.net,
-        level: now.level, levelsGained: now.level - dayStart.level, heapMB: Math.round((performance.memory?.usedJSHeapSize || 0) / 1e6), actors: G.scenes.island.actors.length, saveKB: Math.round(JSON.stringify(now).length / 1000), rep: Math.round(now.reputation), xp: (now.xpTotal || 0) - dayStart.xp, restocks, achievements: ach, milestonesClaimed: claimed, milestoneLines: sum.milestones.length });
+        level: now.level, levelsGained: now.level - dayStart.level, heapMB: Math.round((performance.memory?.usedJSHeapSize || 0) / 1e6), actors: G.scenes.island.actors.length, saveKB: Math.round(JSON.stringify(now).length / 1000), rep: Math.round(now.reputation), xp: (now.xpTotal || 0) - dayStart.xp, restocks, spend: sum.books?.spending, income: sum.books?.income, achievements: ach, milestonesClaimed: claimed, milestoneLines: sum.milestones.length });
       S().time = Tm.DAY_START; startDay();
       phase = 'wake'; t = 0;
     }

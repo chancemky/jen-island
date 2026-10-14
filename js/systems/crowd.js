@@ -68,6 +68,7 @@ function occupiedNow(island, s, me) {
 // areas an event has taken over (a birthday table, a wedding): no standing spots are handed out
 // there while it lasts, and whoever stood there is asked to choose again
 const zones = new Map();
+export const inEventZone = (x, y) => inZone({ x, y });
 const inZone = s => { for (const z of zones.values()) if (dist(s.x, s.y, z.x, z.y) < z.r) return true; return false; };
 export function blockZone(id, x, y, r) {
   zones.set(id, { x, y, r });

@@ -7,6 +7,7 @@ import { G } from './state.js';
 import { rand, choice, dist, TAU } from '../core/util.js';
 import { INK, ell, circ, shadow, poly, stext } from '../gfx/draw.js';
 import { sfx } from '../core/audio.js';
+import { inEventZone } from './crowd.js';
 
 const A = [];
 let fish = [];
@@ -76,7 +77,9 @@ export function updateAnimals(dt) {
     const nx = a.x + a.vx * dt, ny = a.y + a.vy * dt;
     const stuckIn = !island.canStand(a.x, a.y, 3);                 // wandered into a prop (a parked bike…): let it walk out
     if (stuckIn && Math.hypot(a.vx, a.vy) < 5) { const an = Math.random() * Math.PI * 2, sp = SPEED[a.kind]; a.state = 'walk'; a.vx = Math.cos(an) * sp; a.vy = Math.sin(an) * sp; a.until = 1; }
-    if (a.state === 'fly' || stuckIn || island.canStand(nx, ny, 3)) { a.x = nx; a.y = ny; a.blocked = 0; }
+    // (and they keep out of a party or the wedding: a dog used to wander across the ceremony arch)
+    if (a.state !== 'fly' && !stuckIn && inEventZone(nx, ny) && !inEventZone(a.x, a.y)) { a.vx = -a.vx; a.vy = -a.vy; a.until = Math.min(a.until, 1); }
+    else if (a.state === 'fly' || stuckIn || island.canStand(nx, ny, 3)) { a.x = nx; a.y = ny; a.blocked = 0; }
     else {
       // blocked: turn to a fresh direction instead of bouncing back and forth on the spot
       a.blocked = (a.blocked || 0) + 1;

@@ -24,13 +24,14 @@ function gather() {
   if (gathered) return;
   const couple = ['minh', 'linh'].map(rid => npcs.residents.find(a => a.data.rid === rid)).filter(Boolean);
   const guests = npcs.residents.filter(a => !couple.includes(a) && a.visible && !a.data.inTalk && a.data.state !== 'busy').slice(0, 5);
-  gathered = { couple, guests, looks: couple.map(a => a.look) };
+  gathered = { couple, guests, looks: couple.map(a => a.look) }; G.runtime.weddingOn = true;   // (the plaza lantern string comes down for the ceremony: it ran across the couple's faces)
   for (const a of [...couple, ...guests]) { releaseStand(a); a.data.wedding = true; }
   blockZone('wedding', SPOT.x, SPOT.y + 14, 64);
   couple.forEach((a, i) => { a.look = { ...a.look, ...outfit[a.data.rid] }; a.stop?.(); a.data.state = 'busy'; a.walkTo?.(G.scenes.island.nav.path(a.x, a.y, SPOT.x - 10 + i * 20, SPOT.y - 6)).then(() => a.face?.('down')); });
   guests.forEach((a, i) => { const ang = Math.PI * (0.2 + i * 0.15), x = SPOT.x + Math.cos(ang) * 46 - 0, y = SPOT.y + 26 + Math.sin(ang) * 12; a.stop?.(); a.data.state = 'busy'; a.walkTo?.(G.scenes.island.nav.path(a.x, a.y, x, y)).then(() => { a.face?.('up'); a.showEmote?.('heart', 2); }); });   // (along the paths: guests used to walk straight across the sea)
 }
 function disperse() {
+  G.runtime.weddingOn = false;
   if (!gathered) return;
   gathered.couple.forEach((a, i) => { a.look = gathered.looks[i]; });
   for (const a of [...gathered.couple, ...gathered.guests]) { a.data.state = 'idle'; a.data.until = 0; a.data.wedding = false; }

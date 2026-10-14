@@ -37,8 +37,9 @@ function bunting(c, t, x1, y1, x2, y2, h, cols) {
   for (let i = 1; i < n; i++) { const [x, y] = pt(i / n), sw = Math.sin(t * 2 + i) * 1.2; poly(c, [x - 4, y, x + 4, y, x + sw, y + 9], cols[i % cols.length], INK, 0.6); }
 }
 function lanternString(c, t, x1, y1, x2, y2, h) {
+  h = Math.max(h, 66);   // (above people's heads, like every other lantern string)
   for (const [x, y] of [[x1, y1], [x2, y2]]) { ell(c, x, y + 1, 4, 1.6, 'rgba(0,0,0,.15)', null); line(c, x, y, x, y - h, '#8a5f3e', 2.2); circ(c, x, y - h, 2, '#f2c14e', null); }   // tied to two poles
-  const n = 7, pt = u => [x1 + (x2 - x1) * u, y1 - h + (y2 - y1) * u + Math.sin(u * Math.PI) * 12];
+  const n = 7, pt = u => [x1 + (x2 - x1) * u, y1 - h + (y2 - y1) * u + Math.sin(u * Math.PI) * 8];
   c.strokeStyle = '#5b3f36'; c.lineWidth = 0.8; c.beginPath(); for (let i = 0; i <= 20; i++) { const [x, y] = pt(i / 20); i ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke();
   for (let i = 1; i < n; i++) {
     const [x, y] = pt(i / n), col = ['#ea5a4f', '#f2c14e', '#f08ca0'][i % 3];
@@ -199,7 +200,7 @@ export function growthDrawables() {
   // Chapter 11: the island is a destination — bunting around Wind Plaza
   if (ch() >= 11) add(PLAZA.x, PLAZA.y - 60, OVERHEAD, (c, t) => { bunting(c, t, PLAZA.x - 120, PLAZA.y - 70, PLAZA.x + 120, PLAZA.y - 70, 64, ['#e8584e', '#fff5df', '#f2c14e']); });
   // after the Lantern Festival: lanterns stay strung over the plaza for good
-  if (ach('lantern_festival')) add(PLAZA.x, PLAZA.y + 90, OVERHEAD, (c, t) => { lanternString(c, t, PLAZA.x - 124, PLAZA.y + 96, PLAZA.x + 124, PLAZA.y + 96, 60); });
+  if (ach('lantern_festival')) add(PLAZA.x, PLAZA.y + 90, OVERHEAD, (c, t) => { if (G.runtime.weddingOn) return; lanternString(c, t, PLAZA.x - 124, PLAZA.y + 96, PLAZA.x + 124, PLAZA.y + 96, 60); });
   // Chapter 12+: more boats in the water off the pier
   if (ch() >= 12) add(760, 2520, 2380, (c, t) => { boat(c, t, 760, 2500, '#8fb7e0'); if (ch() >= 17) boat(c, t, 1080, 2560, '#f7de8c'); });
   // Chapter 19+: a banner on the ferry gate

@@ -6,7 +6,7 @@ import { Island, areaAt, areaIdAt, AREAS, BUILDINGS, TRUCK_SPOTS } from './world
 import { COUNTS } from './core/counts.js';
 import { unlockAchievement, G, T, defaultState, bizOf, markDirty, flag, setFlag, canAfford, addMoney, learnRecipe } from './systems/state.js';
 import { buildInteriors } from './world/interiors.js';
-import { buildRestaurant, updateRestaurant, initRestaurantRuntime, restRT, guestNeedingOrder, playerTakeOrder, playerServed, playerCookFailed, nextTicketForPlayer, ticketCooked, playerDeliver, collectRegister } from './systems/restaurant.js';
+import { buildRestaurant, updateRestaurant, staffByRole, clearTableByHand, initRestaurantRuntime, restRT, guestNeedingOrder, playerTakeOrder, playerServed, playerCookFailed, nextTicketForPlayer, ticketCooked, playerDeliver, collectRegister } from './systems/restaurant.js';
 import { Player } from './systems/player.js';
 import { Actor } from './world/actor.js';
 import { initInput, input, moveVector, releaseJoystick } from './core/input.js';
@@ -531,8 +531,14 @@ function updateInteraction(dt) {
   // 1) restaurant guest who wants to order
   if (sc.id === 'restaurant') {
     const g = guestNeedingOrder(pl.x, pl.y);
-    const hasServer = [...restRT().staff.values()].some(a => a.data.emp.role === 'server');
+    // (a server on their day off doesn't count: the button used to vanish and guests walked out)
+    const hasServer = staffByRole('server').length > 0;
     if (g && !hasServer) { setAction(T('Take order', 'Nhận món'), () => takeRestaurantOrder(g), RECIPES[g.recipe].icon); return; }
+    // with nobody to clear up, you can wipe a dirty table yourself (with no staff the room used to lock up)
+    if (!staffByRole('cleaner').length && !staffByRole('server').length && !staffByRole('manager').length) {
+      const t = sc.tables?.find(t => t.active && t.dirty && !t.claimed && dist(pl.x, pl.y, t.x, t.y + 14) < 34);
+      if (t) { setAction(T('Clear table', 'Dọn bàn'), () => clearTableByHand(t), 'star'); return; }
+    }
   }
   // 2) nearby talkable actors — over a trigger only when they're genuinely closer
   //    (or standing still by a door); a pet never takes over the bed, a door or a counter

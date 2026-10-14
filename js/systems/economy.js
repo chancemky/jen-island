@@ -65,10 +65,11 @@ export const keeperSkill = k => Math.max(1, Math.min(3, k?.skill || 1));
 export const wageFor = (id, skill) => Math.round((KEEPER_WAGE[BUSINESSES[id].kind] || 50) * (0.8 + 0.2 * skill));
 // a day off (today or tomorrow, on the shop calendar): they stay home and aren't paid that day
 export const keeperOff = (id, k = keeperOf(id)) => !!k && k.offDay === G.state.day;
-export function giveDayOff(id, which = 'today') { const k = keeperOf(id); if (!k) return false; k.offDay = G.state.day + (which === 'tomorrow' ? 1 : 0); markDirty(true); bus.emit('keeper', id); return true; }
+export function giveDayOff(id, which = 'today') { const k = keeperOf(id); if (!k || (which === 'today' && (k.today > 0 || G.state.time >= 9 * 60))) return false;   // (today only before they've started work)
+  k.offDay = G.state.day + (which === 'tomorrow' ? 1 : 0); markDirty(true); bus.emit('keeper', id); return true; }
 export const keeperWage = (id, k = keeperOf(id)) => Math.round(wageFor(id, keeperSkill(k)) * (k?.head ? 1.2 : 1));
 export const HIRE_DAYS = 2;
-export const KEEPER_CUT = 0.35;          // a shopkeeper's share of each sale they make
+export const KEEPER_CUT = 0.15;          // a shopkeeper's share of each sale they make
 export const keeperOf = id => G.state.keepers?.[id] || null;
 export const canHaveKeeper = id => BUSINESSES[id].kind !== 'restaurant';
 export const keeperUnlocked = () => G.state.story.chapter >= 5;
@@ -291,7 +292,7 @@ function autoPrep(id) {
 // has already sliced / cooked stays at that shop. A runner looks at what the shop has
 // actually been selling lately (and what's already prepped there) and brings just enough
 // for about a day and a half — no mountains of spoiling stock, no empty shelves.
-export const SUPPLY = { price: id => Math.round(({ shed: 900, truck: 1400, stall: 1050, restaurant: 2800 })[BUSINESSES[id].kind] || 1200), fee: 1.35, days: 1.5 };   // runners cost more, and charge more on top
+export const SUPPLY = { price: id => Math.round(({ shed: 900, truck: 1400, stall: 1050, restaurant: 2800 })[BUSINESSES[id].kind] || 1200), fee: 1.1, days: 1.5 };   // runners cost more, and charge more on top
 export const hasSupply = id => !!G.state.supply?.[id];
 export const supplyUnlocked = () => G.state.story.chapter >= 6;
 export function buySupply(id) {
@@ -306,6 +307,7 @@ export function toggleSupply(id) { const s = G.state.supply?.[id]; if (s) { s.on
 // portions this shop is likely to need (recent sales, or a sensible first guess)
 export function shopNeed(id, k) {
   const g = INGREDIENTS[k], used = G.state.usage?.[id]?.[k];
+  if (used == null && ['tapioca', 'jelly', 'cheese_foam', 'chili'].includes(k)) return 4;   // (extras nobody has ordered yet: a little, not a dozen of each)
   return Math.max(4, Math.ceil(used != null ? used * SUPPLY.days : Math.max(g.pack, 12)));   // (a first guess of one pack — 6 kumquats — sold out within the first hour)
 }
 const preppedAt = (id, k) => { const to = INGREDIENTS[k]?.prep?.to; return to ? bizOf(id).prepped?.[to] || 0 : 0; };
@@ -359,6 +361,6 @@ export function dailyCosts() {
 // how close the island is to running itself (end goal)
 export function staffedCount() {
   const s = G.state, list = Object.keys(BUSINESSES).filter(id => s.biz[id]?.owned);
-  const staffed = list.filter(id => BUSINESSES[id].kind === 'restaurant' ? new Set(s.biz.restaurant.employees.map(e => e.role)).size >= 3 : !!keeperOf(id));
+  const staffed = list.filter(id => BUSINESSES[id].kind === 'restaurant' ? ['cook', 'server'].every(r => s.biz.restaurant.employees.some(e => e.role === r && e.offDay !== s.day)) : !!keeperOf(id) && keeperOf(id).offDay !== s.day);   // (the same rule as "Runs on its own": someone actually working today)
   return { staffed: staffed.length, total: list.length, list, missing: list.filter(id => !staffed.includes(id)) };
 }

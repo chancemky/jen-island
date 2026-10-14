@@ -3,7 +3,7 @@
 
 import { G, T, canAfford, bizOf, markDirty } from '../systems/state.js';
 import { ROLES, TRAITS } from '../data/game.js';
-import { candidates, hire, fire, setRole, restaurantAutomated, dailyWages, staffByRole, STAFF_ROLES, roleAvailable, wageOf, feeOf } from '../systems/restaurant.js';
+import { candidates, hire, fire, setRole, restaurantAutomated, dailyWages, staffByRole, STAFF_ROLES, roleAvailable, wageOf, feeOf, RETAINER } from '../systems/restaurant.js';
 import { employeeLook } from '../data/looks.js';
 import { openSheet, tabs, h, btn, portrait } from './sheets.js';
 import { toast } from './hud.js';
@@ -19,13 +19,13 @@ function empCard(e, right) {
   const ico = h('div', 'ico'); const cv = document.createElement('canvas'); cv.width = 96; cv.height = 96; cv.style.width = cv.style.height = '48px'; ico.appendChild(cv);
   portrait(cv, { look: employeeLook(e.seed, e.role || 'server') });
   const tr = TRAITS.find(t => t.id === e.trait);
-  const info = h('div', 'info', `<b>${escapeHtml(e.name)} ${e.role ? `<span class="pill lv">${escapeHtml(T(ROLES[e.role].en, ROLES[e.role].vi))}</span>` : ''}</b><small>${escapeHtml(T(tr.en, tr.vi))} · ${escapeHtml(T(tr.fx, tr.fxVi))}</small>${statBar(T('Speed', 'Tốc độ'), e.stats.speed)}${statBar(T('Cooking', 'Nấu ăn'), e.stats.cooking)}${statBar(T('Service', 'Phục vụ'), e.stats.service)}${statBar(T('Reliable', 'Chăm chỉ'), e.stats.reliability)}<small>${T(`Wage ${wageOf(e, e.role || 'server')}k/day`, `Lương ${wageOf(e, e.role || 'server')}k/ngày`)}${e.work ? T(` · ${e.work} jobs done`, ` · đã làm ${e.work} việc`) : ''}</small>${didLine(e.today)}`);
+  const info = h('div', 'info', `<b>${escapeHtml(e.name)} ${e.role ? `<span class="pill lv">${escapeHtml(T(ROLES[e.role].en, ROLES[e.role].vi))}</span>` : ''}</b><small>${escapeHtml(T(tr.en, tr.vi))} · ${escapeHtml(T(tr.fx, tr.fxVi))}</small>${statBar(T('Speed', 'Tốc độ'), e.stats.speed)}${statBar(T('Cooking', 'Nấu ăn'), e.stats.cooking)}${statBar(T('Service', 'Phục vụ'), e.stats.service)}${statBar(T('Reliable', 'Chăm chỉ'), e.stats.reliability)}<small>${e.role ? T(`Wage ${money(wageOf(e))}/day (${money(Math.round(wageOf(e) * RETAINER))} on a closed day)`, `Lương ${money(wageOf(e))}/ngày (${money(Math.round(wageOf(e) * RETAINER))} ngày đóng cửa)`) : ''}${e.work ? T(` · ${e.work} jobs done`, ` · đã làm ${e.work} việc`) : ''}</small>${didLine(e.today)}`);
   r.append(ico, info);
   if (right) r.appendChild(right);
   return r;
 }
 export function openStaffBoard() {
-  openSheet({ title: T('Staff Board', 'Bảng nhân viên'), sub: T('Only restaurants can hire staff', 'Chỉ nhà hàng mới thuê được nhân viên'), full: true, build: (body, api) => {
+  openSheet({ title: T('Staff Board', 'Bảng nhân viên'), sub: T('The restaurant team (shopkeepers for the small shops: Menu → Business)', 'Đội nhà hàng (người trông quán nhỏ: Menu → Kinh doanh)'), full: true, build: (body, api) => {
     const b = bizOf('restaurant');
     const auto = restaurantAutomated();
     const status = h('div', 'row', `<div class="info"><b>${auto ? T('Runs on its own ✓', 'Nhà hàng tự vận hành ✓') : T('Not automated yet', 'Chưa tự vận hành')}</b><small>${auto ? T('Your cook and server keep it running while you are away.', 'Đầu bếp và phục vụ giữ nhà hàng hoạt động khi bạn vắng mặt.') : T('Hire at least a cook and a server so it runs without you.', 'Thuê ít nhất một đầu bếp và một phục vụ để nhà hàng tự chạy.')} ${T('Wages', 'Lương')}: ${money(dailyWages())}/${T('day', 'ngày')}</small></div>`);
@@ -46,7 +46,7 @@ export function openStaffBoard() {
           const off = e.offDay === G.state.day ? 'today' : e.offDay === G.state.day + 1 ? 'tomorrow' : null;
           if (off) right.appendChild(h('small', 'dim', off === 'today' ? T('🌴 Off today', '🌴 Nghỉ hôm nay') : T('🌴 Off tomorrow', '🌴 Nghỉ ngày mai')));
           right.append(sel);
-          if (off !== 'today') right.appendChild(btn(T('Day off today', 'Nghỉ hôm nay'), () => { e.offDay = G.state.day; markDirty(true); sfx('ui'); toast({ text: T(`${e.name} has the rest of today off`, `${e.name} được nghỉ hết hôm nay`), sub: T('Unpaid today. Back tomorrow.', 'Không tính lương hôm nay. Mai đi làm.'), now: true }); api.rebuild(); }, 'buy alt'));
+          if (off !== 'today' && !(G.state.today.opened?.restaurant || G.state.time >= 9 * 60)) right.appendChild(btn(T('Day off today', 'Nghỉ hôm nay'), () => { e.offDay = G.state.day; markDirty(true); sfx('ui'); toast({ text: T(`${e.name} has the rest of today off`, `${e.name} được nghỉ hết hôm nay`), sub: T('Unpaid today. Back tomorrow.', 'Không tính lương hôm nay. Mai đi làm.'), now: true }); api.rebuild(); }, 'buy alt'));
           if (off !== 'tomorrow') right.appendChild(btn(T('Day off tomorrow', 'Nghỉ ngày mai'), () => { e.offDay = G.state.day + 1; markDirty(true); sfx('ui'); toast({ text: T(`${e.name} will take tomorrow off`, `${e.name} sẽ nghỉ ngày mai`), now: true }); api.rebuild(); }, 'buy alt'));
           if (off) right.appendChild(btn(T('Cancel day off', 'Hủy ngày nghỉ'), () => { e.offDay = null; markDirty(true); sfx('ui'); api.rebuild(); }, 'buy alt'));
           const lg = h('button', 'link-btn', T('Let go…', 'Cho thôi việc…')); lg.type = 'button';
