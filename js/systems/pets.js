@@ -6,7 +6,7 @@
 import { lockInput, releaseInput } from '../core/locks.js';
 import { G, T, markDirty, addMoney, canAfford } from './state.js';
 import { Actor } from '../world/actor.js';
-import { ANIMAL_DRAW } from './animals.js';
+import { ANIMAL_DRAW, ANIMAL_SLEEP, drawShutEye } from './animals.js';
 import { INK, ell, circ, poly, shadow, heart } from '../gfx/draw.js';
 import { F } from '../gfx/furniture.js';
 import { say, ask } from '../ui/dialogue.js';
@@ -38,6 +38,14 @@ export const followerUid = () => S().petFollow || null;
 
 // ---------------------------------------------------------------- drawing
 function drawBunny(c, t, a) {
+  if (a.asleep) {   // curled up, ears laid flat, eyes shut
+    shadow(c, 0, 0.5, 8, 2, 0.18); c.save(); c.scale(a.face, 1 + Math.sin(a.t * 1.6) * 0.03);
+    ell(c, -1, -4, 7.6, 4.2, a.col, INK, 0.9); circ(c, -7.4, -4, 2.2, '#fff', INK, 0.6);
+    ell(c, 4.6, -5.6, 4.2, 3.6, a.col, INK, 0.9);
+    for (const dy of [0, 1.6]) { c.save(); c.translate(2, -7.6 + dy); c.rotate(-1.35); ell(c, 0, -3.6, 1.5, 4.2, a.col, INK, 0.7); c.restore(); }
+    drawShutEye(c, 6.2, -6, 1.5); circ(c, 8.4, -5, 0.6, '#f07c8c', null);
+    c.restore(); return;
+  }
   const hopK = a.moving > 0.2 ? Math.abs(Math.sin(a.t * 10)) * 3 : 0;
   shadow(c, 0, 0.5, 7, 2, 0.18);
   c.save(); c.scale(a.face, 1); c.translate(0, -hopK);
@@ -48,6 +56,13 @@ function drawBunny(c, t, a) {
   c.restore();
 }
 function drawDuck(c, t, a) {
+  if (a.asleep) {   // settled down, head tucked, eyes shut
+    shadow(c, 0, 0.5, 5.4, 1.6, 0.16); c.save(); c.scale(a.face, 1 + Math.sin(a.t * 1.8) * 0.04);
+    ell(c, 0, -3.4, 5.6, 3.4, a.col, INK, 0.8); circ(c, 2.4, -5.6, 2.6, a.col, INK, 0.8);
+    poly(c, [4.4, -5.4, 6.6, -5, 4.4, -4.4], '#f2a14e', INK, 0.5); drawShutEye(c, 3, -6, 1.3);
+    ell(c, -1, -4, 2.6, 1.6, '#ffd35a', null);
+    c.restore(); return;
+  }
   const w = a.moving > 0.2 ? Math.sin(a.t * 14) * 0.2 : 0;
   shadow(c, 0, 0.5, 5, 1.6, 0.16);
   c.save(); c.scale(a.face, 1); c.rotate(w * 0.3);
@@ -62,8 +77,12 @@ function drawPet(c, a, t) {
   st.t = t; st.col = def.col; st.face = a.dir === 'left' ? -1 : 1; st.vx = moving ? 20 : 0; st.vy = 0;
   st.state = a.data.greet > 0 ? 'greet' : moving ? 'walk' : 'idle'; st.idle = a.data.happy > 0 ? 'wag' : (a.data.sleep ? 'sleep' : 'sit');
   const hop = a.hop || 0;
+  // asleep: napping on its bed, or night has fallen and it's lying still — down, eyes shut
+  const h = (G.state?.time || 0) / 60, asleep = !moving && !(a.data.happy > 0) && !(a.data.greet > 0) && (a.data.sleep || h >= 22 || h < 5.5);
   c.save(); c.translate(0, -hop);
-  if (def.kind === 'dog') ANIMAL_DRAW.dog(c, t, st);
+  if (asleep && (def.kind === 'dog' || def.kind === 'cat')) ANIMAL_SLEEP[def.kind](c, t, st);
+  else if (asleep) (def.kind === 'bunny' ? drawBunny : drawDuck)(c, t, { ...st, moving: 0, asleep: true });
+  else if (def.kind === 'dog') ANIMAL_DRAW.dog(c, t, st);
   else if (def.kind === 'cat') ANIMAL_DRAW.cat(c, t, { ...st, id: a.data.happy > 0 ? 'groom' : 'sit' });
   else if (def.kind === 'bunny') drawBunny(c, t, { ...st, moving: a.moving || 0 });
   else drawDuck(c, t, { ...st, moving: a.moving || 0 });

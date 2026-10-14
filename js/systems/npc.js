@@ -527,6 +527,9 @@ function updateDucks(dt) {
       d.a = Math.atan2((d.y - 482) / (d.r * 0.62), (d.x - 770) / (d.r * 1.3)); // rejoin the loop from here
       continue;
     }
+    // at night they float still, asleep (heads tucked in, eyes shut)
+    const hh = G.state.time / 60; d.asleep = hh >= 22 || hh < 5.5;
+    if (d.asleep && d.x != null) continue;
     // otherwise paddle lazily around the pond, easing back onto the loop
     d.a += d.sp * dt * (d.seed % 2 ? 1 : -1);
     const ox = 770 + Math.cos(d.a) * d.r * 1.3, oy = 482 + Math.sin(d.a) * d.r * 0.62;

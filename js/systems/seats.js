@@ -49,11 +49,12 @@ export function nearestSeat(scene, x, y, r = 22) {
 
 // only you (or someone sitting down right beside you) make a sound: every villager on every bench
 // across the island used to go "pop" — random beeps out of nowhere
-const heard = a => a === G.player || ((a.scene ? a.scene === G.scene : G.scene === G.scenes?.island) && !!G.player && Math.hypot(a.x - G.player.x, a.y - G.player.y) < 90);
+const heard = a => a === G.player;   // (only you: islanders sit down and get up quietly)
 // Hop an actor onto a seat: butt first, little squash on landing.
 export async function hopOnto(a, s) {
   const x0 = a.x, y0 = a.y, T = 0.42, t0 = performance.now();
   a.face('down');
+  if (heard(a)) sfx('hop');
   while (true) {
     const k = Math.min(1, (performance.now() - t0) / 1000 / T), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     a.x = x0 + (s.x - x0) * e; a.y = y0 + (s.y - y0) * e;
@@ -62,7 +63,8 @@ export async function hopOnto(a, s) {
     if (k >= 1) break;
     await sleep(16);
   }
-  a.hop = 0; a.squash = 0.9; a.x = s.x; a.y = s.y;   // (sitting down is silent)
+  a.hop = 0; a.squash = 0.9; a.x = s.x; a.y = s.y;
+  if (heard(a)) sfx('pop');
 }
 export async function hopOff(a, s) {
   const x0 = a.x, y0 = a.y, tx = s.x, ty = s.y + 13, T = 0.34, t0 = performance.now();

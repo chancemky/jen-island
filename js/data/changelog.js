@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.20.2';
+export const APP_VERSION = '5.20.3';
 
 export const CHANGELOG = [
+  {
+    v: '5.20.3', date: '2026-10-14T14:39:42Z',
+    title: ['Sweet Dreams', 'Ngủ Ngon'],
+    items: [
+      ['Only you make a sound when you sit down or get up — the islanders do it quietly', 'Chỉ bạn phát tiếng khi ngồi xuống hay đứng lên — người trên đảo làm thật khẽ'],
+      ['From 22:00 every animal sleeps: dogs, cats, chickens, goats, pigeons, crabs, the pond ducks and your own pets lie down and close their eyes', 'Từ 22 giờ mọi con vật đều ngủ: chó, mèo, gà, dê, bồ câu, cua, vịt dưới hồ và thú cưng của bạn nằm xuống nhắm mắt'],
+    ],
+  },
   {
     v: '5.20.2', date: '2026-10-14T12:21:19Z',
     title: ['Hush', 'Nhẹ Nhàng'],

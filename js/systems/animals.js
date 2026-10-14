@@ -40,7 +40,7 @@ const RANGE = { chicken: 60, dog: 150, cat: 80, crab: 70, pigeon: 60, goat: 70 }
 export function updateAnimals(dt) {
   const island = G.scenes?.island; if (!island) return;
   const pl = G.player, here = G.scene === island;
-  const night = G.state.time >= 24 * 60 || G.state.time < 5.5 * 60;   // after midnight every animal is asleep
+  const night = G.state.time >= 22 * 60 || G.state.time < 5.5 * 60;   // from 22:00 every animal is asleep (lying down, eyes shut)
   for (const a of A) {
     a.t += dt; tickReact(a, dt);
     if (night) {
@@ -272,6 +272,70 @@ function goat(c, t, a) {
   c.save(); c.translate(-10, -12); c.rotate(-0.5 + Math.sin(a.t * 8) * 0.2); ell(c, 0, -2, 1.6, 2.6, '#f4efe6', INK, 0.7); c.restore();
   c.restore();
 }
+// asleep at night: every animal lies down with its eyes shut (they used to sit up, wide awake, under the z's)
+const shut = (c, x, y, w = 1.6) => { c.strokeStyle = INK; c.lineWidth = 0.75; c.beginPath(); c.moveTo(x - w / 2, y); c.quadraticCurveTo(x, y + w * 0.55, x + w / 2, y); c.stroke(); };
+const SLEEP = {
+  chicken(c, t, a) {
+    const s = a.chick ? 0.6 : 1, br = 1 + Math.sin(a.t * 1.6) * 0.03;
+    shadow(c, 0, 0.5, 6.5 * s, 2, 0.16);
+    c.save(); c.scale(a.face * s, s * br);
+    ell(c, 0, -4.2, 7, 4.4, a.col, INK, 0.9);                                   // settled down, legs tucked under
+    poly(c, [-6, -5, -9.5, -8, -8.6, -3.4], a.col, INK, 0.8);                    // tail
+    circ(c, 4.2, -6.8, 3.2, a.col, INK, 0.8);                                   // head tucked low
+    if (!a.chick) circ(c, 4, -10, 1.1, '#e8584e', null);
+    poly(c, [6.8, -6.8, 8.6, -6.2, 6.8, -5.6], '#f2b33d', null);
+    shut(c, 5.2, -7.2, 1.6);
+    c.restore();
+  },
+  dog(c, t, a) {
+    const br = 1 + Math.sin(a.t * 1.4) * 0.03;
+    shadow(c, 0, 0.5, 12, 3, 0.18);
+    c.save(); c.scale(a.face, br);
+    c.strokeStyle = INK; c.lineWidth = 3.2; c.beginPath(); c.moveTo(-10, -3.4); c.quadraticCurveTo(-15, -3, -13.4, -0.6); c.stroke(); c.strokeStyle = a.col; c.lineWidth = 1.8; c.stroke();   // tail curled on the ground
+    ell(c, -1, -3.8, 10, 3.9, a.col, INK, 0.9);                                 // lying flat
+    ell(c, 7.4, -0.9, 3.4, 1.4, shadeLight(a.col), INK, 0.7);                    // front paws out
+    c.save(); c.translate(8.6, -4.4);                                           // chin resting on the paws
+    ell(c, 0, 0, 5.6, 4.6, a.col, INK, 0.9);
+    ell(c, 4.4, 1.2, 2.8, 2, a.col === '#fff4e0' ? '#f7e6cc' : shadeLight(a.col), INK, 0.7);
+    circ(c, 6.8, 0.6, 0.9, INK, null);
+    shut(c, 1.8, -0.8, 2);
+    c.save(); c.translate(-2.6, -2.4); c.rotate(0.4); ell(c, 0, 2.6, 2, 3.8, a.col === '#8a6a52' ? '#5e4636' : '#b98a5a', INK, 0.7); c.restore();   // floppy ear down
+    c.restore();
+    c.restore();
+  },
+  cat(c, t, a) { vcat(c, t, { ...a, state: 'idle', idle: 'nap', vx: 0, vy: 0 }); },
+  crab(c, t, a) {
+    shadow(c, 0, 0.5, 6, 1.8, 0.16);
+    c.save(); c.scale(1, 0.9);
+    for (const k of [-1, 1]) { c.save(); c.translate(k * 4.6, -2.6); c.rotate(k * 0.2); ell(c, 0, 0, 2, 1.4, '#ef6a4f', INK, 0.6); c.restore(); }   // claws folded in
+    ell(c, 0, -2.4, 4.6, 2.6, '#ef6a4f', INK, 0.8);
+    for (const k of [-1, 1]) shut(c, k * 1.8, -4.6, 1.4);                         // eyes down and shut
+    c.restore();
+  },
+  pigeon(c, t, a) {
+    const br = 1 + Math.sin(a.t * 1.8) * 0.04;
+    shadow(c, 0, 0.5, 4.6, 1.5, 0.15);
+    c.save(); c.scale(a.face, br);
+    ell(c, 0, -3.4, 5.2, 3.4, '#9aa3b4', INK, 0.8);                             // fluffed up on the ground
+    ell(c, -1, -3.8, 3.2, 1.9, '#b7bfcc', null);
+    circ(c, 2.8, -5.6, 2.2, '#7f889c', INK, 0.7);                               // head sunk into the shoulders
+    poly(c, [4.6, -5.4, 6, -5, 4.6, -4.6], '#e6a55a', null);
+    shut(c, 3.4, -6, 1.3);
+    c.restore();
+  },
+  goat(c, t, a) {
+    const br = 1 + Math.sin(a.t * 1.2) * 0.03;
+    shadow(c, 0, 0.5, 11, 3, 0.18);
+    c.save(); c.scale(a.face, br);
+    ell(c, 0, -4.6, 10.4, 4.8, '#f4efe6', INK, 0.9);                            // lying down, legs folded under
+    c.save(); c.translate(9.4, -7.4); c.rotate(0.25);
+    ell(c, 0, 0, 4.2, 3.6, '#f4efe6', INK, 0.9);
+    poly(c, [-2, -3, -4.6, -7, -1, -4], '#c9b79a', INK, 0.6); poly(c, [1, -3, 0, -7.4, 3, -3.6], '#c9b79a', INK, 0.6);
+    shut(c, 1.8, -0.6, 1.8);
+    c.restore();
+    c.restore();
+  },
+};
 const DRAW = { chicken, dog, cat: vcat, crab, pigeon, goat };
 
 // a visiting animal (systems/rare.js): added for a while, then taken away again
@@ -286,9 +350,8 @@ export function animalDrawables() {
     c.save(); c.translate(0, -hop); c.scale(SC[a.kind] / Math.sqrt(sq), SC[a.kind] * sq);
     if (a.react && a.kind === 'dog') c.rotate(Math.sin(k * 20) * 0.08);          // excited wiggle
     if (a.react && a.kind === 'crab') c.translate(Math.sin(k * 30) * 1.5, 0);   // side shuffle
-    if (a.sleeping) c.scale(1.06, 0.84);                                        // curled up low
     if (a.golden) { const k3 = 0.25 + Math.sin(t * 2.4) * 0.08; c.fillStyle = `rgba(255,214,90,${k3})`; c.beginPath(); c.ellipse(0, -5, 15, 9, 0, 0, Math.PI * 2); c.fill(); }
-    DRAW[a.kind](c, t, a);
+    (a.sleeping && SLEEP[a.kind] ? SLEEP[a.kind] : DRAW[a.kind])(c, t, a);
     if (a.react && a.kind === 'chicken' && k < 1) { c.strokeStyle = INK; c.lineWidth = 0.8; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * 5, -8); c.lineTo(s * (9 + Math.sin(k * 40) * 2), -12 - Math.abs(Math.sin(k * 40)) * 3); c.stroke(); } }
     c.restore();
     if (a.sleeping) for (let i = 0; i < 2; i++) { const k2 = (t * 0.35 + i * 0.5 + a.seed) % 1; c.globalAlpha = Math.sin(k2 * Math.PI) * 0.8; const zs = (4 + k2 * 3) / 6; c.save(); c.translate(5 + k2 * 6, -TOP[a.kind] * SC[a.kind] * 0.7 - k2 * 12); c.scale(zs, zs); stext(c, 'z', 0, 0, 6, '#fff', 900, 'center', INK, 1.2); c.restore(); c.globalAlpha = 1; }   // (one cached size, scaled — a new size every frame meant a new bitmap every frame)
@@ -307,4 +370,4 @@ export function animalDrawables() {
   }
   return out;
 }
-export { DRAW as ANIMAL_DRAW };
+export { DRAW as ANIMAL_DRAW, SLEEP as ANIMAL_SLEEP, shut as drawShutEye };

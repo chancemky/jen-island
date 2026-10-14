@@ -746,8 +746,12 @@ export function duck(c, t, p) {
   const b = Math.sin(t * 2 + p.seed) * 0.6;
   ell(c, 0, 2, 8, 2.4, 'rgba(255,255,255,.35)', null);
   c.save(); c.translate(0, b); c.scale(p.flip ? -1 : 1, 1);
-  ell(c, 0, -2, 6, 3.6, p.col || '#fffaf0'); ell(c, 4, -6.4, 2.8, 2.6, p.col || '#fffaf0');
-  poly(c, [6.4, -6.6, 9.4, -6, 6.4, -5.2], '#f2a33a', INK, 0.5); circ(c, 5, -7.2, 0.5, INK, null);
+  ell(c, 0, -2, 6, 3.6, p.col || '#fffaf0');
+  if (p.asleep) {   // head tucked down on its back, eye shut
+    ell(c, 2.6, -4.6, 2.8, 2.4, p.col || '#fffaf0'); poly(c, [4.8, -4.6, 6.8, -4.2, 4.8, -3.8], '#f2a33a', INK, 0.5);
+    c.strokeStyle = INK; c.lineWidth = 0.6; c.beginPath(); c.moveTo(2.6, -5.2); c.quadraticCurveTo(3.3, -4.6, 4, -5.2); c.stroke();
+  } else { ell(c, 4, -6.4, 2.8, 2.6, p.col || '#fffaf0');
+  poly(c, [6.4, -6.6, 9.4, -6, 6.4, -5.2], '#f2a33a', INK, 0.5); circ(c, 5, -7.2, 0.5, INK, null); }
   c.beginPath(); c.moveTo(-5, -3); c.quadraticCurveTo(-7.5, -5.5, -5, -5.6); c.strokeStyle = INK; c.lineWidth = 0.7; c.stroke();
   c.restore();
 }
