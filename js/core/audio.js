@@ -176,7 +176,7 @@ export function sfx(name, opt = {}) {
     case 'buy': [72, 76, 79].forEach((m, i) => inst('marimba', m, 0.13, i * 0.055)); inst('bells', 91, 0.04, 0.17); break;
     case 'error': tone(196, 0.14, { type: 'triangle', vol: 0.14, lp: 900 }); tone(165, 0.2, { type: 'triangle', vol: 0.13, when: 0.11, lp: 800 }); break;
     case 'step': noise(0.03, { vol: 0.035, freq: 900 + Math.random() * 300, q: 2 }); break;
-    case 'door': noise(0.22, { vol: 0.1, freq: 420, q: 4, to: 300 }); tone(150, 0.1, { type: 'sine', vol: 0.1, slide: -40 }); inst('bells', 88, 0.05, 0.06, 0.5, 0.3); inst('bells', 93, 0.035, 0.13, 0.5, -0.3); break;   // a creak, the latch and the shop bell
+    case 'door': noise(0.22, { vol: 0.1, freq: 420, q: 4, to: 300 }); tone(150, 0.1, { type: 'sine', vol: 0.1, slide: -40 }); break;   // a soft creak and the latch (no shop bell: the ring on every door got tiresome)
     case 'chop': noise(0.035, { vol: 0.22, freq: 3200, q: 1.2 }); tone(170, 0.08, { type: 'sine', vol: 0.18, slide: -60 }); break;   // the knife, then the wooden board
     case 'sizzle': noise(0.6, { vol: 0.1, freq: 5000, q: 0.6, type: 'highpass' }); for (let i = 0; i < 6; i++) noise(0.012, { vol: 0.12, freq: 3000 + Math.random() * 3000, q: 4, when: Math.random() * 0.55 }); break;
     case 'pour': noise(0.5, { vol: 0.2, freq: 500, q: 6, to: 1400, wet: 0.2 }); for (let i = 0; i < 5; i++) tone(500 + i * 120 + Math.random() * 60, 0.05, { type: 'sine', vol: 0.09, slide: 240, when: 0.05 + i * 0.08 }); break;   // liquid rising in the cup, with bubbles

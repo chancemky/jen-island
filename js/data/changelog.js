@@ -3,9 +3,16 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.20.1';
+export const APP_VERSION = '5.20.2';
 
 export const CHANGELOG = [
+  {
+    v: '5.20.2', date: '2026-10-14T12:21:19Z',
+    title: ['Hush', 'Nhẹ Nhàng'],
+    items: [
+      ['Sitting down is silent, and doors no longer ring a shop bell when you go in and out', 'Ngồi xuống không còn phát tiếng, và cửa không còn rung chuông khi bạn ra vào'],
+    ],
+  },
   {
     v: '5.20.1', date: '2026-10-14T12:08:00Z',
     title: ['Peace and Quiet', 'Yên Tĩnh'],
