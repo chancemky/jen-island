@@ -76,8 +76,8 @@ export const keeperUnlocked = () => G.state.story.chapter >= 5;
 const TRAIT = [{ id: 'quick', en: 'Quick hands', vi: 'Nhanh tay', speed: 0.75, perfect: 0.55 }, { id: 'careful', en: 'Careful', vi: 'Cẩn thận', speed: 1, perfect: 0.85 }, { id: 'friendly', en: 'Friendly', vi: 'Thân thiện', speed: 0.9, perfect: 0.65, tip: true }];
 export const keeperTrait = k => TRAIT.find(t => t.id === k.trait) || TRAIT[0];
 // how fast and how well: trait × skill
-export const keeperSpeed = k => keeperTrait(k).speed * [1, 1.15, 1, 0.85][keeperSkill(k)];
-export const keeperPerfect = k => Math.min(0.97, keeperTrait(k).perfect + [0, -0.08, 0, 0.1][keeperSkill(k)] + (k.head ? 0.05 : 0));
+export const keeperSpeed = k => keeperTrait(k).speed * [1, 1.15, 1, 0.85][keeperSkill(k)] * (k.head ? 0.85 : 1);   // a head keeper is quicker and more careful: worth the promotion (it used to lose money)
+export const keeperPerfect = k => Math.min(0.97, keeperTrait(k).perfect + [0, -0.08, 0, 0.1][keeperSkill(k)] + (k.head ? 0.12 : 0));
 // training: a paid course that lifts a keeper one skill level (once every three days)
 export const trainCost = id => keeperWage(id) * 4;
 export const canTrain = id => { const k = keeperOf(id); return !!k && keeperSkill(k) < 3 && (G.state.day - (k.trainedDay || -9)) >= 3; };
@@ -87,7 +87,7 @@ export function trainKeeper(id) {
   return true;
 }
 // an expert can be promoted to head keeper: a little more careful, and proud of it (a higher wage)
-export const promoteCost = id => keeperWage(id) * 6;
+export const promoteCost = id => keeperWage(id) * 4;
 export function promoteKeeper(id) {
   const k = keeperOf(id), cost = promoteCost(id); if (!k || k.head || keeperSkill(k) < 3 || !canAfford(cost)) return false;
   addMoney(-cost, 'hire'); recordCost(id, 'wages', cost); k.head = true; markDirty(true); addXP(60, 'promote');

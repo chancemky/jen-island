@@ -129,11 +129,15 @@ export function candidates() {
   const s = G.state, r = restRT();
   if (r.candDay !== s.day) {
     r.candDay = s.day;
-    const R = rng(s.day * 97 + 13);
+    const R = rng(s.day * 97 + 13), used = [];
     r.cands = Array.from({ length: 3 }, (_, i) => {
       const seed = Math.floor(R() * 1e6);
       const st = { speed: 1 + Math.floor(R() * 5), cooking: 1 + Math.floor(R() * 5), service: 1 + Math.floor(R() * 5), reliability: 1 + Math.floor(R() * 5) };
-      return { id: 'e' + seed, seed, name: EMPLOYEE_NAMES[Math.floor(R() * EMPLOYEE_NAMES.length)], stats: st, trait: TRAITS[Math.floor(R() * TRAITS.length)].id, role: null };
+      // a name nobody on the team (or in today's line) already has: two Hạnhs in one kitchen confused everyone
+      const taken = new Set([...bizOf('restaurant').employees.map(e => e.name), ...used]); let k = Math.floor(R() * EMPLOYEE_NAMES.length), name = EMPLOYEE_NAMES[k];
+      for (let j = 0; j < EMPLOYEE_NAMES.length && taken.has(name); j++) name = EMPLOYEE_NAMES[(k + j + 1) % EMPLOYEE_NAMES.length];
+      used.push(name);
+      return { id: 'e' + seed, seed, name, stats: st, trait: TRAITS[Math.floor(R() * TRAITS.length)].id, role: null };
     });
   }
   return r.cands.filter(c => !bizOf('restaurant').employees.some(e => e.id === c.id));

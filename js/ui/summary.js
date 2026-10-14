@@ -28,6 +28,8 @@ function walletTrail(sum) {
 }
 import { catName } from '../systems/ledger.js';
 import { currentStep } from '../systems/story.js';
+// takings sitting uncollected in the restaurant register (they count when you collect them)
+const bizOfRegister = () => Math.round(G.state.biz?.restaurant?.register || 0);
 // what you're working toward, so each day ends pointing at the next one
 const nextGoal = () => { try { const t = currentStep()?.text?.(); return t ? t.replace(/\*/g, '') : ''; } catch { return ''; } };
 
@@ -81,6 +83,7 @@ function summaryCard(sum) {
       ${(sum.milestones.length || sum.achievements.length) ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Milestones', 'Cột mốc')}</div><ul class="sum-list">${sum.milestones.map(m => `<li class="ach"><span>★ ${escapeHtml(tr(m))}</span></li>`).join('')}</ul></div>` : ''}
       ${nextGoal() ? `<div class="sum-card"><div class="section-title" style="color:#fff8ea">${T('Tomorrow', 'Ngày mai')}</div><div style="font-weight:800">${escapeHtml(nextGoal())}</div></div>` : ''}
       <div class="sum-card" style="text-align:center;font-weight:800;opacity:.85">${escapeHtml(sum.meoLine)}</div>
+      ${bizOfRegister() > 0 ? `<div class="sum-card" style="text-align:center;font-weight:800">${T(`💰 ${money(bizOfRegister())} is still in the restaurant register — collect it tomorrow`, `💰 Còn ${money(bizOfRegister())} trong két nhà hàng — mai nhớ thu nhé`)}</div>` : ''}
       ${walletTrail(sum)}
       ${adOffer ? `<button class="btn big gold sum-ad" type="button" style="max-width:420px;margin-bottom:8px">${T(`▶ Watch a short ad: double today's tips (+${money(sum.tips)})`, `▶ Xem quảng cáo ngắn: nhân đôi tiền boa hôm nay (+${money(sum.tips)})`)}</button>` : ''}
       <button class="btn big pink sum-next" type="button" style="max-width:420px">${T('Next day ☀', 'Ngày mới ☀')}</button>`;

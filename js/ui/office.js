@@ -103,9 +103,14 @@ export function renderOffice(pane, api) {
       toast({ text: T(`You now own ${placeName(id)}!`, `Bạn đã sở hữu ${placeName(id)}!`), sub: T('No more rent here, ever.', 'Không bao giờ phải trả tiền thuê ở đây nữa.'), icon: 'key' });
       api.rebuild();
     }, 'buy', !affordable));
+    // the look of the place (uniform, interior) sits behind one quiet "Style" button: every card used to be a wall of
+    // equally loud buttons, and the ones that matter (buy, hire, deliveries) got lost
     if (id !== 'house' && G.state.biz[id]?.owned) {
-      if (canHaveKeeper(id) || id === 'restaurant') row.appendChild(btn(T('👕 Uniform', '👕 Đồng phục'), () => openUniform(id, placeName(id)), 'buy alt'));
-      const inner = G.scenes[id]; if (inner?.kind === 'interior') row.appendChild(btn(T('🎨 Interior', '🎨 Nội thất'), () => openRoomStyle(inner, true), 'buy alt'));
+      const inner = G.scenes[id], hasUni = canHaveKeeper(id) || id === 'restaurant', hasIn = inner?.kind === 'interior';
+      if (hasUni || hasIn) {
+        const style = btn(T('🎨 Style…', '🎨 Phong cách…'), () => { style.remove(); if (hasUni) row.appendChild(btn(T('👕 Uniform', '👕 Đồng phục'), () => openUniform(id, placeName(id)), 'buy alt')); if (hasIn) row.appendChild(btn(T('🏠 Interior', '🏠 Nội thất'), () => openRoomStyle(inner, true), 'buy alt')); }, 'buy alt');
+        style.classList.add('quiet'); row.appendChild(style);
+      }
     }
     if (canDecorateFront(id)) { const sc = scoreFront(id), n = (G.state.biz[id].decor || []).length; row.appendChild(btn(T(`Shop front${n ? ` · ${n}` : ''}`, `Mặt tiền${n ? ` · ${n}` : ''}`), () => { api.close(true); openShopFront(id); }, 'buy alt')); if (n) card.appendChild(h('div', 'oc-line dim', T(`Shop front draws +${Math.round((frontAttract(id) - 1) * 100)}% customers`, `Mặt tiền thu hút thêm ${Math.round((frontAttract(id) - 1) * 100)}% khách`))); void sc; }
     if (id !== 'house' && canHaveKeeper(id)) {
@@ -115,7 +120,7 @@ export function renderOffice(pane, api) {
         const sk = SKILL_NAMES[keeperSkill(k)];
         card.appendChild(h('div', 'oc-line', `👤 <b>${escapeHtml(k.name)}</b> · ${escapeHtml(T(...sk))} · ${escapeHtml(T(tr.en, tr.vi))} · ${T(`${money(keeperWage(id))}/day + ${Math.round(KEEPER_CUT * 100)}% of sales · served ${k.today || 0} today, ${k.served || 0} in all`, `${money(keeperWage(id))}/ngày + ${Math.round(KEEPER_CUT * 100)}% doanh thu · hôm nay bán ${k.today || 0}, tổng ${k.served || 0}`)}`));
         if (canTrain(id)) row.appendChild(btn(T(`Train · ${money(trainCost(id))}`, `Đào tạo · ${money(trainCost(id))}`), () => { if (!trainKeeper(id)) return moneyShortfall(trainCost(id)); sfx('success'); toast({ text: T(`${k.name} is now ${SKILL_NAMES[keeperSkill(k)][0].toLowerCase()}!`, `${k.name} giờ đã ${SKILL_NAMES[keeperSkill(k)][1].toLowerCase()}!`), icon: 'star' }); api.rebuild(); }, 'buy'));
-        else if (keeperSkill(k) >= 3 && !k.head) row.appendChild(btn(T(`Promote · ${money(promoteCost(id))}`, `Thăng chức · ${money(promoteCost(id))}`), () => { if (!promoteKeeper(id)) return moneyShortfall(promoteCost(id)); sfx('fanfare'); toast({ text: T(`${k.name} is your head keeper now!`, `${k.name} giờ là trưởng quán!`), icon: 'star' }); api.rebuild(); }, 'buy'));
+        else if (keeperSkill(k) >= 3 && !k.head) row.appendChild(btn(T(`Promote · ${money(promoteCost(id))} (15% faster, fewer slips)`, `Thăng chức · ${money(promoteCost(id))} (nhanh hơn 15%, ít sai hơn)`), () => { if (!promoteKeeper(id)) return moneyShortfall(promoteCost(id)); sfx('fanfare'); toast({ text: T(`${k.name} is your head keeper now!`, `${k.name} giờ là trưởng quán!`), icon: 'star' }); api.rebuild(); }, 'buy'));
         // a day off (today or tomorrow) — and, tucked away, letting them go for good (tap twice)
         const off = k.offDay === G.state.day ? 'today' : k.offDay === G.state.day + 1 ? 'tomorrow' : null;
         if (off) card.appendChild(h('div', 'oc-line', off === 'today' ? T(`🌴 ${k.name} has today off`, `🌴 Hôm nay ${k.name} được nghỉ`) : T(`🌴 ${k.name} has tomorrow off`, `🌴 Ngày mai ${k.name} được nghỉ`)));
