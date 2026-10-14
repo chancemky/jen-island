@@ -481,7 +481,7 @@ if (run('ui')) {
   if (!/past 11 pm|quá 23 giờ/.test(out.afterClose)) fail('ui', `wrong after-close message: ${out.afterClose}`);
   if (!/Opens at 6:00|Mở cửa lúc 6:00/.test(out.afterMidnight) || /past 11 pm|quá 23 giờ/.test(out.afterMidnight) || out.afterMidnightOpen) fail('ui', `wrong after-midnight (02:09) opening message: ${out.afterMidnight}`);
   if (out.hoursEn.join('|') !== 'HOURS 06:00–23:00|HOURS 06:00–22:00|HOURS 10:00–23:00|HOURS 17:00–23:00' || out.hoursVi !== 'GIỜ 06:00–23:00') fail('ui', `wrong exterior hours cues: ${out.hoursEn.join(' · ')} / ${out.hoursVi}`);
-  if (!/35%/.test(out.office)) fail('ui', 'the supply-runner copy does not show its 35% fee');
+  if (!/\+10% delivery|10%/.test(out.office)) fail('ui', 'the supply-runner copy does not show its 10% fee');   // (SUPPLY.fee 1.1)
   if (!/Island level unlocks features|Cấp đảo mở khóa tính năng/.test(out.office)) fail('ui', 'island level and shop level are not explained');
   if (!/You have .*short|Bạn có .*thiếu/.test(out.office) || !out.propertyDisabled) fail('ui', 'an unaffordable property is not disabled with its shortfall shown');
   if (!/Need .*Have .*Short|Cần .*Có .*Thiếu/.test(out.shortfallToast)) fail('ui', 'the insufficient-funds toast does not show need, have and shortfall');
