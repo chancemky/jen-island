@@ -17,7 +17,7 @@ export function openSheet({ title, sub = '', who = null, cls = '', full = false,
   for (const e of document.querySelectorAll('#toasts .toast:not(.ach):not(.bad)')) e.classList.add('out');   // (island news already showing steps aside for the menu)
   const wrap = document.createElement('div');
   wrap.className = 'sheet-wrap' + (clear ? ' clear' : '');
-  wrap.innerHTML = `<div class="sheet ${full ? 'full' : ''} ${cls}"><div class="sheet-head">${who ? '<div class="who"><canvas width="120" height="120"></canvas></div>' : ''}<h2>${escapeHtml(title)}${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</h2><button class="x" type="button" aria-label="Close">✕</button></div><div class="sheet-body"></div></div>`;
+  wrap.innerHTML = `<div class="sheet ${full ? 'full' : ''} ${cls}"><div class="sheet-head">${who ? '<div class="who"><canvas width="120" height="120"></canvas></div>' : ''}<h2>${escapeHtml(title)}${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</h2><button class="x" type="button" aria-label="${T('Close', 'Đóng')}">✕</button></div><div class="sheet-body"></div></div>`;
   root.appendChild(wrap);
   const sheet = wrap.querySelector('.sheet'), body = wrap.querySelector('.sheet-body');
   body.style.display = 'flex'; body.style.flexDirection = 'column'; body.style.minHeight = '0'; body.style.flex = '1';

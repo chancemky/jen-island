@@ -26,7 +26,7 @@ export function openPrep(bizId, { onClose } = {}) {
   const own = ingredientsForBiz(bizId).filter(k => INGREDIENTS[k].prep);
   const raws = [...own, ...Object.keys(INGREDIENTS).filter(k => INGREDIENTS[k].prep && !own.includes(k) && pantry(k) > 0)];
   const el = h('div', 'prep');
-  el.innerHTML = `<div class="prep-head"><h2>${T('Prep table', 'Bàn sơ chế')}<small>${escapeHtml(bizName(bizId))}</small></h2><div class="svc-clock"><span class="sun"></span><b class="clk"></b></div><button class="btn gold all hidden" type="button">${T('Prep all', 'Sơ chế hết')}</button><button class="svc-close" type="button">✕</button></div>
+  el.innerHTML = `<div class="prep-head"><h2>${T('Prep table', 'Bàn sơ chế')}<small>${escapeHtml(bizName(bizId))}</small></h2><div class="svc-clock"><span class="sun"></span><b class="clk"></b></div><button class="btn gold all hidden" type="button">${T('Prep all', 'Sơ chế hết')}</button><button class="svc-close" type="button" aria-label="${T('Close', 'Đóng')}">✕</button></div>
     <div class="prep-guide"><p>${T('Prepping turns raw ingredients from the supermarket into what your recipes use. Each round preps a batch.', 'Sơ chế biến nguyên liệu thô mua ở siêu thị thành thứ công thức cần dùng. Mỗi lượt sơ chế một mẻ.')}</p>
       <ol><li data-s="1"><b>1</b>${T('Tap a raw ingredient', 'Chạm nguyên liệu thô')}</li><li data-s="2"><b>2</b>${T('Tap the board to prep it', 'Chạm thớt để sơ chế')}</li><li data-s="3"><b>3</b>${T('Tap its bowl to store it', 'Chạm tô để cất vào')}</li></ol></div>
     <div class="prep-raw"></div>

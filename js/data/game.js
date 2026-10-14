@@ -494,26 +494,26 @@ export const PERSONALITIES = {
 // ---------------------------------------------------------------- chapters
 export const CHAPTERS = [
   null,
-  { n: 1, title: 'A New Arrival', vi: 'Người Mới Đến' },
-  { n: 2, title: 'First Regulars', vi: 'Những Khách Quen Đầu Tiên' },
-  { n: 3, title: 'Word Is Spreading', vi: 'Tiếng Lành Đồn Xa' },
-  { n: 4, title: 'A Second Shop', vi: 'Quán Thứ Hai' },
-  { n: 5, title: 'A Helping Hand', vi: 'Có Người Phụ Giúp' },
-  { n: 6, title: 'Supplies & Rent', vi: 'Hàng Hóa & Tiền Thuê' },
-  { n: 7, title: 'On Wheels', vi: 'Lăn Bánh' },
+  { n: 1, title: 'A New Arrival', vi: 'Người mới đến' },
+  { n: 2, title: 'First Regulars', vi: 'Những khách quen đầu tiên' },
+  { n: 3, title: 'Word Is Spreading', vi: 'Tiếng lành đồn xa' },
+  { n: 4, title: 'A Second Shop', vi: 'Quán thứ hai' },
+  { n: 5, title: 'A Helping Hand', vi: 'Có người phụ giúp' },
+  { n: 6, title: 'Supplies & Rent', vi: 'Hàng hóa & tiền thuê' },
+  { n: 7, title: 'On Wheels', vi: 'Lăn bánh' },
   { n: 8, title: 'The Night Market', vi: 'Chợ Đêm' },
-  { n: 9, title: 'More Stalls', vi: 'Thêm Sạp Mới' },
-  { n: 10, title: 'The Restaurant', vi: 'Nhà Hàng' },
-  { n: 11, title: 'A Destination', vi: 'Điểm Đến Của Mọi Người' },
+  { n: 9, title: 'More Stalls', vi: 'Thêm sạp mới' },
+  { n: 10, title: 'The Restaurant', vi: 'Nhà hàng' },
+  { n: 11, title: 'A Destination', vi: 'Điểm đến của mọi người' },
   { n: 12, title: 'Harbour Town', vi: 'Phố Cảng' },
   { n: 13, title: 'The Harbour Café', vi: 'Quán Cà Phê Bến Cảng' },
   { n: 14, title: 'The Long Bridge', vi: 'Cây Cầu Dài' },
-  { n: 15, title: 'Landlord', vi: 'Chủ Đất' },
+  { n: 15, title: 'Landlord', vi: 'Chủ đất' },
   { n: 16, title: 'The Lantern Festival', vi: 'Lễ Hội Lồng Đèn' },
   { n: 17, title: 'Coconut Cove', vi: 'Vịnh Dừa' },
-  { n: 18, title: 'Star of the Night Market', vi: 'Ngôi Sao Chợ Đêm' },   // (was "Queen": you can be anyone)
-  { n: 19, title: 'The Island Runs Itself', vi: 'Hòn Đảo Tự Vận Hành' },
-  { n: 20, title: 'Keeper of the Island', vi: 'Người Giữ Đảo' },
+  { n: 18, title: 'Star of the Night Market', vi: 'Ngôi sao Chợ Đêm' },   // (was "Queen": you can be anyone)
+  { n: 19, title: 'The Island Runs Itself', vi: 'Hòn đảo tự vận hành' },
+  { n: 20, title: 'Keeper of the Island', vi: 'Người giữ đảo' },
 ];
 export const HARBOUR_BRIDGE = { cost: 4000, mats: { wood: 40, metal: 16, paint: 8 } };
 export const COVE_BRIDGE = { cost: 6000, mats: { wood: 50, metal: 20, paint: 10, tile: 10 } };

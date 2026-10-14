@@ -92,7 +92,7 @@ async function clear(times = 12) {
   }
 }
 async function closeModes() { await ev(async () => { (await import('/js/ui/decorate.js')).stopDecorate?.(); (await import('/js/ui/photo.js')).closePhotoMode?.(); document.querySelector('.ph-top .ph-x')?.click(); }); await new Promise(r => setTimeout(r, 400)); }
-async function closeSheets() { await closeModes(); await ev(() => { for (let i = 0; i < 4; i++) document.querySelector('.sheet-wrap:not(.out) .sheet-x, .sheet-wrap:not(.out) .close, .av-x, .sheet-wrap:not(.out) [aria-label="Close"], .sheet-wrap:not(.out) [aria-label="Đóng"]')?.click(); }); await wait(500); }
+async function closeSheets() { await closeModes(); await ev(() => { for (let i = 0; i < 4; i++) document.querySelector('.sheet-wrap:not(.out) .sheet-x, .sheet-wrap:not(.out) .close, .av-x, .sheet-wrap:not(.out) .x, .sheet-wrap:not(.out) [aria-label="Đóng"]')?.click(); }); await wait(500); }
 // a sheet: screenshot it, then scroll its body to the end and screenshot again
 async function sheetShots(name) {
   await wait(700); await shot(name);

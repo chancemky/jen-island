@@ -51,7 +51,7 @@ try {
     ['projects', "(await import('/js/ui/board.js')).openProjects()"], ['staff', "(await import('/js/ui/staff.js')).openStaffBoard()"]];
   for (const [nm, call] of sheets) {
     await imp('/js/systems/state.js', `${call};`); await sleep(1200); await errors(nm); await shot('sheet-' + nm);
-    await run(`for (let i = 0; i < 3; i++) document.querySelector('.sheet-wrap:not(.out) .sheet-x, .sheet-wrap:not(.out) [aria-label="Close"]')?.click()`); await sleep(500);
+    await run(`for (let i = 0; i < 3; i++) document.querySelector('.sheet-wrap:not(.out) .sheet-x, .sheet-wrap:not(.out) .x')?.click()`); await sleep(500);
   }
   // serve a customer at the drink stand
   await imp('/js/systems/scenes.js', `const { G } = await import('/js/systems/state.js'); G.state.time = 10 * 60; m.setScene('island', 600, 2260); window.__jen?.openBiz?.('shed1'); for (let i = 0; i < 3; i++) window.__jen?.spawnCustomer?.('shed1');`);
