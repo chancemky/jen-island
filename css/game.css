@@ -1079,3 +1079,4 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
   .hud-top .chip .coin, .hud-top .chip .sun { transform: scale(.85); }
   .chip-rep .rep-num { display: none; }
 }
+.buy.off { background: #efe4d2; color: var(--ink); text-shadow: none; }   /* a setting that's off: neutral, not a warning-yellow */

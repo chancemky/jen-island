@@ -23,7 +23,7 @@ import { Actor } from '../world/actor.js';
 import { sfx, setMood } from '../core/audio.js';
 import { bus, rand, choice, dist, sleep, money, moneyShort, islandDay } from '../core/util.js';
 import { PROJECTS, projectDone } from './projects.js';
-import { rt as bizRT, openBiz as openShop } from './business.js';
+import { rt as bizRT, openBiz as openShop, makeableRecipes } from './business.js';
 import { availableRecipes } from '../ui/shops.js';
 import { questOption, questTalk } from './sidequests.js';
 import { morningEvent, birthdaysToday, BIRTHDAYS, morningRumour } from './interact.js';
@@ -174,7 +174,8 @@ export const STEPS = {
   // ---- Chapter 8: the Night Market
   nightIntro: { ch: 8, next: 'restoreNM' },          // (nightMarketIntro moves on by itself)
   restoreNM: { ch: 8, text: () => { const r = NIGHT_MARKET_RESTORE; if (!gatePaid('night')) return T(`Get the Night Market key from Mèo Mây (${gateText('night')})`, `Lấy chìa khóa Chợ Đêm từ Mèo Mây (${gateText('night')})`); return T(`Restore the Night Market: cash ${moneyGoal(G.state.money, r.cost)}, wood ${mats('wood')}/${r.mats.wood}, metal ${mats('metal')}/${r.mats.metal}, paint ${mats('paint')}/${r.mats.paint}, lanterns ${mats('lantern')}/${r.mats.lantern}, light strings ${mats('cable')}/${r.mats.cable}`, `Khôi phục Chợ Đêm: tiền ${moneyGoal(G.state.money, r.cost)}, gỗ ${mats('wood')}/${r.mats.wood}, tôn ${mats('metal')}/${r.mats.metal}, sơn ${mats('paint')}/${r.mats.paint}, lồng đèn ${mats('lantern')}/${r.mats.lantern}, dây đèn ${mats('cable')}/${r.mats.cable}`); }, target: () => !gatePaid('night') ? meoTarget() : ({ scene: 'island', x: 520, y: 700 }), _t0: () => ({ scene: 'island', x: 430, y: 780 }), done: () => G.state.nightMarket.restored, next: 'nightServe' },
-  nightServe: { ch: 8, text: () => T(`Sell ${Math.min(20, bizServedSince('night', 'nightServe'))}/20 dishes at your night stall (open 17:00–23:00)`, `Bán ${Math.min(20, bizServedSince('night', 'nightServe'))}/20 món ở Sạp Đêm (mở 17:00–23:00)`), target: () => ({ scene: 'island', x: 520, y: 700 }), done: () => bizServedSince('night', 'nightServe') >= 20, next: 'buyStall', scene: () => newChapter(9) },
+  nightServe: { ch: 8, text: () => { const n = Math.min(20, bizServedSince('night', 'nightServe')), stocked = makeableRecipes('night').length > 0;   // (say what to buy first: it only came up when the stall refused to open)
+    return T(`Sell ${n}/20 dishes at your night stall (open 17:00–23:00)${stocked ? '' : ' — first buy rice paper, eggs and scallions at the supermarket'}`, `Bán ${n}/20 món ở Sạp Đêm (mở 17:00–23:00)${stocked ? '' : ' — mua bánh tráng, trứng và hành lá ở siêu thị trước'}`); }, target: () => ({ scene: 'island', x: 520, y: 700 }), done: () => bizServedSince('night', 'nightServe') >= 20, next: 'buyStall', scene: () => newChapter(9) },
   // ---- Chapter 10: the restaurant
   restoIntro: { ch: 10, next: 'buyResto' },          // (restaurantIntro moves on by itself)
   buyResto: { ch: 10, text: () => T(`Buy the restaurant's key from Mèo Mây (${gateText('restaurant')})`, `Mua chìa khóa nhà hàng từ Mèo Mây (${gateText('restaurant')})`), target: () => meoTarget(), done: () => bizOf('restaurant').owned, next: 'repairResto' },

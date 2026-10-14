@@ -140,7 +140,7 @@ export function candidates() {
       return { id: 'e' + seed, seed, name, stats: st, trait: TRAITS[Math.floor(R() * TRAITS.length)].id, role: null };
     });
   }
-  return r.cands.filter(c => !bizOf('restaurant').employees.some(e => e.id === c.id));
+  return r.cands.filter(c => !bizOf('restaurant').employees.some(e => e.id === c.id) && r.firedToday?.[c.id] !== s.day);
 }
 export function hire(cand, role) {
   const b = bizOf('restaurant');
@@ -160,6 +160,7 @@ export function fire(id) {
   const i = b.employees.findIndex(e => e.id === id);
   if (i < 0) return;
   b.employees.splice(i, 1);
+  (restRT().firedToday ||= {})[id] = G.state.day;   // (someone you let go doesn't turn up again in today's applicants)
   const a = restRT().staff.get(id);
   if (a) { scene().remove(a); restRT().staff.delete(id); }
   markDirty(true);

@@ -168,7 +168,7 @@ export function openMaterialShop() {
 // ---------------------------------------------------------------- furniture
 // today's pick at Anh Khoa's: chosen by the shared island day, from what you could buy anyway
 function todaysPick() {
-  const s = G.state, ok = Object.keys(FURNITURE).filter(id => { const f = FURNITURE[id]; return !f.reward && !f.collector && f.price >= 1000 && !(f.unlock && s.story.chapter < f.unlock) && !(f.need && !s.story.flags[f.need]); });
+  const s = G.state, ok = Object.keys(FURNITURE).filter(id => { const f = FURNITURE[id]; return !f.reward && !f.collector && f.price >= 200 && !(f.unlock && s.story.chapter < f.unlock) && !(f.need && !s.story.flags[f.need]); });
   if (!ok.length) return null;
   let x = (jstDayNum(islandNow()) * 2654435761) >>> 0; x ^= x >>> 13; x = Math.imul(x, 1274126177) >>> 0;
   return ok[x % ok.length];

@@ -308,7 +308,7 @@ function traceLine(c, pts) { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for 
 export const TRUCK_SPOTS = {
   beach: { x: 1420, y: 2152, en: 'Sunny Beach', vi: 'Bãi Biển', fx: 'Beach lunches and hot afternoons', fxVi: 'Trưa bãi biển và chiều nắng' },
   dock: { x: 1064, y: 2340, en: 'Ferry Dock', vi: 'Bến tàu', fx: 'A rush whenever the ferry comes in; tourists mind prices less', fxVi: 'Đông mỗi khi tàu cập bến; du khách ít để ý giá', ferry: 1.6, tolerance: 1.12 },
-  plaza: { x: 1000, y: 1720, en: 'Wind Plaza', vi: 'Quảng Trường Gió', fx: 'Steady neighbours all day, busy evenings', fxVi: 'Hàng xóm ghé đều cả ngày, tối đông', steady: 1.15 },
+  plaza: { x: 1072, y: 1700, en: 'Wind Plaza', vi: 'Quảng Trường Gió', fx: 'Steady neighbours all day, busy evenings', fxVi: 'Hàng xóm ghé đều cả ngày, tối đông', steady: 1.15 },
   harbour: { x: 2552, y: 707, en: 'Harbour Town', vi: 'Phố Cảng', need: 'harbourBridge', fx: 'Visitors from the guesthouse; pricier menus are fine', fxVi: 'Khách từ nhà nghỉ; giá cao hơn cũng được', tolerance: 1.18, steady: 1.05 },
 };
 export const NAV_ONLY = new Set(['nm', 'bridge', 'hbridge', 'cbridge', 'coveRoad']);   // walkable routes for NPCs with no road drawn (coveRoad: no road from Chú Hải's house down to the cove bridge)

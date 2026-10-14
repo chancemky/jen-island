@@ -28,7 +28,7 @@ import { openMenu, guestReminder } from './ui/menu.js';
 import { showAuth } from './ui/auth.js';
 import { updateBusinesses, openBiz, closeBiz, rt as bizRT, bizRecipes } from './systems/business.js';
 import { initNPCs, updateNPCs, npcDrawables, drawSkyLife, npcs, feedDucks, nearPond } from './systems/npc.js';
-import { updateClock, endDay, specialsInit, DAWN } from './systems/time.js';
+import { updateClock, endDay, specialsInit, DAWN, billsDue } from './systems/time.js';
 import { repairBridge, STEPS, stallHandover, buildSeaBridge, runArrival, runTour, refreshQuest, checkStory, setStep, repairScene, upgradeScene, discoverRecipe, talkToMeo, updateMeo, morningHooks, restoreNightMarket, statueReady, buildStatue, currentStep } from './systems/story.js';
 import { talkToResident, talkToMerchant, talkToStaff, talkToVisitor } from './systems/talk.js';
 import { questDelivery } from './systems/sidequests.js';
@@ -328,6 +328,8 @@ bus.on('late', () => {
   toast({ text: T('It\'s past midnight!', 'Đã quá nửa đêm!'), sub: T('You\'re getting sleepy — sleep in your bed, or at 6 am you\'ll doze off wherever you are.', 'Bạn buồn ngủ rồi — về giường ngủ nhé, không thì 6 giờ sáng bạn sẽ ngủ gục tại chỗ đó.'), icon: 'sleep_moon', ms: 5000 });
 });
 bus.on('regular', c => toast({ text: T(`${c.name} is now a regular!`, `${c.name} đã thành khách quen!`), sub: '♥', icon: 'heart' }));
+// the goal bar updates the moment you buy what it asks for (it could lag behind while a shop was open)
+for (const ev of ['bought', 'materials', 'pantry', 'key', 'property']) bus.on(ev, () => refreshQuest());
 bus.on('ferry', n => { if (G.scene === scenes.island && flag('freeRoam') && !cs.active && G.state.story.chapter >= 2) toast({ cat: 'island', text: T('The ferry has arrived', 'Tàu khách đã cập bến'), sub: T(`It brought ${n} visitor${n > 1 ? 's' : ''}!`, `Tàu chở ${n} du khách tới!`), icon: 'photo', ms: 2200 }); });
 bus.on('achievement', () => { if (Math.random() < 0.5) setTimeout(() => toast({ text: 'Mèo Mây: “' + choice(T(['Wow! I\'m telling everyone!', 'My tail is doing the happy thing!', 'Hehe, I knew you could.', 'That deserves a nap. For me. In your honour.'], ['Oa! Mình sẽ kể cho cả đảo!', 'Đuôi mình đang vẫy vui lắm nè!', 'Hì hì, mình biết bạn làm được mà.', 'Chuyện này đáng một giấc ngủ trưa. Của mình. Để mừng bạn.'])) + '”', icon: 'heart', ms: 2400 }), 1400); });
 bus.on('biz:open', id => { if (currentStep()) checkStory(); });
@@ -883,8 +885,10 @@ async function homeSnack() {
 
 // ---------------------------------------------------------------- sleeping / new day
 async function sleepFlow() {
-  const early = G.state.time < 12 * 60;
-  const pick = await ask(null, early ? T('It\'s still early… Sleep until tomorrow?', 'Mới sáng mà… Ngủ đến sáng mai?') : T('Sleep until tomorrow?', 'Ngủ đến sáng mai?'), [T('Sleep', 'Ngủ thôi'), T('Not yet', 'Chưa')]);
+  const early = G.state.time < 12 * 60, due = billsDue(), short = due > 0 && G.state.money < due;
+  // tonight's bills, said at the bed when you can't cover them (an early night skipped the 8 pm warning and woke you up in debt)
+  const bills = short ? T(` Tonight's bills are ${money(due)} and you have ${money(G.state.money)} — you'd wake up in debt.`, ` Chi phí đêm nay là ${money(due)} mà bạn chỉ có ${money(G.state.money)} — sáng mai sẽ bị nợ.`) : '';
+  const pick = await ask(null, (early ? T('It\'s still early… Sleep until tomorrow?', 'Mới sáng mà… Ngủ đến sáng mai?') : T('Sleep until tomorrow?', 'Ngủ đến sáng mai?')) + bills, [T('Sleep', 'Ngủ thôi'), T('Not yet', 'Chưa')]);
   closeDialog();
   if (pick !== 0) return;
   await doSleep(false);

@@ -325,7 +325,7 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
         const toggle = (label, key, fn) => {
           const r = h('div', 'row', `<div class="info"><b>${label}</b></div>`);
           const on = () => T('On', 'Bật'), off = () => T('Off', 'Tắt');
-          r.appendChild(btn(s.settings[key] ? on() : off(), (b) => { s.settings[key] = !s.settings[key]; b.innerHTML = s.settings[key] ? on() : off(); b.className = s.settings[key] ? 'buy' : 'buy alt'; fn?.(); markDirty(true); sfx('ui'); }, s.settings[key] ? 'buy' : 'buy alt'));
+          r.appendChild(btn(s.settings[key] ? on() : off(), (b) => { s.settings[key] = !s.settings[key]; b.innerHTML = s.settings[key] ? on() : off(); b.className = s.settings[key] ? 'buy' : 'buy off'; fn?.(); markDirty(true); sfx('ui'); }, s.settings[key] ? 'buy' : 'buy off'));
           list.appendChild(r);
         };
         // language: one language at a time, never mixed
@@ -340,7 +340,7 @@ export function openMenu({ onLogout, tab = 0 } = {}) {
           const apply = () => setAudio({ [key]: s.settings[key], [volKey]: s.settings[volKey] });
           inp.oninput = () => { s.settings[volKey] = +inp.value / 100; if (!s.settings[key] && +inp.value > 0) { s.settings[key] = true; b.innerHTML = on(); b.className = 'buy'; } apply(); };
           inp.onchange = () => { markDirty(true); if (key === 'sfx') sfx('coin'); };
-          const b = btn(s.settings[key] ? on() : off(), (el) => { s.settings[key] = !s.settings[key]; el.innerHTML = s.settings[key] ? on() : off(); el.className = s.settings[key] ? 'buy' : 'buy alt'; apply(); markDirty(true); sfx('ui'); }, s.settings[key] ? 'buy' : 'buy alt');
+          const b = btn(s.settings[key] ? on() : off(), (el) => { s.settings[key] = !s.settings[key]; el.innerHTML = s.settings[key] ? on() : off(); el.className = s.settings[key] ? 'buy' : 'buy alt'; apply(); markDirty(true); sfx('ui'); }, s.settings[key] ? 'buy' : 'buy off');
           r.appendChild(b); list.appendChild(r);
         };
         slider(T('Music', 'Nhạc nền'), 'music', 'musicVol');
