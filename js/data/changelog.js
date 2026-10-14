@@ -3,9 +3,27 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.19.0';
+export const APP_VERSION = '5.20.0';
 
 export const CHANGELOG = [
+  {
+    v: '5.20.0', date: '2026-10-14T10:26:35Z',
+    title: ['Busy Island', 'Đảo Rộn Ràng'],
+    items: [
+      ['Customers line up, order and get served more smoothly: low-stock warnings, ingredients go back on the shelf if you close mid-order, and the serving screen fits every phone', 'Khách xếp hàng, gọi món và được phục vụ mượt hơn: báo sắp hết hàng, nguyên liệu trả lại kệ khi đóng quầy giữa chừng, và màn hình bán hàng vừa mọi điện thoại'],
+      ['A fairer economy: busy shops slow down once the island has eaten, reputation grows quickly at first then steadies, and shops, upgrades and cosmetics cost more — so every big purchase feels earned', 'Kinh tế công bằng hơn: quán đông sẽ thưa khách khi cả đảo đã ăn rồi, danh tiếng tăng nhanh lúc đầu rồi chậm lại, và quán, nâng cấp, đồ trang trí đắt hơn — món lớn nào cũng đáng công sức'],
+      ['Shopkeepers keep 15% of their sales and supply runners add 10%: a fully staffed island now pays its way, and pays well once you own the property', 'Người trông quán giữ 15% tiền bán và người giao hàng tính thêm 10%: đảo có đủ nhân viên giờ tự nuôi được mình, và lời nhiều khi bạn sở hữu mặt bằng'],
+      ['Clearer goals: tap the goal bar to see every goal and fly to where it is, prices shown in each goal, a \'Tomorrow\' line at the end of each day, and Mèo Mây warns you before a key leaves you short', 'Mục tiêu rõ hơn: chạm thanh mục tiêu để xem hết và bay tới chỗ cần đi, giá hiện ngay trong mục tiêu, dòng \'Ngày mai\' cuối mỗi ngày, và Mèo Mây nhắc trước khi mua chìa khóa làm bạn hụt tiền'],
+      ['A shorter first chapter, the restaurant opens at level 15, and early shops are a goal rather than a wall', 'Chương đầu ngắn hơn, nhà hàng mở ở cấp 15, và các quán đầu là mục tiêu chứ không phải bức tường'],
+      ['New: two mid-game island projects, a daily 20%-off pick at Anh Khoa\'s, a try-on mirror at Cô Ba\'s, a climbable lookout on Firefly Islet, neighbours on the map and a morning island rumour', 'Mới: hai công trình đảo giữa game, món giảm 20% mỗi ngày ở tiệm Anh Khoa, gương thử đồ ở tiệm cô Ba, chòi canh leo được ở Cù Lao Đom Đóm, hàng xóm trên bản đồ và tin đồn buổi sáng'],
+      ['Collect and save: collection progress, furniture sets celebrate when complete, \'Save for it\' on big furniture, and a \'Claim all\' button for milestones', 'Sưu tầm và để dành: tiến độ sưu tập, hoàn thành bộ nội thất có ăn mừng, \'Để dành\' cho nội thất lớn, và nút \'Nhận tất cả\' cho cột mốc'],
+      ['The restaurant runs properly: clear tables yourself when nobody else can, no more leftover orders, a supply runner, and wages shown clearly', 'Nhà hàng chạy đúng: tự dọn bàn khi không ai dọn, không còn món thừa từ hôm qua, có người giao hàng, và lương hiện rõ ràng'],
+      ['Prepped ingredients can be made at any prep table for every shop', 'Nguyên liệu sơ chế làm được ở bất kỳ bàn sơ chế nào cho mọi quán'],
+      ['Much better Vietnamese: natural pronouns for every customer and neighbour, rewritten jokes, and consistent names', 'Tiếng Việt tự nhiên hơn nhiều: xưng hô đúng cho mọi khách và hàng xóm, chuyện cười viết lại, và tên gọi thống nhất'],
+      ['Looks and feel: stall keepers\' heads no longer cut off, lanterns hang above heads, guests stay off the sea, shop interiors have a little street outside, nicer salon and shoe previews, and the top bar fits small phones', 'Hình ảnh: đầu người trông sạp không còn bị cắt, lồng đèn treo cao, khách không đi trên biển, ngoài quán có con phố nhỏ, xem trước kiểu tóc và giày đẹp hơn, và thanh trên cùng vừa điện thoại nhỏ'],
+      ['And about 150 more fixes from play-testing every part of the island', 'Và khoảng 150 sửa lỗi khác sau khi chơi thử mọi góc của hòn đảo'],
+    ],
+  },
   {
     v: '5.19.0', date: '2026-10-13T14:34:38Z',
     title: ['Big Dreams', 'Ước Mơ Lớn'],
