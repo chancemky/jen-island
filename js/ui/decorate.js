@@ -301,8 +301,10 @@ function freeSpot(sel, pad = TILE, near = null) {   // (new pieces keep a tile o
     const x = g.ox + gx * TILE + fp.w / 2, y = g.oy + gy * TILE;
     // keep the way to the door clear: nothing new lands in the lane in front of the exit (a table and a
     // fish tank used to drop right onto the EXIT path)
-    if (!near && sc.door && !sc.noDoor && Math.abs(x - sc.door.x) < sc.door.w / 2 + fp.w / 2 + 10 && y > sc.h - TILE * 3) continue;
-    spots.push({ x, y, d: Math.hypot(x - cx, (y - cy) * wy) });
+    if (!near && sc.door && !sc.noDoor && Math.abs(x - sc.door.x) < sc.door.w / 2 + fp.w / 2 + 10 && y > sc.h - TILE * 6) continue;
+    // a new piece goes into open floor, away from what's already there (they all clumped in the middle)
+    const crowd = near ? 0 : furnList(sc).reduce((m, f) => Math.min(m, Math.hypot(f.x - x, (f.y - y) * 1.3)), 999);
+    spots.push({ x, y, d: Math.hypot(x - cx, (y - cy) * wy) - (near ? 0 : Math.min(crowd, 140) * 1.4) });
   }
   spots.sort((a, b) => a.d - b.d);
   for (const s of spots) if (fits(sel, s.x, s.y, 0, null, near ? 0 : pad)) return { x: s.x, y: s.y };
