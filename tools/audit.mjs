@@ -223,6 +223,7 @@ try {
     cur = 'play';
     // run the drink stand: open it, a customer, the service screen
     await setTime(10 * 60); await go('island', 600, 2260); await wait(600);
+    await ev(async () => { const m = await import('/js/ui/lookout.js'); await m.leaveLighthouse(); }); await wait(1200);   // (the lighthouse view must be closed first, or it moves you back to its door)
     // the drink stand: stocked, opened, three customers in line, then the counter (it used to shoot wherever the last step left you)
     await ev(async () => { const J = window.__jen, D = await import('/js/data/game.js'), sc = await import('/js/systems/scenes.js'); for (const k of Object.keys(D.INGREDIENTS)) J.G.state.pantry[k] = 40; J.G.state.prepped.kumquat_cut = 20; delete J.G.state.keepers?.shed1; J.G.state.time = 10 * 60; sc.setScene('island', 600, 2262, 'up'); J.openBiz('shed1'); }); await wait(1500); await shot('shop-open');
     await ev(async () => { const B = await import('/js/systems/business.js'); for (let i = 0; i < 3; i++) B.spawnCustomer('shed1'); }); await wait(7000); await shot('customers');

@@ -194,6 +194,8 @@ export const STEPS = {
 function freeText() {
   const av = availableRecipes();
   if (av.length) return T('Mèo Mây has a new recipe for you — visit her house!', 'Mèo Mây có công thức mới! Ghé nhà Mèo Mây nhé');
+  // what you chose to save for comes first (it used to stay hidden behind a generic upgrade hint)
+  const g0 = G.state.goal; if (g0) return T(`Saving for ${g0.en}: ${money(Math.min(G.state.money, g0.cost))} / ${money(g0.cost)}`, `Đang để dành mua ${g0.vi}: ${money(Math.min(G.state.money, g0.cost))} / ${money(g0.cost)}`);
   const up = Object.entries(G.state.biz).find(([id, b]) => b.owned && b.level < 3 && BUSINESSES[id].upgrades);
   if (up) return T(`Upgrade ${bizName(up[0])} and keep growing your island`, `Nâng cấp ${bizName(up[0])} và tiếp tục phát triển đảo`);
   // after the story: the families who left, the neighbours' own stories, the island's secrets

@@ -45,7 +45,8 @@ export async function leaveLighthouse() {
   await fadeOut(400);
   cancelAnimationFrame(L.raf); L.el.remove();
   const pl = G.player;
-  pl.x = DOOR.x; pl.y = DOOR.y; pl.visible = true; releaseInput('lookout'); pl.face('down');
+  // back where you climbed up (the islet tower used to drop you at the lighthouse door)
+  const back = L.title ? L.from : DOOR; pl.x = back.x; pl.y = back.y; pl.visible = true; releaseInput('lookout'); pl.face('down');
   cam.override = null; cam.follow = pl; cam.zoomMul = 1; cam.snap(pl.x, pl.y - 18);
   document.body.classList.remove('lookout', 'hide-controls');
   G.runtime.lookout = false; input.enabled = true;
