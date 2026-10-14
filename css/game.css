@@ -1063,3 +1063,6 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
 .svc.indoor .svc-awning::after { display: none; }
 .svc.indoor .svc-outside, .svc.indoor .svc-outside.dusk, .svc.indoor .svc-outside.night { background: linear-gradient(180deg, #f6e6d6 0%, #efd9c3 58%, #c98f5a 58.5%, #b9824f 100%); }
 .svc.indoor .svc-sky { display: none; }
+.tabs.icons.reveal { flex-wrap: wrap; }
+.tabs.icons.reveal button { flex: 1 1 22%; flex-direction: column; gap: 1px; padding: 5px 2px; }
+.tabs.icons.reveal button span { display: block; font-size: 10px; }

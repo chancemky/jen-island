@@ -300,6 +300,8 @@ const leaderboardRowNow = () => ({ ...leaderboardRow(G.state), badge: showcaseBa
 
 export function openMenu({ onLogout, tab = 0 } = {}) {
   const s = G.state;
+  // the first couple of times, every tab says its name for a moment (icons alone were hard to learn)
+  const f = s.story.flags; if ((f.menuSeen || 0) < 2) { f.menuSeen = (f.menuSeen || 0) + 1; setTimeout(() => { const t = document.querySelector('.sheet-wrap:not(.out) .tabs.icons'); if (t) { t.classList.add('reveal'); setTimeout(() => t.classList.remove('reveal'), 3200); } }, 60); }
   openSheet({ title: s.island.name || 'Bistro Island', sub: T(`Day ${s.day} · ${clock(s.time)} · Chapter ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.title || ''}`, `Ngày ${s.day} · ${clock(s.time)} · Chương ${s.story.chapter}: ${CHAPTERS[s.story.chapter]?.vi || ''}`), full: true, build: (body, api) => {
     const shop = storeVisible();
     const ti = (label, icon) => ({ label, icon });

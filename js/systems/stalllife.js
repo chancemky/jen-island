@@ -53,7 +53,9 @@ export function updateStallLife(island, npcs, dt) {
   const open = marketOpen() || (G.runtime.nm?.restoreAnim ?? 0) > 0.5;
   for (const a of npcs.vendors) {
     const d = a.data, b = island.buildings[d.vendor]; if (!b || G.runtime.inCutscene) continue;
-    const mine = s.biz[d.vendor]?.owned, want = open && !mine && hours() >= OPEN + d.jitter - (G.runtime.nm?.restoreAnim ? 99 : 0);
+    const mine = s.biz[d.vendor]?.owned, idle = mine && !s.biz[d.vendor].open && !s.keepers?.[d.vendor] && G.runtime.serviceOpen !== d.vendor;
+    // a stall you own but leave shut, with nobody hired: the old family keeps it lively for the evening (the market went dark)
+    const want = open && (!mine || idle) && hours() >= OPEN + d.jitter - (G.runtime.nm?.restoreAnim ? 99 : 0);
     if (d.phase === 'away' && want) {                                   // arrive from off-screen and walk to the stall
       const p = edge(besideStall(b)); a.clip = null; a.x = p[0]; a.y = p[1]; a.visible = true; a.alpha = undefined; d.phase = 'arriving';
       walk(island, a, besideStall(b), () => { if (d.phase !== 'arriving') return; d.phase = 'working'; behindCounter(a, b); a.face('down'); });

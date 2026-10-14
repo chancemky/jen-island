@@ -59,7 +59,7 @@ export function tabs(body, list, onPick, start = 0, api = null) {
   if (list.some(t => t?.icon)) bar.classList.add('icons');
   list.forEach((t, i) => {
     const b = document.createElement('button'); b.type = 'button';
-    if (t?.icon) { b.innerHTML = `<img src="${iconURL(t.icon, 36)}" alt=""><span></span>`; b.lastChild.textContent = t.label; b.setAttribute('aria-label', t.label); } else b.textContent = t;
+    if (t?.icon) { b.innerHTML = `<img src="${iconURL(t.icon, 36)}" alt=""><span></span>`; b.lastChild.textContent = t.label; b.setAttribute('aria-label', t.label); b.title = t.label; } else b.textContent = t;
     b.onclick = () => { sfx('ui'); select(i); }; bar.appendChild(b);
   });
   body.append(bar, pane);
