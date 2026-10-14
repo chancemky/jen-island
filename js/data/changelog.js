@@ -3,9 +3,17 @@
 // "What's new" card listing the updates released since they last played;
 // Settings keeps the last 20.
 
-export const APP_VERSION = '5.20.0';
+export const APP_VERSION = '5.20.1';
 
 export const CHANGELOG = [
+  {
+    v: '5.20.1', date: '2026-10-14T12:08:00Z',
+    title: ['Peace and Quiet', 'Yên Tĩnh'],
+    items: [
+      ['No more random beeps: villagers sitting down on benches across the island no longer make a sound, background news pops up silently, and a shopkeeper\'s team order no longer plays a fanfare from across the island', 'Hết tiếng bíp ngẫu nhiên: hàng xóm ngồi xuống ghế khắp đảo không còn phát tiếng, tin tức nền hiện lên yên lặng, và đơn đội của người trông quán không còn bật nhạc từ xa'],
+      ['Scooters give one polite beep only if you walk into them, and the ferry horn only sounds near the dock', 'Xe máy chỉ bíp nhẹ một lần khi bạn đi vào đường của nó, và còi phà chỉ vang khi bạn ở gần bến'],
+    ],
+  },
   {
     v: '5.20.0', date: '2026-10-14T10:26:35Z',
     title: ['Busy Island', 'Đảo Rộn Ràng'],

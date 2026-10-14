@@ -496,7 +496,7 @@ export function completeOrder(c, quality) {
   if (s.lifetime >= 1000) unlockAchievement('money_1000');
   if (s.lifetime >= 10000) unlockAchievement('money_10000');
   bus.emit('served', c, quality, price, tip);
-  if (c.team) { c.team.done++; if (c.team.done >= c.team.size) { const bonus = Math.round(c.team.total * 0.5 + price * 0.5); addMoney(bonus, 'tip'); fx.float(a.x, a.y - 66, `${T('TEAM BONUS', 'THƯỞNG ĐỘI')} +${bonus}k`, '#ffe07a', { size: 11, life: 2 }); sfx('fanfare'); for (const m of c.team.members) { m.actor?.setAct?.('cheer'); m.actor?.doHop?.(); setTimeout(() => m.actor?.setAct?.(null), 1400); } } else c.team.total += price; }
+  if (c.team) { c.team.done++; if (c.team.done >= c.team.size) { const bonus = Math.round(c.team.total * 0.5 + price * 0.5); addMoney(bonus, 'tip'); fx.float(a.x, a.y - 66, `${T('TEAM BONUS', 'THƯỞNG ĐỘI')} +${bonus}k`, '#ffe07a', { size: 11, life: 2 }); if (G.runtime.serviceOpen === c.bizId) sfx('fanfare'); for (const m of c.team.members) { m.actor?.setAct?.('cheer'); m.actor?.doHop?.(); setTimeout(() => m.actor?.setAct?.(null), 1400); } } else c.team.total += price; }
   c.state = 'done';
   customerLeave(c, 'happy');
   markDirty(true);

@@ -342,7 +342,7 @@ function updateFerry(island, dt) {
   const running = (s.time >= RUNS.from && s.time < RUNS.to) || waitingForBoat();
   if (f.state === 'away' || f.state === 'leaving') f.gap -= dt;
   if (f.state === 'away') {
-    if (running && f.gap <= APPROACH) { f.state = 'arriving'; f.x = BERTH.x; f.y = 2980; f.speed = 110; sfx('horn'); }   // (sets off in time to tie up 10 s after the last one left)
+    if (running && f.gap <= APPROACH) { f.state = 'arriving'; f.x = BERTH.x; f.y = 2980; f.speed = 110; harbourHorn(); }   // (sets off in time to tie up 10 s after the last one left)
   } else if (f.state === 'arriving') {
     const dy = f.y - BERTH.y;
     f.speed = G.runtime.introBoat ? Math.max(8, Math.min(80, dy * 0.8)) : Math.max(14, Math.min(110, dy * 1.3));   // (your own arrival at the start glides in slowly)
@@ -366,7 +366,7 @@ function updateFerry(island, dt) {
     else if (f.boarded >= 5) go = f.sinceBoard >= 3;                          // five or more aboard: three more seconds, then off
     else if (!f.boarded && !coming) go = f.t >= f.unloadFor + 2;              // nobody to take: leave
     else go = coming ? f.t > 45 : f.sinceBoard >= 12;                          // a few aboard: wait a little for more
-    if (go) { f.state = 'leaving'; f.gap = 10; sfx('horn'); }
+    if (go) { f.state = 'leaving'; f.gap = 10; harbourHorn(); }
   } else if (f.state === 'leaving') {
     f.speed = Math.min(130, f.speed + dt * 45);
     f.y += f.speed * dt;
@@ -406,6 +406,14 @@ function makeScooter(path, col, phase) {
   const look = { ...visitorLook(seed, 'regular'), hat: 'helmet', hatColor: choice(['#f28f7c', '#6f9fc8', '#f7de8c', '#9fd8c8', '#fff5df']), backpack: undefined, camera: undefined, scale: 1 };
   return { pts, segs, len, pos: len * phase, dir: 1, speed: 72, col, rider: { look, dir: 'right', moving: 0, seed, blinkAmt: 0, emo: 'happy', sit: true, act: 'ride', actT: 0 }, x: 0, y: 0, flip: false, beep: 0 };
 }
+// the ferry's horn only for someone near the dock — and not every few seconds (it sounded all over the island,
+// indoors too, each time the shuttle came and went)
+let hornAt = -1e9, beepAt = -1e9;
+function harbourHorn() {
+  const pl = G.player, now = performance.now();
+  if (G.scene !== G.scenes.island || !pl || dist(pl.x, pl.y, BERTH.x, BERTH.y) > 520 || now - hornAt < 45000) return;
+  hornAt = now; sfx('horn');
+}
 function updateScooter(sc, dt) {
   const pl = G.player;
   let target = 72;
@@ -413,9 +421,9 @@ function updateScooter(sc, dt) {
     // only brake if the player is actually ahead, on the road
     const vx = sc.vx || (sc.flip ? -1 : 1), vy = sc.vy || 0, l = Math.hypot(vx, vy) || 1;
     const along = ((pl.x - sc.x) * vx + (pl.y - sc.y) * vy) / l, side = Math.abs(((pl.x - sc.x) * vy - (pl.y - sc.y) * vx) / l);
-    if (along > 0 && side < 18) { sc.wait = (sc.wait || 0) + dt; target = sc.wait > 1.6 ? 36 : 0; if (sc.beep <= 0) { sc.beep = 3; sfx('beep'); } }
-    else sc.wait = 0;
-  } else sc.wait = 0;
+    if (along > 0 && side < 18) { sc.wait = (sc.wait || 0) + dt; target = sc.wait > 1.6 ? 36 : 0; if (!sc.beeped && sc.wait > 0.8) { sc.beeped = true; const now = performance.now(); if ((pl.moving || 0) > 0.05 && now - beepAt > 30000) { beepAt = now; sfx('beep'); } } }   // (a polite beep only if you're walking into it, at most every 30 s island-wide — it beeped every pass at anyone standing on a road)
+    else { sc.wait = 0; sc.beeped = false; }
+  } else { sc.wait = 0; sc.beeped = false; }
   // animals on the road: brake, and once stopped the animal trots off and the scooter rolls on
   if (target > 0 && G.animals && G.scene === G.scenes.island) {
     const vx = sc.vx || 1, vy = sc.vy || 0, l = Math.hypot(vx, vy) || 1;

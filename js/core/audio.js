@@ -147,7 +147,7 @@ function voice(pts, { vol = 0.12, type = 'sawtooth', vib = 0, vibRate = 7, when 
 }
 
 export function sfx(name, opt = {}) {
-  hapticFor(name);
+  hapticFor(name); globalThis.__sfxLog?.push([name, Math.round(globalThis.__jen?.G?.state?.time || 0), globalThis.__sfxStack && (name === globalThis.__sfxStack || globalThis.__sfxStack === 'ALL') ? new Error().stack.split('\n').slice(2, 5).join(' | ') : '']);   // (play-tests can list every sound)
   if (!ctx || !started || !state.sfx || ctx.state !== 'running') return;
   switch (name) {
     case 'blip': { const now = performance.now(); if (now - state.lastBlip < 45) return; state.lastBlip = now; tone((opt.pitch || 620) * (0.94 + Math.random() * 0.12), 0.05, { type: 'triangle', vol: 0.09 }); break; }
