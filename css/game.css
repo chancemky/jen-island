@@ -1033,3 +1033,27 @@ body.cb .icon-opt .cnt.low { background: #d55e00; }
 .steps-mini figcaption { font-size: 10px; font-weight: 800; opacity: .75; max-width: 64px; text-align: center; line-height: 1.1; }   /* (names under the icons: you couldn't tell what to buy) */
 /* the goal bar: two lines at most (three covered a sixth of the screen); tap it for the whole goal */
 #questText { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-align: left; }
+/* short screens (a Safari tab with its bars): everything still fits and Serve is always on screen */
+.svc-bottom { flex: none; }
+@media (max-height: 760px) {
+  .svc-label { display: none; }
+  .svc-board canvas { height: min(110px, 14vh); }
+  .svc-customer { min-height: 96px; }
+  .svc-portrait { width: 82px; height: 96px; }
+  .svc-grid { min-height: 84px; }
+  .svc-chips span { font-size: 10.5px; padding: 3px 7px; }
+  .svc-order { font-size: 13.5px; line-height: 1.3; }
+}
+@media (max-height: 640px) {
+  .svc-awning { height: 10px; }
+  .svc-top { padding-top: 6px; }
+  .svc-customer { min-height: 80px; }
+  .svc-portrait { width: 68px; height: 80px; }
+  .svc-board canvas { height: 76px; }
+  .seg button.icon-opt { min-height: 38px; padding: 2px; }
+  .icon-opt .oi { height: 18px; } .icon-opt .oi img { width: 17px; height: 17px; }
+  .svc-grid { min-height: 70px; }
+  .svc-grid .ing .tray img { width: 34px; height: 34px; }
+  .svc-counter { gap: 5px; padding-top: 5px; }
+  .svc-bottom .btn { padding: 10px; }
+}

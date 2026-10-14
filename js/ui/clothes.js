@@ -85,6 +85,7 @@ export function openBoutique() {
       const slot = SLOTS[i - 1].id, w = wardrobe();
       const list = h('div', 'list'); pane.appendChild(list);
       const ids = Object.keys(CLOTHES).filter(k => CLOTHES[k].slot === slot && !FREE_CLOTHES.includes(k) && !CLOTHES[k].store && !CLOTHES[k].designer).sort((a, b) => (CLOTHES[a].lv || 0) - (CLOTHES[b].lv || 0) || CLOTHES[a].price - CLOTHES[b].price);
+      list.appendChild(h('div', 'empty-note', T(`Collected: ${ids.filter(k => w.owned.includes(k)).length} of ${ids.length} · tap a picture to try it on`, `Đã sưu tầm: ${ids.filter(k => w.owned.includes(k)).length}/${ids.length} · chạm hình để thử`)));   // (progress, and the try-on mirror)
       for (const id of ids) {
         const it = CLOTHES[id], own = w.owned.includes(id), locked = level() < (it.lv || 0);
         const note = own ? T('In your wardrobe ✓', 'Đã có trong tủ ✓') : locked ? T(`Unlocks at level ${it.lv}`, `Mở ở cấp ${it.lv}`) : money(it.price) + (it.luxury ? T(' · ✦ Rare piece', ' · ✦ Hàng hiếm') : '');

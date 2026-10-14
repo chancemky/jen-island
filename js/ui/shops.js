@@ -223,6 +223,9 @@ export function openFurnitureShop() {
     const ids = Object.keys(FURNITURE).sort((a, b) => group(FURNITURE[a]) - group(FURNITURE[b]) || FURNITURE[a].price - FURNITURE[b].price);
     const HEADS = [T('For the floor', 'Đồ đặt sàn'), T('For the walls', 'Đồ treo tường'), T('Lights', 'Đèn'), T('✦ Collector\'s corner', '✦ Góc sưu tầm')];
     const setOf = id => Object.values(SETS).find(st => st.pieces.includes(id));
+    // your collection so far: every different piece you own (placed or stored) out of all that's for sale
+    { const sale = ids.filter(id => !FURNITURE[id].reward), ownedSet = new Set([...s.home.owned, ...placedFurniture().map(f => f.id)]), n = sale.filter(id => ownedSet.has(id)).length;
+      list.appendChild(h('div', 'empty-note', T(`Your collection: ${n} of ${sale.length} pieces`, `Bộ sưu tập: ${n}/${sale.length} món`))); }
     let lastHead = -1;
     for (const id of ids) {
       const f = FURNITURE[id];

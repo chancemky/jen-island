@@ -78,7 +78,10 @@ export function recoloured(key, hue, draw) {
         const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, dl = mx - mn;
         if (dl < 0.08 || l < 0.18) continue;                      // ink outlines, greys and shadows keep their colour
         const s = l > 0.5 ? dl / (2 - mx - mn) : dl / (mx + mn);
-        let hh = mx === r ? (g - b) / dl + (g < b ? 6 : 0) : mx === g ? (b - r) / dl + 2 : (r - g) / dl + 4; hh = (hh / 6 + rot) % 1;
+        let hh = mx === r ? (g - b) / dl + (g < b ? 6 : 0) : mx === g ? (b - r) / dl + 2 : (r - g) / dl + 4;
+        // wood and brown tones stay as they are: only the colours change (a record player used to turn lime green, legs and all)
+        const deg = hh * 60; if (deg >= 16 && deg <= 50 && s < 0.7 && l < 0.72) continue;
+        hh = (hh / 6 + rot) % 1;
         const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q, f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
         d[i] = f(hh + 1 / 3) * 255; d[i + 1] = f(hh) * 255; d[i + 2] = f(hh - 1 / 3) * 255;
       }

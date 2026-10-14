@@ -205,14 +205,14 @@ export function buildFloor(which, level) {
   const { w, h } = FLOOR_SIZES[Math.min(level, 2)] || FLOOR_SIZES[1], up = which === 'up', id = up ? 'house_up' : 'house_down';
   const r = new Interior(up
     ? { id, name: 'Tầng trên', w, h, WH: 64, wall: '#e6eef7', wall2: '#dbe5f1', wallStyle: 'dots', floor: '#c98f5a', door: { x: w / 2, w: 30 }, noDoor: true, building: 'house' }
-    : { id, name: 'Tầng hầm', w, h, WH: 64, wall: level >= 2 ? '#e9dccb' : '#ddd0c0', wall2: '#d3c4b2', wallStyle: 'brick', floor: level >= 2 ? '#b08158' : '#bdb2a3', floorStyle: level >= 2 ? 'wood' : 'concrete', door: { x: w / 2, w: 30 }, noDoor: true, building: 'house' });
+    : { id, name: 'Tầng hầm', w, h, WH: 64, wall: level >= 2 ? '#e9dccb' : '#ddd0c0', wall2: '#d3c4b2', wallStyle: 'brick', floor: level >= 2 ? '#c4a07a' : '#bdb2a3', floorStyle: level >= 2 ? 'tile' : 'concrete', door: { x: w / 2, w: 30 }, noDoor: true, building: 'house' });
   if (up) {
     r.wallItem('window', w / 2 - 40, { w: 46, h: 28, hgt: 54, curtain: '#c9b6e8' });
-    if (level >= 2) { r.wallItem('window', w / 2 + 60, { w: 70, h: 34, hgt: 56, curtain: '#f4a9b8' }); r.wallItem('familyPhoto', 60); }
+    if (level >= 2) { r.wallItem('window', w / 2 + 60, { w: 70, h: 34, hgt: 56, curtain: '#f4a9b8' }); r.wallItem('familyPhoto', 60); r.wallItem('photoWall', w - 46); r.wallItem('bunting', w / 2 - 110); }   // (the big upgrade gets some character: it was a bare room)
     addStairs(r, 'down', 'house', ['Go downstairs', 'Xuống lầu']);
   } else {
     r.wallItem('window', w / 2 + 40, { w: 34, h: 14, hgt: 58, curtain: '#e6d3b0' });        // a little window high up at ground level
-    if (level >= 2) r.wallItem('window', w - 70, { w: 34, h: 14, hgt: 58, curtain: '#e6d3b0' });
+    if (level >= 2) { r.wallItem('window', w - 70, { w: 34, h: 14, hgt: 58, curtain: '#e6d3b0' }); r.wallItem('bunting', 70); r.wallItem('pegboard', w / 2 - 70); r.wallItem('clock', w - 34); }   // (a finished basement: a hangout, not a copy of the ground floor)
     addStairs(r, 'up', 'house', ['Go upstairs', 'Lên lầu']);
   }
   r.entry = { x: stairsX(r, up ? 'down' : 'up'), y: r.WH + 70 };

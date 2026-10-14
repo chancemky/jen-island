@@ -601,7 +601,7 @@ function updateInteraction(dt) {
 function cycleSpecial(id) {
   const z = bizOf(id), list = bizRecipes(id); if (!list.length) return;
   const i = list.indexOf(z.special); z.special = list[(i + 1) % list.length]; markDirty(true); sfx('page');
-  toast({ text: T(`Today's special: ${recipeName(z.special)}`, `Món đặc biệt hôm nay: ${recipeName(z.special)}`), sub: T('Customers order it more and tip a little extra. Tap again for another.', 'Khách gọi món này nhiều hơn và boa thêm. Chạm lần nữa để đổi.'), icon: RECIPES[z.special].icon, ms: 2600 });
+  toast({ text: T(`Today's special: ${recipeName(z.special)}`, `Món đặc biệt hôm nay: ${recipeName(z.special)}`), sub: T('Customers order it more and tip a little extra. Tap again for another.', 'Khách gọi món này nhiều hơn và boa thêm. Chạm lần nữa để đổi.'), icon: RECIPES[z.special].icon, ms: 2600, now: true });   // (the answer to your tap: never queued behind island news)
 }
 function followingPet(sc, pl) {
   const uid = followerUid(); if (!uid) return null;
@@ -830,11 +830,11 @@ function toggleBiz(bizId) {
     // Close sits beside the big action button: with people in line, it takes a second tap (one slip used to send them all away)
     const waiting = bizRT(bizId).queue.length;
     if (waiting && !(G.runtime.closeArm?.id === bizId && performance.now() - G.runtime.closeArm.t < 3000)) { G.runtime.closeArm = { id: bizId, t: performance.now() }; sfx('tap'); toast({ text: T(`${waiting} customer${waiting > 1 ? 's are' : ' is'} waiting`, `${waiting} khách đang chờ`), sub: T('Tap Close again to close anyway.', 'Bấm Đóng cửa lần nữa để đóng.'), icon: 'person', now: true, ms: 2600 }); return; }
-    G.runtime.closeArm = null; closeBiz(bizId); sfx('back'); toast({ text: T(`${bizName(bizId)} is closed`, `${bizName(bizId)} đã đóng cửa`) }); return;
+    G.runtime.closeArm = null; closeBiz(bizId); sfx('back'); toast({ text: T(`${bizName(bizId)} is closed`, `${bizName(bizId)} đã đóng cửa`), now: true }); return;
   }
   const r = openBiz(bizId);
   if (!r.ok) { toast({ text: r.why.split('\n')[0], sub: r.why.split('\n')[1] || '', bad: true, ms: 3400 }); return; }
-  toast({ text: T(`${bizName(bizId)} is open!`, `${bizName(bizId)} mở cửa!`), sub: T('Customers are on the way', 'Khách đang tới'), icon: 'sign_open' });
+  toast({ text: T(`${bizName(bizId)} is open!`, `${bizName(bizId)} mở cửa!`), sub: T('Customers are on the way', 'Khách đang tới'), icon: 'sign_open', now: true });
   fx.burst('spark', G.player.x, G.player.y - 40, 10, { up: 40, col: '#ffd35a' });
 }
 function updateBizButton() {

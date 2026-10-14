@@ -39,7 +39,7 @@ export function showHud(on) {
 const sungAt = {};
 function announceSong(id, S) {
   const now = performance.now();
-  if (G.runtime.cinematic || !G.state.story.flags.freeRoam || now - (sungAt[id] ?? -1e9) < 600000 || document.querySelector('.sheet-wrap:not(.out), .summary, .modal')) return;   // (not over a menu)
+  if (G.runtime.cinematic || !G.state.story.flags.freeRoam || now - (sungAt[id] ?? -1e9) < 600000 || document.querySelector('.sheet-wrap:not(.out), .summary, .modal') || document.body.classList.contains('svc-open')) return;   // (not over a menu)
   sungAt[id] = now;
   toast({ text: '♪ ' + T(S.en, S.vi), cls: 'song', quiet: true, ms: 2600 });
 }
