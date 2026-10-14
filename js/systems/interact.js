@@ -35,6 +35,26 @@ export const DISCOVERIES = {
   tidepool: ['Looked in the tide pool', 'Ngắm hồ triều'], fireflies: ['Caught fireflies in a jar', 'Bắt đom đóm vào lọ'], stars: ['Joined up a constellation', 'Nối một chòm sao'], movie: ['Watched a film at home', 'Xem phim ở nhà'], craft: ['Fixed something at the workbench', 'Sửa đồ ở bàn thợ'],
 };
 COUNTS.discoveries = Object.keys(DISCOVERIES).length;
+// a little island rumour each morning, pointing at something you haven't tried yet (a reason to go and look)
+const RUMOURS = {
+  coin: ['They say a coin tossed in the Wind Plaza fountain makes a wish come true.', 'Người ta nói ném đồng xu vào đài phun nước ở Quảng Trường Gió thì điều ước sẽ thành.'],
+  stones: ['The sea on Sunny Beach is flat this morning — perfect for skipping stones.', 'Sáng nay biển ở Bãi Biển lặng lắm — ném thia lia là hết ý.'],
+  wave: ['The ferry crew always wave back if you wave from the pier.', 'Ai vẫy tay từ cầu tàu là thủy thủ trên phà vẫy lại liền.'],
+  timetable: ['Wondering when the next ferry comes? The timetable on the pier knows.', 'Muốn biết khi nào phà tới? Lịch tàu ở cầu tàu biết đó.'],
+  telescope: ['From the lighthouse telescope you can see the whole island up close.', 'Nhìn qua kính viễn vọng trên hải đăng thấy rõ cả hòn đảo.'],
+  bird: ['A canary on the island sings back if you whistle to it.', 'Có một chú chim hoàng yến trên đảo, ai huýt sáo là nó hót lại.'],
+  fishing: ['The fish are biting off the pier today, Chú Hải says.', 'Chú Hải nói hôm nay cá cắn câu ở cầu tàu lắm.'],
+  plaque: ['Every old building on the island has a story on its plaque.', 'Mỗi ngôi nhà cổ trên đảo đều có câu chuyện trên tấm bảng của nó.'],
+  books: ['Every bookshelf on the island hides a good line or two. Have a browse.', 'Kệ sách nào trên đảo cũng có vài câu hay. Thử lật xem.'],
+  snack: ['The street-food carts have a secret favourite. Try them all.', 'Mấy xe đồ ăn vặt có một món ruột bí mật. Thử hết đi.'],
+  gift: ['Neighbours remember who brings them a little gift.', 'Hàng xóm nhớ hoài ai tặng họ một món quà nhỏ.'],
+};
+export function morningRumour() {
+  const s = G.state, open = Object.keys(RUMOURS).filter(k => !s.discovered?.[k]);
+  if (!open.length || s.story.chapter < 2) return null;
+  const k = open[s.day % open.length], r = RUMOURS[k];
+  return T(r[0], r[1]);
+}
 export function discover(key) {
   const s = G.state, d = (s.discovered ||= {});
   if (d[key] || !DISCOVERIES[key]) return;

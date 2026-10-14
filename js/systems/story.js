@@ -26,7 +26,7 @@ import { PROJECTS, projectDone } from './projects.js';
 import { rt as bizRT, openBiz as openShop } from './business.js';
 import { availableRecipes } from '../ui/shops.js';
 import { questOption, questTalk } from './sidequests.js';
-import { morningEvent, birthdaysToday, BIRTHDAYS } from './interact.js';
+import { morningEvent, birthdaysToday, BIRTHDAYS, morningRumour } from './interact.js';
 import { npcs } from './npc.js';
 import { playCinematic } from './cinematic.js';
 import * as cloud from './cloud.js';
@@ -684,6 +684,7 @@ export async function morningHooks() {
   // birthdays follow the real calendar: say it once per real day, and only for neighbours you've met
   // (it repeated every island morning, about people you didn't know yet)
   for (const rid of birthdaysToday().filter(r => (s.friends?.[r] || 0) > 0 && !flag('bdayNote:' + r + ':' + islandDay()))) setFlag('bdayNote:' + rid + ':' + islandDay()), toast({ text: T(`It's ${RESIDENTS[rid]?.name}'s birthday!`, `Hôm nay là sinh nhật ${RESIDENTS[rid]?.name}!`), sub: T(`They love ${(BIRTHDAYS[rid]?.likes || []).map(k => ingName(k)).join(' and ')} — chat → Give a gift.`, `Họ thích ${(BIRTHDAYS[rid]?.likes || []).map(k => ingName(k)).join(' và ')} — trò chuyện → Tặng quà.`), icon: 'heart', ms: 5200 });
+  { const r = morningRumour(); if (r && !flag('rumour' + s.day)) { setFlag('rumour' + s.day); setTimeout(() => toast({ cat: 'discover', text: T('Island rumour', 'Tin đồn trên đảo'), sub: r, icon: 'note', ms: 5200 }), 6000); } }
   if (s.day === 3 && !flag('rentHint')) { setFlag('rentHint'); toast({ text: T(`Rent starts today: ${money(PLACES.house.rent)} a day`, `Hôm nay bắt đầu trả tiền thuê: ${money(PLACES.house.rent)} mỗi ngày`), sub: T('It comes out when you sleep. To stop paying, buy the place: Menu → Business → Buy property.', 'Tiền tự trừ khi bạn ngủ. Muốn khỏi trả thì mua đứt: Menu → Kinh doanh → Mua đứt.'), icon: 'key', ms: 6000 }); }
   if (S().step === 'grow' && !flag('ch3intro')) await wordSpreadingIntro();
   else if (availableRecipes().length && !flag('recipeNote' + s.day)) { setFlag('recipeNote' + s.day); toast({ text: T('Mèo Mây has a new recipe!', 'Mèo Mây có công thức mới!'), sub: T('Visit Mèo Mây\'s house to learn it.', 'Ghé nhà Mèo Mây để học nhé.'), icon: 'notebook' }); }

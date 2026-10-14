@@ -35,7 +35,8 @@ export function openShopFront(id) {
   };
   tray.onclick = e => { const k = e.target.closest('[data-k]')?.dataset.k; if (!k) return; st.pick = st.pick === k ? null : k; st.sel = -1; sfx('ui'); refresh(); };
   const toLocal = e => { const r = G.renderer.cv.getBoundingClientRect(), [wx, wy] = G.renderer.toWorld(e.clientX - r.left, e.clientY - r.top); return [wx - b.x, wy - b.y]; };
-  const inArea = (dx, dy) => dx >= area.x0 && dx <= area.x1 && dy >= area.y0 && dy <= area.y1;
+  // (the walk up to the door stays clear: a parasol used to go right on the door path)
+  const doorX = b.door ? b.door[0] : null, inArea = (dx, dy) => dx >= area.x0 && dx <= area.x1 && dy >= area.y0 && dy <= area.y1 && !(doorX != null && Math.abs(dx - doorX) < 16);
   const hit = (dx, dy) => { const list = decorOf(id); let best = -1, bd = 22; list.forEach((d, i) => { const dd = Math.hypot(d.dx - dx, (d.dy - 10) - dy); if (dd < bd) { bd = dd; best = i; } }); return best; };
   const drag = ui.querySelector('.ph-drag');
   drag.addEventListener('pointerdown', e => {
@@ -50,7 +51,12 @@ export function openShopFront(id) {
   // the placing area and the selected piece, drawn over the world
   G.runtime.decoOverlay = (c, t) => {
     if (cam.override !== mine) cam.override = mine;                // (a scene change resets the camera: keep it on the shop)
-    c.save(); c.setLineDash([3, 3]); c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 1; c.strokeRect(b.x + area.x0, b.y + area.y0 - 6, area.x1 - area.x0, area.y1 - area.y0 + 6); c.restore();
+    // the area you can decorate, clearly marked (a faint dashed line was easy to miss), and the door lane kept clear
+    const pulse = 0.55 + Math.sin(t * 3) * 0.2;
+    c.save(); c.fillStyle = 'rgba(255,236,160,.16)'; c.fillRect(b.x + area.x0, b.y + area.y0 - 6, area.x1 - area.x0, area.y1 - area.y0 + 6);
+    c.setLineDash([4, 3]); c.strokeStyle = `rgba(255,255,255,${pulse + 0.2})`; c.lineWidth = 1.6; c.strokeRect(b.x + area.x0, b.y + area.y0 - 6, area.x1 - area.x0, area.y1 - area.y0 + 6);
+    if (doorX != null) { c.setLineDash([]); c.fillStyle = 'rgba(232,88,78,.18)'; c.fillRect(b.x + doorX - 16, b.y + area.y0 - 6, 32, area.y1 - area.y0 + 6); }
+    c.restore();
     const d = decorOf(id)[st.sel]; if (d) { c.save(); c.strokeStyle = '#ff6fae'; c.lineWidth = 1.4; c.beginPath(); c.ellipse(b.x + d.dx, b.y + d.dy, 14, 5, 0, 0, Math.PI * 2); c.stroke(); c.restore(); }
   };
   ui.querySelector('.ph-x').onclick = () => close(mine);

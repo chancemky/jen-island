@@ -239,6 +239,13 @@ function draw(cv, view) {
     if (at) label(c, T(en, vi), at[0], at[1], 13 * k, '#5b3f36', 'rgba(255,248,234,.85)', 'italic 900');
   }
   c.globalAlpha = 1;
+  // your neighbours, wherever they are right now: small mint dots (names when zoomed in) — so you can go and find someone
+  { const zoomed = view.s > (view.fit || 0) * 2.4;
+    for (const a of G.npcs?.residents || []) {
+      if (a.visible === false || !G.scenes.island.actors.includes(a) || (a.data?.state === 'home')) continue;
+      c.beginPath(); c.arc(a.x, a.y, 5 * k, 0, TAU); c.fillStyle = '#7fd1b9'; c.fill(); c.lineWidth = 2 * k; c.strokeStyle = '#2f6f5f'; c.stroke();
+      if (zoomed) label(c, a.name, a.x, a.y - 12 * k, 8 * k, '#2f6f5f', '#fff8ea');
+    } }
   // side quest stars
   for (const q of activeQuests()) if (G.state.sideQuests[q.id] === 'active') { const sp = questSpot(q); starAt(c, sp.x, sp.y, 12 * k); }
   // goal
@@ -261,12 +268,13 @@ function draw(cv, view) {
   c.beginPath(); c.roundRect ? c.roundRect(10, 10, 150, 34, 12) : c.rect(10, 10, 150, 34); c.fill(); c.stroke();
   c.fillStyle = '#5b3f36'; c.font = '900 14px Nunito, sans-serif'; c.textAlign = 'left'; c.fillText(G.state.island.name || 'Bistro Island', 20, 32);
   // compass
-  c.translate(cw - 34, ch - 60); c.fillStyle = 'rgba(255,248,234,.9)'; c.beginPath(); c.arc(0, 0, 20, 0, TAU); c.fill(); c.stroke();
+  // (small and see-through: it sat on top of Coconut Cove's "Opens in Chapter 17")
+  c.globalAlpha = 0.7; c.translate(cw - 26, ch - 50); c.scale(0.7, 0.7); c.fillStyle = 'rgba(255,248,234,.9)'; c.beginPath(); c.arc(0, 0, 20, 0, TAU); c.fill(); c.stroke();
   c.fillStyle = '#e8584e'; c.beginPath(); c.moveTo(0, -16); c.lineTo(5, 0); c.lineTo(-5, 0); c.closePath(); c.fill(); c.fillStyle = '#9aa3ad'; c.beginPath(); c.moveTo(0, 16); c.lineTo(5, 0); c.lineTo(-5, 0); c.closePath(); c.fill();
-  c.fillStyle = '#5b3f36'; c.font = '900 9px Nunito, sans-serif'; c.textAlign = 'center'; c.fillText(T('N', 'B'), 0, -22 + 2);
+  c.fillStyle = '#5b3f36'; c.font = '900 11px Nunito, sans-serif'; c.textAlign = 'center'; c.fillText(T('N', 'B'), 0, -22 + 2);
   c.restore();
   c.save(); c.scale(d, d); c.font = '900 11px Nunito, sans-serif'; c.fillStyle = '#fff'; c.textAlign = 'left'; c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 3;
-  const legend = T('● You  ● Mèo Mây  ○ Goal  ★ Lost item · drag / pinch to zoom', '● Bạn  ● Mèo Mây  ○ Mục tiêu  ★ Đồ thất lạc · kéo / chụm để phóng to');
+  const legend = T('● You  ● Mèo Mây  ● Neighbours  ○ Goal  ★ Lost item · drag / pinch to zoom', '● Bạn  ● Mèo Mây  ● Hàng xóm  ○ Mục tiêu  ★ Đồ thất lạc · kéo / chụm để phóng to');
   c.font = `900 ${Math.min(11, 11 * (cw - 70) / c.measureText(legend).width)}px Nunito, sans-serif`;   // shrinks to fit beside the compass
   c.fillText(T('● You  ● Mèo Mây  ○ Goal  ★ Lost item · drag / pinch to zoom', '● Bạn  ● Mèo Mây  ○ Mục tiêu  ★ Đồ thất lạc · kéo / chụm để phóng to'), 10, ch - 10);
   c.restore();

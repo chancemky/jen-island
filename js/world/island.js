@@ -673,6 +673,7 @@ export class Island extends Scene {
     this.add2('banyan', 2250, 1318, { s: 1.05, cullR: 120, cullH: 170, solidR: 16, fireflies: true });
     this.add2('shrine', 2196, 1330, { solidR: 7 });
     this.add2('lookout', 2470, 1400, { cullR: 40, cullH: 150, solidR: 12 });
+    this.trigger({ id: 'isletTower', kind: 'act', x: 2456, y: 1404, w: 28, h: 26, label: 'Leo lên', en: 'Climb up', icon: 'star', action: 'isletTower' });   // (the tower used to be just scenery)
     this.add2('easel', 2410, 1690, { solidR: 5, cullR: 30, cullH: 50 });
     this.add2('beachHammock', 2100, 1790, { cullR: 60, cullH: 60 });
     this.add2('coconutPile', 2040, 1650, { cullR: 20, cullH: 20 });

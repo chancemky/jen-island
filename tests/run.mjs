@@ -195,7 +195,7 @@ if (run('story') || run('chaos')) {
   let lastCh = 1, soft = false; const stuckAfter = [];
   for (let i = 0; i < 90; i++) {
     const before = await p.evaluate(() => window.__jen.G.state.story.step);
-    seen.push(before);
+    seen.push(before); if (process.env.DEBUG) console.log('  step', before);
     if (before === 'free') break;
     const xp0 = await p.evaluate(() => window.__jen.G.state.xpTotal || 0);
     const res = await p.evaluate(step => {

@@ -16,20 +16,21 @@ const DOOR = { x: 900, y: 330 };
 let L = null;
 
 
-export async function enterLighthouse() {
+// o (optional): another high place to look out from — from/to: where the view starts and drifts to; title/sub
+export async function enterLighthouse(o = {}) {
   if (L || !G.player) return;
   releaseJoystick(); input.enabled = false;
   sfx('door');
   await fadeOut(450);
   const pl = G.player;
-  L = { t: 0, from: { x: pl.x, y: pl.y }, clouds: [], gulls: [] };
+  L = { t: 0, from: { x: pl.x, y: pl.y }, clouds: [], gulls: [], a: o.from || [900, 520], b: o.to || [900, 1330], title: o.title, sub: o.sub };
   G.runtime.lookout = true;
   pl.visible = false; lockInput('lookout');
   document.body.classList.add('lookout', 'hide-controls');
   // start up close to the lighthouse, then slowly pull back until the whole island is in view
   const full = fullZoom();
-  cam.override = { x: 900, y: 520, zoom: full * 2.6, rate: 2 };
-  cam.snap(900, 520); cam.zoomMul = full * 2.6;
+  cam.override = { x: L.a[0], y: L.a[1], zoom: full * 2.6, rate: 2 };
+  cam.snap(L.a[0], L.a[1]); cam.zoomMul = full * 2.6;
   for (let i = 0; i < 4; i++) L.clouds.push({ x: Math.random(), y: 0.05 + Math.random() * 0.7, s: 0.6 + Math.random() * 0.8, v: 0.004 + Math.random() * 0.006 });
   for (let i = 0; i < 4; i++) L.gulls.push({ x: Math.random(), y: 0.1 + Math.random() * 0.35, v: 0.02 + Math.random() * 0.03, ph: Math.random() * 6 });
   buildOverlay();
@@ -54,7 +55,7 @@ export async function leaveLighthouse() {
 
 function buildOverlay() {
   const el = document.createElement('div'); el.className = 'lookout-ui';
-  el.innerHTML = `<canvas></canvas><div class="lk-title"><b>${T('The Old Lighthouse', 'Ngọn Hải Đăng Cũ')}</b><small>${T(`${G.state.island.name || 'The island'}, seen from the gallery`, `${G.state.island.name || 'Hòn đảo'} nhìn từ ban công hải đăng`)}</small></div><button type="button" class="btn big ghost lk-scope">🔭 ${T('Telescope', 'Kính viễn vọng')}</button><button type="button" class="btn big pink lk-leave">${T('Leave the lighthouse', 'Rời hải đăng')}</button>`;
+  el.innerHTML = `<canvas></canvas><div class="lk-title"><b>${L.title ? T(...L.title) : T('The Old Lighthouse', 'Ngọn Hải Đăng Cũ')}</b><small>${L.sub ? T(...L.sub) : T(`${G.state.island.name || 'The island'}, seen from the gallery`, `${G.state.island.name || 'Hòn đảo'} nhìn từ ban công hải đăng`)}</small></div><button type="button" class="btn big ghost lk-scope">🔭 ${T('Telescope', 'Kính viễn vọng')}</button><button type="button" class="btn big pink lk-leave">${L.title ? T('Climb down', 'Leo xuống') : T('Leave the lighthouse', 'Rời hải đăng')}</button>`;
   document.getElementById('app').appendChild(el);
   el.querySelector('.lk-leave').onclick = () => leaveLighthouse();
   // the telescope: zoom in and drag to look around the island
@@ -87,7 +88,7 @@ function step(dt) {
   if (L.scope) { cam.override = { x: L.sx, y: L.sy, zoom: full * 3.2, rate: 6 }; return; }
   if (t < 1.2) return;
   const k = Math.min(1, (t - 1.2) / 7), e = k * k * (3 - 2 * k);
-  cam.override = { x: 900 + Math.sin(t * 0.05) * 50 * e, y: 520 + (1330 - 520) * e + Math.cos(t * 0.04) * 60 * e, zoom: full * (2.6 - 1.6 * e) * (1 + Math.sin(t * 0.07) * 0.04 * e), rate: 1.2 };
+  cam.override = { x: L.a[0] + (L.b[0] - L.a[0]) * e + Math.sin(t * 0.05) * 50 * e, y: L.a[1] + (L.b[1] - L.a[1]) * e + Math.cos(t * 0.04) * 60 * e, zoom: full * (2.6 - 1.6 * e) * (1 + Math.sin(t * 0.07) * 0.04 * e), rate: 1.2 };
   for (const cl of L.clouds) { cl.x += cl.v * dt; if (cl.x > 1.3) { cl.x = -0.3; cl.y = 0.05 + Math.random() * 0.7; } }
   for (const g of L.gulls) { g.x += g.v * dt; g.ph += dt * 5; if (g.x > 1.15) { g.x = -0.15; g.y = 0.08 + Math.random() * 0.35; } }
 }
