@@ -43,7 +43,7 @@ function card(n) {
     const el = document.createElement('div'); el.className = 'modal chess';
     const B0 = n == null ? null : setup(PUZZLES[n]);
     el.innerHTML = `<div class="card"><div class="kicker">♟️ ${T('Ông Lộc\'s chess corner', 'Góc cờ của Ông Lộc')}</div>
-      <p class="ch-msg">${n == null ? T('"You\'ve solved every puzzle I know. Now you set me one!"', '“Con giải hết các thế cờ ông biết rồi. Giờ con ra đề cho ông đi!”') : T(`Puzzle ${n + 1} of ${PUZZLES.length}: red to move — checkmate in one.`, `Thế cờ ${n + 1}/${PUZZLES.length}: đỏ đi — chiếu bí trong một nước.`)}</p>
+      <p class="ch-msg">${n == null ? T('"You\'ve solved every puzzle I know. Now you set me one!"', '“Con giải hết các thế cờ ông biết rồi. Giờ con ra đề cho ông đi!”') : T(`Puzzle ${n + 1} of ${PUZZLES.length}: red to move — checkmate in one. Tap a red piece, then where it goes.`, `Thế cờ ${n + 1}/${PUZZLES.length}: đỏ đi — chiếu bí trong một nước. Chạm một quân đỏ, rồi chạm chỗ nó đi tới.`)}</p>
       ${B0 ? '<canvas width="540" height="600"></canvas>' : ''}<button class="btn ghost" type="button">${T('Close', 'Đóng')}</button></div>`;
     (document.getElementById('app') || document.body).appendChild(el);
     const close = () => { el.remove(); done(); };

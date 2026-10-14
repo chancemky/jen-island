@@ -64,12 +64,12 @@ export function openStaffBoard() {
           const best = c.stats.cooking >= c.stats.service ? 'cook' : 'server';
           const missing = ['cook', 'server', 'cleaner', 'cashier', 'prep'].find(r => !staffByRole(r).length);
           roleOptions(sel, null, missing === 'cook' || missing === 'server' ? missing : best);
-          const hireBtn = btn(T(`Hire ${feeOf(c, sel.value)}k`, `Thuê ${feeOf(c, sel.value)}k`), () => {
+          const hireBtn = btn(T(`Hire ${money(feeOf(c, sel.value))}`, `Thuê ${money(feeOf(c, sel.value))}`), () => {
             if (!canAfford(feeOf(c, sel.value))) { sfx('error'); toast({ text: T('Not enough money', 'Không đủ tiền'), bad: true }); return; }
             hire(c, sel.value); sfx('success'); toast({ text: T(`${c.name} joined the team!`, `${c.name} gia nhập đội!`), sub: T(`Hired as ${ROLES[sel.value].en.toLowerCase()}`, `Vị trí: ${ROLES[sel.value].vi.toLowerCase()}`), icon: 'person' }); api.rebuild();
           }, 'buy pink');
           const wageNote = h('small', '', ''); wageNote.style.cssText = 'font-size:11px;font-weight:800;opacity:.75;text-align:center';
-          const upd = () => { hireBtn.textContent = T(`Hire ${feeOf(c, sel.value)}k`, `Thuê ${feeOf(c, sel.value)}k`); wageNote.textContent = T(`${wageOf(c, sel.value)}k/day as ${ROLES[sel.value].en.toLowerCase()}`, `${wageOf(c, sel.value)}k/ngày (${ROLES[sel.value].vi.toLowerCase()})`); };
+          const upd = () => { hireBtn.textContent = T(`Hire ${money(feeOf(c, sel.value))}`, `Thuê ${money(feeOf(c, sel.value))}`); wageNote.textContent = T(`${money(wageOf(c, sel.value))}/day as ${ROLES[sel.value].en.toLowerCase()}`, `${money(wageOf(c, sel.value))}/ngày (${ROLES[sel.value].vi.toLowerCase()})`); };
           sel.onchange = upd; upd();
           right.append(sel, hireBtn, wageNote);
           list.appendChild(empCard(c, right));

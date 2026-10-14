@@ -907,7 +907,7 @@ body.hc :is(.chip, .tag, .pill, .opt-tag) { border-width: 3px; }
 .av-x { position: absolute; top: calc(12px + var(--sat)); right: 12px; width: 40px; height: 40px; border-radius: 50%; background: #fffaf0; border: 3px solid #5b3f36; font-weight: 900; }
 .av-row { display: flex; gap: 8px; }
 .btn-col { display: flex; flex-direction: column; gap: 4px; flex: 0 1 46%; max-width: 46%; }   /* (never wider than the text beside it: long Vietnamese labels squeezed the description to one word a line) */
-.btn-col .btn { white-space: normal; line-height: 1.15; }
+.btn-col .btn, .btn-col .buy { white-space: normal; line-height: 1.15; font-size: 13px; padding: 7px 8px; min-width: 0; width: 100%; overflow-wrap: anywhere; }   /* (long labels wrap inside the button: "7.5M down · rest later" ran out of it) */
 .set-list { display: grid; gap: 6px; margin-bottom: 10px; }
 .set-chip { background: #fff; border: 2px solid #efdcbc; border-radius: 12px; padding: 6px 10px; }
 .set-chip b { font-size: 13px; } .set-chip small { display: block; font-weight: 700; opacity: .65; font-size: 11px; }

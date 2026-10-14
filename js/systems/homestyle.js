@@ -4,7 +4,7 @@
 //  · furniture colours: give any piece a new colour (its fabric and wood shift hue; the outlines
 //    stay). Drawn once into a small cached image, so it costs nothing per frame.
 import { G, T, markDirty, addMoney, addPantry } from './state.js';
-import { shade, bus, islandSeason } from '../core/util.js';
+import { shade, bus, islandSeason, money } from '../core/util.js';
 import { openSheet, h, present } from '../ui/sheets.js';
 import { FURNITURE, ingName } from '../data/game.js';
 import { setProgress, homePieces } from '../data/sets.js';
@@ -149,7 +149,7 @@ export function initHomeContest() {
       const el = document.createElement('div'); el.className = 'modal';
       el.innerHTML = `<div class="card contest"><div class="kicker">${T('Home of the Week', 'Ngôi nhà của tuần')}</div><h2>${T(theme.en, theme.vi)}</h2><div class="stars-big">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</div>
         <p class="judge"><b>Anh Khoa</b> “${T(...SAY_HOME[good][0])}”</p><p class="judge"><b>Cô Lan</b> “${T(...SAY_HOME[weak][r.parts[weak] >= 1 ? 0 : 1])}”</p>
-        <p style="font-weight:900">${prize ? T(`Prize: ${prize}k`, `Giải thưởng: ${prize}k`) : T('No prize this time — next week\'s spotlight is new!', 'Lần này chưa có giải — tuần sau có chủ đề mới!')}</p>
+        <p style="font-weight:900">${prize ? T(`Prize: ${money(prize)}`, `Giải thưởng: ${money(prize)}`) : T('No prize this time — next week\'s spotlight is new!', 'Lần này chưa có giải — tuần sau có chủ đề mới!')}</p>
         <p class="muted" style="font-size:12px">${T(`This week's spotlight: ${homeTheme().en}`, `Chủ đề tuần này: ${homeTheme().vi}`)}</p><button class="btn primary" type="button">${T('Thank you!', 'Cảm ơn!')}</button></div>`;
       (document.getElementById('app') || document.body).appendChild(el); bus.emit('stinger', stars >= 4 ? 'award' : 'friend');
       el.querySelector('button').onclick = () => { el.remove(); done(); };

@@ -7,7 +7,7 @@ import { G, T, markDirty, addPantry } from './state.js';
 import { sfx } from '../core/audio.js';
 import { toast } from '../ui/hud.js';
 import { fx } from '../world/render.js';
-import { rand, bus } from '../core/util.js';
+import { rand, bus, money } from '../core/util.js';
 import { PIER_END } from '../world/island.js';
 import { discover } from './interact.js';
 
@@ -90,13 +90,13 @@ export async function openTackle() {
     list.appendChild(h('div', 'section-title', T('Rods', 'Cần câu')));
     RODS.forEach((r, i) => { const row = h('div', 'row', `<div class="ico">🎣</div><div class="info"><b>${T(r.en, r.vi)}</b><small>${T(`${r.casts} casts a day · ${r.window > 1000 ? 'a gentler bite' : 'a quick bite'}${r.rare ? ' · rare fish like it' : ''}`, `${r.casts} lần mỗi ngày · ${r.window > 1000 ? 'cá cắn câu lâu hơn' : 'cá cắn câu nhanh'}${r.rare ? ' · cá hiếm thích cần này' : ''}`)}</small></div>`);
       if (i <= lv) row.appendChild(h('div', 'pill', i === lv ? T('Using', 'Đang dùng') : T('Owned', 'Đã có')));
-      else if (i === lv + 1) row.appendChild(btn(`${r.cost}k`, () => { if (!canAfford(r.cost)) return moneyShortfall(r.cost); addMoney(-r.cost, 'equipment'); fs.rod = i; markDirty(true); sfx('buy'); api.rebuild(); }, 'buy'));
+      else if (i === lv + 1) row.appendChild(btn(money(r.cost), () => { if (!canAfford(r.cost)) return moneyShortfall(r.cost); addMoney(-r.cost, 'equipment'); fs.rod = i; markDirty(true); sfx('buy'); api.rebuild(); }, 'buy'));
       list.appendChild(row); });
     list.appendChild(h('div', 'section-title', T(`Bait · ${fs.bait || 0} left`, `Mồi câu · còn ${fs.bait || 0}`)));
     const b = h('div', 'row', `<div class="ico">🪱</div><div class="info"><b>${T(`${BAIT.n} bait`, `${BAIT.n} mồi`)}</b><small>${T('Used one per cast: rare fish bite far more often, boots far less.', 'Mỗi lần câu dùng một mồi: cá hiếm cắn nhiều hơn, ủng cũ ít hơn.')}</small></div>`);
-    b.appendChild(btn(`${BAIT.cost}k`, () => { if (!canAfford(BAIT.cost)) return moneyShortfall(BAIT.cost); addMoney(-BAIT.cost, 'equipment'); fs.bait = (fs.bait || 0) + BAIT.n; markDirty(true); sfx('buy'); api.rebuild(); }, 'buy')); list.appendChild(b);
+    b.appendChild(btn(money(BAIT.cost), () => { if (!canAfford(BAIT.cost)) return moneyShortfall(BAIT.cost); addMoney(-BAIT.cost, 'equipment'); fs.bait = (fs.bait || 0) + BAIT.n; markDirty(true); sfx('buy'); api.rebuild(); }, 'buy')); list.appendChild(b);
     const lu = h('div', 'row', `<div class="ico">🏮</div><div class="info"><b>${T(`${LURE.n} lantern lures`, `${LURE.n} mồi đèn`)}</b><small>${T(`For night fishing (19:00–5:00): squid, ribbonfish and lanternfish come up to the light. You have ${fs.lure || 0}.`, `Câu đêm (19:00–5:00): mực, cá hố và cá đèn lồng bơi lên theo ánh sáng. Bạn có ${fs.lure || 0}.`)}</small></div>`);
-    lu.appendChild(btn(`${LURE.cost}k`, () => { if (!canAfford(LURE.cost)) return moneyShortfall(LURE.cost); addMoney(-LURE.cost, 'equipment'); fs.lure = (fs.lure || 0) + LURE.n; markDirty(true); sfx('buy'); api.rebuild(); }, 'buy')); list.appendChild(lu);
+    lu.appendChild(btn(money(LURE.cost), () => { if (!canAfford(LURE.cost)) return moneyShortfall(LURE.cost); addMoney(-LURE.cost, 'equipment'); fs.lure = (fs.lure || 0) + LURE.n; markDirty(true); sfx('buy'); api.rebuild(); }, 'buy')); list.appendChild(lu);
     list.appendChild(h('div', 'section-title', T('Fish journal', 'Sổ tay cá')));
     for (const [id, f] of Object.entries(FISH)) { const seen = s.fishSeen?.[id]; list.appendChild(h('div', 'row' + (seen ? '' : ' dim'), `<div class="ico">${seen ? (f.junk ? '🥾' : f.nightOnly ? '🏮' : f.rare ? '🌙' : '🐟') : '❔'}</div><div class="info"><b>${seen ? T(f.en, f.vi) : '???'}</b><small>${seen ? T(`Caught ${s.fishBag?.[id] || 0} · biggest ${fs.records?.[id] || '?'} cm`, `Đã câu ${s.fishBag?.[id] || 0} · lớn nhất ${fs.records?.[id] || '?'} cm`) : (f.night ? T('Bites after dark…', 'Cắn câu khi trời tối…') : T('Not caught yet', 'Chưa câu được'))}</small></div>`)); }
   } });
