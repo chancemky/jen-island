@@ -225,7 +225,7 @@ try {
     await setTime(10 * 60); await go('island', 600, 2260); await wait(600);
     await ev(async () => { const m = await import('/js/ui/lookout.js'); await m.leaveLighthouse(); }); await wait(1200);   // (the lighthouse view must be closed first, or it moves you back to its door)
     // the drink stand: stocked, opened, three customers in line, then the counter (it used to shoot wherever the last step left you)
-    await ev(async () => { const J = window.__jen, D = await import('/js/data/game.js'), sc = await import('/js/systems/scenes.js'); for (const k of Object.keys(D.INGREDIENTS)) J.G.state.pantry[k] = 40; J.G.state.prepped.kumquat_cut = 20; delete J.G.state.keepers?.shed1; J.G.state.time = 10 * 60; sc.setScene('island', 600, 2262, 'up'); J.openBiz('shed1'); }); await wait(1500); await shot('shop-open');
+    await ev(async () => { const { G } = await import('/js/systems/state.js'), D = await import('/js/data/game.js'), sc = await import('/js/systems/scenes.js'), B = await import('/js/systems/business.js'); for (const k of Object.keys(D.INGREDIENTS)) G.state.pantry[k] = 40; G.state.prepped.kumquat_cut = 20; delete G.state.keepers?.shed1; G.state.time = 10 * 60; sc.setScene('island', 600, 2262, 'up'); B.openBiz('shed1'); }); await wait(1500); await shot('shop-open');   // (module imports, not window.__jen: the store build has no dev hooks)
     await ev(async () => { const B = await import('/js/systems/business.js'); for (let i = 0; i < 3; i++) B.spawnCustomer('shed1'); }); await wait(7000); await shot('customers');
     await ev(async () => { const m = await import('/js/ui/service.js'); m.openService('shed1'); }); await wait(1500); await shot('service');
     await ev(async () => { (await import('/js/ui/service.js')).closeService(); });

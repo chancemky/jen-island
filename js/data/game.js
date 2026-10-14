@@ -574,7 +574,7 @@ export const ECON = {
   furniture: 5,          // furniture × list price
   furnitureCurve: [[2500, 6], [1000, 3], [400, 1.6]],   // …then the luxury curve: a 6,000k centrepiece becomes 36M
   upgrades: 5,           // shop upgrades × list price
-  businesses: 2.5,       // buying one of the first shops (and its key from Mèo Mây) × (a grinder's first week used to buy every shop the day it unlocked)
+  businesses: 2,         // buying one of the first shops (and its key from Mèo Mây) × (a grinder's first week used to buy every shop the day it unlocked)
   businessesLate: 1.5,   // …and the shops from Chapter 9 on (already priced for a bigger income)
   build: 2,              // the bridges, the statue and the Night Market restoration ×
   equipment: 3,          // shop equipment (tip jar, fan, register…) ×
